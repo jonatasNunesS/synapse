@@ -34,7 +34,7 @@ interface NavItem {
 
 const navigation: NavItem[] = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
-  { label: "Financeiro", href: "/financeiro", icon: DollarSign, disabled: true },
+  { label: "Financeiro", href: "/financeiro", icon: DollarSign },
   { label: "Estoque", href: "/estoque", icon: Package, disabled: true },
   { label: "Clientes", href: "/clientes", icon: Users, disabled: true },
   { label: "Fornecedores", href: "/fornecedores", icon: Truck, disabled: true },

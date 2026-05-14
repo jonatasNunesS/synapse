@@ -30,7 +30,7 @@ urlpatterns = [
     path("api/health/", health_check, name="health-check"),
     # ── Módulos ────────────────────────────────────────────
     path("api/auth/", include("modules.auth.urls")),
-    # path("api/financeiro/", include("modules.financeiro.urls")),
+    path("api/financeiro/", include("modules.financeiro.urls")),
     # path("api/estoque/", include("modules.estoque.urls")),
     # path("api/clientes/", include("modules.clientes.urls")),
     # path("api/fornecedores/", include("modules.fornecedores.urls")),

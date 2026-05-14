@@ -32,6 +32,13 @@ export interface ApiError {
 
 export type ApiResult<T = unknown> = ApiResponse<T> | ApiError;
 
+export interface PaginatedResponse<T = unknown> {
+  success: true;
+  data: T[];
+  message: string;
+  pagination: Pagination;
+}
+
 /**
  * Tipos base compartilhados
  */
