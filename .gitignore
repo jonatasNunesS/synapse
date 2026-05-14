@@ -1,0 +1,67 @@
+# ════════════════════════════════════════════════════════════
+# Synapse - .gitignore
+# ════════════════════════════════════════════════════════════
+
+# ── Ambiente ───────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── Python / Django ────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+celerybeat-schedule
+celerybeat.pid
+
+# ── Django ─────────────────────────────────────────────────
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+backend/media/
+backend/staticfiles/
+
+# ── Node.js / Next.js ─────────────────────────────────────
+node_modules/
+.next/
+out/
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+
+# ── IDE ────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Docker ─────────────────────────────────────────────────
+*.log
+docker-compose.override.yml
