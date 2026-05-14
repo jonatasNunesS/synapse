@@ -41,6 +41,7 @@ PASSWORD_HASHERS = [
 # ════════════════════════════════════════════════════════════
 # DEBUG TOOLBAR - Desabilitado em testes
 # ════════════════════════════════════════════════════════════
+DEBUG = False  # Garante que debug_toolbar não seja carregado nas URLs
 INSTALLED_APPS = [app for app in INSTALLED_APPS if app != "debug_toolbar"]  # noqa: F405
 MIDDLEWARE = [m for m in MIDDLEWARE if "debug_toolbar" not in m]  # noqa: F405
 

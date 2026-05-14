@@ -28,8 +28,8 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     # ── Health Check ───────────────────────────────────────
     path("api/health/", health_check, name="health-check"),
-    # ── Módulos (serão adicionados conforme os milestones) ─
-    # path("api/auth/", include("modules.auth.urls")),
+    # ── Módulos ────────────────────────────────────────────
+    path("api/auth/", include("modules.auth.urls")),
     # path("api/financeiro/", include("modules.financeiro.urls")),
     # path("api/estoque/", include("modules.estoque.urls")),
     # path("api/clientes/", include("modules.clientes.urls")),

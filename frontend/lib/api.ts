@@ -1,15 +1,29 @@
 /**
- * Synapse - Cliente HTTP
- * Wrapper sobre fetch com tratamento de erros padrão,
- * autenticação JWT via httpOnly cookie e refresh automático.
+ * Synapse — API Client (M1)
+ * Wrapper sobre fetch com autenticação JWT via httpOnly cookie,
+ * refresh automático em 401 e tratamento de erros padronizado.
+ * Todas as requisições enviam credentials: "include".
  */
 
-import type { ApiResponse, ApiError } from "@/types/api";
+import type { ApiError, ApiResponse } from "@/types/api";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const API_BASE_URL =
+  typeof window !== "undefined"
+    ? "/api" // Browser: usa o proxy do Next.js (next.config.mjs)
+    : process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
+}
+
+// ── Controle de refresh (evita loop infinito) ────────────────
+let isRefreshing = false;
+type QueueItem = { resolve: () => void; reject: (e: unknown) => void };
+const failedQueue: QueueItem[] = [];
+
+function processQueue(error: unknown) {
+  failedQueue.forEach((p) => (error ? p.reject(error) : p.resolve()));
+  failedQueue.length = 0;
 }
 
 class ApiClient {
@@ -19,11 +33,14 @@ class ApiClient {
     this.baseUrl = baseUrl;
   }
 
-  /**
-   * Constrói a URL com query params.
-   */
-  private buildUrl(endpoint: string, params?: Record<string, string | number | boolean | undefined>): string {
-    const url = new URL(`${this.baseUrl}${endpoint}`);
+  private buildUrl(
+    endpoint: string,
+    params?: Record<string, string | number | boolean | undefined>
+  ): string {
+    const url = new URL(
+      `${this.baseUrl}${endpoint}`,
+      typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"
+    );
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
@@ -34,106 +51,103 @@ class ApiClient {
     return url.toString();
   }
 
-  /**
-   * Requisição base com tratamento de erros.
-   */
-  private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
+  private async request<T>(
+    endpoint: string,
+    options: RequestOptions = {}
+  ): Promise<ApiResponse<T>> {
     const { params, ...fetchOptions } = options;
     const url = this.buildUrl(endpoint, params);
-
-    const defaultHeaders: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
 
     const config: RequestInit = {
       ...fetchOptions,
       headers: {
-        ...defaultHeaders,
+        "Content-Type": "application/json",
+        Accept: "application/json",
         ...fetchOptions.headers,
       },
-      credentials: "include", // Envia cookies httpOnly
+      credentials: "include",
     };
 
-    try {
-      const response = await fetch(url, config);
+    const response = await fetch(url, config);
 
-      // Token expirado - tenta refresh
-      if (response.status === 401) {
-        const refreshed = await this.refreshToken();
-        if (refreshed) {
-          // Repete a requisição original
-          const retryResponse = await fetch(url, config);
-          return await retryResponse.json();
-        }
-        // Refresh falhou - redireciona para login
+    // ── Refresh automático em 401 ──────────────────────────
+    const isAuthRoute =
+      endpoint.includes("/auth/refresh") ||
+      endpoint.includes("/auth/login") ||
+      endpoint.includes("/auth/registro");
+
+    if (response.status === 401 && !isAuthRoute) {
+      if (isRefreshing) {
+        return new Promise<ApiResponse<T>>((resolve, reject) => {
+          failedQueue.push({
+            resolve: () => this.request<T>(endpoint, options).then(resolve),
+            reject,
+          });
+        });
+      }
+
+      isRefreshing = true;
+      try {
+        const refreshRes = await fetch(this.buildUrl("/auth/refresh/"), {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (!refreshRes.ok) throw new Error("Refresh failed");
+
+        processQueue(null);
+        isRefreshing = false;
+        return this.request<T>(endpoint, options);
+      } catch (err) {
+        processQueue(err);
+        isRefreshing = false;
         if (typeof window !== "undefined") {
           window.location.href = "/login";
         }
-        throw new Error("Sessão expirada. Faça login novamente.");
+        throw {
+          success: false,
+          error: { code: "SESSION_EXPIRED", message: "Sessão expirada.", details: {} },
+        } as ApiError;
       }
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw data;
-      }
-
-      return data;
-    } catch (error) {
-      if ((error as ApiError)?.error?.code) {
-        throw error;
-      }
-      throw {
-        success: false,
-        error: {
-          code: "NETWORK_ERROR",
-          message: "Erro de conexão. Verifique sua internet.",
-          details: {},
-        },
-      } as ApiError;
     }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw data as ApiError;
+    }
+
+    return data as ApiResponse<T>;
   }
 
-  /**
-   * Tenta renovar o access token usando o refresh token.
-   */
-  private async refreshToken(): Promise<boolean> {
-    try {
-      const response = await fetch(`${this.baseUrl}/auth/refresh/`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      });
-      return response.ok;
-    } catch {
-      return false;
-    }
-  }
+  // ── Métodos HTTP ───────────────────────────────────────────
 
-  // ── Métodos HTTP ──────────────────────────────────────────
-
-  async get<T>(endpoint: string, params?: Record<string, string | number | boolean | undefined>): Promise<ApiResponse<T>> {
+  async get<T>(
+    endpoint: string,
+    params?: Record<string, string | number | boolean | undefined>
+  ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { method: "GET", params });
   }
 
   async post<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: "POST",
-      body: data ? JSON.stringify(data) : undefined,
+      body: data !== undefined ? JSON.stringify(data) : undefined,
     });
   }
 
   async put<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: "PUT",
-      body: data ? JSON.stringify(data) : undefined,
+      body: data !== undefined ? JSON.stringify(data) : undefined,
     });
   }
 
   async patch<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: "PATCH",
-      body: data ? JSON.stringify(data) : undefined,
+      body: data !== undefined ? JSON.stringify(data) : undefined,
     });
   }
 
@@ -141,21 +155,33 @@ class ApiClient {
     return this.request<T>(endpoint, { method: "DELETE" });
   }
 
-  /**
-   * Upload de arquivo via FormData.
-   */
   async upload<T>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
     const url = this.buildUrl(endpoint);
     const response = await fetch(url, {
       method: "POST",
       body: formData,
       credentials: "include",
-      // Não define Content-Type - o browser seta automaticamente com boundary
     });
     return await response.json();
   }
 }
 
-// Instância singleton
 export const api = new ApiClient(API_BASE_URL);
 export default api;
+
+// ── Helper: extrai mensagem de erro ───────────────────────────
+export function getErrorMessage(error: unknown): string {
+  const e = error as ApiError;
+  if (e?.error?.message) return e.error.message;
+  return "Ocorreu um erro inesperado.";
+}
+
+export function getFieldErrors(
+  error: unknown
+): Record<string, string[]> | null {
+  const e = error as ApiError;
+  if (e?.error?.details && Object.keys(e.error.details).length > 0) {
+    return e.error.details as Record<string, string[]>;
+  }
+  return null;
+}

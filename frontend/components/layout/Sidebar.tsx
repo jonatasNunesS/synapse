@@ -16,9 +16,13 @@ import {
   Sparkles,
   ChevronLeft,
   ChevronRight,
+  Zap,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
+import { useAuth } from "@/hooks/useAuth";
+import { PLANO_CORES, PLANO_LABELS } from "@/types/auth";
 
 interface NavItem {
   label: string;
@@ -38,43 +42,78 @@ const navigation: NavItem[] = [
   { label: "Equipe", href: "/equipe", icon: UserCog, disabled: true },
   { label: "Documentos", href: "/documentos", icon: FileText, disabled: true },
   { label: "Notificações", href: "/notificacoes", icon: Bell, disabled: true },
-  { label: "AI Hub", href: "/ai-hub/conteudo", icon: Sparkles, disabled: true },
+  { label: "AI Hub", href: "/ai-hub", icon: Sparkles, disabled: true },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const { sidebarOpen, toggleSidebar } = useAppStore();
+  const { usuario, empresa, logout } = useAuth();
+
+  // Iniciais do nome do usuário para o avatar
+  const iniciais = usuario?.nome
+    ? usuario.nome
+        .split(" ")
+        .slice(0, 2)
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+    : "?";
+
+  const plano = empresa?.plano ?? "starter";
+  const planoLabel = PLANO_LABELS[plano];
+  const planoCor = PLANO_CORES[plano];
 
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300",
+        "fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-slate-800 bg-slate-900 transition-all duration-300",
         sidebarOpen ? "w-64" : "w-16"
       )}
     >
       {/* ── Logo ──────────────────────────────────────────── */}
-      <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
+      <div className="flex h-16 items-center justify-between border-b border-slate-800 px-4">
         {sidebarOpen && (
           <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <Sparkles className="h-4 w-4 text-primary-foreground" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600">
+              <Zap className="h-4 w-4 text-white" />
             </div>
-            <span className="text-lg font-bold text-foreground">Synapse</span>
+            <span className="text-lg font-bold text-white tracking-tight">Synapse</span>
           </Link>
         )}
-        <button
-          onClick={toggleSidebar}
-          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-          aria-label={sidebarOpen ? "Recolher menu" : "Expandir menu"}
-        >
-          {sidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        </button>
+        {!sidebarOpen && (
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600 mx-auto">
+            <Zap className="h-4 w-4 text-white" />
+          </div>
+        )}
+        {sidebarOpen && (
+          <button
+            onClick={toggleSidebar}
+            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-500 hover:bg-slate-800 hover:text-slate-300 transition-colors"
+            aria-label="Recolher menu"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
+      {/* ── Botão expandir (quando recolhido) ─────────────── */}
+      {!sidebarOpen && (
+        <button
+          onClick={toggleSidebar}
+          className="absolute -right-3 top-[72px] flex h-6 w-6 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-slate-500 hover:text-slate-300 transition-colors shadow-md"
+          aria-label="Expandir menu"
+        >
+          <ChevronRight className="h-3 w-3" />
+        </button>
+      )}
+
       {/* ── Navegação ─────────────────────────────────────── */}
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
         {navigation.map((item) => {
-          const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+          const isActive =
+            pathname === item.href ||
+            (item.href !== "/" && pathname.startsWith(item.href));
           const Icon = item.icon;
 
           return (
@@ -82,27 +121,32 @@ export function Sidebar() {
               key={item.href}
               href={item.disabled ? "#" : item.href}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
                 isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-sidebar-foreground hover:bg-accent hover:text-foreground",
+                  ? "bg-violet-600/15 text-violet-400 shadow-sm"
+                  : "text-slate-400 hover:bg-slate-800 hover:text-slate-200",
                 item.disabled && "cursor-not-allowed opacity-40",
-                !sidebarOpen && "justify-center px-0"
+                !sidebarOpen && "justify-center px-2"
               )}
               onClick={(e) => item.disabled && e.preventDefault()}
               title={!sidebarOpen ? item.label : undefined}
             >
-              <Icon className="h-4 w-4 shrink-0" />
+              <Icon
+                className={cn(
+                  "h-4 w-4 shrink-0",
+                  isActive ? "text-violet-400" : "text-slate-500"
+                )}
+              />
               {sidebarOpen && (
                 <>
                   <span className="flex-1">{item.label}</span>
                   {item.badge !== undefined && item.badge > 0 && (
-                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-violet-600 px-1.5 text-[10px] font-bold text-white">
                       {item.badge}
                     </span>
                   )}
                   {item.disabled && (
-                    <span className="text-[10px] text-muted-foreground">Em breve</span>
+                    <span className="text-[10px] text-slate-600 font-normal">breve</span>
                   )}
                 </>
               )}
@@ -111,23 +155,47 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* ── Footer ────────────────────────────────────────── */}
-      <div className="border-t border-sidebar-border p-3">
+      {/* ── Footer: Usuário ────────────────────────────────── */}
+      <div className="border-t border-slate-800 p-3">
         {sidebarOpen ? (
-          <div className="flex items-center gap-3 rounded-md px-3 py-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary text-sm font-bold">
-              S
+          <div className="group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-800 transition-colors cursor-default">
+            {/* Avatar */}
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-600/20 text-violet-400 text-xs font-bold border border-violet-600/30">
+              {iniciais}
             </div>
-            <div className="flex-1 truncate">
-              <p className="text-sm font-medium text-foreground truncate">Synapse</p>
-              <p className="text-xs text-muted-foreground">Plano Starter</p>
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-slate-200 truncate">
+                {usuario?.nome ?? "Carregando..."}
+              </p>
+              <div className="flex items-center gap-1.5">
+                <span
+                  className={cn(
+                    "inline-flex h-1.5 w-1.5 rounded-full",
+                    planoCor
+                  )}
+                />
+                <p className="text-xs text-slate-500 truncate">{planoLabel}</p>
+              </div>
             </div>
+            {/* Logout */}
+            <button
+              onClick={() => logout()}
+              className="opacity-0 group-hover:opacity-100 flex h-6 w-6 items-center justify-center rounded-md text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
+              title="Sair"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+            </button>
           </div>
         ) : (
           <div className="flex justify-center">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary text-sm font-bold">
-              S
-            </div>
+            <button
+              onClick={() => logout()}
+              title="Sair"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600/20 text-violet-400 text-xs font-bold border border-violet-600/30 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 transition-all"
+            >
+              {iniciais}
+            </button>
           </div>
         )}
       </div>

@@ -8,3 +8,6 @@ class SynapseAuthConfig(AppConfig):
     name = "modules.auth"
     label = "synapse_auth"
     verbose_name = "Autenticação"
+
+    def ready(self):
+        pass  # Signals serão registrados aqui nos próximos milestones
