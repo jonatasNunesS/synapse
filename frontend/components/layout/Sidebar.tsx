@@ -36,7 +36,7 @@ const navigation: NavItem[] = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "Financeiro", href: "/financeiro", icon: DollarSign },
   { label: "Estoque", href: "/estoque", icon: Package },
-  { label: "Clientes", href: "/clientes", icon: Users, disabled: true },
+  { label: "Clientes", href: "/clientes", icon: Users },
   { label: "Fornecedores", href: "/fornecedores", icon: Truck, disabled: true },
   { label: "Projetos", href: "/projetos", icon: FolderKanban, disabled: true },
   { label: "Equipe", href: "/equipe", icon: UserCog, disabled: true },

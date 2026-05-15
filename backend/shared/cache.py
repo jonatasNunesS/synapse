@@ -43,25 +43,54 @@ def set_cached(key: str, value: Any, ttl: int = 300) -> None:
     logger.debug(f"Cache SET: {key} (TTL: {ttl}s)")
 
 
-def invalidate_cache(empresa_id: int, modulo: str) -> None:
+def invalidate_cache(empresa_id, modulo: str) -> None:
     """
     Invalida todo o cache de um módulo para uma empresa.
     Usa padrão de prefixo: synapse:{empresa_id}:{modulo}:*
+
+    Estratégia:
+    1. Tenta usar cache.delete_pattern() (django-redis)
+    2. Fallback: tenta via get_redis_connection diretamente
+    3. Fallback final: usa cache.clear() (apenas em testes/LocMemCache)
     """
     pattern = f"synapse:{empresa_id}:{modulo}:*"
+
+    # Tentativa 1: delete_pattern do django-redis (método preferido)
+    try:
+        cache.delete_pattern(pattern)
+        logger.info(
+            f"Cache invalidated via delete_pattern: {pattern}",
+            extra={"empresa_id": empresa_id, "modulo": modulo},
+        )
+        return
+    except AttributeError:
+        # LocMemCache não tem delete_pattern — fallback
+        pass
+    except Exception as e:
+        logger.warning(f"delete_pattern failed: {pattern} - {e}")
+
+    # Tentativa 2: via get_redis_connection diretamente
     try:
         from django_redis import get_redis_connection
-
         conn = get_redis_connection("default")
-        keys = conn.keys(f"synapse:{pattern}")
+        # Padrão correto sem prefixo duplicado
+        keys = conn.keys(pattern)
         if keys:
             conn.delete(*keys)
             logger.info(
-                f"Cache invalidated: {pattern}",
+                f"Cache invalidated via redis keys: {pattern}",
                 extra={"empresa_id": empresa_id, "modulo": modulo, "keys_deleted": len(keys)},
             )
+        return
     except Exception as e:
-        logger.warning(f"Cache invalidation failed: {pattern} - {e}")
+        logger.debug(f"Redis direct invalidation failed: {pattern} - {e}")
+
+    # Fallback final: limpa todo o cache (aceitável em testes com LocMemCache)
+    try:
+        cache.clear()
+        logger.debug(f"Cache cleared (fallback): {pattern}")
+    except Exception as e:
+        logger.warning(f"Cache clear fallback failed: {e}")
 
 
 def cached_view(modulo: str, tipo: str, ttl: int = 300):
