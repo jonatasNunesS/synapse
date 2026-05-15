@@ -14,7 +14,7 @@ def success_response(data=None, message="", status_code=status.HTTP_200_OK):
     return Response(
         {
             "success": True,
-            "data": data or {},
+            "data": data if data is not None else {},
             "message": message,
         },
         status=status_code,
