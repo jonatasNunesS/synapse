@@ -52,14 +52,6 @@ def alertar_fornecedores_sem_avaliacao():
     """
     from modules.fornecedores.models import Fornecedor
 
-    sem_avaliacao = Fornecedor.objects.filter(
-        ativo=True,
-        status="ativo",
-        score_synapse=0,
-    ).values("empresa_id").annotate(
-        from django.db.models import Count
-    )
-
     # Simplificado: apenas log
     total = Fornecedor.objects.filter(ativo=True, status="ativo", score_synapse=0).count()
     logger.info("[Fornecedores] %d fornecedores ativos sem avaliação.", total)

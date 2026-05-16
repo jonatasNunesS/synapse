@@ -1,6 +1,7 @@
 """
-Synapse - Configuração do Celery
+Synapse — Configuração do Celery
 Broker: Redis | Backend: Redis
+Tasks periódicas registradas para M2 (Financeiro), M3 (Estoque), M4 (CRM), M5 (Fornecedores)
 """
 
 import os
@@ -22,13 +23,43 @@ app.autodiscover_tasks()
 # TAREFAS AGENDADAS (Celery Beat)
 # ════════════════════════════════════════════════════════════
 app.conf.beat_schedule = {
-    # Placeholder: tarefas agendadas serão adicionadas nos milestones seguintes
-    # Exemplo (M2): verificar vencimentos financeiros diariamente às 8h
-    # "verificar-vencimentos": {
-    #     "task": "modules.financeiro.tasks.verificar_vencimentos",
-    #     "schedule": crontab(hour=8, minute=0),
-    # },
+    # ── M2: Financeiro ──────────────────────────────────────
+    "verificar-vencimentos": {
+        "task": "financeiro.verificar_vencimentos",
+        "schedule": crontab(hour=8, minute=0),  # Diáriamente às 8h
+        "options": {"expires": 3600},
+    },
+    "criar-recorrencias": {
+        "task": "financeiro.criar_recorrencias",
+        "schedule": crontab(hour=0, minute=30),  # Diáriamente à meia-noite e meia
+        "options": {"expires": 3600},
+    },
+    # ── M3: Estoque ──────────────────────────────────────────
+    "verificar-estoque-minimo": {
+        "task": "estoque.verificar_estoque_minimo",
+        "schedule": crontab(hour=7, minute=0),  # Diáriamente às 7h
+        "options": {"expires": 3600},
+    },
+    # ── M4: CRM ──────────────────────────────────────────────
+    "verificar-followups": {
+        "task": "clientes.verificar_followups",
+        "schedule": crontab(hour=9, minute=0),  # Diáriamente às 9h
+        "options": {"expires": 3600},
+    },
+    # ── M5: Fornecedores ─────────────────────────────────────
+    "relatorio-semanal-fornecedores": {
+        "task": "fornecedores.relatorio_semanal",
+        "schedule": crontab(hour=8, minute=0, day_of_week=1),  # Toda segunda às 8h
+        "options": {"expires": 7200},
+    },
+    "alertar-fornecedores-sem-avaliacao": {
+        "task": "fornecedores.alertar_sem_avaliacao",
+        "schedule": crontab(hour=10, minute=0, day_of_week=5),  # Toda sexta às 10h
+        "options": {"expires": 3600},
+    },
 }
+
+app.conf.timezone = "America/Sao_Paulo"
 
 
 @app.task(bind=True, ignore_result=True)

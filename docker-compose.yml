@@ -1,6 +1,6 @@
 # ════════════════════════════════════════════════════════════
-# Synapse - Docker Compose
-# Sobe tudo: Django, Next.js, PostgreSQL, Redis, Celery, Flower
+# Synapse — Docker Compose
+# Sobe tudo: Django, Next.js, PostgreSQL, Redis, Celery, Flower, pgAdmin
 # ════════════════════════════════════════════════════════════
 
 services:
@@ -47,6 +47,7 @@ services:
     restart: unless-stopped
     command: >
       sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
              python manage.py runserver 0.0.0.0:8000"
     env_file:
       - .env
@@ -61,6 +62,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/health/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # ── Celery Worker ──────────────────────────────────────────
   celery_worker:
@@ -121,19 +128,37 @@ services:
       dockerfile: Dockerfile
     container_name: synapse-frontend
     restart: unless-stopped
-    env_file:
-      - .env
     environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
       - NEXT_PUBLIC_API_URL=http://localhost:8000/api
       - NEXT_PUBLIC_APP_NAME=Synapse
     ports:
       - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ── pgAdmin ─────────────────────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: synapse-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@synapse.dev}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
 
 volumes:
   postgres_data:
@@ -143,4 +168,6 @@ volumes:
   backend_media:
     driver: local
   backend_static:
+    driver: local
+  pgadmin_data:
     driver: local

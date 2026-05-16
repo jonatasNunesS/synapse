@@ -99,8 +99,9 @@ def enviar_email_recuperacao(self, email: str, token: str, nome: str) -> dict:
                 "html": html_body,
             }
         )
-        logger.info("E-mail de recuperação enviado", extra={"email": email, "id": response.get("id")})
-        return {"status": "sent", "id": response.get("id")}
+        email_id = response.get("id") if isinstance(response, dict) else getattr(response, "id", None)
+        logger.info("E-mail de recuperação enviado", extra={"email": email, "id": email_id})
+        return {"status": "sent", "id": email_id}
 
     except Exception as exc:
         logger.error(
