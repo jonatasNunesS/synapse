@@ -33,7 +33,7 @@ urlpatterns = [
     path("api/financeiro/", include("modules.financeiro.urls")),
     path("api/estoque/", include("modules.estoque.urls")),
     path("api/clientes/", include("modules.clientes.urls")),
-    # path("api/fornecedores/", include("modules.fornecedores.urls")),
+    path("api/fornecedores/", include("modules.fornecedores.urls")),
     # path("api/projetos/", include("modules.projetos.urls")),
     # path("api/equipe/", include("modules.equipe.urls")),
     # path("api/documentos/", include("modules.documentos.urls")),
