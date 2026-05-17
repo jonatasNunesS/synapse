@@ -33,6 +33,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_PUBLIC_API_URL=http://backend:8000
 ENV NEXT_PUBLIC_APP_NAME=Synapse
 
+RUN pnpm add next@latest
+
+
 # Build da aplicação (output: standalone configurado em next.config.mjs)
 RUN pnpm build
 
