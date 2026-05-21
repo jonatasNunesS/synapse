@@ -47,6 +47,7 @@ LOCAL_APPS = [
     "modules.estoque",
     "modules.clientes",
     "modules.fornecedores",
+    "modules.projetos",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

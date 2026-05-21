@@ -38,7 +38,7 @@ const navigation: NavItem[] = [
   { label: "Estoque", href: "/estoque", icon: Package },
   { label: "Clientes", href: "/clientes", icon: Users },
   { label: "Fornecedores", href: "/fornecedores", icon: Truck },
-  { label: "Projetos", href: "/projetos", icon: FolderKanban, disabled: true },
+  { label: "Projetos", href: "/projetos", icon: FolderKanban },
   { label: "Equipe", href: "/equipe", icon: UserCog, disabled: true },
   { label: "Documentos", href: "/documentos", icon: FileText, disabled: true },
   { label: "Notificações", href: "/notificacoes", icon: Bell, disabled: true },

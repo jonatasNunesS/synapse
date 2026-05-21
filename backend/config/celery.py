@@ -1,7 +1,7 @@
 """
 Synapse — Configuração do Celery
 Broker: Redis | Backend: Redis
-Tasks periódicas registradas para M2 (Financeiro), M3 (Estoque), M4 (CRM), M5 (Fornecedores)
+Tasks periódicas registradas para M2 (Financeiro), M3 (Estoque), M4 (CRM), M5 (Fornecedores), M6 (Projetos)
 """
 
 import os
@@ -43,6 +43,17 @@ app.conf.beat_schedule = {
     # ── M4: CRM ──────────────────────────────────────────────
     "verificar-followups": {
         "task": "clientes.verificar_followups",
+        "schedule": crontab(hour=9, minute=0),  # Diáriamente às 9h
+        "options": {"expires": 3600},
+    },
+    # ── M6: Projetos ──────────────────────────────────────────
+    "verificar-prazos-tarefas": {
+        "task": "projetos.verificar_prazos_tarefas",
+        "schedule": crontab(hour=8, minute=0),  # Diáriamente às 8h
+        "options": {"expires": 3600},
+    },
+    "verificar-projetos-atrasados": {
+        "task": "projetos.verificar_projetos_atrasados",
         "schedule": crontab(hour=9, minute=0),  # Diáriamente às 9h
         "options": {"expires": 3600},
     },

@@ -91,14 +91,13 @@ def enviar_email_recuperacao(self, email: str, token: str, nome: str) -> dict:
         import resend  # type: ignore
 
         resend.api_key = resend_api_key
-        response = resend.Emails.send(
-            {
-                "from": "Synapse <noreply@synapse.app>",
-                "to": [email],
-                "subject": "Redefinição de senha — Synapse",
-                "html": html_body,
-            }
-        )
+        params = {
+            "from": "Synapse <noreply@synapse.app>",
+            "to": [email],
+            "subject": "Redefinição de senha — Synapse",
+            "html": html_body,
+        }
+        response = resend.Emails.send(params)
         email_id = response.get("id") if isinstance(response, dict) else getattr(response, "id", None)
         logger.info("E-mail de recuperação enviado", extra={"email": email, "id": email_id})
         return {"status": "sent", "id": email_id}

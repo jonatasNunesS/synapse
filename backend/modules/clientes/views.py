@@ -1,6 +1,11 @@
+"""
+Synapse — M4: Views do CRM (Clientes)
+Todas as views herdam EmpresaQuerySetMixin (multi-tenant obrigatório).
+"""
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 
+from shared.authentication import CookieJWTAuthentication
 from shared.permissions import IsEmpresaMember, EmpresaQuerySetMixin
 from shared.pagination import StandardPagination
 from shared.responses import success_response, created_response, no_content_response, error_response
@@ -19,13 +24,14 @@ from .serializers import (
 )
 
 
-class ClienteListCreateView(APIView):
+class ClienteListCreateView(EmpresaQuerySetMixin, APIView):
     """GET /api/clientes/ — lista paginada | POST — cria cliente."""
 
+    authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def get(self, request):
-        empresa_id = request.user.empresa_id
+        empresa_id = self.get_empresa_id()
         filtros = {
             "status_funil": request.query_params.get("status_funil"),
             "origem": request.query_params.get("origem"),
@@ -43,12 +49,10 @@ class ClienteListCreateView(APIView):
         page = paginator.paginate_queryset(qs, request)
         serializer = ClienteListSerializer(page, many=True)
 
-        return success_response(
-            data=serializer.data,
-            message="Clientes listados com sucesso.",
-        )
+        return paginator.get_paginated_response(serializer.data)
 
     def post(self, request):
+        empresa_id = self.get_empresa_id()
         serializer = ClienteCreateUpdateSerializer(data=request.data)
         if not serializer.is_valid():
             return error_response(
@@ -58,7 +62,7 @@ class ClienteListCreateView(APIView):
             )
 
         cliente = ClienteService.criar_cliente(
-            empresa_id=request.user.empresa_id,
+            empresa_id=empresa_id,
             usuario_id=request.user.id,
             dados=serializer.validated_data,
         )
@@ -68,14 +72,16 @@ class ClienteListCreateView(APIView):
         )
 
 
-class ClienteDetailView(APIView):
+class ClienteDetailView(EmpresaQuerySetMixin, APIView):
     """GET/PATCH/PUT/DELETE /api/clientes/{id}/"""
 
+    authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def get(self, request, pk):
+        empresa_id = self.get_empresa_id()
         try:
-            cliente = ClienteService.obter_cliente(request.user.empresa_id, pk)
+            cliente = ClienteService.obter_cliente(empresa_id, pk)
         except ResourceNotFound:
             return error_response(
                 code="NOT_FOUND",
@@ -87,8 +93,9 @@ class ClienteDetailView(APIView):
         )
 
     def patch(self, request, pk):
+        empresa_id = self.get_empresa_id()
         try:
-            cliente = ClienteService.obter_cliente(request.user.empresa_id, pk)
+            cliente = ClienteService.obter_cliente(empresa_id, pk)
         except ResourceNotFound:
             return error_response(
                 code="NOT_FOUND",
@@ -107,7 +114,7 @@ class ClienteDetailView(APIView):
             )
 
         cliente = ClienteService.atualizar_cliente(
-            empresa_id=request.user.empresa_id,
+            empresa_id=empresa_id,
             cliente_id=pk,
             dados=serializer.validated_data,
         )
@@ -120,8 +127,9 @@ class ClienteDetailView(APIView):
         return self.patch(request, pk)
 
     def delete(self, request, pk):
+        empresa_id = self.get_empresa_id()
         try:
-            ClienteService.deletar_cliente(request.user.empresa_id, pk)
+            ClienteService.deletar_cliente(empresa_id, pk)
         except ResourceNotFound:
             return error_response(
                 code="NOT_FOUND",
@@ -131,9 +139,10 @@ class ClienteDetailView(APIView):
         return no_content_response()
 
 
-class ClienteMoverFunilView(APIView):
+class ClienteMoverFunilView(EmpresaQuerySetMixin, APIView):
     """PATCH /api/clientes/{id}/mover-funil/"""
 
+    authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def patch(self, request, pk):
@@ -147,7 +156,7 @@ class ClienteMoverFunilView(APIView):
 
         try:
             cliente = ClienteService.mover_funil(
-                empresa_id=request.user.empresa_id,
+                empresa_id=self.get_empresa_id(),
                 cliente_id=pk,
                 novo_status=serializer.validated_data["status_funil"],
             )
@@ -164,26 +173,28 @@ class ClienteMoverFunilView(APIView):
         )
 
 
-class ClienteFunilView(APIView):
+class ClienteFunilView(EmpresaQuerySetMixin, APIView):
     """GET /api/clientes/funil/ — dados do Kanban agrupados por status."""
 
+    authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def get(self, request):
-        funil = ClienteService.obter_funil(request.user.empresa_id)
+        funil = ClienteService.obter_funil(self.get_empresa_id())
         return success_response(
             data=funil,
             message="Funil carregado com sucesso.",
         )
 
 
-class ClienteResumoView(APIView):
+class ClienteResumoView(EmpresaQuerySetMixin, APIView):
     """GET /api/clientes/resumo/ — KPIs do CRM."""
 
+    authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def get(self, request):
-        resumo = ClienteService.obter_resumo(request.user.empresa_id)
+        resumo = ClienteService.obter_resumo(self.get_empresa_id())
         serializer = ResumoClientesSerializer(resumo)
         return success_response(
             data=serializer.data,
@@ -191,9 +202,10 @@ class ClienteResumoView(APIView):
         )
 
 
-class ClienteFollowupsView(APIView):
+class ClienteFollowupsView(EmpresaQuerySetMixin, APIView):
     """GET /api/clientes/followups/ — próximos follow-ups."""
 
+    authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def get(self, request):
@@ -202,7 +214,7 @@ class ClienteFollowupsView(APIView):
         except (ValueError, TypeError):
             dias = 3
 
-        qs = ClienteService.listar_followups(request.user.empresa_id, dias)
+        qs = ClienteService.listar_followups(self.get_empresa_id(), dias)
         serializer = ClienteListSerializer(qs, many=True)
         return success_response(
             data=serializer.data,
@@ -210,15 +222,17 @@ class ClienteFollowupsView(APIView):
         )
 
 
-class InteracaoListCreateView(APIView):
+class InteracaoListCreateView(EmpresaQuerySetMixin, APIView):
     """
     GET  /api/clientes/{id}/interacoes/ — histórico paginado
     POST /api/clientes/{id}/interacoes/ — registrar interação
     """
 
+    authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def get(self, request, pk):
+        empresa_id = self.get_empresa_id()
         filtros = {
             "tipo": request.query_params.get("tipo"),
             "data_inicio": request.query_params.get("data_inicio"),
@@ -228,7 +242,7 @@ class InteracaoListCreateView(APIView):
 
         try:
             qs = ClienteService.listar_interacoes(
-                empresa_id=request.user.empresa_id,
+                empresa_id=empresa_id,
                 cliente_id=pk,
                 filtros=filtros,
             )
@@ -242,12 +256,10 @@ class InteracaoListCreateView(APIView):
         paginator = StandardPagination()
         page = paginator.paginate_queryset(qs, request)
         serializer = InteracaoClienteSerializer(page, many=True)
-        return success_response(
-            data=serializer.data,
-            message="Interações listadas com sucesso.",
-        )
+        return paginator.get_paginated_response(serializer.data)
 
     def post(self, request, pk):
+        empresa_id = self.get_empresa_id()
         serializer = InteracaoClienteCreateSerializer(data=request.data)
         if not serializer.is_valid():
             return error_response(
@@ -261,7 +273,7 @@ class InteracaoListCreateView(APIView):
 
         try:
             interacao = ClienteService.registrar_interacao(
-                empresa_id=request.user.empresa_id,
+                empresa_id=empresa_id,
                 usuario_id=request.user.id,
                 cliente_id=pk,
                 dados=dados,

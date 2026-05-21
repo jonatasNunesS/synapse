@@ -132,7 +132,8 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
-      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+      - NEXT_PUBLIC_API_URL=http://backend:8000/api
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
       - NEXT_PUBLIC_APP_NAME=Synapse
     ports:
       - "3000:3000"
