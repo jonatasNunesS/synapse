@@ -170,7 +170,7 @@ function KanbanCard({
 
         <div className="flex items-center gap-2">
           {tarefa.esta_atrasada && (
-            <AlertCircle size={12} className="text-red-500" title="Tarefa atrasada" />
+            <AlertCircle size={12} className="text-red-500" aria-label="Tarefa atrasada" />
           )}
           {tarefa.data_prazo && (
             <span

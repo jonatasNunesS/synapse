@@ -32,31 +32,38 @@ class ApiClient {
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
   }
-
-  private buildUrl(
-    endpoint: string,
-    params?: Record<string, string | number | boolean | undefined>
-  ): string {
-    const url = new URL(
-      `${this.baseUrl}${endpoint}`,
-      typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"
-    );
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          url.searchParams.append(key, String(value));
-        }
-      });
-    }
-    return url.toString();
+private buildUrl(
+  endpoint: string,
+  params?: Record<string, string | number | boolean | undefined>
+): string {
+  let url = `${this.baseUrl}${endpoint}`;
+  if (params) {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        query.append(key, String(value));
+      }
+    });
+    url += `?${query.toString()}`;
   }
+
+  // 🔥 Garantir barra final SEMPRE
+  if (!url.endsWith("/")) {
+    url += "/";
+  }
+
+  console.log("Construindo URL:", url); // Log para depuração
+  return url;
+}
+
+
 
   private async request<T>(
     endpoint: string,
     options: RequestOptions = {}
   ): Promise<ApiResponse<T>> {
     const { params, ...fetchOptions } = options;
-    const url = this.buildUrl(endpoint, params);
+     const url = this.buildUrl(endpoint, params);
 
     const config: RequestInit = {
       ...fetchOptions,
