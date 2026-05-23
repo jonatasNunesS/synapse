@@ -72,27 +72,34 @@ def verificar_vencimentos(self):
 
 
 def _criar_notificacao_vencimento(lancamento, hoje: date) -> None:
-    """Cria notificação de vencimento para o responsável da empresa."""
+    """Cria notificação de vencimento para todos os admins da empresa."""
+    from modules.notificacoes.services import NotificacaoService
+
     try:
-        # Módulo de notificações será implementado no M7
-        # Por ora, apenas loga
         dias_restantes = (lancamento.data_vencimento - hoje).days
         if dias_restantes == 0:
-            msg = f"Lançamento '{lancamento.descricao}' vence HOJE (R${lancamento.valor})"
+            titulo = f"Lançamento vence HOJE"
+            mensagem = f"O lançamento '{lancamento.descricao}' de R${lancamento.valor} vence hoje."
+            prioridade = "urgente"
         else:
-            msg = f"Lançamento '{lancamento.descricao}' vence amanhã (R${lancamento.valor})"
+            titulo = f"Lançamento vence amanhã"
+            mensagem = f"O lançamento '{lancamento.descricao}' de R${lancamento.valor} vence amanhã."
+            prioridade = "alta"
 
+        NotificacaoService.criar_para_empresa(
+            empresa_id=str(lancamento.empresa_id),
+            tipo="financeiro",
+            titulo=titulo,
+            mensagem=mensagem,
+            acao_url="/financeiro",
+            prioridade=prioridade,
+        )
         logger.info(
-            "Notificação de vencimento",
-            extra={
-                "empresa_id": str(lancamento.empresa_id),
-                "lancamento_id": str(lancamento.id),
-                "mensagem": msg,
-                "dias_restantes": dias_restantes,
-            },
+            "Notificação de vencimento criada",
+            extra={"empresa_id": str(lancamento.empresa_id), "lancamento_id": str(lancamento.id)},
         )
     except Exception as e:
-        logger.warning(f"Erro ao criar notificação: {e}")
+        logger.warning(f"Erro ao criar notificação de vencimento: {e}")
 
 
 @shared_task(name="financeiro.criar_recorrencias", bind=True, max_retries=3)

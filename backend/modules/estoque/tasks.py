@@ -1,9 +1,13 @@
+"""
+Synapse — Módulo Estoque: Tasks Celery
+Tasks assíncronas para verificação de estoque mínimo e alertas críticos.
+"""
 import logging
 
 from celery import shared_task
 from django.db.models import F
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("synapse")
 
 
 @shared_task(name="estoque.verificar_estoque_minimo", bind=True, max_retries=3)
@@ -14,6 +18,7 @@ def verificar_estoque_minimo(self):
     """
     try:
         from modules.estoque.models import Produto
+        from modules.notificacoes.services import NotificacaoService
 
         produtos_criticos = Produto.objects.filter(
             ativo=True,
@@ -21,24 +26,33 @@ def verificar_estoque_minimo(self):
         ).select_related("empresa")
 
         total_alertas = 0
-        empresas_notificadas = set()
+        processados = set()
 
         for produto in produtos_criticos:
             empresa_id = str(produto.empresa_id)
-
-            # Evitar múltiplas notificações para a mesma empresa no mesmo lote
             chave = f"{empresa_id}:{produto.id}"
-            if chave in empresas_notificadas:
+            if chave in processados:
                 continue
-            empresas_notificadas.add(chave)
+            processados.add(chave)
 
-            status = "zerado" if produto.esta_sem_estoque else "baixo"
-            logger.info(
-                f"Alerta estoque {status}: {produto.nome} | "
-                f"Atual: {produto.estoque_atual} | Mínimo: {produto.estoque_minimo} | "
-                f"Empresa: {empresa_id}"
+            status_txt = "zerado" if produto.esta_sem_estoque else "abaixo do mínimo"
+            titulo = f"Estoque {status_txt}: {produto.nome}"
+            mensagem = (
+                f"O produto '{produto.nome}' está com estoque {status_txt}. "
+                f"Atual: {produto.estoque_atual} | Mínimo: {produto.estoque_minimo}."
             )
-            total_alertas += 1
+            try:
+                NotificacaoService.criar_para_empresa(
+                    empresa_id=empresa_id,
+                    tipo="estoque",
+                    titulo=titulo,
+                    mensagem=mensagem,
+                    acao_url="/estoque",
+                    prioridade="alta",
+                )
+                total_alertas += 1
+            except Exception as e:
+                logger.warning(f"Falha ao criar notificação de estoque para {produto.id}: {e}")
 
         logger.info(f"verificar_estoque_minimo: {total_alertas} alertas gerados.")
         return {"alertas_gerados": total_alertas}
@@ -56,26 +70,35 @@ def alertar_estoque_critico(self, produto_id: str):
     """
     try:
         from modules.estoque.models import Produto
+        from modules.notificacoes.services import NotificacaoService
 
         produto = Produto.objects.select_related("empresa").get(id=produto_id)
+        status_txt = "zerado" if produto.esta_sem_estoque else "abaixo do mínimo"
 
-        status = "zerado" if produto.esta_sem_estoque else "abaixo do mínimo"
-
-        logger.warning(
-            f"ALERTA CRÍTICO: Produto '{produto.nome}' está {status}. "
-            f"Estoque atual: {produto.estoque_atual} | "
-            f"Mínimo: {produto.estoque_minimo} | "
-            f"Empresa: {produto.empresa.nome}"
+        NotificacaoService.criar_para_empresa(
+            empresa_id=str(produto.empresa_id),
+            tipo="estoque",
+            titulo=f"URGENTE: Estoque {status_txt} — {produto.nome}",
+            mensagem=(
+                f"O produto '{produto.nome}' está com estoque {status_txt}. "
+                f"Atual: {produto.estoque_atual} | Mínimo: {produto.estoque_minimo}. "
+                f"Reposição imediata necessária."
+            ),
+            acao_url="/estoque",
+            prioridade="urgente",
         )
 
-        # Aqui seria criada uma Notificacao (M7)
-        # Por ora, apenas log estruturado
+        logger.warning(
+            f"ALERTA CRÍTICO: Produto '{produto.nome}' está {status_txt}. "
+            f"Estoque atual: {produto.estoque_atual} | Mínimo: {produto.estoque_minimo}"
+        )
+
         return {
             "produto_id": produto_id,
             "produto_nome": produto.nome,
             "estoque_atual": float(produto.estoque_atual),
             "estoque_minimo": float(produto.estoque_minimo),
-            "status": status,
+            "status": status_txt,
         }
 
     except Exception as exc:

@@ -39,9 +39,9 @@ const navigation: NavItem[] = [
   { label: "Clientes", href: "/clientes", icon: Users },
   { label: "Fornecedores", href: "/fornecedores", icon: Truck },
   { label: "Projetos", href: "/projetos", icon: FolderKanban },
-  { label: "Equipe", href: "/equipe", icon: UserCog, disabled: true },
-  { label: "Documentos", href: "/documentos", icon: FileText, disabled: true },
-  { label: "Notificações", href: "/notificacoes", icon: Bell, disabled: true },
+  { label: "Equipe", href: "/equipe", icon: UserCog },
+  { label: "Documentos", href: "/documentos", icon: FileText },
+  { label: "Notificações", href: "/notificacoes", icon: Bell },
   { label: "AI Hub", href: "/ai-hub", icon: Sparkles, disabled: true },
 ];
 

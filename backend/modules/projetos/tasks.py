@@ -18,6 +18,7 @@ def verificar_prazos_tarefas(self):
     - Notifica responsáveis de tarefas atrasadas
     """
     from .repository import ProjetoRepository
+    from modules.notificacoes.services import NotificacaoService
 
     hoje = date.today()
     notificacoes_criadas = 0
@@ -26,10 +27,20 @@ def verificar_prazos_tarefas(self):
         # Tarefas que vencem hoje
         vencendo_hoje = ProjetoRepository.listar_tarefas_vencendo_hoje()
         for tarefa in vencendo_hoje:
+            if not tarefa.responsavel_id:
+                continue
             try:
-                _criar_notificacao_tarefa(
-                    tarefa=tarefa,
-                    mensagem=f"Tarefa '{tarefa.titulo}' vence hoje no projeto '{tarefa.projeto.nome}'",
+                NotificacaoService.criar_notificacao(
+                    usuario_id=str(tarefa.responsavel_id),
+                    empresa_id=str(tarefa.empresa_id),
+                    tipo="projeto",
+                    titulo=f"Tarefa vence hoje: {tarefa.titulo}",
+                    mensagem=(
+                        f"A tarefa '{tarefa.titulo}' vence hoje no projeto "
+                        f"'{tarefa.projeto.nome}'."
+                    ),
+                    acao_url=f"/projetos/{tarefa.projeto_id}",
+                    prioridade="alta",
                 )
                 notificacoes_criadas += 1
             except Exception as e:
@@ -38,14 +49,21 @@ def verificar_prazos_tarefas(self):
         # Tarefas atrasadas
         atrasadas = ProjetoRepository.listar_tarefas_atrasadas()
         for tarefa in atrasadas:
+            if not tarefa.responsavel_id:
+                continue
             try:
                 dias_atraso = (hoje - tarefa.data_prazo).days
-                _criar_notificacao_tarefa(
-                    tarefa=tarefa,
+                NotificacaoService.criar_notificacao(
+                    usuario_id=str(tarefa.responsavel_id),
+                    empresa_id=str(tarefa.empresa_id),
+                    tipo="projeto",
+                    titulo=f"Tarefa atrasada: {tarefa.titulo}",
                     mensagem=(
-                        f"Tarefa '{tarefa.titulo}' está atrasada "
-                        f"({dias_atraso} dia(s)) no projeto '{tarefa.projeto.nome}'"
+                        f"A tarefa '{tarefa.titulo}' está atrasada ({dias_atraso} dia(s)) "
+                        f"no projeto '{tarefa.projeto.nome}'."
                     ),
+                    acao_url=f"/projetos/{tarefa.projeto_id}",
+                    prioridade="urgente",
                 )
                 notificacoes_criadas += 1
             except Exception as e:
@@ -53,16 +71,9 @@ def verificar_prazos_tarefas(self):
 
         logger.info(
             "Task verificar_prazos_tarefas concluída",
-            extra={
-                "data": str(hoje),
-                "notificacoes_criadas": notificacoes_criadas,
-            },
+            extra={"data": str(hoje), "notificacoes_criadas": notificacoes_criadas},
         )
-        return {
-            "status": "ok",
-            "data": str(hoje),
-            "notificacoes_criadas": notificacoes_criadas,
-        }
+        return {"status": "ok", "data": str(hoje), "notificacoes_criadas": notificacoes_criadas}
 
     except Exception as exc:
         logger.error(f"Erro na task verificar_prazos_tarefas: {exc}")
@@ -76,6 +87,7 @@ def notificar_responsavel_tarefa(self, tarefa_id: str, usuario_id: str):
     Cria notificação: "Você foi atribuído à tarefa '{titulo}' no projeto '{projeto}'"
     """
     from .models import Tarefa
+    from modules.notificacoes.services import NotificacaoService
 
     try:
         tarefa = (
@@ -87,26 +99,22 @@ def notificar_responsavel_tarefa(self, tarefa_id: str, usuario_id: str):
             logger.warning(f"Tarefa {tarefa_id} não encontrada para notificação.")
             return
 
-        mensagem = (
-            f"Você foi atribuído à tarefa '{tarefa.titulo}' "
-            f"no projeto '{tarefa.projeto.nome}'"
-        )
-
-        _criar_notificacao_usuario(
-            empresa_id=str(tarefa.empresa_id),
+        NotificacaoService.criar_notificacao(
             usuario_id=usuario_id,
-            mensagem=mensagem,
-            tipo="tarefa_atribuida",
-            referencia_id=tarefa_id,
+            empresa_id=str(tarefa.empresa_id),
+            tipo="projeto",
+            titulo=f"Nova tarefa atribuída: {tarefa.titulo}",
+            mensagem=(
+                f"Você foi atribuído à tarefa '{tarefa.titulo}' "
+                f"no projeto '{tarefa.projeto.nome}'."
+            ),
+            acao_url=f"/projetos/{tarefa.projeto_id}",
+            prioridade="normal",
         )
 
         logger.info(
             "Notificação de atribuição de tarefa criada",
-            extra={
-                "tarefa_id": tarefa_id,
-                "usuario_id": usuario_id,
-                "mensagem": mensagem,
-            },
+            extra={"tarefa_id": tarefa_id, "usuario_id": usuario_id},
         )
         return {"status": "ok", "tarefa_id": tarefa_id, "usuario_id": usuario_id}
 
@@ -122,6 +130,7 @@ def verificar_projetos_atrasados(self):
     Notifica criado_por e responsavel de projetos com prazo vencido.
     """
     from .repository import ProjetoRepository
+    from modules.notificacoes.services import NotificacaoService
 
     hoje = date.today()
     notificacoes_criadas = 0
@@ -132,19 +141,23 @@ def verificar_projetos_atrasados(self):
         for projeto in projetos_atrasados:
             try:
                 dias_atraso = (hoje - projeto.data_prazo).days
+                titulo = f"Projeto atrasado: {projeto.nome}"
                 mensagem = (
-                    f"Projeto '{projeto.nome}' está atrasado "
+                    f"O projeto '{projeto.nome}' está atrasado "
                     f"({dias_atraso} dia(s)). Prazo era {projeto.data_prazo}."
                 )
+                acao_url = f"/projetos/{projeto.id}"
 
                 # Notificar criado_por
                 if projeto.criado_por_id:
-                    _criar_notificacao_usuario(
-                        empresa_id=str(projeto.empresa_id),
+                    NotificacaoService.criar_notificacao(
                         usuario_id=str(projeto.criado_por_id),
+                        empresa_id=str(projeto.empresa_id),
+                        tipo="projeto",
+                        titulo=titulo,
                         mensagem=mensagem,
-                        tipo="projeto_atrasado",
-                        referencia_id=str(projeto.id),
+                        acao_url=acao_url,
+                        prioridade="alta",
                     )
                     notificacoes_criadas += 1
 
@@ -153,12 +166,14 @@ def verificar_projetos_atrasados(self):
                     projeto.responsavel_id
                     and str(projeto.responsavel_id) != str(projeto.criado_por_id)
                 ):
-                    _criar_notificacao_usuario(
-                        empresa_id=str(projeto.empresa_id),
+                    NotificacaoService.criar_notificacao(
                         usuario_id=str(projeto.responsavel_id),
+                        empresa_id=str(projeto.empresa_id),
+                        tipo="projeto",
+                        titulo=titulo,
                         mensagem=mensagem,
-                        tipo="projeto_atrasado",
-                        referencia_id=str(projeto.id),
+                        acao_url=acao_url,
+                        prioridade="alta",
                     )
                     notificacoes_criadas += 1
 
@@ -167,56 +182,10 @@ def verificar_projetos_atrasados(self):
 
         logger.info(
             "Task verificar_projetos_atrasados concluída",
-            extra={
-                "data": str(hoje),
-                "notificacoes_criadas": notificacoes_criadas,
-            },
+            extra={"data": str(hoje), "notificacoes_criadas": notificacoes_criadas},
         )
-        return {
-            "status": "ok",
-            "data": str(hoje),
-            "notificacoes_criadas": notificacoes_criadas,
-        }
+        return {"status": "ok", "data": str(hoje), "notificacoes_criadas": notificacoes_criadas}
 
     except Exception as exc:
         logger.error(f"Erro na task verificar_projetos_atrasados: {exc}")
         raise self.retry(exc=exc, countdown=300)
-
-
-# ── Helpers internos ──────────────────────────────────────────
-
-def _criar_notificacao_tarefa(tarefa, mensagem: str) -> None:
-    """Cria notificação para o responsável da tarefa."""
-    if not tarefa.responsavel_id:
-        return
-    _criar_notificacao_usuario(
-        empresa_id=str(tarefa.empresa_id),
-        usuario_id=str(tarefa.responsavel_id),
-        mensagem=mensagem,
-        tipo="prazo_tarefa",
-        referencia_id=str(tarefa.id),
-    )
-
-
-def _criar_notificacao_usuario(
-    empresa_id: str,
-    usuario_id: str,
-    mensagem: str,
-    tipo: str,
-    referencia_id: str = None,
-) -> None:
-    """
-    Cria notificação para um usuário.
-    Módulo de notificações será implementado no M7.
-    Por ora, apenas loga a notificação.
-    """
-    logger.info(
-        "Notificação gerada",
-        extra={
-            "empresa_id": empresa_id,
-            "usuario_id": usuario_id,
-            "mensagem": mensagem,
-            "tipo": tipo,
-            "referencia_id": referencia_id,
-        },
-    )

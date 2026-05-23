@@ -35,9 +35,9 @@ urlpatterns = [
     path("api/clientes/", include("modules.clientes.urls")),
     path("api/fornecedores/", include("modules.fornecedores.urls")),
     path("api/projetos/", include("modules.projetos.urls")),
-    # path("api/equipe/", include("modules.equipe.urls")),
-    # path("api/documentos/", include("modules.documentos.urls")),
-    # path("api/notificacoes/", include("modules.notificacoes.urls")),
+    path("api/equipe/", include("modules.equipe.urls")),
+    path("api/documentos/", include("modules.documentos.urls")),
+    path("api/notificacoes/", include("modules.notificacoes.urls")),
     # path("api/ai-hub/", include("modules.ai_hub.urls")),
 ]
 

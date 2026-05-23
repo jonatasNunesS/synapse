@@ -2,7 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
-import { Bell, Search, LogOut, User, Settings, Building2 } from "lucide-react";
+import { Search, LogOut, User, Settings, Building2 } from "lucide-react";
+import { NotificationBell } from "@/components/notificacoes/NotificationBell";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,18 +47,8 @@ export function Header() {
 
       {/* ── Ações ─────────────────────────────────────────── */}
       <div className="flex items-center gap-1.5">
-        {/* Notificações */}
-        <button
-          className="relative flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-800 hover:text-slate-300 transition-colors"
-          aria-label="Notificações"
-        >
-          <Bell className="h-4 w-4" />
-          {unreadNotifications > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-violet-600 px-1 text-[10px] font-bold text-white">
-              {unreadNotifications > 99 ? "99+" : unreadNotifications}
-            </span>
-          )}
-        </button>
+        {/* Notificações — live badge + dropdown */}
+        <NotificationBell />
 
         {/* Menu do Usuário */}
         <div className="relative ml-1">
