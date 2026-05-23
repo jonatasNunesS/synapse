@@ -6,6 +6,7 @@ Tokens JWT são setados em httpOnly cookies (nunca no body).
 
 import logging
 
+from django.conf import settings
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
@@ -44,7 +45,7 @@ def _set_auth_cookies(response: Response, tokens: dict) -> None:
         max_age=ACCESS_MAX_AGE,
         httponly=True,
         samesite="Lax",
-        secure=False,  # True em produção
+        secure=settings.SIMPLE_JWT.get("AUTH_COOKIE_SECURE", False),
         path="/",
     )
     response.set_cookie(
@@ -53,7 +54,7 @@ def _set_auth_cookies(response: Response, tokens: dict) -> None:
         max_age=REFRESH_MAX_AGE,
         httponly=True,
         samesite="Lax",
-        secure=False,
+        secure=settings.SIMPLE_JWT.get("AUTH_COOKIE_SECURE", False),
         path="/",
     )
 
@@ -196,7 +197,7 @@ class RefreshView(APIView):
             max_age=ACCESS_MAX_AGE,
             httponly=True,
             samesite="Lax",
-            secure=False,
+            secure=settings.SIMPLE_JWT.get("AUTH_COOKIE_SECURE", False),
             path="/",
         )
         return response

@@ -29,7 +29,7 @@ export function useResumoEstoque() {
     setError(null);
     try {
       const res = await api.get<ApiResponse<ResumoEstoque>>(
-        "/api/estoque/resumo/"
+        "/estoque/resumo/"
       );
       setResumo(res.data.data as ResumoEstoque);
     } catch {
@@ -54,7 +54,7 @@ export function useAlertasEstoque() {
     setError(null);
     try {
       const res = await api.get<ApiResponse<ProdutoList[]>>(
-        "/api/estoque/alertas/"
+        "/estoque/alertas/"
       );
       setAlertas((res.data.data as ProdutoList[]) || []);
     } catch {
@@ -108,7 +108,7 @@ export function useProdutos() {
 
       const query = params.toString();
       const res = await api.get<ListResponse<ProdutoList>>(
-        `/api/estoque/produtos/${query ? `?${query}` : ""}`
+        `/estoque/produtos/${query ? `?${query}` : ""}`
       );
       setProdutos(res.data.data || []);
       setPaginacao({
@@ -126,7 +126,7 @@ export function useProdutos() {
   const obter = useCallback(async (id: string): Promise<ProdutoDetail | null> => {
     try {
       const res = await api.get<ApiResponse<ProdutoDetail>>(
-        `/api/estoque/produtos/${id}/`
+        `/estoque/produtos/${id}/`
       );
       return res.data.data as ProdutoDetail;
     } catch {
@@ -137,7 +137,7 @@ export function useProdutos() {
   const criar = useCallback(async (dados: ProdutoCreate): Promise<ProdutoDetail | null> => {
     try {
       const res = await api.post<ApiResponse<ProdutoDetail>>(
-        "/api/estoque/produtos/",
+        "/estoque/produtos/",
         dados
       );
       return res.data.data as ProdutoDetail;
@@ -150,7 +150,7 @@ export function useProdutos() {
     async (id: string, dados: Partial<ProdutoCreate>): Promise<ProdutoDetail | null> => {
       try {
         const res = await api.patch<ApiResponse<ProdutoDetail>>(
-          `/api/estoque/produtos/${id}/`,
+          `/estoque/produtos/${id}/`,
           dados
         );
         return res.data.data as ProdutoDetail;
@@ -163,7 +163,7 @@ export function useProdutos() {
 
   const excluir = useCallback(async (id: string): Promise<boolean> => {
     try {
-      await api.delete(`/api/estoque/produtos/${id}/`);
+      await api.delete(`/estoque/produtos/${id}/`);
       return true;
     } catch {
       return false;
@@ -209,7 +209,7 @@ export function useMovimentacoes() {
 
         const query = params.toString();
         const res = await api.get<ListResponse<Movimentacao>>(
-          `/api/estoque/produtos/${produtoId}/movimentacoes/${query ? `?${query}` : ""}`
+          `/estoque/produtos/${produtoId}/movimentacoes/${query ? `?${query}` : ""}`
         );
         setMovimentacoes(res.data.data || []);
         setPaginacao({
@@ -230,7 +230,7 @@ export function useMovimentacoes() {
     async (dados: MovimentacaoCreate): Promise<Movimentacao | null> => {
       try {
         const res = await api.post<ApiResponse<Movimentacao>>(
-          "/api/estoque/movimentacoes/",
+          "/estoque/movimentacoes/",
           dados
         );
         return res.data.data as Movimentacao;
@@ -256,7 +256,7 @@ export function useCategoriasEstoque() {
     setError(null);
     try {
       const res = await api.get<ListResponse<CategoriaEstoque>>(
-        "/api/estoque/categorias/"
+        "/estoque/categorias/"
       );
       setCategorias(res.data.data || []);
     } catch {
@@ -270,7 +270,7 @@ export function useCategoriasEstoque() {
     async (dados: CategoriaEstoqueCreate): Promise<CategoriaEstoque | null> => {
       try {
         const res = await api.post<ApiResponse<CategoriaEstoque>>(
-          "/api/estoque/categorias/",
+          "/estoque/categorias/",
           dados
         );
         return res.data.data as CategoriaEstoque;
@@ -296,7 +296,7 @@ export function useRelatorioEstoque() {
     setError(null);
     try {
       const res = await api.get<ApiResponse<RelatorioEstoque>>(
-        "/api/estoque/relatorio/"
+        "/estoque/relatorio/"
       );
       setRelatorio(res.data.data as RelatorioEstoque);
     } catch {

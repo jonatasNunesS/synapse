@@ -97,6 +97,10 @@ class FinanceiroService:
         lancamento = FinanceiroRepository.get_lancamento(empresa_id, lancamento_id)
         if not lancamento:
             raise ValueError("Lançamento não encontrado.")
+        if lancamento.status == "pago":
+            raise ValueError("Lançamentos pagos são imutáveis e não podem ser editados.")
+        if lancamento.status == "cancelado":
+            raise ValueError("Lançamentos cancelados são imutáveis e não podem ser editados.")
         lancamento = FinanceiroRepository.atualizar_lancamento(lancamento, dados)
         invalidate_cache(empresa_id, "financeiro")
         return lancamento
@@ -106,6 +110,8 @@ class FinanceiroService:
         lancamento = FinanceiroRepository.get_lancamento(empresa_id, lancamento_id)
         if not lancamento:
             raise ValueError("Lançamento não encontrado.")
+        if lancamento.status == "pago":
+            raise ValueError("Lançamentos pagos são imutáveis e não podem ser excluídos.")
         FinanceiroRepository.deletar_lancamento(lancamento)
         invalidate_cache(empresa_id, "financeiro")
 
