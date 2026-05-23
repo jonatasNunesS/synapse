@@ -216,11 +216,16 @@ export default function AnalyticsPage() {
                 <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={75} />
                 <Tooltip content={<CustomTooltipFinanceiro />} />
                 <Legend
-                  formatter={(v) => v === "receitas" ? "Receitas" : v === "despesas" ? "Despesas" : "Saldo Acum."}
+                  formatter={(value: string) => {
+                    if (value === "receitas") return "Receitas";
+                    if (value === "despesas") return "Despesas";
+                    return "Saldo Acum.";
+                  }}
                   iconType="circle"
                   iconSize={8}
                   wrapperStyle={{ fontSize: 12 }}
                 />
+
                 <Area type="monotone" dataKey="receitas" stroke="#22c55e" strokeWidth={2} fill="url(#gradReceitas)" />
                 <Area type="monotone" dataKey="despesas" stroke="#ef4444" strokeWidth={2} fill="url(#gradDespesas)" />
                 <Area type="monotone" dataKey="saldo_acumulado" name="saldo" stroke="#6366f1" strokeWidth={2} strokeDasharray="4 2" fill="url(#gradSaldo)" />
@@ -251,13 +256,16 @@ export default function AnalyticsPage() {
                   <XAxis dataKey="semana" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                   <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={70} />
                   <Tooltip
-                    formatter={(value: number, name: string) => [
-                      formatCurrencyFull(value),
+                    formatter={(value, name) => [
+                      formatCurrencyFull(Number(value ?? 0)),
                       name === "receitas" ? "Receitas" : "Despesas",
                     ]}
                   />
+
                   <Legend
-                    formatter={(v) => v === "receitas" ? "Receitas" : "Despesas"}
+                    formatter={(v: string) =>
+                      v === "receitas" ? "Receitas" : v === "despesas" ? "Despesas" : "Saldo Acum."
+                    }
                     iconType="circle"
                     iconSize={8}
                     wrapperStyle={{ fontSize: 12 }}
@@ -265,6 +273,7 @@ export default function AnalyticsPage() {
                   <Bar dataKey="receitas" fill="#22c55e" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="despesas" fill="#ef4444" radius={[4, 4, 0, 0]} />
                 </BarChart>
+
               </ResponsiveContainer>
             )}
           </CardContent>
@@ -300,7 +309,7 @@ export default function AnalyticsPage() {
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(value: number, name: string) => [
+                      formatter={(value, name) => [
                         `${value} cliente${value !== 1 ? "s" : ""}`,
                         name,
                       ]}
@@ -354,11 +363,12 @@ export default function AnalyticsPage() {
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(value: number, name: string) => [
-                        formatCurrencyFull(value),
-                        name,
+                      formatter={(value, name) => [
+                        formatCurrencyFull(Number(value ?? 0)),
+                        name ?? "",
                       ]}
                     />
+
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="flex flex-col gap-2 min-w-[160px]">
@@ -394,7 +404,7 @@ export default function AnalyticsPage() {
                   <XAxis dataKey="data" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
                   <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={75} />
                   <Tooltip
-                    formatter={(value: number) => [formatCurrencyFull(value), "Saldo Acumulado"]}
+                    formatter={(value) => [formatCurrencyFull(Number(value ?? 0)), "Saldo Acumulado"]}
                   />
                   <Line
                     type="monotone"

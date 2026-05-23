@@ -22,9 +22,19 @@ import type {
 // FETCHER PADRÃO
 // ════════════════════════════════════════════════════════════
 
-const fetcher = (url: string) =>
-  api.get(url).then((res) => {
-    if (!res.data.success) throw new Error(res.data.error?.message || "Erro");
+// Defina o formato esperado da resposta da API
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  error?: { message?: string };
+}
+
+// Fetcher genérico tipado — mesma lógica, só com tipos
+const fetcher = <T>(url: string): Promise<T> =>
+  api.get<ApiResponse<T>>(url).then((res) => {
+    if (!res.data.success) {
+      throw new Error(res.data.error?.message || "Erro");
+    }
     return res.data.data;
   });
 

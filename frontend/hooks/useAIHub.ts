@@ -39,14 +39,16 @@ export function useAIHub() {
   // Uso mensal
   const { data: usoData, mutate: mutateUso } = useSWR<{ success: boolean; data: UsoIA }>(
     KEYS.uso,
-    (url: string) => api.get(url).then((r) => r.data),
+    (url: string) =>
+      api.get<{ success: boolean; data: UsoIA }>(url).then((r) => r.data),
     { refreshInterval: 60000 }
   );
 
   // Insight semanal
   const { data: insightData } = useSWR<{ success: boolean; data: ConteudoGerado | null }>(
     KEYS.insight,
-    (url: string) => api.get(url).then((r) => r.data)
+    (url: string) =>
+      api.get<{ success: boolean; data: ConteudoGerado | null }>(url).then((r) => r.data)
   );
 
   // Parar polling ao desmontar
@@ -63,7 +65,7 @@ export function useAIHub() {
 
       pollingRef.current = setInterval(async () => {
         try {
-          const resp = await api.get(`/ai/status/${taskId}/`);
+          const resp = await api.get<{ success: boolean; data: TaskIA }>(`/ai/status/${taskId}/`);
           const task: TaskIA = resp.data.data;
           setTaskAtual(task);
 
@@ -101,7 +103,7 @@ export function useAIHub() {
       setTaskAtual(null);
 
       try {
-        const resp = await api.post("/ai/gerar/", solicitacao);
+        const resp = await api.post<{ success: boolean; data: TaskIA }>("/ai/gerar/", solicitacao);
         const task: TaskIA = resp.data.data;
         setTaskAtual(task);
         iniciarPolling(task.id, onConcluido);
@@ -155,7 +157,11 @@ export function useHistoricoConteudos(
     success: boolean;
     data: ConteudoGerado[];
     pagination: { count: number; next: string | null; previous: string | null };
-  }>(key, (url: string) => api.get(url).then((r) => r.data));
+  }>(
+    key,
+    (url: string) =>
+      api.get<{ success: boolean; data: ConteudoGerado[]; pagination: { count: number; next: string | null; previous: string | null } }>(url).then((r) => r.data)
+  );
 
   const toggleFavorito = useCallback(
     async (conteudoId: string) => {
