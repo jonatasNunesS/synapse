@@ -36,7 +36,18 @@ private buildUrl(
   endpoint: string,
   params?: Record<string, string | number | boolean | undefined>
 ): string {
-  let url = `${this.baseUrl}${endpoint}`;
+  // 1. Garantir barra final no endpoint ANTES de adicionar query params
+  let safeEndpoint = endpoint;
+  if (!safeEndpoint.includes('?')) {
+    safeEndpoint = safeEndpoint.endsWith('/') ? safeEndpoint : safeEndpoint + '/';
+  } else {
+    const [path, query] = safeEndpoint.split('?');
+    safeEndpoint = (path.endsWith('/') ? path : path + '/') + '?' + query;
+  }
+
+  let url = `${this.baseUrl}${safeEndpoint}`;
+  
+  // 2. Adicionar params se existirem
   if (params) {
     const query = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
@@ -44,15 +55,12 @@ private buildUrl(
         query.append(key, String(value));
       }
     });
-    url += `?${query.toString()}`;
+    const queryString = query.toString();
+    if (queryString) {
+      url += (url.includes('?') ? '&' : '?') + queryString;
+    }
   }
 
-  // 🔥 Garantir barra final SEMPRE
-  if (!url.endsWith("/")) {
-    url += "/";
-  }
-
-  console.log("Construindo URL:", url); // Log para depuração
   return url;
 }
 
