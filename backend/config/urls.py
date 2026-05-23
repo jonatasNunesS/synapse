@@ -39,7 +39,7 @@ urlpatterns = [
     path("api/documentos/", include("modules.documentos.urls")),
     path("api/notificacoes/", include("modules.notificacoes.urls")),
     path("api/dashboard/", include("modules.dashboard.urls")),
-    # path("api/ai-hub/", include("modules.ai_hub.urls")),
+    path("api/ai/", include("modules.ai_hub.urls")),
 ]
 
 # ── Debug Toolbar (apenas em dev) ──────────────────────────

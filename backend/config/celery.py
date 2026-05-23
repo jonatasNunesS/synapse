@@ -68,6 +68,12 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=10, minute=0, day_of_week=5),  # Toda sexta às 10h
         "options": {"expires": 3600},
     },
+    # ── M9: AI Hub ───────────────────────────────────────────
+    "gerar-insights-semanais": {
+        "task": "ai_hub.gerar_insights_semanais",
+        "schedule": crontab(hour=8, minute=0, day_of_week=0),  # Todo domingo às 8h
+        "options": {"expires": 7200},
+    },
 }
 
 app.conf.timezone = "America/Sao_Paulo"
