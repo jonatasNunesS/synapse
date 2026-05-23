@@ -11,6 +11,16 @@ import type {
   MetaFormData,
 } from "@/types/equipe";
 
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  error?: { message?: string };
+}
+
+interface PaginatedResponse<T> extends ApiResponse<T[]> {
+  pagination: { count: number; next: string | null; previous: string | null };
+}
+
 const MEMBROS_KEY = "/equipe/membros/";
 const RESUMO_KEY = "/equipe/resumo/";
 
@@ -28,19 +38,20 @@ export function useMembros(params?: {
   if (params?.page) query.set("page", String(params.page));
   const qs = query.toString();
 
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, mutate } = useSWR<PaginatedResponse<MembroEquipe>>(
     `${MEMBROS_KEY}${qs ? `?${qs}` : ""}`,
-    (url: string) => api.get(url).then((r) => r.data)
+    (url: string) =>
+      api.get<PaginatedResponse<MembroEquipe>>(url).then((r) => r.data)
   );
 
   const adicionarMembro = async (dados: MembroFormData): Promise<MembroEquipe> => {
-    const res = await api.post(MEMBROS_KEY, dados);
+    const res = await api.post<ApiResponse<MembroEquipe>>(MEMBROS_KEY, dados);
     await mutate();
     return res.data.data;
   };
 
   const atualizarMembro = async (id: string, dados: Partial<MembroFormData>): Promise<MembroEquipe> => {
-    const res = await api.patch(`/equipe/membros/${id}/`, dados);
+    const res = await api.patch<ApiResponse<MembroEquipe>>(`/equipe/membros/${id}/`, dados);
     await mutate();
     return res.data.data;
   };
@@ -51,7 +62,7 @@ export function useMembros(params?: {
   };
 
   return {
-    membros: (data?.data ?? []) as MembroEquipe[],
+    membros: data?.data ?? [],
     pagination: data?.pagination,
     isLoading,
     error,
@@ -64,13 +75,14 @@ export function useMembros(params?: {
 
 // ── Detalhe de membro ─────────────────────────────────────
 export function useMembro(id: string) {
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, mutate } = useSWR<ApiResponse<MembroEquipe>>(
     id ? `/equipe/membros/${id}/` : null,
-    (url: string) => api.get(url).then((r) => r.data)
+    (url: string) =>
+      api.get<ApiResponse<MembroEquipe>>(url).then((r) => r.data)
   );
 
   return {
-    membro: data?.data as MembroEquipe | undefined,
+    membro: data?.data,
     isLoading,
     error,
     mutate,
@@ -79,13 +91,14 @@ export function useMembro(id: string) {
 
 // ── Resumo da equipe ──────────────────────────────────────
 export function useResumoEquipe() {
-  const { data, error, isLoading } = useSWR(
+  const { data, error, isLoading } = useSWR<ApiResponse<ResumoEquipe>>(
     RESUMO_KEY,
-    (url: string) => api.get(url).then((r) => r.data)
+    (url: string) =>
+      api.get<ApiResponse<ResumoEquipe>>(url).then((r) => r.data)
   );
 
   return {
-    resumo: data?.data as ResumoEquipe | undefined,
+    resumo: data?.data,
     isLoading,
     error,
   };
@@ -95,19 +108,20 @@ export function useResumoEquipe() {
 export function useMetasMembro(membroId: string) {
   const KEY = membroId ? `/equipe/membros/${membroId}/metas/` : null;
 
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, mutate } = useSWR<ApiResponse<MetaMembro[]>>(
     KEY,
-    (url: string) => api.get(url).then((r) => r.data)
+    (url: string) =>
+      api.get<ApiResponse<MetaMembro[]>>(url).then((r) => r.data)
   );
 
   const criarMeta = async (dados: MetaFormData): Promise<MetaMembro> => {
-    const res = await api.post(KEY!, dados);
+    const res = await api.post<ApiResponse<MetaMembro>>(KEY!, dados);
     await mutate();
     return res.data.data;
   };
 
   const atualizarMeta = async (metaId: string, dados: Partial<MetaFormData>): Promise<MetaMembro> => {
-    const res = await api.patch(`/equipe/membros/${membroId}/metas/${metaId}/`, dados);
+    const res = await api.patch<ApiResponse<MetaMembro>>(`/equipe/membros/${membroId}/metas/${metaId}/`, dados);
     await mutate();
     return res.data.data;
   };
@@ -118,7 +132,7 @@ export function useMetasMembro(membroId: string) {
   };
 
   return {
-    metas: (data?.data ?? []) as MetaMembro[],
+    metas: data?.data ?? [],
     isLoading,
     error,
     criarMeta,

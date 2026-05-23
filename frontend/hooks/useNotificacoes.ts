@@ -5,15 +5,26 @@ import useSWR, { mutate } from "swr";
 import { api } from "@/lib/api";
 import type { Notificacao, ContagemNotificacoes } from "@/types/notificacoes";
 
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  error?: { message?: string };
+}
+
+interface PaginatedResponse<T> extends ApiResponse<T[]> {
+  pagination: { count: number; next: string | null; previous: string | null };
+}
+
 const CONTAGEM_KEY = "/notificacoes/contagem/";
 const NAO_LIDAS_KEY = "/notificacoes/nao-lidas/";
 const LISTA_KEY = "/notificacoes/";
 
 // ── Polling de contagem (a cada 30s) ──────────────────────
 export function useContagemNotificacoes() {
-  const { data, error, isLoading } = useSWR<{ success: boolean; data: ContagemNotificacoes }>(
+  const { data, error, isLoading } = useSWR<ApiResponse<ContagemNotificacoes>>(
     CONTAGEM_KEY,
-    (url: string) => api.get(url).then((r) => r.data),
+    (url: string) =>
+      api.get<ApiResponse<ContagemNotificacoes>>(url).then((r) => r.data),
     { refreshInterval: 30_000 }
   );
 
@@ -26,12 +37,10 @@ export function useContagemNotificacoes() {
 
 // ── Notificações não lidas (para o dropdown) ──────────────
 export function useNotificacoesNaoLidas() {
-  const { data, error, isLoading, mutate: revalidate } = useSWR<{
-    success: boolean;
-    data: Notificacao[];
-  }>(
+  const { data, error, isLoading, mutate: revalidate } = useSWR<ApiResponse<Notificacao[]>>(
     NAO_LIDAS_KEY,
-    (url: string) => api.get(url).then((r) => r.data),
+    (url: string) =>
+      api.get<ApiResponse<Notificacao[]>>(url).then((r) => r.data),
     { refreshInterval: 30_000 }
   );
 
@@ -72,9 +81,10 @@ export function useNotificacoes(params?: {
   if (params?.page) query.set("page", String(params.page));
   const qs = query.toString();
 
-  const { data, error, isLoading, mutate: revalidate } = useSWR(
+  const { data, error, isLoading, mutate: revalidate } = useSWR<PaginatedResponse<Notificacao>>(
     `${LISTA_KEY}${qs ? `?${qs}` : ""}`,
-    (url: string) => api.get(url).then((r) => r.data)
+    (url: string) =>
+      api.get<PaginatedResponse<Notificacao>>(url).then((r) => r.data)
   );
 
   const marcarLida = async (id: string) => {
@@ -99,7 +109,7 @@ export function useNotificacoes(params?: {
   };
 
   return {
-    notificacoes: (data?.data ?? []) as Notificacao[],
+    notificacoes: data?.data ?? [],
     pagination: data?.pagination,
     isLoading,
     error,

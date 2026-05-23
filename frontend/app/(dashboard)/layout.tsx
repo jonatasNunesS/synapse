@@ -42,10 +42,12 @@ export default function DashboardLayout({
       <main
         className={cn(
           "pt-16 min-h-screen transition-all duration-300",
-          sidebarOpen ? "pl-64" : "pl-16"
+          // Mobile (< md): sem padding lateral — sidebar fica como overlay
+          // Desktop (>= md): padding conforme estado da sidebar
+          sidebarOpen ? "md:pl-64" : "md:pl-16"
         )}
       >
-        <div className="p-6">{children}</div>
+        <div className="p-4 md:p-6">{children}</div>
       </main>
     </div>
   );

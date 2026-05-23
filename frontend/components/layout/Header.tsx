@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Search, LogOut, User, Settings, Building2 } from "lucide-react";
+import { Search, LogOut, User, Settings, Building2, Menu } from "lucide-react";
 import { NotificationBell } from "@/components/notificacoes/NotificationBell";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { PLANO_LABELS } from "@/types/auth";
 
 export function Header() {
-  const { sidebarOpen, unreadNotifications } = useAppStore();
+  const { sidebarOpen, toggleSidebar, unreadNotifications } = useAppStore();
   const { usuario, empresa, logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = React.useState(false);
 
@@ -28,10 +28,22 @@ export function Header() {
   return (
     <header
       className={cn(
-        "fixed top-0 right-0 z-30 flex h-16 items-center justify-between border-b border-slate-800 bg-slate-950/80 backdrop-blur-sm px-6 transition-all duration-300",
-        sidebarOpen ? "left-64" : "left-16"
+        "fixed top-0 right-0 z-30 flex h-16 items-center justify-between border-b border-slate-800 bg-slate-950/80 backdrop-blur-sm px-4 md:px-6 transition-all duration-300",
+        // Mobile: sempre left-0 (sidebar é overlay)
+        // Desktop: ajusta conforme estado da sidebar
+        "left-0",
+        sidebarOpen ? "md:left-64" : "md:left-16"
       )}
     >
+      {/* ── Hamburger (mobile only) ────────────────────────── */}
+      <button
+        onClick={toggleSidebar}
+        className="flex md:hidden h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors mr-2"
+        aria-label="Abrir menu"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+
       {/* ── Busca ─────────────────────────────────────────── */}
       <div className="flex items-center gap-4 flex-1 max-w-xl">
         <div className="relative flex-1">

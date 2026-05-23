@@ -5,6 +5,16 @@ import useSWR from "swr";
 import { api } from "@/lib/api";
 import type { Documento, DocumentoFormData, VersaoDocumento } from "@/types/documentos";
 
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  error?: { message?: string };
+}
+
+interface PaginatedResponse<T> extends ApiResponse<T[]> {
+  pagination: { count: number; next: string | null; previous: string | null };
+}
+
 const DOCS_KEY = "/documentos/";
 
 // ── Lista de documentos ───────────────────────────────────
@@ -23,19 +33,20 @@ export function useDocumentos(params?: {
   if (params?.page) query.set("page", String(params.page));
   const qs = query.toString();
 
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, mutate } = useSWR<PaginatedResponse<Documento>>(
     `${DOCS_KEY}${qs ? `?${qs}` : ""}`,
-    (url: string) => api.get(url).then((r) => r.data)
+    (url: string) =>
+      api.get<PaginatedResponse<Documento>>(url).then((r) => r.data)
   );
 
   const criarDocumento = async (dados: DocumentoFormData): Promise<Documento> => {
-    const res = await api.post(DOCS_KEY, dados);
+    const res = await api.post<ApiResponse<Documento>>(DOCS_KEY, dados);
     await mutate();
     return res.data.data;
   };
 
   const atualizarDocumento = async (id: string, dados: Partial<DocumentoFormData>): Promise<Documento> => {
-    const res = await api.patch(`/documentos/${id}/`, dados);
+    const res = await api.patch<ApiResponse<Documento>>(`/documentos/${id}/`, dados);
     await mutate();
     return res.data.data;
   };
@@ -46,7 +57,7 @@ export function useDocumentos(params?: {
   };
 
   return {
-    documentos: (data?.data ?? []) as Documento[],
+    documentos: data?.data ?? [],
     pagination: data?.pagination,
     isLoading,
     error,
@@ -59,19 +70,20 @@ export function useDocumentos(params?: {
 
 // ── Detalhe de documento ──────────────────────────────────
 export function useDocumento(id: string) {
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, mutate } = useSWR<ApiResponse<Documento>>(
     id ? `/documentos/${id}/` : null,
-    (url: string) => api.get(url).then((r) => r.data)
+    (url: string) =>
+      api.get<ApiResponse<Documento>>(url).then((r) => r.data)
   );
 
   const criarVersao = async (notas: string): Promise<VersaoDocumento> => {
-    const res = await api.post(`/documentos/${id}/versoes/`, { notas });
+    const res = await api.post<ApiResponse<VersaoDocumento>>(`/documentos/${id}/versoes/`, { notas });
     await mutate();
     return res.data.data;
   };
 
   return {
-    documento: data?.data as Documento | undefined,
+    documento: data?.data,
     isLoading,
     error,
     criarVersao,
