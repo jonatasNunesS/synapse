@@ -14,6 +14,7 @@ import {
   FileText,
   Bell,
   Sparkles,
+  BarChart2,
   ChevronLeft,
   ChevronRight,
   Zap,
@@ -42,6 +43,7 @@ const navigation: NavItem[] = [
   { label: "Equipe", href: "/equipe", icon: UserCog },
   { label: "Documentos", href: "/documentos", icon: FileText },
   { label: "Notificações", href: "/notificacoes", icon: Bell },
+  { label: "Analytics", href: "/analytics", icon: BarChart2 },
   { label: "AI Hub", href: "/ai-hub", icon: Sparkles, disabled: true },
 ];
 
