@@ -151,7 +151,10 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={item.disabled ? "#" : item.href}
-                onClick={handleNavClick}
+                onClick={(e) => {
+                  if (item.disabled) e.preventDefault();
+                  handleNavClick();
+                }}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
                   isActive
@@ -160,10 +163,6 @@ export function Sidebar() {
                   item.disabled && "cursor-not-allowed opacity-40",
                   !sidebarOpen && "justify-center px-2"
                 )}
-                onClick={(e) => {
-                  if (item.disabled) e.preventDefault();
-                  handleNavClick();
-                }}
                 title={!sidebarOpen ? item.label : undefined}
               >
                 <Icon

@@ -392,19 +392,18 @@ def seed():
                 titulo=d["titulo"],
                 defaults={
                     "tipo": d["tipo"],
-                    "conteudo": d["conteudo"],
+                    "descricao": d["conteudo"][:255],
                     "criado_por": admin,
-                    "status": "publicado",
+                    "status": "aprovado",
                 },
             )
             if criado:
                 VersaoDocumento.objects.create(
                     documento=doc,
                     empresa=empresa,
-                    conteudo=d["conteudo"],
+                    notas=d["conteudo"][:500],
                     numero_versao=1,
                     criado_por=admin,
-                    notas="Versão inicial",
                 )
         print(f"✓ {len(docs_data)} documentos")
 
