@@ -149,42 +149,46 @@ export function Sidebar() {
 
             return (
               <Link
-                key={item.href}
-                href={item.disabled ? "#" : item.href}
-                onClick={(e) => {
-                  if (item.disabled) e.preventDefault();
-                  handleNavClick();
-                }}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
-                  isActive
-                    ? "bg-violet-600/15 text-violet-400 shadow-sm"
-                    : "text-slate-400 hover:bg-slate-800 hover:text-slate-200",
-                  item.disabled && "cursor-not-allowed opacity-40",
-                  !sidebarOpen && "justify-center px-2"
-                )}
-                title={!sidebarOpen ? item.label : undefined}
-              >
-                <Icon
-                  className={cn(
-                    "h-4 w-4 shrink-0",
-                    isActive ? "text-violet-400" : "text-slate-500"
-                  )}
-                />
-                {sidebarOpen && (
-                  <>
-                    <span className="flex-1">{item.label}</span>
-                    {item.badge !== undefined && item.badge > 0 && (
-                      <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-violet-600 px-1.5 text-[10px] font-bold text-white">
-                        {item.badge}
-                      </span>
-                    )}
-                    {item.disabled && (
-                      <span className="text-[10px] text-slate-600 font-normal">breve</span>
-                    )}
-                  </>
-                )}
-              </Link>
+  key={item.href}
+  href={item.disabled ? "#" : item.href}
+  className={cn(
+    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
+    isActive
+      ? "bg-violet-600/15 text-violet-400 shadow-sm"
+      : "text-slate-400 hover:bg-slate-800 hover:text-slate-200",
+    item.disabled && "cursor-not-allowed opacity-40",
+    !sidebarOpen && "justify-center px-2"
+  )}
+  onClick={(e) => {
+    if (item.disabled) {
+      e.preventDefault();
+      return;
+    }
+    handleNavClick();
+  }}
+  title={!sidebarOpen ? item.label : undefined}
+>
+  <Icon
+    className={cn(
+      "h-4 w-4 shrink-0",
+      isActive ? "text-violet-400" : "text-slate-500"
+    )}
+  />
+  {sidebarOpen && (
+    <>
+      <span className="flex-1">{item.label}</span>
+      {item.badge !== undefined && item.badge > 0 && (
+        <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-violet-600 px-1.5 text-[10px] font-bold text-white">
+          {item.badge}
+        </span>
+      )}
+      {item.disabled && (
+        <span className="text-[10px] text-slate-600 font-normal">breve</span>
+      )}
+    </>
+  )}
+</Link>
+
             );
           })}
         </nav>

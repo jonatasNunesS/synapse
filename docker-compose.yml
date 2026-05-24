@@ -127,6 +127,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    env_file:
+      - .env
     container_name: synapse-frontend
     restart: unless-stopped
     environment:
@@ -145,7 +147,7 @@ services:
       interval: 15s
       timeout: 10s
       retries: 5
-      start_period: 30s
+      start_period: 30s 
 
   # ── pgAdmin ─────────────────────────────────────────────────
   pgadmin:
