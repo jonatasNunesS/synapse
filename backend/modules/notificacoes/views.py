@@ -4,11 +4,13 @@ View → Service → Repository → Model (Clean Architecture).
 """
 import logging
 from django.core.cache import cache
-from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from shared.authentication import CookieJWTAuthentication
 from shared.pagination import StandardPagination
+from shared.permissions import IsEmpresaMember
+from shared.responses import success_response, error_response, no_content_response
 from .models import Notificacao
 from .repository import NotificacaoRepository
 from .serializers import NotificacaoSerializer, ContagemNotificacoesSerializer
@@ -17,24 +19,11 @@ from .services import NotificacaoService
 logger = logging.getLogger("synapse")
 
 
-def _success(data=None, message="", pagination=None, status_code=200):
-    payload = {"success": True, "data": data or {}, "message": message}
-    if pagination:
-        payload["pagination"] = pagination
-    return Response(payload, status=status_code)
-
-
-def _error(code, message, details=None, status_code=400):
-    return Response(
-        {"success": False, "error": {"code": code, "message": message, "details": details or {}}},
-        status=status_code,
-    )
-
-
 class NotificacaoListView(APIView):
     """GET /api/notificacoes/ — Lista todas as notificações do usuário."""
 
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def get(self, request):
         usuario_id = str(request.user.id)
@@ -64,7 +53,8 @@ class NotificacaoListView(APIView):
 class NotificacaoNaoLidasView(APIView):
     """GET /api/notificacoes/nao-lidas/ — Lista não lidas (máx 50)."""
 
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def get(self, request):
         usuario_id = str(request.user.id)
@@ -83,17 +73,19 @@ class NotificacaoNaoLidasView(APIView):
 class NotificacaoContagemView(APIView):
     """GET /api/notificacoes/contagem/ — Contagem de não lidas (polling)."""
 
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def get(self, request):
         count = NotificacaoService.contar_nao_lidas(str(request.user.id))
-        return _success(data={"count": count})
+        return success_response(data={"count": count})
 
 
 class NotificacaoMarcarLidaView(APIView):
     """PATCH /api/notificacoes/{id}/marcar-lida/"""
 
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def patch(self, request, pk):
         try:
@@ -102,15 +94,16 @@ class NotificacaoMarcarLidaView(APIView):
             cache.delete(f"synapse:{request.user.id}:notificacoes:lista")
             cache.delete(f"synapse:{request.user.id}:notificacoes:nao_lidas")
             serializer = NotificacaoSerializer(notificacao)
-            return _success(data=serializer.data, message="Notificação marcada como lida.")
+            return success_response(data=serializer.data, message="Notificação marcada como lida.")
         except Notificacao.DoesNotExist:
-            return _error("NOT_FOUND", "Notificação não encontrada.", status_code=404)
+            return error_response("NOT_FOUND", "Notificação não encontrada.", status_code=404)
 
 
 class NotificacaoMarcarTodasLidasView(APIView):
     """PATCH /api/notificacoes/marcar-todas-lidas/"""
 
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def patch(self, request):
         count = NotificacaoService.marcar_todas_lidas(
@@ -119,7 +112,7 @@ class NotificacaoMarcarTodasLidasView(APIView):
         # Invalidar caches
         cache.delete(f"synapse:{request.user.id}:notificacoes:lista")
         cache.delete(f"synapse:{request.user.id}:notificacoes:nao_lidas")
-        return _success(
+        return success_response(
             data={"marcadas": count},
             message=f"{count} notificação(ões) marcada(s) como lida(s).",
         )
@@ -128,14 +121,15 @@ class NotificacaoMarcarTodasLidasView(APIView):
 class NotificacaoDeleteView(APIView):
     """DELETE /api/notificacoes/{id}/"""
 
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def delete(self, request, pk):
         deleted = NotificacaoRepository.deletar(str(pk), str(request.user.id))
         if not deleted:
-            return _error("NOT_FOUND", "Notificação não encontrada.", status_code=404)
+            return error_response("NOT_FOUND", "Notificação não encontrada.", status_code=404)
         # Invalidar caches
         cache.delete(f"synapse:{request.user.id}:notificacoes:lista")
         cache.delete(f"synapse:{request.user.id}:notificacoes:nao_lidas")
         NotificacaoRepository.invalidar_cache_contagem(str(request.user.id))
-        return _success(message="Notificação excluída.")
+        return no_content_response()

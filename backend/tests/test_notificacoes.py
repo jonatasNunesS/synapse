@@ -220,7 +220,7 @@ def test_api_marcar_todas_lidas(auth_client_a, usuario_a, empresa_a):
 @pytest.mark.django_db
 def test_api_deletar_notificacao(auth_client_a, notificacao_a):
     response = auth_client_a.delete(f"/api/notificacoes/{notificacao_a.id}/")
-    assert response.status_code == 200
+    assert response.status_code == 204
 
 @pytest.mark.django_db
 def test_api_sem_autenticacao():

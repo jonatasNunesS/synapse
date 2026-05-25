@@ -4,9 +4,11 @@ View → Service → Repository → Model (Clean Architecture).
 """
 import logging
 from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from shared.pagination import StandardPagination
+from shared.authentication import CookieJWTAuthentication
+from shared.permissions import IsEmpresaMember
+from shared.responses import success_response, error_response, no_content_response
 from .models import Documento, VersaoDocumento
 from .repository import DocumentoRepository
 from .serializers import (
@@ -22,24 +24,11 @@ from .services import DocumentoService
 logger = logging.getLogger("synapse")
 
 
-def _success(data=None, message="", pagination=None, status_code=200):
-    payload = {"success": True, "data": data or {}, "message": message}
-    if pagination:
-        payload["pagination"] = pagination
-    return Response(payload, status=status_code)
-
-
-def _error(code, message, details=None, status_code=400):
-    return Response(
-        {"success": False, "error": {"code": code, "message": message, "details": details or {}}},
-        status=status_code,
-    )
-
-
 class DocumentoListCreateView(APIView):
     """GET /api/documentos/ | POST /api/documentos/"""
 
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def get(self, request):
         empresa_id = str(request.user.empresa_id)
@@ -58,14 +47,14 @@ class DocumentoListCreateView(APIView):
     def post(self, request):
         serializer = DocumentoCreateSerializer(data=request.data)
         if not serializer.is_valid():
-            return _error("VALIDATION_ERROR", "Dados inválidos.", serializer.errors, 400)
+            return error_response("VALIDATION_ERROR", "Dados inválidos.", serializer.errors, 400)
 
         doc = DocumentoService.criar(
             str(request.user.empresa_id),
             str(request.user.id),
             serializer.validated_data,
         )
-        return _success(
+        return success_response(
             DocumentoDetailSerializer(doc).data,
             "Documento criado com sucesso.",
             status_code=201,
@@ -75,61 +64,64 @@ class DocumentoListCreateView(APIView):
 class DocumentoDetailView(APIView):
     """GET/PATCH/DELETE /api/documentos/{id}/"""
 
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def get(self, request, pk):
         try:
             doc = DocumentoRepository.obter(str(pk), str(request.user.empresa_id))
-            return _success(DocumentoDetailSerializer(doc).data)
+            return success_response(DocumentoDetailSerializer(doc).data)
         except Documento.DoesNotExist:
-            return _error("NOT_FOUND", "Documento não encontrado.", status_code=404)
+            return error_response("NOT_FOUND", "Documento não encontrado.", status_code=404)
 
     def patch(self, request, pk):
         try:
-            DocumentoRepository.obter(str(pk), str(request.user.empresa_id))
+            doc = DocumentoRepository.obter(str(pk), str(request.user.empresa_id))
         except Documento.DoesNotExist:
-            return _error("NOT_FOUND", "Documento não encontrado.", status_code=404)
+            return error_response("NOT_FOUND", "Documento não encontrado.", status_code=404)
 
-        serializer = DocumentoUpdateSerializer(data=request.data, partial=True)
+        # ALTO-6: passar instância ao serializer para atualização parcial correta
+        serializer = DocumentoUpdateSerializer(instance=doc, data=request.data, partial=True)
         if not serializer.is_valid():
-            return _error("VALIDATION_ERROR", "Dados inválidos.", serializer.errors, 400)
+            return error_response("VALIDATION_ERROR", "Dados inválidos.", serializer.errors, 400)
 
         doc = DocumentoService.atualizar(
             str(pk), str(request.user.empresa_id), serializer.validated_data
         )
-        return _success(DocumentoDetailSerializer(doc).data, "Documento atualizado.")
+        return success_response(DocumentoDetailSerializer(doc).data, "Documento atualizado.")
 
     def delete(self, request, pk):
         deleted = DocumentoService.deletar(str(pk), str(request.user.empresa_id))
         if not deleted:
-            return _error("NOT_FOUND", "Documento não encontrado.", status_code=404)
-        return _success(message="Documento excluído.")
+            return error_response("NOT_FOUND", "Documento não encontrado.", status_code=404)
+        return no_content_response()
 
 
 class VersaoListCreateView(APIView):
     """GET/POST /api/documentos/{id}/versoes/"""
 
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def get(self, request, doc_id):
         try:
             DocumentoRepository.obter(str(doc_id), str(request.user.empresa_id))
         except Documento.DoesNotExist:
-            return _error("NOT_FOUND", "Documento não encontrado.", status_code=404)
+            return error_response("NOT_FOUND", "Documento não encontrado.", status_code=404)
 
         versoes = DocumentoRepository.listar_versoes(str(doc_id), str(request.user.empresa_id))
         serializer = VersaoDocumentoSerializer(versoes, many=True)
-        return _success(serializer.data)
+        return success_response(serializer.data)
 
     def post(self, request, doc_id):
         try:
             DocumentoRepository.obter(str(doc_id), str(request.user.empresa_id))
         except Documento.DoesNotExist:
-            return _error("NOT_FOUND", "Documento não encontrado.", status_code=404)
+            return error_response("NOT_FOUND", "Documento não encontrado.", status_code=404)
 
         serializer = NovaVersaoSerializer(data=request.data)
         if not serializer.is_valid():
-            return _error("VALIDATION_ERROR", "Dados inválidos.", serializer.errors, 400)
+            return error_response("VALIDATION_ERROR", "Dados inválidos.", serializer.errors, 400)
 
         versao = DocumentoService.criar_versao(
             str(doc_id),
@@ -137,7 +129,7 @@ class VersaoListCreateView(APIView):
             str(request.user.id),
             serializer.validated_data,
         )
-        return _success(
+        return success_response(
             VersaoDocumentoSerializer(versao).data,
             f"Versão {versao.numero_versao} criada.",
             status_code=201,

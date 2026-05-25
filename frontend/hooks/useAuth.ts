@@ -63,6 +63,9 @@ export function useAuth() {
           setAutenticado(true);
           router.push("/");
         }
+      } catch (error: unknown) {
+        // Re-lança com mensagem útil para o componente de login exibir
+        throw new Error(getErrorMessage(error));
       } finally {
         setLoading(false);
       }
@@ -82,6 +85,9 @@ export function useAuth() {
           setAutenticado(true);
           router.push("/?boas_vindas=1");
         }
+      } catch (error: unknown) {
+        // Re-lança com mensagem útil para o componente de registro exibir
+        throw new Error(getErrorMessage(error));
       } finally {
         setLoading(false);
       }

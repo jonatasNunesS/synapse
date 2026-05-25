@@ -8,7 +8,7 @@ import { Plus, Search, Filter, FolderOpen } from "lucide-react";
 import { ProjetoCard } from "@/components/projetos/ProjetoCard";
 import { ProjetoForm } from "@/components/projetos/ProjetoForm";
 import { ResumoProjetosCards } from "@/components/projetos/ResumoProjetosCards";
-import { useProjetos, useResumoProjetoss } from "@/hooks/useProjetos";
+import { useProjetos, useResumoProjetoS } from "@/hooks/useProjetos";
 import type { ProjetoCreatePayload, ProjetoList, ProjetoStatus } from "@/types/projetos";
 
 export default function ProjetosPage() {
@@ -25,7 +25,7 @@ export default function ProjetosPage() {
   if (busca) filtros.search = busca;
 
   const { projetos, loading, total, criar, atualizar, deletar } = useProjetos(filtros);
-  const { resumo, loading: loadingResumo } = useResumoProjetoss();
+  const { resumo, loading: loadingResumo } = useResumoProjetoS();
 
   const handleSalvar = async (dados: ProjetoCreatePayload) => {
     if (projetoEditando) {

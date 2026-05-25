@@ -182,7 +182,7 @@ def test_api_atualizar_documento(auth_client_a, documento_a):
 @pytest.mark.django_db
 def test_api_deletar_documento(auth_client_a, documento_a):
     response = auth_client_a.delete(f"/api/documentos/{documento_a.id}/")
-    assert response.status_code == 200
+    assert response.status_code == 204
 
 @pytest.mark.django_db
 def test_api_criar_versao(auth_client_a, documento_a):

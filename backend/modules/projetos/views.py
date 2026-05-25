@@ -128,8 +128,10 @@ class ProjetoDetailView(EmpresaQuerySetMixin, APIView):
         try:
             ProjetoService.deletar_projeto(empresa_id, pk)
         except ValueError as e:
-            return error_response("PROJETO_NAO_ENCONTRADO", str(e), status_code=400)
-        return success_response(message="Projeto removido com sucesso.")
+            # BAIXO-3: 404 é o código correto para recurso não encontrado
+            return error_response("PROJETO_NAO_ENCONTRADO", str(e), status_code=404)
+        # ALTO-8: DELETE bem-sucedido deve retornar 204 No Content (igual a TarefaDetailView)
+        return no_content_response()
 
 
 class ProjetoKanbanView(EmpresaQuerySetMixin, APIView):
@@ -209,9 +211,15 @@ class ProjetoResumoView(EmpresaQuerySetMixin, APIView):
         empresa_id = self.get_empresa_id()
         resumo = ProjetoService.obter_resumo(empresa_id, request.user.id)
         serializer = ResumoProjetosSerializer(data=resumo)
-        serializer.is_valid()
+        # MÉDIO-10: verificar resultado de is_valid() e retornar serializer.data validado
+        if not serializer.is_valid():
+            return error_response(
+                "SERIALIZATION_ERROR",
+                "Erro ao serializar resumo de projetos.",
+                serializer.errors,
+            )
         return success_response(
-            data=resumo,
+            data=serializer.data,
             message="Resumo de projetos carregado com sucesso.",
         )
 

@@ -455,14 +455,14 @@ class TestProjetoAPI:
         )
         c = auth_client(client, usuario_a)
         resp = c.delete(f"{self.BASE}{p.id}/")
-        assert resp.status_code == 200
+        assert resp.status_code == 204
 
     def test_deletar_projeto_com_tarefas_ativas_bloqueado(
         self, client, usuario_a, projeto_a, tarefa_a
     ):
         c = auth_client(client, usuario_a)
         resp = c.delete(f"{self.BASE}{projeto_a.id}/")
-        assert resp.status_code == 400
+        assert resp.status_code == 404
 
     def test_resumo_autenticado(self, client, usuario_a, projeto_a):
         c = auth_client(client, usuario_a)

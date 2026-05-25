@@ -5,7 +5,8 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import type { ApiResponse, PaginatedResponse } from "@/types/api";
+import { getErrorMessage } from "@/lib/api";
+import type { PaginatedResponse } from "@/types/api";
 import type {
   ChecklistItem,
   Comentario,
@@ -21,8 +22,9 @@ import type {
 } from "@/types/projetos";
 
 // ── Resumo ────────────────────────────────────────────────
+// BAIXO-1: corrigido typo "useResumoProjetoss" → "useResumoProjetoS"
 
-export function useResumoProjetoss() {
+export function useResumoProjetoS() {
   const [resumo, setResumo] = useState<ResumoProjetosData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,13 +33,11 @@ export function useResumoProjetoss() {
     setLoading(true);
     setError(null);
     try {
-      const resp = await api.get<ApiResponse<ResumoProjetosData>>(
-        "/projetos/resumo/"
-      );
-      setResumo(resp.data.data);
+      // MÉDIO-12: padrão correto — api.get<T> → resp.data = T
+      const resp = await api.get<ResumoProjetosData>("/projetos/resumo/");
+      setResumo(resp.data);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e?.response?.data?.error?.message ?? "Erro ao carregar resumo.");
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -66,11 +66,11 @@ export function useProjetos(filtros?: Record<string, string>) {
       const resp = await api.get<PaginatedResponse<ProjetoList>>(
         `/projetos/?${params.toString()}`
       );
-      setProjetos(resp.data.data);
-      setTotal(resp.data.pagination?.count ?? 0);
+      // MÉDIO-11: guard antes de acessar .data e .pagination
+      setProjetos(resp.data?.data ?? []);
+      setTotal(resp.data?.pagination?.count ?? 0);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e?.response?.data?.error?.message ?? "Erro ao carregar projetos.");
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -81,19 +81,16 @@ export function useProjetos(filtros?: Record<string, string>) {
   }, [carregar]);
 
   const criar = useCallback(async (dados: ProjetoCreatePayload) => {
-    const resp = await api.post<ApiResponse<ProjetoDetail>>("/projetos/", dados);
+    const resp = await api.post<ProjetoDetail>("/projetos/", dados);
     await carregar();
-    return resp.data.data;
+    return resp.data;
   }, [carregar]);
 
   const atualizar = useCallback(
     async (id: string, dados: Partial<ProjetoCreatePayload>) => {
-      const resp = await api.patch<ApiResponse<ProjetoDetail>>(
-        `/projetos/${id}/`,
-        dados
-      );
+      const resp = await api.patch<ProjetoDetail>(`/projetos/${id}/`, dados);
       await carregar();
-      return resp.data.data;
+      return resp.data;
     },
     [carregar]
   );
@@ -117,15 +114,18 @@ export function useProjetoDetalhe(id: string | null) {
   const [error, setError] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
-    if (!id) return;
+    // MÉDIO-11: guard — não chamar API sem id
+    if (!id) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      const resp = await api.get<ApiResponse<ProjetoDetail>>(`/projetos/${id}/`);
-      setProjeto(resp.data.data);
+      const resp = await api.get<ProjetoDetail>(`/projetos/${id}/`);
+      setProjeto(resp.data);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e?.response?.data?.error?.message ?? "Erro ao carregar projeto.");
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -146,17 +146,18 @@ export function useKanban(projetoId: string | null) {
   const [error, setError] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
-    if (!projetoId) return;
+    // MÉDIO-11: guard
+    if (!projetoId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      const resp = await api.get<ApiResponse<KanbanData>>(
-        `/projetos/${projetoId}/kanban/`
-      );
-      setKanban(resp.data.data);
+      const resp = await api.get<KanbanData>(`/projetos/${projetoId}/kanban/`);
+      setKanban(resp.data);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e?.response?.data?.error?.message ?? "Erro ao carregar kanban.");
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -168,12 +169,12 @@ export function useKanban(projetoId: string | null) {
 
   const moverTarefa = useCallback(
     async (tarefaId: string, payload: TarefaMoverPayload) => {
-      const resp = await api.patch<ApiResponse<TarefaList>>(
+      const resp = await api.patch<TarefaList>(
         `/projetos/tarefas/${tarefaId}/mover/`,
         payload
       );
       await carregar();
-      return resp.data.data;
+      return resp.data;
     },
     [carregar]
   );
@@ -189,17 +190,20 @@ export function useTarefas(projetoId: string | null) {
   const [error, setError] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
-    if (!projetoId) return;
+    // MÉDIO-11: guard
+    if (!projetoId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const resp = await api.get<PaginatedResponse<TarefaList>>(
         `/projetos/${projetoId}/tarefas/`
       );
-      setTarefas(resp.data.data);
+      setTarefas(resp.data?.data ?? []);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e?.response?.data?.error?.message ?? "Erro ao carregar tarefas.");
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -211,24 +215,24 @@ export function useTarefas(projetoId: string | null) {
 
   const criar = useCallback(
     async (dados: TarefaCreatePayload) => {
-      const resp = await api.post<ApiResponse<TarefaDetail>>(
+      const resp = await api.post<TarefaDetail>(
         `/projetos/${projetoId}/tarefas/`,
         dados
       );
       await carregar();
-      return resp.data.data;
+      return resp.data;
     },
     [projetoId, carregar]
   );
 
   const atualizar = useCallback(
     async (tarefaId: string, dados: Partial<TarefaCreatePayload>) => {
-      const resp = await api.patch<ApiResponse<TarefaDetail>>(
+      const resp = await api.patch<TarefaDetail>(
         `/projetos/tarefas/${tarefaId}/`,
         dados
       );
       await carregar();
-      return resp.data.data;
+      return resp.data;
     },
     [carregar]
   );
@@ -252,17 +256,18 @@ export function useTarefaDetalhe(tarefaId: string | null) {
   const [error, setError] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
-    if (!tarefaId) return;
+    // MÉDIO-11: guard
+    if (!tarefaId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      const resp = await api.get<ApiResponse<TarefaDetail>>(
-        `/projetos/tarefas/${tarefaId}/`
-      );
-      setTarefa(resp.data.data);
+      const resp = await api.get<TarefaDetail>(`/projetos/tarefas/${tarefaId}/`);
+      setTarefa(resp.data);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e?.response?.data?.error?.message ?? "Erro ao carregar tarefa.");
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -283,17 +288,20 @@ export function useComentarios(tarefaId: string | null) {
   const [error, setError] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
-    if (!tarefaId) return;
+    // MÉDIO-11: guard
+    if (!tarefaId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const resp = await api.get<PaginatedResponse<Comentario>>(
         `/projetos/tarefas/${tarefaId}/comentarios/`
       );
-      setComentarios(resp.data.data);
+      setComentarios(resp.data?.data ?? []);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e?.response?.data?.error?.message ?? "Erro ao carregar comentários.");
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -305,24 +313,24 @@ export function useComentarios(tarefaId: string | null) {
 
   const adicionar = useCallback(
     async (texto: string) => {
-      const resp = await api.post<ApiResponse<Comentario>>(
+      const resp = await api.post<Comentario>(
         `/projetos/tarefas/${tarefaId}/comentarios/`,
         { texto }
       );
       await carregar();
-      return resp.data.data;
+      return resp.data;
     },
     [tarefaId, carregar]
   );
 
   const editar = useCallback(
     async (comentarioId: string, texto: string) => {
-      const resp = await api.patch<ApiResponse<Comentario>>(
+      const resp = await api.patch<Comentario>(
         `/projetos/tarefas/${tarefaId}/comentarios/${comentarioId}/`,
         { texto }
       );
       await carregar();
-      return resp.data.data;
+      return resp.data;
     },
     [tarefaId, carregar]
   );
@@ -345,21 +353,21 @@ export function useComentarios(tarefaId: string | null) {
 export function useChecklist(tarefaId: string | null) {
   const adicionar = useCallback(
     async (texto: string, ordem = 0): Promise<ChecklistItem> => {
-      const resp = await api.post<ApiResponse<ChecklistItem>>(
+      const resp = await api.post<ChecklistItem>(
         `/projetos/tarefas/${tarefaId}/checklist/`,
         { texto, ordem }
       );
-      return resp.data.data;
+      return resp.data;
     },
     [tarefaId]
   );
 
   const toggle = useCallback(
     async (itemId: string): Promise<ChecklistItem> => {
-      const resp = await api.patch<ApiResponse<ChecklistItem>>(
+      const resp = await api.patch<ChecklistItem>(
         `/projetos/tarefas/${tarefaId}/checklist/${itemId}/`
       );
-      return resp.data.data;
+      return resp.data;
     },
     [tarefaId]
   );

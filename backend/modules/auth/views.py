@@ -183,6 +183,11 @@ class RefreshView(APIView):
         try:
             refresh = RefreshToken(refresh_token)
             new_access = str(refresh.access_token)
+            # MÉDIO-1: rotacionar o refresh token para evitar reutilização
+            # (ROTATE_REFRESH_TOKENS=True no settings.py já invalida o token anterior)
+            refresh.set_jti()
+            refresh.set_exp()
+            new_refresh = str(refresh)
         except TokenError:
             return error_response(
                 code="TOKEN_INVALIDO",
@@ -195,6 +200,15 @@ class RefreshView(APIView):
             key=ACCESS_COOKIE,
             value=new_access,
             max_age=ACCESS_MAX_AGE,
+            httponly=True,
+            samesite="Lax",
+            secure=settings.SIMPLE_JWT.get("AUTH_COOKIE_SECURE", False),
+            path="/",
+        )
+        response.set_cookie(
+            key=REFRESH_COOKIE,
+            value=new_refresh,
+            max_age=REFRESH_MAX_AGE,
             httponly=True,
             samesite="Lax",
             secure=settings.SIMPLE_JWT.get("AUTH_COOKIE_SECURE", False),

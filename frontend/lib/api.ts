@@ -73,13 +73,18 @@ private buildUrl(
     const { params, ...fetchOptions } = options;
      const url = this.buildUrl(endpoint, params);
 
+    // Se headers for um objeto vazio (upload FormData), não definir Content-Type
+    // para que o browser preencha multipart/form-data com boundary automaticamente.
+    const isFormData = fetchOptions.body instanceof FormData;
     const config: RequestInit = {
       ...fetchOptions,
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        ...fetchOptions.headers,
-      },
+      headers: isFormData
+        ? { Accept: "application/json", ...fetchOptions.headers }
+        : {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            ...fetchOptions.headers,
+          },
       credentials: "include",
     };
 
@@ -171,13 +176,10 @@ private buildUrl(
   }
 
   async upload<T>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
-    const url = this.buildUrl(endpoint);
-    const response = await fetch(url, {
-      method: "POST",
-      body: formData,
-      credentials: "include",
-    });
-    return await response.json();
+    // Usa request() interno para ter tratamento de erros e refresh 401 automático.
+    // O request() detecta FormData e omite Content-Type para o browser definir
+    // multipart/form-data com boundary automaticamente.
+    return this.request<T>(endpoint, { method: "POST", body: formData });
   }
 }
 

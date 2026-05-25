@@ -208,7 +208,7 @@ def test_api_atualizar_membro(auth_client_a, membro_a):
 @pytest.mark.django_db
 def test_api_remover_membro(auth_client_a, membro_a):
     response = auth_client_a.delete(f"/api/equipe/membros/{membro_a.id}/")
-    assert response.status_code == 200
+    assert response.status_code == 204
 
 @pytest.mark.django_db
 def test_api_resumo_equipe(auth_client_a, membro_a, membro_a2):
@@ -288,7 +288,7 @@ def test_api_deletar_meta(auth_client_a, membro_a):
         data_fim=date.today() + timedelta(days=30),
     )
     response = auth_client_a.delete(f"/api/equipe/membros/{membro_a.id}/metas/{meta.id}/")
-    assert response.status_code == 200
+    assert response.status_code == 204
 
 # ════════════════════════════════════════════════════════════
 # TESTES MULTI-TENANT

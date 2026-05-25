@@ -15,28 +15,18 @@ import type {
   DashboardResumo,
   DashboardVencimentos,
   PeriodoAnalytics,
-  PERIODOS,
 } from "@/types/dashboard";
+// BAIXO-7: PERIODOS é um valor (const), não um tipo — importar sem `type`
+import { PERIODOS } from "@/types/dashboard";
 
 // ════════════════════════════════════════════════════════════
 // FETCHER PADRÃO
 // ════════════════════════════════════════════════════════════
 
-// Defina o formato esperado da resposta da API
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: { message?: string };
-}
-
-// Fetcher genérico tipado — mesma lógica, só com tipos
+// ALTO-9: fetcher correto — api.get<T> retorna ApiResponse<T>, então res.data = T
+// Não usar api.get<ApiResponse<T>> que resulta em ApiResponse<ApiResponse<T>>
 const fetcher = <T>(url: string): Promise<T> =>
-  api.get<ApiResponse<T>>(url).then((res) => {
-    if (!res.data.success) {
-      throw new Error(res.data.error?.message || "Erro");
-    }
-    return res.data.data;
-  });
+  api.get<T>(url).then((res) => res.data);
 
 // ════════════════════════════════════════════════════════════
 // HOOK: RESUMO PRINCIPAL
@@ -244,6 +234,7 @@ export function useAnalytics() {
   return {
     periodo,
     dias,
+    periodos: PERIODOS,
     setPeriodo: handlePeriodoChange,
     fluxoCaixa,
     funil,

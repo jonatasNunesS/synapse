@@ -7,6 +7,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import useSWR from "swr";
 import { api } from "@/lib/api";
+import type { ApiError } from "@/types/api";
 import type {
   ConteudoGerado,
   TaskIA,
@@ -36,19 +37,17 @@ export function useAIHub() {
   const [erro, setErro] = useState<string | null>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Uso mensal
-  const { data: usoData, mutate: mutateUso } = useSWR<{ success: boolean; data: UsoIA }>(
+  // Uso mensal — padrão api.get<T>: resp.data = T
+  const { data: usoData, mutate: mutateUso } = useSWR<UsoIA>(
     KEYS.uso,
-    (url: string) =>
-      api.get<{ success: boolean; data: UsoIA }>(url).then((r) => r.data),
+    (url: string) => api.get<UsoIA>(url).then((r) => r.data),
     { refreshInterval: 60000 }
   );
 
   // Insight semanal
-  const { data: insightData } = useSWR<{ success: boolean; data: ConteudoGerado | null }>(
+  const { data: insightData } = useSWR<ConteudoGerado | null>(
     KEYS.insight,
-    (url: string) =>
-      api.get<{ success: boolean; data: ConteudoGerado | null }>(url).then((r) => r.data)
+    (url: string) => api.get<ConteudoGerado | null>(url).then((r) => r.data)
   );
 
   // Parar polling ao desmontar
@@ -65,8 +64,9 @@ export function useAIHub() {
 
       pollingRef.current = setInterval(async () => {
         try {
-          const resp = await api.get<{ success: boolean; data: TaskIA }>(`/ai/status/${taskId}/`);
-          const task: TaskIA = resp.data.data;
+          // CRÍTICO-3: padrão correto — api.get<TaskIA> → resp.data = TaskIA
+          const resp = await api.get<TaskIA>(`/ai/status/${taskId}/`);
+          const task: TaskIA = resp.data;
           setTaskAtual(task);
 
           if (task.status === "concluido") {
@@ -103,22 +103,24 @@ export function useAIHub() {
       setTaskAtual(null);
 
       try {
-        const resp = await api.post<{ success: boolean; data: TaskIA }>("/ai/gerar/", solicitacao);
-        const task: TaskIA = resp.data.data;
+        // CRÍTICO-3: padrão correto — api.post<TaskIA> → resp.data = TaskIA
+        const resp = await api.post<TaskIA>("/ai/gerar/", solicitacao);
+        const task: TaskIA = resp.data;
         setTaskAtual(task);
         iniciarPolling(task.id, onConcluido);
       } catch (err: unknown) {
         setGerando(false);
-        const axiosErr = err as { response?: { data?: { error?: { message?: string } }; status?: number } };
-        if (axiosErr.response?.status === 429) {
+        // BAIXO-6: usar padrão ApiError (fetch nativo), não axios
+        const apiErr = err as ApiError;
+        if (
+          apiErr?.error?.code === "LIMIT_EXCEEDED" ||
+          apiErr?.error?.code === "PLANO_INSUFICIENTE"
+        ) {
           setErro(
-            axiosErr.response.data?.error?.message ||
-              "Limite de gerações atingido. Faça upgrade do plano."
+            apiErr.error.message || "Limite de gerações atingido. Faça upgrade do plano."
           );
         } else {
-          setErro(
-            axiosErr.response?.data?.error?.message || "Erro ao solicitar geração."
-          );
+          setErro(apiErr?.error?.message || "Erro ao solicitar geração.");
         }
       }
     },
@@ -137,8 +139,8 @@ export function useAIHub() {
     erro,
     setErro,
     // Dados
-    uso: usoData?.data ?? null,
-    insight: insightData?.data ?? null,
+    uso: usoData ?? null,
+    insight: insightData ?? null,
     // Ações
     gerarConteudo,
     toggleFavorito,
@@ -153,14 +155,14 @@ export function useHistoricoConteudos(
 ) {
   const key = KEYS.historico(tipo || undefined, favorito);
 
-  const { data, error, isLoading, mutate } = useSWR<{
-    success: boolean;
+  interface HistoricoResponse {
     data: ConteudoGerado[];
     pagination: { count: number; next: string | null; previous: string | null };
-  }>(
+  }
+
+  const { data, error, isLoading, mutate } = useSWR<HistoricoResponse>(
     key,
-    (url: string) =>
-      api.get<{ success: boolean; data: ConteudoGerado[]; pagination: { count: number; next: string | null; previous: string | null } }>(url).then((r) => r.data)
+    (url: string) => api.get<HistoricoResponse>(url).then((r) => r.data)
   );
 
   const toggleFavorito = useCallback(
