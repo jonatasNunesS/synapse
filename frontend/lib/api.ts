@@ -10,7 +10,7 @@ import type { ApiError, ApiResponse } from "@/types/api";
 const API_BASE_URL =
   typeof window !== "undefined"
     ? "/api" // Browser: usa o proxy do Next.js (next.config.mjs)
-    : process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+    : process.env.NEXT_PUBLIC_API_URL || "http://synapse-backend:8000/api";
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;

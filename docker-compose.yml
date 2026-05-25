@@ -64,7 +64,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/health/ || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://synapse-backend:8000/api/health/ || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -134,10 +134,10 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
-      - NEXT_PUBLIC_API_URL=http://backend:8000/api
-      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - NEXT_PUBLIC_API_URL=http://synapse-backend:8000/api
+      - NEXT_PUBLIC_APP_URL=http://synapse-frontend:3000
       - NEXT_PUBLIC_APP_NAME=Synapse
-      - NEXT_PUBLIC_BACKEND_URL=http://backend:8000
+      - NEXT_PUBLIC_BACKEND_URL=http://synapse-backend:8000
     ports:
       - "3000:3000"
     depends_on:
