@@ -57,9 +57,11 @@ export function useAuth() {
     async (payload: LoginPayload): Promise<void> => {
       setLoading(true);
       try {
+        // api.post<T> retorna ApiResponse<T>; response.data é o campo "data" do envelope
         const response = await api.post<{ usuario: Usuario }>("/auth/login/", payload);
-        if (response.success && response.data.usuario) {
-          setUsuario(response.data.usuario);
+        const usuario = response.data?.usuario;
+        if (response.success && usuario) {
+          setUsuario(usuario);
           setAutenticado(true);
           router.push("/");
         }
@@ -79,9 +81,11 @@ export function useAuth() {
     async (payload: RegistroPayload): Promise<void> => {
       setLoading(true);
       try {
+        // api.post<T> retorna ApiResponse<T>; response.data é o campo "data" do envelope
         const response = await api.post<{ usuario: Usuario }>("/auth/registro/", payload);
-        if (response.success && response.data.usuario) {
-          setUsuario(response.data.usuario);
+        const usuario = response.data?.usuario;
+        if (response.success && usuario) {
+          setUsuario(usuario);
           setAutenticado(true);
           router.push("/?boas_vindas=1");
         }

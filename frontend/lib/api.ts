@@ -36,18 +36,14 @@ private buildUrl(
   endpoint: string,
   params?: Record<string, string | number | boolean | undefined>
 ): string {
-  // 1. Garantir barra final no endpoint ANTES de adicionar query params
-  let safeEndpoint = endpoint;
-  if (!safeEndpoint.includes('?')) {
-    safeEndpoint = safeEndpoint.endsWith('/') ? safeEndpoint : safeEndpoint + '/';
-  } else {
-    const [path, query] = safeEndpoint.split('?');
-    safeEndpoint = (path.endsWith('/') ? path : path + '/') + '?' + query;
-  }
+  // 1. Garantir barra final no path (antes do ?) para evitar 301 em POST
+  const [path, existingQuery] = endpoint.split('?');
+  const pathWithSlash = path.endsWith('/') ? path : `${path}/`;
+  let url = existingQuery
+    ? `${this.baseUrl}${pathWithSlash}?${existingQuery}`
+    : `${this.baseUrl}${pathWithSlash}`;
 
-  let url = `${this.baseUrl}${safeEndpoint}`;
-  
-  // 2. Adicionar params se existirem
+  // 2. Adicionar params extras se existirem
   if (params) {
     const query = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
@@ -130,6 +126,11 @@ private buildUrl(
           error: { code: "SESSION_EXPIRED", message: "Sessão expirada.", details: {} },
         } as ApiError;
       }
+    }
+
+    // 204 No Content — sem body para parsear
+    if (response.status === 204) {
+      return { success: true, data: {} as T, message: "" } as ApiResponse<T>;
     }
 
     const data = await response.json();
