@@ -11,7 +11,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NEXT_PUBLIC_API_URL=http://synapse-backend:8000/api
+ENV NEXT_PUBLIC_API_URL=http://backend:8000/api
 ENV NEXT_PUBLIC_APP_URL=http://localhost:3000
 ENV NEXT_PUBLIC_APP_NAME=Synapse
 RUN pnpm run build

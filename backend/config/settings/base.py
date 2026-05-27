@@ -19,9 +19,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # ════════════════════════════════════════════════════════════
 SECRET_KEY = config("DJANGO_SECRET_KEY")
 DEBUG = config("DJANGO_DEBUG", default=False, cast=bool)
-ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOSTS", default="localhost,backend,synapse-backend", cast=Csv())
+ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOSTS", default="localhost,backend", cast=Csv())
 
-
+APPEND_SLASH = False
 # ════════════════════════════════════════════════════════════
 # APLICAÇÕES
 # ════════════════════════════════════════════════════════════
