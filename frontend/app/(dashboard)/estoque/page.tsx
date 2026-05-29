@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Plus, Search, Filter, RefreshCw } from "lucide-react";
+import { Plus, Search, Filter, RefreshCw, Tag } from "lucide-react";
 import { ResumoCards } from "@/components/estoque/ResumoCards";
 import { AlertasEstoque } from "@/components/estoque/AlertasEstoque";
 import { ProdutoTable } from "@/components/estoque/ProdutoTable";
@@ -13,6 +13,7 @@ import {
   useCategoriasEstoque,
 } from "@/hooks/useEstoque";
 import type { ProdutoList, ProdutoCreate, FiltrosProduto, StatusEstoque } from "@/types/estoque";
+import { CategoriaEstoqueModal } from "@/components/estoque/CategoriaEstoqueModal";
 
 export default function EstoquePage() {
   const { resumo, loading: loadingResumo, carregar: carregarResumo } = useResumoEstoque();
@@ -24,6 +25,7 @@ export default function EstoquePage() {
   const [busca, setBusca] = useState("");
   const [statusFiltro, setStatusFiltro] = useState<StatusEstoque | "">("");
   const [mostrarForm, setMostrarForm] = useState(false);
+  const [mostrarCategorias, setMostrarCategorias] = useState(false);
   const [produtoEditando, setProdutoEditando] = useState<ProdutoList | null>(null);
   const [erroForm, setErroForm] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
@@ -116,6 +118,13 @@ export default function EstoquePage() {
             <RefreshCw className="h-4 w-4" />
           </button>
           <button
+            onClick={() => setMostrarCategorias(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 text-slate-300 hover:text-white hover:bg-white/5 text-sm font-medium transition-colors"
+          >
+            <Tag className="h-4 w-4" />
+            Categorias
+          </button>
+          <button
             onClick={() => {
               setProdutoEditando(null);
               setErroForm(null);
@@ -192,6 +201,11 @@ export default function EstoquePage() {
           />
         </div>
       </div>
+
+      {/* Modal de Categorias */}
+      {mostrarCategorias && (
+        <CategoriaEstoqueModal onFechar={() => setMostrarCategorias(false)} />
+      )}
 
       {/* Modal de Produto */}
       {mostrarForm && (

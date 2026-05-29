@@ -4,16 +4,7 @@
 import useSWR, { mutate } from "swr";
 import { api } from "@/lib/api";
 import type { Notificacao, ContagemNotificacoes } from "@/types/notificacoes";
-
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: { message?: string };
-}
-
-interface PaginatedResponse<T> extends ApiResponse<T[]> {
-  pagination: { count: number; next: string | null; previous: string | null };
-}
+import type { ApiResponse } from "@/types/api";
 
 const CONTAGEM_KEY = "/notificacoes/contagem/";
 const NAO_LIDAS_KEY = "/notificacoes/nao-lidas/";
@@ -21,15 +12,14 @@ const LISTA_KEY = "/notificacoes/";
 
 // ── Polling de contagem (a cada 30s) ──────────────────────
 export function useContagemNotificacoes() {
-  const { data, error, isLoading } = useSWR<ApiResponse<ContagemNotificacoes>>(
+  const { data: resp, error, isLoading } = useSWR<ApiResponse<ContagemNotificacoes>>(
     CONTAGEM_KEY,
-    (url: string) =>
-      api.get<ApiResponse<ContagemNotificacoes>>(url).then((r) => r.data),
+    (url: string) => api.get<ContagemNotificacoes>(url),
     { refreshInterval: 30_000 }
   );
 
   return {
-    count: data?.data?.count ?? 0,
+    count: resp?.data?.count ?? 0,
     isLoading,
     error,
   };
@@ -37,10 +27,9 @@ export function useContagemNotificacoes() {
 
 // ── Notificações não lidas (para o dropdown) ──────────────
 export function useNotificacoesNaoLidas() {
-  const { data, error, isLoading, mutate: revalidate } = useSWR<ApiResponse<Notificacao[]>>(
+  const { data: resp, error, isLoading, mutate: revalidate } = useSWR<ApiResponse<Notificacao[]>>(
     NAO_LIDAS_KEY,
-    (url: string) =>
-      api.get<ApiResponse<Notificacao[]>>(url).then((r) => r.data),
+    (url: string) => api.get<Notificacao[]>(url),
     { refreshInterval: 30_000 }
   );
 
@@ -58,7 +47,7 @@ export function useNotificacoesNaoLidas() {
   };
 
   return {
-    notificacoes: data?.data ?? [],
+    notificacoes: resp?.data ?? [],
     isLoading,
     error,
     marcarLida,
@@ -81,10 +70,9 @@ export function useNotificacoes(params?: {
   if (params?.page) query.set("page", String(params.page));
   const qs = query.toString();
 
-  const { data, error, isLoading, mutate: revalidate } = useSWR<PaginatedResponse<Notificacao>>(
+  const { data: resp, error, isLoading, mutate: revalidate } = useSWR<ApiResponse<Notificacao[]>>(
     `${LISTA_KEY}${qs ? `?${qs}` : ""}`,
-    (url: string) =>
-      api.get<PaginatedResponse<Notificacao>>(url).then((r) => r.data)
+    (url: string) => api.get<Notificacao[]>(url)
   );
 
   const marcarLida = async (id: string) => {
@@ -109,8 +97,8 @@ export function useNotificacoes(params?: {
   };
 
   return {
-    notificacoes: data?.data ?? [],
-    pagination: data?.pagination,
+    notificacoes: resp?.data ?? [],
+    pagination: resp?.pagination,
     isLoading,
     error,
     marcarLida,

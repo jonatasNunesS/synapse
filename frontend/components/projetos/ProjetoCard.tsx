@@ -1,6 +1,7 @@
 "use client";
 /**
  * Synapse — M6: Card de Projeto para listagem
+ * Bug D: corrigido dark mode — removidas classes bg-white, text-gray-*, border-gray-*
  */
 import { Calendar, Clock, Users } from "lucide-react";
 import Link from "next/link";
@@ -22,7 +23,7 @@ export function ProjetoCard({ projeto, onEditar, onDeletar }: ProjetoCardProps) 
   const progresso = projeto.progresso ?? 0;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow">
+    <div className="bg-[#0d1117] border border-white/10 rounded-xl p-5 hover:border-white/20 hover:shadow-lg transition-all">
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2 min-w-0">
@@ -32,7 +33,7 @@ export function ProjetoCard({ projeto, onEditar, onDeletar }: ProjetoCardProps) 
           />
           <Link
             href={`/dashboard/projetos/${projeto.id}`}
-            className="font-semibold text-gray-900 truncate hover:text-indigo-600 transition-colors"
+            className="font-semibold text-white truncate hover:text-indigo-400 transition-colors"
           >
             {projeto.nome}
           </Link>
@@ -53,11 +54,11 @@ export function ProjetoCard({ projeto, onEditar, onDeletar }: ProjetoCardProps) 
 
       {/* Progresso */}
       <div className="mb-3">
-        <div className="flex justify-between text-xs text-gray-500 mb-1">
+        <div className="flex justify-between text-xs text-slate-400 mb-1">
           <span>Progresso</span>
           <span>{progresso}%</span>
         </div>
-        <div className="w-full bg-gray-100 rounded-full h-1.5">
+        <div className="w-full bg-white/10 rounded-full h-1.5">
           <div
             className="h-1.5 rounded-full transition-all"
             style={{
@@ -69,7 +70,7 @@ export function ProjetoCard({ projeto, onEditar, onDeletar }: ProjetoCardProps) 
       </div>
 
       {/* Meta */}
-      <div className="flex items-center justify-between text-xs text-gray-500">
+      <div className="flex items-center justify-between text-xs text-slate-400">
         <div className="flex items-center gap-3">
           {projeto.responsavel_nome && (
             <span className="flex items-center gap-1">
@@ -86,7 +87,7 @@ export function ProjetoCard({ projeto, onEditar, onDeletar }: ProjetoCardProps) 
           {projeto.data_prazo && (
             <span
               className={`flex items-center gap-1 ${
-                projeto.esta_atrasado ? "text-red-500 font-medium" : ""
+                projeto.esta_atrasado ? "text-red-400 font-medium" : ""
               }`}
             >
               <Calendar size={12} />
@@ -99,7 +100,7 @@ export function ProjetoCard({ projeto, onEditar, onDeletar }: ProjetoCardProps) 
               {onEditar && (
                 <button
                   onClick={() => onEditar(projeto)}
-                  className="text-gray-400 hover:text-indigo-600 transition-colors p-0.5"
+                  className="text-slate-500 hover:text-indigo-400 transition-colors p-0.5"
                   title="Editar"
                 >
                   ✏
@@ -108,7 +109,7 @@ export function ProjetoCard({ projeto, onEditar, onDeletar }: ProjetoCardProps) 
               {onDeletar && (
                 <button
                   onClick={() => onDeletar(projeto.id)}
-                  className="text-gray-400 hover:text-red-500 transition-colors p-0.5"
+                  className="text-slate-500 hover:text-red-400 transition-colors p-0.5"
                   title="Excluir"
                 >
                   🗑

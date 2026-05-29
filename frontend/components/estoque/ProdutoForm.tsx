@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { X, Loader2 } from "lucide-react";
@@ -59,6 +59,7 @@ export function ProdutoForm({
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -97,6 +98,14 @@ export function ProdutoForm({
     }
   }, [produto, reset]);
 
+  // Bug B: transforma string vazia em null antes de enviar ao backend
+  const handleFormSubmit = async (dados: FormData) => {
+    await onSubmit({
+      ...dados,
+      categoria: dados.categoria === "" ? null : dados.categoria,
+    });
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
@@ -118,7 +127,7 @@ export function ProdutoForm({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="p-6 space-y-5">
           {erro && (
             <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
               {erro}
@@ -198,19 +207,27 @@ export function ProdutoForm({
               <label className="block text-sm font-medium text-slate-300 mb-1.5">
                 Categoria
               </label>
-              <select
-                {...register("categoria")}
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-blue-500/50 transition-colors text-sm"
-              >
-                <option value="" className="bg-[#0d1117]">
-                  Sem categoria
-                </option>
-                {categorias.map((cat) => (
-                  <option key={cat.id} value={cat.id} className="bg-[#0d1117]">
-                    {cat.nome}
-                  </option>
-                ))}
-              </select>
+              <Controller
+                name="categoria"
+                control={control}
+                render={({ field }) => (
+                  <select
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value === "" ? null : e.target.value)}
+                    className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-blue-500/50 transition-colors text-sm"
+                  >
+                    <option value="" className="bg-[#0d1117]">
+                      Sem categoria
+                    </option>
+                    {categorias.map((cat) => (
+                      <option key={cat.id} value={cat.id} className="bg-[#0d1117]">
+                        {cat.nome}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              />
             </div>
           </div>
 

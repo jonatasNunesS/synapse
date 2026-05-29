@@ -1,5 +1,8 @@
 import logging
+import os
 
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.viewsets import ViewSet
@@ -177,6 +180,54 @@ class ProdutoViewSet(ViewSet):
         except SynapseNotFoundError as e:
             return error_response("NOT_FOUND", str(e), status_code=status.HTTP_404_NOT_FOUND)
         return success_response(message="Produto desativado com sucesso.")
+
+    @action(detail=True, methods=["post"], url_path="upload-imagem")
+    def upload_imagem(self, request, pk=None):
+        """POST /api/estoque/produtos/{id}/upload-imagem/ — faz upload da imagem do produto."""
+        empresa_id = request.user.empresa_id
+        try:
+            produto = EstoqueService.obter_produto(empresa_id, pk)
+        except SynapseNotFoundError as e:
+            return error_response("NOT_FOUND", str(e), status_code=status.HTTP_404_NOT_FOUND)
+
+        arquivo = request.FILES.get("imagem")
+        if not arquivo:
+            return error_response("VALIDATION_ERROR", "Nenhum arquivo enviado.", status_code=400)
+
+        # Valida tipo MIME
+        tipos_permitidos = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+        if arquivo.content_type not in tipos_permitidos:
+            return error_response(
+                "VALIDATION_ERROR",
+                "Formato inválido. Use JPEG, PNG, WebP ou GIF.",
+                status_code=400,
+            )
+
+        # Valida tamanho (5 MB)
+        if arquivo.size > 5 * 1024 * 1024:
+            return error_response(
+                "VALIDATION_ERROR",
+                "Arquivo muito grande. Máximo 5 MB.",
+                status_code=400,
+            )
+
+        # Remove imagem anterior se existir no storage local
+        if produto.imagem_url and produto.imagem_url.startswith("/media/"):
+            caminho_antigo = produto.imagem_url.replace("/media/", "", 1)
+            if default_storage.exists(caminho_antigo):
+                default_storage.delete(caminho_antigo)
+
+        ext = os.path.splitext(arquivo.name)[1].lower() or ".jpg"
+        caminho = f"estoque/produtos/{empresa_id}/{pk}{ext}"
+        default_storage.save(caminho, ContentFile(arquivo.read()))
+
+        produto.imagem_url = f"/media/{caminho}"
+        produto.save(update_fields=["imagem_url", "atualizado_em"])
+
+        return success_response(
+            data={"imagem_url": produto.imagem_url},
+            message="Imagem enviada com sucesso.",
+        )
 
     @action(detail=True, methods=["get"], url_path="movimentacoes")
     def movimentacoes(self, request, pk=None):

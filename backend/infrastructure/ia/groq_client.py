@@ -31,7 +31,14 @@ class GroqClient(IIAService):
     }
 
     def __init__(self):
-        self.client = Groq(api_key=config("GROQ_API_KEY", default=""))
+        api_key = config("GROQ_API_KEY", default="")
+        if not api_key:
+            raise ValueError(
+                "GROQ_API_KEY não configurada. "
+                "Defina a variável de ambiente GROQ_API_KEY com sua chave da Groq API "
+                "(https://console.groq.com/keys)."
+            )
+        self.client = Groq(api_key=api_key)
 
     # --- Interface IIAService ---
 

@@ -562,10 +562,12 @@ class TestGeradorCeleryTask:
 
         mock_response = "Corra mais longe com Nike! 👟 #Corrida #Nike"
 
-        with patch("infrastructure.ia.groq_client.GroqClient.gerar", return_value=mock_response):
-            with patch("modules.ai_hub.services.AIHubService.montar_contexto_negocio", return_value="Contexto mock"):
-                with patch("modules.ai_hub.services.AIHubService.incrementar_uso"):
-                    gerar_conteudo_ia(str(task_ia_pendente.id))
+        with patch("infrastructure.ia.groq_client.GroqClient.__init__", return_value=None):
+            with patch("infrastructure.ia.groq_client.GroqClient.gerar", return_value=mock_response):
+                with patch("infrastructure.ia.groq_client.GroqClient.MODELOS", {"simples": "mock", "avancado": "mock"}):
+                    with patch("modules.ai_hub.services.AIHubService.montar_contexto_negocio", return_value="Contexto mock"):
+                        with patch("modules.ai_hub.services.AIHubService.incrementar_uso"):
+                            gerar_conteudo_ia(str(task_ia_pendente.id))
 
         task_ia_pendente.refresh_from_db()
         assert task_ia_pendente.status == "concluido"

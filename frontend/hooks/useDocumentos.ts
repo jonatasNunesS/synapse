@@ -4,16 +4,7 @@
 import useSWR from "swr";
 import { api } from "@/lib/api";
 import type { Documento, DocumentoFormData, VersaoDocumento } from "@/types/documentos";
-
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: { message?: string };
-}
-
-interface PaginatedResponse<T> extends ApiResponse<T[]> {
-  pagination: { count: number; next: string | null; previous: string | null };
-}
+import type { ApiResponse } from "@/types/api";
 
 const DOCS_KEY = "/documentos/";
 
@@ -33,22 +24,21 @@ export function useDocumentos(params?: {
   if (params?.page) query.set("page", String(params.page));
   const qs = query.toString();
 
-  const { data, error, isLoading, mutate } = useSWR<PaginatedResponse<Documento>>(
+  const { data: resp, error, isLoading, mutate } = useSWR<ApiResponse<Documento[]>>(
     `${DOCS_KEY}${qs ? `?${qs}` : ""}`,
-    (url: string) =>
-      api.get<PaginatedResponse<Documento>>(url).then((r) => r.data)
+    (url: string) => api.get<Documento[]>(url)
   );
 
   const criarDocumento = async (dados: DocumentoFormData): Promise<Documento> => {
-    const res = await api.post<ApiResponse<Documento>>(DOCS_KEY, dados);
+    const res = await api.post<Documento>(DOCS_KEY, dados);
     await mutate();
-    return res.data.data;
+    return res.data as Documento;
   };
 
   const atualizarDocumento = async (id: string, dados: Partial<DocumentoFormData>): Promise<Documento> => {
-    const res = await api.patch<ApiResponse<Documento>>(`/documentos/${id}/`, dados);
+    const res = await api.patch<Documento>(`/documentos/${id}/`, dados);
     await mutate();
-    return res.data.data;
+    return res.data as Documento;
   };
 
   const deletarDocumento = async (id: string): Promise<void> => {
@@ -57,8 +47,8 @@ export function useDocumentos(params?: {
   };
 
   return {
-    documentos: data?.data ?? [],
-    pagination: data?.pagination,
+    documentos: resp?.data ?? [],
+    pagination: resp?.pagination,
     isLoading,
     error,
     criarDocumento,
@@ -70,20 +60,19 @@ export function useDocumentos(params?: {
 
 // ── Detalhe de documento ──────────────────────────────────
 export function useDocumento(id: string) {
-  const { data, error, isLoading, mutate } = useSWR<ApiResponse<Documento>>(
+  const { data: resp, error, isLoading, mutate } = useSWR<ApiResponse<Documento>>(
     id ? `/documentos/${id}/` : null,
-    (url: string) =>
-      api.get<ApiResponse<Documento>>(url).then((r) => r.data)
+    (url: string) => api.get<Documento>(url)
   );
 
   const criarVersao = async (notas: string): Promise<VersaoDocumento> => {
-    const res = await api.post<ApiResponse<VersaoDocumento>>(`/documentos/${id}/versoes/`, { notas });
+    const res = await api.post<VersaoDocumento>(`/documentos/${id}/versoes/`, { notas });
     await mutate();
-    return res.data.data;
+    return res.data as VersaoDocumento;
   };
 
   return {
-    documento: data?.data,
+    documento: resp?.data,
     isLoading,
     error,
     criarVersao,

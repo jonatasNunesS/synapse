@@ -16,6 +16,7 @@ import { ResumoEquipeCards } from "@/components/equipe/ResumoEquipeCards";
 import { MembroCard } from "@/components/equipe/MembroCard";
 import { MembroForm } from "@/components/equipe/MembroForm";
 import type { MembroEquipe, MembroFormData } from "@/types/equipe";
+import { ConvidarModal } from "@/components/equipe/ConvidarModal";
 
 export default function EquipePage() {
   const [busca, setBusca] = useState("");
@@ -23,6 +24,7 @@ export default function EquipePage() {
   const [filtroDept, setFiltroDept] = useState<string>("todos");
   const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
+  const [showConvidar, setShowConvidar] = useState(false);
   const [membroEditando, setMembroEditando] = useState<MembroEquipe | null>(null);
 
   const { membros, pagination, isLoading, adicionarMembro, atualizarMembro, removerMembro } =
@@ -65,10 +67,16 @@ export default function EquipePage() {
             Gerencie os membros da sua equipe e acompanhe metas
           </p>
         </div>
-        <Button onClick={() => { setMembroEditando(null); setShowForm(true); }}>
-          <Plus className="h-4 w-4 mr-2" />
-          Adicionar Membro
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowConvidar(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Convidar por E-mail
+          </Button>
+          <Button onClick={() => { setMembroEditando(null); setShowForm(true); }}>
+            <Plus className="h-4 w-4 mr-2" />
+            Adicionar Membro
+          </Button>
+        </div>
       </div>
 
       {/* Resumo */}
@@ -154,12 +162,20 @@ export default function EquipePage() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Modal de Adição */}
       {showForm && (
         <MembroForm
           membro={membroEditando}
           onSalvar={handleSalvar}
           onFechar={() => { setShowForm(false); setMembroEditando(null); }}
+        />
+      )}
+
+      {/* Modal de Convite — Bug E */}
+      {showConvidar && (
+        <ConvidarModal
+          onFechar={() => setShowConvidar(false)}
+          onConvidado={() => { /* mutate é chamado automaticamente via SWR */ }}
         />
       )}
     </div>

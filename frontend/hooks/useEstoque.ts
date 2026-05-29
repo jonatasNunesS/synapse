@@ -15,7 +15,7 @@ import type {
   FiltrosProduto,
   FiltrosMovimentacao,
 } from "@/types/estoque";
-import type { ApiResponse } from "@/types/api";
+import type { PaginatedResponse } from "@/types/api";
 
 // ─── Hook: Resumo do Estoque ──────────────────────────────────────────────────
 
@@ -28,10 +28,8 @@ export function useResumoEstoque() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get<ApiResponse<ResumoEstoque>>(
-        "/estoque/resumo/"
-      );
-      setResumo(res.data.data as ResumoEstoque);
+      const res = await api.get<ResumoEstoque>("/estoque/resumo/");
+      setResumo(res.data || null);
     } catch {
       setError("Erro ao carregar resumo do estoque.");
     } finally {
@@ -53,10 +51,8 @@ export function useAlertasEstoque() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get<ApiResponse<ProdutoList[]>>(
-        "/estoque/alertas/"
-      );
-      setAlertas((res.data.data as ProdutoList[]) || []);
+      const res = await api.get<ProdutoList[]>("/estoque/alertas/");
+      setAlertas(res.data || []);
     } catch {
       setError("Erro ao carregar alertas.");
     } finally {
@@ -68,21 +64,6 @@ export function useAlertasEstoque() {
 }
 
 // ─── Hook: Produtos ───────────────────────────────────────────────────────────
-
-// The API returns { success, data: T[], message, pagination }
-interface ListResponse<T> {
-  success: boolean;
-  data: T[];
-  message: string;
-  pagination: {
-    count: number;
-    page: number;
-    page_size: number;
-    total_pages: number;
-    next: string | null;
-    previous: string | null;
-  };
-}
 
 export function useProdutos() {
   const [produtos, setProdutos] = useState<ProdutoList[]>([]);
@@ -107,14 +88,14 @@ export function useProdutos() {
       if (filtros.page) params.set("page", String(filtros.page));
 
       const query = params.toString();
-      const res = await api.get<ListResponse<ProdutoList>>(
+      const res = await api.get<ProdutoList[]>(
         `/estoque/produtos/${query ? `?${query}` : ""}`
       );
-      setProdutos(res.data.data || []);
+      setProdutos(res.data || []);
       setPaginacao({
-        total: res.data.pagination?.count || 0,
+        total: res.pagination?.count || 0,
         pagina: filtros.page || 1,
-        totalPaginas: res.data.pagination?.total_pages || 1,
+        totalPaginas: res.pagination?.total_pages || 1,
       });
     } catch {
       setError("Erro ao carregar produtos.");
@@ -125,10 +106,8 @@ export function useProdutos() {
 
   const obter = useCallback(async (id: string): Promise<ProdutoDetail | null> => {
     try {
-      const res = await api.get<ApiResponse<ProdutoDetail>>(
-        `/estoque/produtos/${id}/`
-      );
-      return res.data.data as ProdutoDetail;
+      const res = await api.get<ProdutoDetail>(`/estoque/produtos/${id}/`);
+      return res.data || null;
     } catch {
       return null;
     }
@@ -136,11 +115,8 @@ export function useProdutos() {
 
   const criar = useCallback(async (dados: ProdutoCreate): Promise<ProdutoDetail | null> => {
     try {
-      const res = await api.post<ApiResponse<ProdutoDetail>>(
-        "/estoque/produtos/",
-        dados
-      );
-      return res.data.data as ProdutoDetail;
+      const res = await api.post<ProdutoDetail>("/estoque/produtos/", dados);
+      return res.data || null;
     } catch {
       return null;
     }
@@ -149,11 +125,11 @@ export function useProdutos() {
   const atualizar = useCallback(
     async (id: string, dados: Partial<ProdutoCreate>): Promise<ProdutoDetail | null> => {
       try {
-        const res = await api.patch<ApiResponse<ProdutoDetail>>(
+        const res = await api.patch<ProdutoDetail>(
           `/estoque/produtos/${id}/`,
           dados
         );
-        return res.data.data as ProdutoDetail;
+        return res.data || null;
       } catch {
         return null;
       }
@@ -208,14 +184,14 @@ export function useMovimentacoes() {
         if (filtros.page) params.set("page", String(filtros.page));
 
         const query = params.toString();
-        const res = await api.get<ListResponse<Movimentacao>>(
+        const res = await api.get<Movimentacao[]>(
           `/estoque/produtos/${produtoId}/movimentacoes/${query ? `?${query}` : ""}`
         );
-        setMovimentacoes(res.data.data || []);
+        setMovimentacoes(res.data || []);
         setPaginacao({
-          total: res.data.pagination?.count || 0,
+          total: res.pagination?.count || 0,
           pagina: filtros.page || 1,
-          totalPaginas: res.data.pagination?.total_pages || 1,
+          totalPaginas: res.pagination?.total_pages || 1,
         });
       } catch {
         setError("Erro ao carregar movimentações.");
@@ -229,11 +205,11 @@ export function useMovimentacoes() {
   const registrar = useCallback(
     async (dados: MovimentacaoCreate): Promise<Movimentacao | null> => {
       try {
-        const res = await api.post<ApiResponse<Movimentacao>>(
+        const res = await api.post<Movimentacao>(
           "/estoque/movimentacoes/",
           dados
         );
-        return res.data.data as Movimentacao;
+        return res.data || null;
       } catch {
         return null;
       }
@@ -255,10 +231,8 @@ export function useCategoriasEstoque() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get<ListResponse<CategoriaEstoque>>(
-        "/estoque/categorias/"
-      );
-      setCategorias(res.data.data || []);
+      const res = await api.get<CategoriaEstoque[]>("/estoque/categorias/");
+      setCategorias(res.data || []);
     } catch {
       setError("Erro ao carregar categorias.");
     } finally {
@@ -269,11 +243,11 @@ export function useCategoriasEstoque() {
   const criar = useCallback(
     async (dados: CategoriaEstoqueCreate): Promise<CategoriaEstoque | null> => {
       try {
-        const res = await api.post<ApiResponse<CategoriaEstoque>>(
+        const res = await api.post<CategoriaEstoque>(
           "/estoque/categorias/",
           dados
         );
-        return res.data.data as CategoriaEstoque;
+        return res.data || null;
       } catch {
         return null;
       }
@@ -281,7 +255,31 @@ export function useCategoriasEstoque() {
     []
   );
 
-  return { categorias, loading, error, listar, criar };
+  const atualizar = useCallback(
+    async (id: string, dados: Partial<CategoriaEstoqueCreate>): Promise<CategoriaEstoque | null> => {
+      try {
+        const res = await api.patch<CategoriaEstoque>(
+          `/estoque/categorias/${id}/`,
+          dados
+        );
+        return res.data || null;
+      } catch {
+        return null;
+      }
+    },
+    []
+  );
+
+  const excluir = useCallback(async (id: string): Promise<boolean> => {
+    try {
+      await api.delete(`/estoque/categorias/${id}/`);
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  return { categorias, loading, error, listar, criar, atualizar, excluir };
 }
 
 // ─── Hook: Relatório de Estoque ───────────────────────────────────────────────
@@ -295,10 +293,8 @@ export function useRelatorioEstoque() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get<ApiResponse<RelatorioEstoque>>(
-        "/estoque/relatorio/"
-      );
-      setRelatorio(res.data.data as RelatorioEstoque);
+      const res = await api.get<RelatorioEstoque>("/estoque/relatorio/");
+      setRelatorio(res.data || null);
     } catch {
       setError("Erro ao carregar relatório.");
     } finally {

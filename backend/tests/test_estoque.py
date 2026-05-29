@@ -534,3 +534,61 @@ class TestCenarioCompleto:
         })
         assert r9.status_code == 400
         assert r9.data["success"] is False
+
+
+class TestUploadImagemProduto:
+    """Bug C — testa upload de imagem do produto."""
+
+    def test_upload_imagem_sucesso(self, client_a, produto_a):
+        """Upload de imagem JPEG válida deve retornar 200 com imagem_url."""
+        import io
+        from PIL import Image
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        img = Image.new("RGB", (100, 100), color=(255, 0, 0))
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG")
+        buf.seek(0)
+        arquivo = SimpleUploadedFile("foto.jpg", buf.read(), content_type="image/jpeg")
+
+        r = client_a.post(
+            f"/api/estoque/produtos/{produto_a.id}/upload-imagem/",
+            {"imagem": arquivo},
+            format="multipart",
+        )
+        assert r.status_code == 200
+        assert r.data["success"] is True
+        assert r.data["data"]["imagem_url"].startswith("/media/")
+
+    def test_upload_imagem_sem_arquivo(self, client_a, produto_a):
+        """Sem arquivo deve retornar 400."""
+        r = client_a.post(
+            f"/api/estoque/produtos/{produto_a.id}/upload-imagem/",
+            {},
+            format="multipart",
+        )
+        assert r.status_code == 400
+        assert r.data["success"] is False
+
+    def test_upload_imagem_tipo_invalido(self, client_a, produto_a):
+        """Arquivo PDF deve ser rejeitado com 400."""
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        arquivo = SimpleUploadedFile("doc.pdf", b"%PDF-1.4", content_type="application/pdf")
+        r = client_a.post(
+            f"/api/estoque/produtos/{produto_a.id}/upload-imagem/",
+            {"imagem": arquivo},
+            format="multipart",
+        )
+        assert r.status_code == 400
+        assert r.data["success"] is False
+
+    def test_upload_imagem_acesso_negado(self, client_b, produto_a):
+        """Empresa B não pode fazer upload em produto da empresa A."""
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        arquivo = SimpleUploadedFile("foto.jpg", b"\xff\xd8\xff", content_type="image/jpeg")
+        r = client_b.post(
+            f"/api/estoque/produtos/{produto_a.id}/upload-imagem/",
+            {"imagem": arquivo},
+            format="multipart",
+        )
+        assert r.status_code == 404

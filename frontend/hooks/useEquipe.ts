@@ -10,16 +10,12 @@ import type {
   MembroFormData,
   MetaFormData,
 } from "@/types/equipe";
+import type { ApiResponse } from "@/types/api";
 
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: { message?: string };
-}
-
-interface PaginatedResponse<T> extends ApiResponse<T[]> {
-  pagination: { count: number; next: string | null; previous: string | null };
-}
+// O fetcher do SWR chama api.get<T> e retorna o ApiResponse<T> completo.
+// O SWR armazena ApiResponse<T> como data, então acessamos data.data para obter T.
+// CORRETO: api.get<T> retorna ApiResponse<T> onde .data = T (não .data.data).
+// Portanto: fetcher retorna ApiResponse<T>, e usamos resp.data diretamente.
 
 const MEMBROS_KEY = "/equipe/membros/";
 const RESUMO_KEY = "/equipe/resumo/";
@@ -38,22 +34,21 @@ export function useMembros(params?: {
   if (params?.page) query.set("page", String(params.page));
   const qs = query.toString();
 
-  const { data, error, isLoading, mutate } = useSWR<PaginatedResponse<MembroEquipe>>(
+  const { data: resp, error, isLoading, mutate } = useSWR<ApiResponse<MembroEquipe[]>>(
     `${MEMBROS_KEY}${qs ? `?${qs}` : ""}`,
-    (url: string) =>
-      api.get<PaginatedResponse<MembroEquipe>>(url).then((r) => r.data)
+    (url: string) => api.get<MembroEquipe[]>(url)
   );
 
   const adicionarMembro = async (dados: MembroFormData): Promise<MembroEquipe> => {
-    const res = await api.post<ApiResponse<MembroEquipe>>(MEMBROS_KEY, dados);
+    const res = await api.post<MembroEquipe>(MEMBROS_KEY, dados);
     await mutate();
-    return res.data.data;
+    return res.data as MembroEquipe;
   };
 
   const atualizarMembro = async (id: string, dados: Partial<MembroFormData>): Promise<MembroEquipe> => {
-    const res = await api.patch<ApiResponse<MembroEquipe>>(`/equipe/membros/${id}/`, dados);
+    const res = await api.patch<MembroEquipe>(`/equipe/membros/${id}/`, dados);
     await mutate();
-    return res.data.data;
+    return res.data as MembroEquipe;
   };
 
   const removerMembro = async (id: string): Promise<void> => {
@@ -62,8 +57,8 @@ export function useMembros(params?: {
   };
 
   return {
-    membros: data?.data ?? [],
-    pagination: data?.pagination,
+    membros: resp?.data ?? [],
+    pagination: resp?.pagination,
     isLoading,
     error,
     adicionarMembro,
@@ -75,14 +70,13 @@ export function useMembros(params?: {
 
 // ── Detalhe de membro ─────────────────────────────────────
 export function useMembro(id: string) {
-  const { data, error, isLoading, mutate } = useSWR<ApiResponse<MembroEquipe>>(
+  const { data: resp, error, isLoading, mutate } = useSWR<ApiResponse<MembroEquipe>>(
     id ? `/equipe/membros/${id}/` : null,
-    (url: string) =>
-      api.get<ApiResponse<MembroEquipe>>(url).then((r) => r.data)
+    (url: string) => api.get<MembroEquipe>(url)
   );
 
   return {
-    membro: data?.data,
+    membro: resp?.data,
     isLoading,
     error,
     mutate,
@@ -91,14 +85,13 @@ export function useMembro(id: string) {
 
 // ── Resumo da equipe ──────────────────────────────────────
 export function useResumoEquipe() {
-  const { data, error, isLoading } = useSWR<ApiResponse<ResumoEquipe>>(
+  const { data: resp, error, isLoading } = useSWR<ApiResponse<ResumoEquipe>>(
     RESUMO_KEY,
-    (url: string) =>
-      api.get<ApiResponse<ResumoEquipe>>(url).then((r) => r.data)
+    (url: string) => api.get<ResumoEquipe>(url)
   );
 
   return {
-    resumo: data?.data,
+    resumo: resp?.data,
     isLoading,
     error,
   };
@@ -108,22 +101,21 @@ export function useResumoEquipe() {
 export function useMetasMembro(membroId: string) {
   const KEY = membroId ? `/equipe/membros/${membroId}/metas/` : null;
 
-  const { data, error, isLoading, mutate } = useSWR<ApiResponse<MetaMembro[]>>(
+  const { data: resp, error, isLoading, mutate } = useSWR<ApiResponse<MetaMembro[]>>(
     KEY,
-    (url: string) =>
-      api.get<ApiResponse<MetaMembro[]>>(url).then((r) => r.data)
+    (url: string) => api.get<MetaMembro[]>(url)
   );
 
   const criarMeta = async (dados: MetaFormData): Promise<MetaMembro> => {
-    const res = await api.post<ApiResponse<MetaMembro>>(KEY!, dados);
+    const res = await api.post<MetaMembro>(KEY!, dados);
     await mutate();
-    return res.data.data;
+    return res.data as MetaMembro;
   };
 
   const atualizarMeta = async (metaId: string, dados: Partial<MetaFormData>): Promise<MetaMembro> => {
-    const res = await api.patch<ApiResponse<MetaMembro>>(`/equipe/membros/${membroId}/metas/${metaId}/`, dados);
+    const res = await api.patch<MetaMembro>(`/equipe/membros/${membroId}/metas/${metaId}/`, dados);
     await mutate();
-    return res.data.data;
+    return res.data as MetaMembro;
   };
 
   const deletarMeta = async (metaId: string): Promise<void> => {
@@ -132,7 +124,7 @@ export function useMetasMembro(membroId: string) {
   };
 
   return {
-    metas: data?.data ?? [],
+    metas: resp?.data ?? [],
     isLoading,
     error,
     criarMeta,
