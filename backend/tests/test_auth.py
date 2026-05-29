@@ -209,6 +209,15 @@ class TestRegistro:
 
 @pytest.mark.django_db
 class TestLogin:
+    """Testes de login. Cache de throttle é limpo antes de cada teste."""
+
+    @pytest.fixture(autouse=True)
+    def limpar_cache_throttle(self):
+        """Limpa o cache de rate limiting antes de cada teste para evitar 429 espurio."""
+        from django.core.cache import cache
+        cache.clear()
+        yield
+        cache.clear()
 
     def test_login_credenciais_corretas_retorna_200(self, client, usuario_a):
         """Happy path: login com credenciais corretas retorna 200."""
@@ -613,3 +622,32 @@ class TestModels:
         t2 = PasswordResetToken.gerar_token()
         assert t1 != t2
         assert len(t1) >= 64  # token_urlsafe(48) gera ~64 chars
+
+
+# ════════════════════════════════════════════════════════════
+# TESTES: RATE LIMITING (R2)
+# ════════════════════════════════════════════════════════════
+
+
+@pytest.mark.django_db
+class TestRateLimiting:
+    """Valida que throttle_scope está configurado nas views sensíveis."""
+
+    def test_login_view_tem_throttle_scope(self):
+        """LoginView deve ter throttle_scope = 'login'."""
+        from modules.auth.views import LoginView
+        assert LoginView.throttle_scope == "login"
+
+    def test_gerar_conteudo_view_tem_throttle_scope(self):
+        """GerarConteudoView deve ter throttle_scope = 'ai_gerar'."""
+        from modules.ai_hub.views import GerarConteudoView
+        assert GerarConteudoView.throttle_scope == "ai_gerar"
+
+    def test_throttle_rates_configurados(self):
+        """DEFAULT_THROTTLE_RATES deve conter os escopos login e ai_gerar."""
+        from django.conf import settings
+        rates = settings.REST_FRAMEWORK.get("DEFAULT_THROTTLE_RATES", {})
+        assert "login" in rates
+        assert "ai_gerar" in rates
+        assert rates["login"] == "5/minute"
+        assert rates["ai_gerar"] == "10/minute"

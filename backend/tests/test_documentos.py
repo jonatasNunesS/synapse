@@ -252,3 +252,39 @@ def test_multi_tenant_nao_edita_documento_de_outra_empresa(auth_client_b, docume
 def test_multi_tenant_nao_deleta_documento_de_outra_empresa(auth_client_b, documento_a):
     response = auth_client_b.delete(f"/api/documentos/{documento_a.id}/")
     assert response.status_code == 404
+
+# ════════════════════════════════════════════════════════════
+# TESTES: DOWNLOAD AUTENTICADO (R5)
+# ════════════════════════════════════════════════════════════
+
+@pytest.mark.django_db
+def test_api_download_sem_arquivo(auth_client_a, documento_a):
+    """Documento sem arquivo retorna 404 com código NO_FILE."""
+    response = auth_client_a.get(f"/api/documentos/{documento_a.id}/download/")
+    assert response.status_code == 404
+    data = response.json()
+    assert data["error"]["code"] == "NO_FILE"
+
+
+@pytest.mark.django_db
+def test_api_download_sem_autenticacao(documento_a):
+    """Download sem autenticação retorna 401."""
+    from rest_framework.test import APIClient
+    client = APIClient()
+    response = client.get(f"/api/documentos/{documento_a.id}/download/")
+    assert response.status_code == 401
+
+
+@pytest.mark.django_db
+def test_api_download_multi_tenant(auth_client_b, documento_a):
+    """Empresa B não pode baixar arquivo da empresa A."""
+    response = auth_client_b.get(f"/api/documentos/{documento_a.id}/download/")
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_api_download_documento_inexistente(auth_client_a):
+    """UUID inexistente retorna 404."""
+    import uuid as _uuid
+    response = auth_client_a.get(f"/api/documentos/{_uuid.uuid4()}/download/")
+    assert response.status_code == 404

@@ -105,6 +105,8 @@ class LoginView(APIView):
     """Autentica usuário e retorna tokens em cookies."""
 
     permission_classes = [AllowAny]
+    # R2: 5 tentativas/minuto por IP (ScopedRateThrottle)
+    throttle_scope = "login"
 
     def post(self, request: Request) -> Response:
         serializer = LoginSerializer(data=request.data)

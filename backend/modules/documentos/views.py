@@ -3,6 +3,8 @@ Synapse — M7: Views do módulo Documentos.
 View → Service → Repository → Model (Clean Architecture).
 """
 import logging
+import os
+from django.http import FileResponse
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from shared.pagination import StandardPagination
@@ -134,3 +136,48 @@ class VersaoListCreateView(APIView):
             f"Versão {versao.numero_versao} criada.",
             status_code=201,
         )
+
+
+class DocumentoDownloadView(APIView):
+    """
+    GET /api/documentos/{id}/download/
+    Serve o arquivo do documento de forma autenticada e com isolamento
+    multi-tenant. Em produção, o Django não serve /media/ diretamente
+    (DEBUG=False), por isso esta view usa FileResponse para streaming
+    seguro do arquivo sem expor URLs públicas.
+    """
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def get(self, request, pk):
+        try:
+            doc = DocumentoRepository.obter(str(pk), str(request.user.empresa_id))
+        except Documento.DoesNotExist:
+            return error_response("NOT_FOUND", "Documento não encontrado.", status_code=404)
+
+        if not doc.arquivo:
+            return error_response(
+                "NO_FILE",
+                "Este documento não possui arquivo anexado.",
+                status_code=404,
+            )
+
+        # Abre o arquivo via storage backend (local ou S3 em prod)
+        try:
+            arquivo = doc.arquivo.open("rb")
+        except (FileNotFoundError, OSError):
+            return error_response(
+                "FILE_NOT_FOUND",
+                "Arquivo não encontrado no servidor.",
+                status_code=404,
+            )
+
+        # Determina o nome de download a partir do path original
+        filename = os.path.basename(doc.arquivo.name)
+        response = FileResponse(
+            arquivo,
+            as_attachment=True,
+            filename=filename,
+        )
+        return response

@@ -13,13 +13,65 @@ from django.views.decorators.http import require_GET
 
 @require_GET
 def health_check(request):
-    """Endpoint de health check: GET /api/health/"""
+    """
+    Endpoint de health check enriquecido: GET /api/health/
+    Verifica DB, Redis e Celery individualmente.
+    Retorna HTTP 200 se tudo ok, HTTP 503 se qualquer dependência falhar.
+    """
+    import time
+    from django.db import connection, OperationalError as DBError
+    from django.core.cache import cache
+    from celery.app.control import Control
+    from config.celery import app as celery_app
+
+    checks = {}
+    overall_ok = True
+
+    # ── DB ──────────────────────────────────────────────────────────
+    try:
+        connection.ensure_connection()
+        checks["db"] = {"status": "ok"}
+    except DBError as exc:
+        checks["db"] = {"status": "error", "detail": str(exc)}
+        overall_ok = False
+
+    # ── Redis ──────────────────────────────────────────────────────
+    try:
+        _probe_key = "synapse:health:probe"
+        _probe_val = str(time.time())
+        cache.set(_probe_key, _probe_val, timeout=10)
+        assert cache.get(_probe_key) == _probe_val
+        checks["redis"] = {"status": "ok"}
+    except Exception as exc:
+        checks["redis"] = {"status": "error", "detail": str(exc)}
+        overall_ok = False
+
+    # ── Celery ─────────────────────────────────────────────────────
+    try:
+        ctrl = Control(app=celery_app)
+        # ping com timeout curto para não bloquear o health check
+        pong = ctrl.ping(timeout=1.0)
+        if pong:
+            checks["celery"] = {"status": "ok", "workers": len(pong)}
+        else:
+            # Sem workers ativos — não é erro crítico (pode estar escalando)
+            checks["celery"] = {"status": "no_workers"}
+    except Exception as exc:
+        checks["celery"] = {"status": "error", "detail": str(exc)}
+        overall_ok = False
+
+    http_status = 200 if overall_ok else 503
     return JsonResponse(
         {
-            "success": True,
-            "data": {"status": "ok", "service": "synapse-backend"},
-            "message": "Synapse API está operacional.",
-        }
+            "success": overall_ok,
+            "data": {
+                "status": "ok" if overall_ok else "degraded",
+                "service": "synapse-backend",
+                "checks": checks,
+            },
+            "message": "Synapse API está operacional." if overall_ok else "Synapse API degradada.",
+        },
+        status=http_status,
     )
 
 

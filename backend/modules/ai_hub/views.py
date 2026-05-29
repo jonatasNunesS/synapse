@@ -31,6 +31,8 @@ logger = logging.getLogger("synapse")
 class GerarConteudoView(APIView):
     """POST /api/ai/gerar/ — Solicita geração assíncrona de conteúdo."""
     permission_classes = [IsAuthenticated]
+    # R2: 10 requisições/minuto por usuário autenticado (ScopedRateThrottle)
+    throttle_scope = "ai_gerar"
 
     def post(self, request):
         serializer = SolicitacaoConteudoSerializer(data=request.data)

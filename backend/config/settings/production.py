@@ -12,6 +12,19 @@ from .base import *  # noqa: F401, F403
 # ════════════════════════════════════════════════════════════
 DEBUG = False
 
+# ════════════════════════════════════════════════════════════
+# WHITENOISE — Arquivos estáticos em produção
+# Nota: /media/ (uploads) NÃO é servido pelo WhiteNoise.
+# Use DocumentoDownloadView (autenticado) ou configure nginx
+# para servir /media/ diretamente em produção.
+# ════════════════════════════════════════════════════════════
+INSTALLED_APPS = ["whitenoise.runserver_nostatic"] + INSTALLED_APPS  # noqa: F405
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+] + [m for m in MIDDLEWARE if m != "django.middleware.security.SecurityMiddleware"]  # noqa: F405
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=True, cast=bool)

@@ -7,5 +7,10 @@
 # ── Servidor WSGI ──────────────────────────────────────────
 gunicorn==23.0.0
 
+# ── Arquivos Estáticos em Produção ──────────────────────────
+# WhiteNoise serve arquivos estáticos; /media/ é servido via
+# DocumentoDownloadView (autenticado) ou nginx em produção.
+whitenoise==6.9.0
+
 # ── Monitoramento ──────────────────────────────────────────
 sentry-sdk[django]==2.19.2
