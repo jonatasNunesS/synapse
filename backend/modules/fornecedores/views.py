@@ -281,3 +281,52 @@ class CompraFornecedorListCreateView(APIView):
             )
         except ResourceNotFound as exc:
             return error_response("NOT_FOUND", str(exc), status_code=404)
+
+
+class CompraFornecedorDetailView(APIView):
+    """
+    GET    /api/fornecedores/{fornecedor_pk}/compras/{pk}/  — detalhe
+    PATCH  /api/fornecedores/{fornecedor_pk}/compras/{pk}/  — editar
+    DELETE /api/fornecedores/{fornecedor_pk}/compras/{pk}/  — excluir
+    """
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsEmpresaMember]
+
+    def get(self, request, fornecedor_pk, pk):
+        empresa_id = request.user.empresa_id
+        try:
+            compra = FornecedorService.obter_compra(empresa_id, pk)
+        except ResourceNotFound as exc:
+            return error_response("NOT_FOUND", str(exc), status_code=404)
+        return success_response(data=CompraFornecedorSerializer(compra).data)
+
+    def patch(self, request, fornecedor_pk, pk):
+        empresa_id = request.user.empresa_id
+        try:
+            compra = FornecedorService.obter_compra(empresa_id, pk)
+        except ResourceNotFound as exc:
+            return error_response("NOT_FOUND", str(exc), status_code=404)
+
+        serializer = CompraFornecedorCreateSerializer(
+            compra, data=request.data, partial=True
+        )
+        if not serializer.is_valid():
+            return error_response("VALIDATION_ERROR", "Dados inválidos.", details=serializer.errors)
+
+        dados = {k: v for k, v in serializer.validated_data.items() if k != "fornecedor"}
+        try:
+            compra = FornecedorService.atualizar_compra(empresa_id, pk, dados)
+            return success_response(
+                data=CompraFornecedorSerializer(compra).data,
+                message="Compra atualizada com sucesso.",
+            )
+        except ResourceNotFound as exc:
+            return error_response("NOT_FOUND", str(exc), status_code=404)
+
+    def delete(self, request, fornecedor_pk, pk):
+        empresa_id = request.user.empresa_id
+        try:
+            FornecedorService.excluir_compra(empresa_id, pk)
+            return no_content_response()
+        except ResourceNotFound as exc:
+            return error_response("NOT_FOUND", str(exc), status_code=404)

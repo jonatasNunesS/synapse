@@ -16,6 +16,8 @@ from rest_framework.permissions import IsAuthenticated
 
 from shared.responses import success_response, error_response
 from shared.pagination import StandardPagination
+from shared.authentication import CookieJWTAuthentication
+from shared.permissions import IsEmpresaMember
 
 from .serializers import (
     ConteudoGeradoSerializer,
@@ -30,7 +32,8 @@ logger = logging.getLogger("synapse")
 
 class GerarConteudoView(APIView):
     """POST /api/ai/gerar/ — Solicita geração assíncrona de conteúdo."""
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
     # R2: 10 requisições/minuto por usuário autenticado (ScopedRateThrottle)
     throttle_scope = "ai_gerar"
 
@@ -79,7 +82,8 @@ class GerarConteudoView(APIView):
 
 class StatusTaskView(APIView):
     """GET /api/ai/status/{task_id}/ — Polling de status da TaskIA."""
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def get(self, request, task_id):
         empresa_id = request.user.empresa_id
@@ -96,7 +100,8 @@ class StatusTaskView(APIView):
 
 class HistoricoConteudosView(APIView):
     """GET /api/ai/historico/ — Lista conteúdos gerados com paginação."""
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def get(self, request):
         empresa_id = request.user.empresa_id
@@ -116,7 +121,8 @@ class HistoricoConteudosView(APIView):
 
 class FavoritarConteudoView(APIView):
     """POST /api/ai/favoritar/{conteudo_id}/ — Toggle favorito."""
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def post(self, request, conteudo_id):
         empresa_id = request.user.empresa_id
@@ -136,7 +142,8 @@ class FavoritarConteudoView(APIView):
 
 class UsoIAView(APIView):
     """GET /api/ai/uso/ — Uso mensal e limite do plano."""
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def get(self, request):
         empresa_id = request.user.empresa_id
@@ -147,7 +154,8 @@ class UsoIAView(APIView):
 
 class InsightSemanalView(APIView):
     """GET /api/ai/insight/ — Último insight semanal gerado."""
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def get(self, request):
         empresa_id = request.user.empresa_id

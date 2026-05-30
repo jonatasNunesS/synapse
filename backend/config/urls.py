@@ -92,6 +92,7 @@ urlpatterns = [
     path("api/notificacoes/", include("modules.notificacoes.urls")),
     path("api/dashboard/", include("modules.dashboard.urls")),
     path("api/ai/", include("modules.ai_hub.urls")),
+    path("api/search/", include("modules.search.urls")),
 ]
 
 # ── Debug Toolbar (apenas em dev) ──────────────────────────

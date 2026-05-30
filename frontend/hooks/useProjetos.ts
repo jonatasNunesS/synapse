@@ -63,12 +63,12 @@ export function useProjetos(filtros?: Record<string, string>) {
     setError(null);
     try {
       const params = new URLSearchParams(filtros ?? {});
-      const resp = await api.get<PaginatedResponse<ProjetoList>>(
+      const resp = await api.get<ProjetoList[]>(
         `/projetos/?${params.toString()}`
       );
-      // MÉDIO-11: guard antes de acessar .data e .pagination
-      setProjetos(resp.data?.data ?? []);
-      setTotal(resp.data?.pagination?.count ?? 0);
+      // Bug A fix: api.get<T> retorna resp.data = T e resp.pagination = paginação
+      setProjetos(resp.data ?? []);
+      setTotal(resp.pagination?.count ?? 0);
     } catch (err: unknown) {
       setError(getErrorMessage(err));
     } finally {
@@ -198,10 +198,11 @@ export function useTarefas(projetoId: string | null) {
     setLoading(true);
     setError(null);
     try {
-      const resp = await api.get<PaginatedResponse<TarefaList>>(
+      const resp = await api.get<TarefaList[]>(
         `/projetos/${projetoId}/tarefas/`
       );
-      setTarefas(resp.data?.data ?? []);
+      // Bug A fix: api.get<T> retorna resp.data = T e resp.pagination = paginação
+      setTarefas(resp.data ?? []);
     } catch (err: unknown) {
       setError(getErrorMessage(err));
     } finally {
@@ -296,10 +297,11 @@ export function useComentarios(tarefaId: string | null) {
     setLoading(true);
     setError(null);
     try {
-      const resp = await api.get<PaginatedResponse<Comentario>>(
+      const resp = await api.get<Comentario[]>(
         `/projetos/tarefas/${tarefaId}/comentarios/`
       );
-      setComentarios(resp.data?.data ?? []);
+      // Bug A fix: api.get<T> retorna resp.data = T e resp.pagination = paginação
+      setComentarios(resp.data ?? []);
     } catch (err: unknown) {
       setError(getErrorMessage(err));
     } finally {

@@ -5,6 +5,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 
 from shared.authentication import CookieJWTAuthentication
@@ -304,6 +305,36 @@ class MovimentacaoViewSet(ViewSet):
             "METHOD_NOT_ALLOWED",
             "Movimentações não podem ser excluídas.",
             status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
+
+
+class EstornarMovimentacaoView(APIView):
+    """
+    POST /api/estoque/movimentacoes/{id}/estornar/
+    Cria uma movimentação inversa (estorno) respeitando a imutabilidade.
+    """
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticatedEmpresa]
+
+    def post(self, request, pk):
+        empresa_id = request.user.empresa_id
+        motivo = request.data.get("motivo", "")
+        try:
+            estorno, produto = EstoqueService.estornar_movimentacao(
+                empresa_id, pk, request.user.id, motivo
+            )
+        except Exception as e:
+            return error_response(
+                "NOT_FOUND",
+                str(e),
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        return created_response(
+            data={
+                "estorno": MovimentacaoSerializer(estorno).data,
+                "produto": ProdutoDetailSerializer(produto).data,
+            },
+            message="Estorno registrado com sucesso.",
         )
 
 

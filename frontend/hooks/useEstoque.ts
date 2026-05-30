@@ -241,43 +241,30 @@ export function useCategoriasEstoque() {
   }, []);
 
   const criar = useCallback(
-    async (dados: CategoriaEstoqueCreate): Promise<CategoriaEstoque | null> => {
-      try {
-        const res = await api.post<CategoriaEstoque>(
-          "/estoque/categorias/",
-          dados
-        );
-        return res.data || null;
-      } catch {
-        return null;
-      }
+    async (dados: CategoriaEstoqueCreate): Promise<CategoriaEstoque> => {
+      // Item 2 fix: erro propaga para o modal + recarrega lista após sucesso
+      const res = await api.post<CategoriaEstoque>("/estoque/categorias/", dados);
+      await listar();
+      return res.data;
     },
-    []
+    [listar]
   );
 
   const atualizar = useCallback(
-    async (id: string, dados: Partial<CategoriaEstoqueCreate>): Promise<CategoriaEstoque | null> => {
-      try {
-        const res = await api.patch<CategoriaEstoque>(
-          `/estoque/categorias/${id}/`,
-          dados
-        );
-        return res.data || null;
-      } catch {
-        return null;
-      }
+    async (id: string, dados: Partial<CategoriaEstoqueCreate>): Promise<CategoriaEstoque> => {
+      // Item 2 fix: erro propaga para o modal + recarrega lista após sucesso
+      const res = await api.patch<CategoriaEstoque>(`/estoque/categorias/${id}/`, dados);
+      await listar();
+      return res.data;
     },
-    []
+    [listar]
   );
 
-  const excluir = useCallback(async (id: string): Promise<boolean> => {
-    try {
-      await api.delete(`/estoque/categorias/${id}/`);
-      return true;
-    } catch {
-      return false;
-    }
-  }, []);
+  const excluir = useCallback(async (id: string): Promise<void> => {
+    // Item 2 fix: erro propaga para o modal + recarrega lista após sucesso
+    await api.delete(`/estoque/categorias/${id}/`);
+    await listar();
+  }, [listar]);
 
   return { categorias, loading, error, listar, criar, atualizar, excluir };
 }

@@ -12,6 +12,7 @@ from .views import (
     FornecedorDetailView,
     FornecedorAvaliacaoView,
     CompraFornecedorListCreateView,
+    CompraFornecedorDetailView,
 )
 
 app_name = "fornecedores"
@@ -35,5 +36,10 @@ urlpatterns = [
         "<uuid:fornecedor_pk>/compras/",
         CompraFornecedorListCreateView.as_view(),
         name="compras-list",
+    ),
+    path(
+        "<uuid:fornecedor_pk>/compras/<uuid:pk>/",
+        CompraFornecedorDetailView.as_view(),
+        name="compras-detail",
     ),
 ]

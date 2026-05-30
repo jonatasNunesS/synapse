@@ -313,3 +313,56 @@ def test_api_sem_autenticacao():
     client = APIClient()
     response = client.get("/api/equipe/membros/")
     assert response.status_code == 401
+
+
+# ─── Testes: Convidar Membro (Item 7) ────────────────────────────────────────
+
+@pytest.mark.django_db
+def test_convidar_membro_sucesso(auth_client_a):
+    """POST /equipe/convidar/ cria usuário e membro em transação atômica."""
+    resp = auth_client_a.post(
+        "/api/equipe/convidar/",
+        data={"email": "novo@empresa.com", "nome": "Novo Colaborador", "perfil": "colaborador", "cargo": "Analista", "departamento": "Vendas"},
+        content_type="application/json",
+    )
+    assert resp.status_code == 201
+    data = resp.json()["data"]
+    assert data["email"] == "novo@empresa.com"
+    assert data["cargo"] == "Analista"
+    assert data["departamento"] == "Vendas"
+
+
+@pytest.mark.django_db
+def test_convidar_membro_email_duplicado(auth_client_a, usuario_a2):
+    """Convidar e-mail já cadastrado na empresa deve retornar 400."""
+    resp = auth_client_a.post(
+        "/api/equipe/convidar/",
+        data={"email": usuario_a2.email, "nome": "Duplicado", "perfil": "colaborador"},
+        content_type="application/json",
+    )
+    assert resp.status_code == 400
+    assert resp.json()["success"] is False
+
+
+@pytest.mark.django_db
+def test_convidar_membro_perfil_invalido(auth_client_a):
+    """Perfil inválido deve retornar 400."""
+    resp = auth_client_a.post(
+        "/api/equipe/convidar/",
+        data={"email": "invalido@empresa.com", "nome": "Teste", "perfil": "superadmin"},
+        content_type="application/json",
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.django_db
+def test_convidar_membro_sem_autenticacao():
+    """Sem autenticação deve retornar 401."""
+    from rest_framework.test import APIClient
+    c = APIClient()
+    resp = c.post("/api/equipe/convidar/", {
+        "email": "anonimo@empresa.com",
+        "nome": "Anônimo",
+        "perfil": "colaborador",
+    })
+    assert resp.status_code == 401

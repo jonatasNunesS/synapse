@@ -148,3 +148,40 @@ class EstoqueService:
     @staticmethod
     def obter_historico_produto(empresa_id, produto_id):
         return EstoqueRepository.historico_produto(empresa_id, produto_id)
+
+    @staticmethod
+    def estornar_movimentacao(empresa_id, movimentacao_id, usuario_id, motivo_estorno=""):
+        """
+        Cria uma movimentação de estorno (inversa) para a movimentação original.
+        A movimentação original permanece imutável (regra de negócio).
+        """
+        from .models import Movimentacao
+        try:
+            original = Movimentacao.objects.get(pk=movimentacao_id, empresa_id=empresa_id)
+        except Movimentacao.DoesNotExist:
+            from shared.exceptions import ResourceNotFound
+            raise ResourceNotFound("Movimentação", str(movimentacao_id))
+
+        # Tipo inverso: saida → entrada, entrada → saida, ajuste → ajuste
+        tipo_inverso = {
+            "saida": "entrada",
+            "entrada": "saida",
+            "ajuste": "ajuste",
+            "transferencia": "transferencia",
+        }.get(original.tipo, "ajuste")
+
+        dados_estorno = {
+            "produto": original.produto,
+            "variacao": original.variacao,
+            "tipo": tipo_inverso,
+            "quantidade": original.quantidade,
+            "motivo": "devolucao",
+            "referencia": f"Estorno de {original.id}",
+            "observacoes": motivo_estorno or f"Estorno automático da movimentação {original.id}",
+        }
+
+        movimentacao_estorno, produto = EstoqueRepository.criar_movimentacao(
+            empresa_id, dados_estorno, usuario_id
+        )
+        invalidate_cache(empresa_id, "estoque")
+        return movimentacao_estorno, produto

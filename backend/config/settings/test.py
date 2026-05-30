@@ -32,6 +32,13 @@ CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
 
 # ════════════════════════════════════════════════════════════
+# SERVIÇOS EXTERNOS - Desabilitados em testes
+# ════════════════════════════════════════════════════════════
+RESEND_API_KEY = ""  # E-mails não são enviados em testes
+GROQ_API_KEY = ""   # IA não é chamada em testes (mock nos testes de AI Hub)
+ALLOWED_HOSTS = ["*"]  # Permite qualquer host em testes
+
+# ════════════════════════════════════════════════════════════
 # SENHAS - Hasher rápido para testes
 # ════════════════════════════════════════════════════════════
 PASSWORD_HASHERS = [

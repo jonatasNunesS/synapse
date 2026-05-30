@@ -116,10 +116,12 @@ class EquipeRepository:
         """Cria CustomUser + MembroEquipe em transaction.atomic()."""
         from modules.auth.models import CustomUser
         with transaction.atomic():
+            import secrets
+            senha_temp = dados_usuario.get("password") or secrets.token_urlsafe(16)
             usuario = CustomUser.objects.create_user(
                 email=dados_usuario["email"],
                 nome=dados_usuario["nome"],
-                password=dados_usuario.get("password", CustomUser.objects.make_random_password()),
+                senha=senha_temp,
                 empresa_id=empresa_id,
                 perfil=dados_usuario.get("perfil", "colaborador"),
             )

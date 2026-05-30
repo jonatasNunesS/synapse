@@ -180,3 +180,18 @@ class FornecedorService:
         compra = FornecedorRepository.criar_compra(fornecedor_id, empresa_id, dados, usuario_id)
         invalidate_cache(empresa_id, "fornecedores")
         return compra
+
+    @staticmethod
+    def obter_compra(empresa_id: int, compra_id):
+        return FornecedorRepository.obter_compra(empresa_id, compra_id)
+
+    @staticmethod
+    def atualizar_compra(empresa_id: int, compra_id, dados: dict):
+        compra = FornecedorRepository.atualizar_compra(empresa_id, compra_id, dados)
+        invalidate_cache(empresa_id, "fornecedores")
+        return compra
+
+    @staticmethod
+    def excluir_compra(empresa_id: int, compra_id):
+        FornecedorRepository.excluir_compra(empresa_id, compra_id)
+        invalidate_cache(empresa_id, "fornecedores")

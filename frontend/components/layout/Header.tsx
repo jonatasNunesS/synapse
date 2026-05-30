@@ -2,7 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
-import { Search, LogOut, User, Settings, Building2, Menu } from "lucide-react";
+import { LogOut, User, Settings, Building2, Menu } from "lucide-react";
+import { BuscaGlobal } from "@/components/layout/BuscaGlobal";
 import { NotificationBell } from "@/components/notificacoes/NotificationBell";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
@@ -44,17 +45,9 @@ export function Header() {
         <Menu className="h-5 w-5" />
       </button>
 
-      {/* ── Busca ─────────────────────────────────────────── */}
+      {/* ── Busca Global ───────────────────────────────────── */}
       <div className="flex items-center gap-4 flex-1 max-w-xl">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-600" />
-          <input
-            type="text"
-            placeholder="Buscar..."
-            className="h-9 w-full rounded-lg border border-slate-800 bg-slate-900/60 pl-9 pr-4 text-sm text-slate-300 placeholder:text-slate-600
-              focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/40 transition-colors"
-          />
-        </div>
+        <BuscaGlobal />
       </div>
 
       {/* ── Ações ─────────────────────────────────────────── */}

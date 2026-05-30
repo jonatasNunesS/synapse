@@ -269,6 +269,7 @@ class TestMovimentacao:
             "tipo": "saida",
             "quantidade": "3",
             "motivo": "venda",
+            "preco_unitario": "29.90",
         })
         assert resp.status_code == 201
         # Estoque era 10, saída de 3 → 7
@@ -365,6 +366,7 @@ class TestMovimentacao:
             "tipo": "saida",
             "quantidade": "2",
             "motivo": "venda",
+            "preco_unitario": "49.90",
         })
         assert resp.status_code == 201
         mov = resp.data["data"]["movimentacao"]
@@ -406,6 +408,7 @@ class TestAlertasResumo:
             "tipo": "saida",
             "quantidade": "8",  # 10 - 8 = 2, abaixo do mínimo 5
             "motivo": "venda",
+            "preco_unitario": "29.90",
         })
         resp = client_a.get("/api/estoque/alertas/")
         assert resp.status_code == 200
@@ -451,6 +454,7 @@ class TestAlertasResumo:
             "tipo": "saida",
             "quantidade": "8",
             "motivo": "venda",
+            "preco_unitario": "29.90",
         })
         resp = client_a.get(f"/api/estoque/produtos/{produto_a.id}/")
         assert resp.data["data"]["status_estoque"] == "baixo"
@@ -505,6 +509,7 @@ class TestCenarioCompleto:
             "tipo": "saida",
             "quantidade": "8",
             "motivo": "venda",
+            "preco_unitario": "79.90",
         })
         assert r5.status_code == 201
         assert float(r5.data["data"]["produto"]["estoque_atual"]) == 2.0
@@ -531,6 +536,7 @@ class TestCenarioCompleto:
             "tipo": "saida",
             "quantidade": "100",
             "motivo": "venda",
+            "preco_unitario": "79.90",
         })
         assert r9.status_code == 400
         assert r9.data["success"] is False
@@ -592,3 +598,97 @@ class TestUploadImagemProduto:
             format="multipart",
         )
         assert r.status_code == 404
+
+
+# ─── Testes: Estorno de Movimentação ─────────────────────────────────────────
+
+class TestEstornoMovimentacao:
+    """Item 3b — testa o endpoint de estorno de movimentação."""
+
+    def test_estorno_entrada_cria_saida(self, client_a, produto_a):
+        """Estornar uma entrada cria uma saída inversa."""
+        # Registrar entrada
+        r1 = client_a.post("/api/estoque/movimentacoes/", {
+            "produto": str(produto_a.id),
+            "tipo": "entrada",
+            "quantidade": "5",
+            "motivo": "compra",
+        })
+        assert r1.status_code == 201
+        mov_id = r1.data["data"]["movimentacao"]["id"]
+        estoque_apos_entrada = float(r1.data["data"]["produto"]["estoque_atual"])
+
+        # Estornar a entrada
+        r2 = client_a.post(f"/api/estoque/movimentacoes/{mov_id}/estornar/", {
+            "motivo": "Compra cancelada pelo fornecedor",
+        })
+        assert r2.status_code == 201
+        estorno = r2.data["data"]["estorno"]
+        assert estorno["tipo"] == "saida"
+        assert float(estorno["quantidade"]) == 5.0
+        assert "Estorno de" in estorno["referencia"]
+        # Estoque deve voltar ao valor antes da entrada
+        assert float(r2.data["data"]["produto"]["estoque_atual"]) == estoque_apos_entrada - 5.0
+
+    def test_estorno_saida_cria_entrada(self, client_a, produto_a):
+        """Estornar uma saída cria uma entrada inversa (devolução)."""
+        # Registrar saída de venda
+        r1 = client_a.post("/api/estoque/movimentacoes/", {
+            "produto": str(produto_a.id),
+            "tipo": "saida",
+            "quantidade": "3",
+            "motivo": "venda",
+            "preco_unitario": "29.90",
+        })
+        assert r1.status_code == 201
+        mov_id = r1.data["data"]["movimentacao"]["id"]
+        estoque_apos_saida = float(r1.data["data"]["produto"]["estoque_atual"])
+
+        # Estornar a saída (devolução do cliente)
+        r2 = client_a.post(f"/api/estoque/movimentacoes/{mov_id}/estornar/", {
+            "motivo": "Cliente devolveu o produto",
+        })
+        assert r2.status_code == 201
+        estorno = r2.data["data"]["estorno"]
+        assert estorno["tipo"] == "entrada"
+        assert float(estorno["quantidade"]) == 3.0
+        assert float(r2.data["data"]["produto"]["estoque_atual"]) == estoque_apos_saida + 3.0
+
+    def test_estorno_movimentacao_inexistente(self, client_a):
+        """Estornar movimentação inexistente retorna 404."""
+        import uuid
+        r = client_a.post(f"/api/estoque/movimentacoes/{uuid.uuid4()}/estornar/", {})
+        assert r.status_code == 404
+
+    def test_estorno_multi_tenant(self, client_b, produto_a):
+        """Empresa B não pode estornar movimentação da Empresa A."""
+        # Criar movimentação na empresa A
+        from modules.estoque.models import Movimentacao
+        import uuid
+        # Usar um UUID aleatório — empresa B não tem acesso
+        r = client_b.post(f"/api/estoque/movimentacoes/{uuid.uuid4()}/estornar/", {})
+        assert r.status_code == 404
+
+    def test_movimentacao_original_permanece_imutavel(self, client_a, produto_a):
+        """Após estorno, a movimentação original ainda existe e não foi alterada."""
+        r1 = client_a.post("/api/estoque/movimentacoes/", {
+            "produto": str(produto_a.id),
+            "tipo": "entrada",
+            "quantidade": "2",
+            "motivo": "compra",
+        })
+        assert r1.status_code == 201
+        mov_id = r1.data["data"]["movimentacao"]["id"]
+        qtd_original = float(r1.data["data"]["movimentacao"]["quantidade"])
+
+        # Estornar
+        client_a.post(f"/api/estoque/movimentacoes/{mov_id}/estornar/", {})
+
+        # Verificar que a original ainda existe no histórico
+        r_hist = client_a.get(f"/api/estoque/produtos/{produto_a.id}/movimentacoes/")
+        assert r_hist.status_code == 200
+        ids_hist = [m["id"] for m in r_hist.data["data"]]
+        assert mov_id in ids_hist
+        # A quantidade da original não mudou
+        original_no_hist = next(m for m in r_hist.data["data"] if m["id"] == mov_id)
+        assert float(original_no_hist["quantidade"]) == qtd_original

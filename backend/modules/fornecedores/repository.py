@@ -213,3 +213,29 @@ class FornecedorRepository:
                 **dados,
             )
         return compra
+
+    @staticmethod
+    def obter_compra(empresa_id, compra_id) -> CompraFornecedor:
+        """Retorna compra garantindo multi-tenant."""
+        try:
+            return CompraFornecedor.objects.select_related("fornecedor", "criado_por").get(
+                pk=compra_id, empresa_id=empresa_id
+            )
+        except CompraFornecedor.DoesNotExist:
+            from shared.exceptions import ResourceNotFound
+            raise ResourceNotFound("Compra", str(compra_id))
+
+    @staticmethod
+    def atualizar_compra(empresa_id, compra_id, dados: dict) -> CompraFornecedor:
+        """Atualiza campos editáveis da compra."""
+        compra = FornecedorRepository.obter_compra(empresa_id, compra_id)
+        for campo, valor in dados.items():
+            setattr(compra, campo, valor)
+        compra.save()
+        return compra
+
+    @staticmethod
+    def excluir_compra(empresa_id, compra_id) -> None:
+        """Exclui compra garantindo multi-tenant."""
+        compra = FornecedorRepository.obter_compra(empresa_id, compra_id)
+        compra.delete()

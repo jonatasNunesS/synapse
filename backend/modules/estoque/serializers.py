@@ -144,14 +144,23 @@ class MovimentacaoSerializer(serializers.ModelSerializer):
     tipo_display = serializers.CharField(source="get_tipo_display", read_only=True)
     motivo_display = serializers.CharField(source="get_motivo_display", read_only=True)
 
+    valor_total = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Movimentacao
         fields = [
             "id", "produto", "produto_nome", "variacao", "variacao_nome",
             "tipo", "tipo_display", "quantidade", "estoque_antes", "estoque_depois",
-            "motivo", "motivo_display", "referencia", "observacoes",
-            "criado_por_nome", "criado_em",
+            "motivo", "motivo_display", "preco_unitario", "desconto", "valor_total",
+            "referencia", "observacoes", "criado_por_nome", "criado_em",
         ]
+
+    def get_valor_total(self, obj):
+        """Calcula valor_total = quantidade * preco_unitario * (1 - desconto/100)."""
+        if obj.preco_unitario is None:
+            return None
+        desconto = obj.desconto or 0
+        return float(obj.quantidade * obj.preco_unitario * (1 - desconto / 100))
 
 
 # ─── Movimentação — Escrita ───────────────────────────────────────────────────
@@ -161,8 +170,12 @@ class MovimentacaoCreateSerializer(serializers.ModelSerializer):
         model = Movimentacao
         fields = [
             "produto", "variacao", "tipo", "quantidade",
-            "motivo", "referencia", "observacoes",
+            "motivo", "preco_unitario", "desconto", "referencia", "observacoes",
         ]
+        extra_kwargs = {
+            "preco_unitario": {"required": False, "allow_null": True},
+            "desconto": {"required": False},
+        }
 
     def validate_quantidade(self, value):
         if value <= 0:
@@ -186,6 +199,20 @@ class MovimentacaoCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     {"produto": "Produto não encontrado."}
                 )
+
+        # Validar preco_unitario obrigatório para saída do tipo venda
+        if tipo == "saida" and data.get("motivo") == "venda":
+            if not data.get("preco_unitario"):
+                raise serializers.ValidationError(
+                    {"preco_unitario": "O preço unitário é obrigatório para saídas do tipo venda."}
+                )
+
+        # Validar desconto entre 0 e 100
+        desconto = data.get("desconto", 0)
+        if desconto < 0 or desconto > 100:
+            raise serializers.ValidationError(
+                {"desconto": "O desconto deve estar entre 0 e 100%."}
+            )
 
         # Verificar estoque suficiente para saída
         if tipo == "saida":

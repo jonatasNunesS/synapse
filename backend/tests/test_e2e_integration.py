@@ -286,7 +286,7 @@ class TestE2EEstoque:
         }, format="json")
         # Saída de 15
         resp = client.post("/api/estoque/movimentacoes/", {
-            "produto": produto_id, "tipo": "saida", "quantidade": 15, "motivo": "venda"
+            "produto": produto_id, "tipo": "saida", "quantidade": 15, "motivo": "venda", "preco_unitario": "10.00"
         }, format="json")
         assert resp.status_code == 201
         prod_resp = client.get(f"/api/estoque/produtos/{produto_id}/")

@@ -16,12 +16,11 @@ def enviar_email_boas_vindas(self, usuario_id: str, empresa_nome: str):
         import resend
 
         usuario = CustomUser.objects.get(id=usuario_id)
-        resend.api_key = settings.RESEND_API_KEY
-
         if not settings.RESEND_API_KEY:
             logger.warning("RESEND_API_KEY não configurado. E-mail de boas-vindas não enviado.")
             return {"status": "skipped", "reason": "no_api_key"}
 
+        resend.api_key = settings.RESEND_API_KEY
         params = resend.Emails.SendParams(
             from_=settings.DEFAULT_FROM_EMAIL,
             to=[usuario.email],

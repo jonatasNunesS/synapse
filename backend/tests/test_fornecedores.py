@@ -567,3 +567,63 @@ class TestCenarioCompleto:
         resp_resumo = client_a.get("/api/fornecedores/resumo/")
         assert resp_resumo.status_code == 200
         assert resp_resumo.data["data"]["total_fornecedores"] >= 1
+
+
+# ─── Testes: Editar e Excluir Compra ─────────────────────────────────────────
+
+class TestCompraDetail:
+    """Item 6 — testa GET/PATCH/DELETE em compras de fornecedor."""
+
+    @pytest.fixture
+    def compra_a(self, client_a, fornecedor_tecido):
+        """Cria uma compra para uso nos testes."""
+        resp = client_a.post(f"/api/fornecedores/{fornecedor_tecido.id}/compras/", {
+            "descricao": "Pedido inicial",
+            "valor": "500.00",
+            "data_compra": "2025-01-15",
+            "status": "pendente",
+        })
+        assert resp.status_code == 201
+        return resp.data["data"]
+
+    def test_detalhe_compra(self, client_a, fornecedor_tecido, compra_a):
+        r = client_a.get(f"/api/fornecedores/{fornecedor_tecido.id}/compras/{compra_a['id']}/")
+        assert r.status_code == 200
+        assert r.data["data"]["id"] == compra_a["id"]
+        assert r.data["data"]["descricao"] == "Pedido inicial"
+
+    def test_editar_compra_status(self, client_a, fornecedor_tecido, compra_a):
+        r = client_a.patch(f"/api/fornecedores/{fornecedor_tecido.id}/compras/{compra_a['id']}/", {
+            "status": "pago",
+            "data_pagamento": "2025-01-20",
+        })
+        assert r.status_code == 200
+        assert r.data["data"]["status"] == "pago"
+
+    def test_editar_compra_descricao(self, client_a, fornecedor_tecido, compra_a):
+        r = client_a.patch(f"/api/fornecedores/{fornecedor_tecido.id}/compras/{compra_a['id']}/", {
+            "descricao": "Pedido atualizado",
+        })
+        assert r.status_code == 200
+        assert r.data["data"]["descricao"] == "Pedido atualizado"
+
+    def test_editar_pago_sem_data_falha(self, client_a, fornecedor_tecido, compra_a):
+        r = client_a.patch(f"/api/fornecedores/{fornecedor_tecido.id}/compras/{compra_a['id']}/", {
+            "status": "pago",
+        })
+        assert r.status_code == 400
+
+    def test_excluir_compra(self, client_a, fornecedor_tecido, compra_a):
+        r = client_a.delete(f"/api/fornecedores/{fornecedor_tecido.id}/compras/{compra_a['id']}/")
+        assert r.status_code == 204
+        r2 = client_a.get(f"/api/fornecedores/{fornecedor_tecido.id}/compras/{compra_a['id']}/")
+        assert r2.status_code == 404
+
+    def test_compra_detail_multitenant(self, client_b, fornecedor_tecido, compra_a):
+        r = client_b.get(f"/api/fornecedores/{fornecedor_tecido.id}/compras/{compra_a['id']}/")
+        assert r.status_code == 404
+
+    def test_compra_inexistente_retorna_404(self, client_a, fornecedor_tecido):
+        import uuid
+        r = client_a.get(f"/api/fornecedores/{fornecedor_tecido.id}/compras/{uuid.uuid4()}/")
+        assert r.status_code == 404

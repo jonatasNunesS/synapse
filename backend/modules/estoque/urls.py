@@ -5,6 +5,7 @@ from .views import (
     ProdutoViewSet,
     MovimentacaoViewSet,
     EstoqueResumoView,
+    EstornarMovimentacaoView,
 )
 
 router = DefaultRouter()
@@ -22,4 +23,6 @@ urlpatterns = [
     path("resumo/", resumo_list, name="estoque-resumo"),
     path("alertas/", alertas_list, name="estoque-alertas"),
     path("relatorio/", relatorio_list, name="estoque-relatorio"),
+    # R3b: Estorno de movimentação (imutabilidade preservada — cria mov. inversa)
+    path("movimentacoes/<uuid:pk>/estornar/", EstornarMovimentacaoView.as_view(), name="estoque-estornar"),
 ]

@@ -221,6 +221,21 @@ class Movimentacao(models.Model):
         _("estoque depois"), max_digits=12, decimal_places=3
     )
     motivo = models.CharField(_("motivo"), max_length=30, choices=MOTIVO_CHOICES)
+    preco_unitario = models.DecimalField(
+        _("preço unitário"),
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Preço unitário de venda (obrigatório para saídas do tipo venda).",
+    )
+    desconto = models.DecimalField(
+        _("desconto (%)"),
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        help_text="Percentual de desconto aplicado (0-100).",
+    )
     referencia = models.CharField(_("referência"), max_length=255, blank=True)
     observacoes = models.TextField(_("observações"), blank=True)
     criado_por = models.ForeignKey(

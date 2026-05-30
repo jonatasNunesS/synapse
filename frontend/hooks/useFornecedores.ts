@@ -84,17 +84,33 @@ export function useCategoriasFornecedor() {
   }, []);
 
   const criar = useCallback(
-    async (payload: { nome: string; cor?: string }) => {
-      const res = await api.post<CategoriaFornecedor>(
-        "/fornecedores/categorias/",
-        payload
-      );
+    async (payload: { nome: string; cor?: string }): Promise<CategoriaFornecedor> => {
+      // Item 5 fix: erro propaga + recarrega lista após sucesso
+      const res = await api.post<CategoriaFornecedor>("/fornecedores/categorias/", payload);
+      await fetch();
       return res.data;
     },
-    []
+    [fetch]
   );
 
-  return { data, loading, error, fetch, criar };
+  const atualizar = useCallback(
+    async (id: string, payload: { nome: string; cor?: string }): Promise<CategoriaFornecedor> => {
+      const res = await api.patch<CategoriaFornecedor>(`/fornecedores/categorias/${id}/`, payload);
+      await fetch();
+      return res.data;
+    },
+    [fetch]
+  );
+
+  const excluir = useCallback(
+    async (id: string): Promise<void> => {
+      await api.delete(`/fornecedores/categorias/${id}/`);
+      await fetch();
+    },
+    [fetch]
+  );
+
+  return { data, loading, error, fetch, criar, atualizar, excluir };
 }
 
 // ─── Fornecedores ─────────────────────────────────────────────────────────────
