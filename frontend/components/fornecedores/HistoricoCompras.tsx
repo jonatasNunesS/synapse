@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, X, Loader2, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, X, Loader2, ShoppingCart, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { useComprasFornecedor } from "@/hooks/useFornecedores";
 import type { CompraFornecedor } from "@/types/fornecedores";
 
@@ -36,11 +36,14 @@ interface NovaCompraFormProps {
   fornecedorId: string;
   onSuccess: () => void;
   onClose: () => void;
+  compraId?: string;
+  initialData?: Partial<CompraFormValues>;
 }
 
-function NovaCompraForm({ fornecedorId, onSuccess, onClose }: NovaCompraFormProps) {
-  const { criar } = useComprasFornecedor();
+function NovaCompraForm({ fornecedorId, onSuccess, onClose, compraId, initialData }: NovaCompraFormProps) {
+  const { criar, atualizar } = useComprasFornecedor();
   const [serverError, setServerError] = useState<string | null>(null);
+  const isEdit = !!compraId;
 
   const {
     register,
@@ -52,6 +55,7 @@ function NovaCompraForm({ fornecedorId, onSuccess, onClose }: NovaCompraFormProp
     defaultValues: {
       status: "pendente",
       data_compra: new Date().toISOString().split("T")[0],
+      ...initialData,
     },
   });
 
@@ -63,11 +67,15 @@ function NovaCompraForm({ fornecedorId, onSuccess, onClose }: NovaCompraFormProp
       const payload = Object.fromEntries(
         Object.entries(values).filter(([, v]) => v !== "" && v !== undefined)
       ) as CompraFormValues;
-      await criar(fornecedorId, payload);
+      if (isEdit && compraId) {
+        await atualizar(compraId, payload);
+      } else {
+        await criar(fornecedorId, payload);
+      }
       onSuccess();
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setServerError(e?.response?.data?.error?.message ?? "Erro ao registrar compra");
+      setServerError(e?.response?.data?.error?.message ?? (isEdit ? "Erro ao editar compra" : "Erro ao registrar compra"));
     }
   };
 
@@ -75,7 +83,7 @@ function NovaCompraForm({ fornecedorId, onSuccess, onClose }: NovaCompraFormProp
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
       <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-          <h3 className="text-base font-semibold text-white">Registrar Compra</h3>
+          <h3 className="text-base font-semibold text-white">{isEdit ? "Editar Compra" : "Registrar Compra"}</h3>
           <button onClick={onClose} className="rounded-lg p-1.5 text-zinc-400 hover:bg-white/10 hover:text-white">
             <X className="h-5 w-5" />
           </button>
@@ -131,7 +139,7 @@ function NovaCompraForm({ fornecedorId, onSuccess, onClose }: NovaCompraFormProp
             </button>
             <button type="submit" disabled={isSubmitting} className="flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-60">
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Registrar Compra
+              {isEdit ? "Salvar Alterações" : "Registrar Compra"}
             </button>
           </div>
         </form>
@@ -145,9 +153,12 @@ interface HistoricoComprasProps {
 }
 
 export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
-  const { data, total, loading, error, fetch } = useComprasFornecedor();
+  const { data, total, loading, error, fetch, atualizar, deletar } = useComprasFornecedor();
   const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
+  const [editando, setEditando] = useState<CompraFornecedor | null>(null);
+  const [confirmandoDelete, setConfirmandoDelete] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const pageSize = 25;
 
   useEffect(() => {
@@ -158,11 +169,31 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
 
   const handleSuccess = () => {
     setShowForm(false);
+    setEditando(null);
     fetch(fornecedorId, page);
+  };
+
+  const handleDeletar = async (id: string) => {
+    setActionError(null);
+    try {
+      await deletar(id);
+      fetch(fornecedorId, page);
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: { message?: string } } } };
+      setActionError(e?.response?.data?.error?.message ?? "Erro ao excluir compra.");
+    } finally {
+      setConfirmandoDelete(null);
+    }
   };
 
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm">
+      {actionError && (
+        <div className="mx-4 mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
+          {actionError}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
         <div className="flex items-center gap-2">
@@ -228,6 +259,39 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
                 <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${status.color}`}>
                   {status.label}
                 </span>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <button
+                    onClick={() => setEditando(c)}
+                    className="p-1 rounded text-zinc-500 hover:text-violet-400 hover:bg-violet-500/10 transition-colors"
+                    title="Editar compra"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </button>
+                  {confirmandoDelete === c.id ? (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleDeletar(c.id)}
+                        className="px-1.5 py-0.5 rounded text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                      >
+                        Sim
+                      </button>
+                      <button
+                        onClick={() => setConfirmandoDelete(null)}
+                        className="px-1.5 py-0.5 rounded text-xs text-zinc-400 hover:text-white transition-colors"
+                      >
+                        Não
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmandoDelete(c.id)}
+                      className="p-1 rounded text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                      title="Excluir compra"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           );
@@ -255,6 +319,24 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
           fornecedorId={fornecedorId}
           onSuccess={handleSuccess}
           onClose={() => setShowForm(false)}
+        />
+      )}
+
+      {editando && (
+        <NovaCompraForm
+          fornecedorId={fornecedorId}
+          compraId={editando.id}
+          initialData={{
+            descricao: editando.descricao,
+            valor: typeof editando.valor === "string" ? parseFloat(editando.valor) : editando.valor,
+            data_compra: editando.data_compra,
+            numero_nf: editando.numero_nf ?? "",
+            status: editando.status as "pendente" | "pago" | "cancelado",
+            data_pagamento: editando.data_pagamento ?? "",
+            observacoes: editando.observacoes ?? "",
+          }}
+          onSuccess={handleSuccess}
+          onClose={() => setEditando(null)}
         />
       )}
     </div>

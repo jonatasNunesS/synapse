@@ -18,6 +18,7 @@ import type {
   LancamentoPagar,
   ResumoFinanceiro,
 } from "@/types/financeiro";
+import type { ApiResponse, PaginatedResponse } from "@/types/api";
 
 // ── Resumo ────────────────────────────────────────────────
 
@@ -34,10 +35,10 @@ export function useResumoFinanceiro(mes?: number, ano?: number) {
     setLoading(true);
     setError(null);
     try {
-      const resp = await api.get<ResumoFinanceiro>(
+      const resp = await api.get<ApiResponse<ResumoFinanceiro>>(
         `/financeiro/resumo/?mes=${m}&ano=${a}`
       );
-      setResumo(resp.data || null);
+      setResumo(resp.data.data);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
       setError(e?.response?.data?.error?.message ?? "Erro ao carregar resumo.");
@@ -72,10 +73,10 @@ export function useFluxoCaixa(dataInicio?: string, dataFim?: string) {
     setLoading(true);
     setError(null);
     try {
-      const resp = await api.get<FluxoCaixaDia[]>(
+      const resp = await api.get<ApiResponse<FluxoCaixaDia[]>>(
         `/financeiro/fluxo-caixa/?data_inicio=${inicio}&data_fim=${fim}`
       );
-      setFluxo(resp.data || []);
+      setFluxo(resp.data.data);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
       setError(e?.response?.data?.error?.message ?? "Erro ao carregar fluxo.");
@@ -106,10 +107,10 @@ export function useDRE(mes?: number, ano?: number) {
     setLoading(true);
     setError(null);
     try {
-      const resp = await api.get<DRE>(
+      const resp = await api.get<ApiResponse<DRE>>(
         `/financeiro/dre/?mes=${m}&ano=${a}`
       );
-      setDre(resp.data || null);
+      setDre(resp.data.data);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
       setError(e?.response?.data?.error?.message ?? "Erro ao carregar DRE.");
@@ -146,11 +147,11 @@ export function useLancamentos(filtros?: FiltrosLancamento) {
       if (filtros?.busca) params.set("busca", filtros.busca);
       if (filtros?.page) params.set("page", String(filtros.page));
 
-      const resp = await api.get<Lancamento[]>(
+      const resp = await api.get<PaginatedResponse<Lancamento>>(
         `/financeiro/lancamentos/?${params.toString()}`
       );
-      setLancamentos(resp.data || []);
-      setTotal(resp.pagination?.count ?? 0);
+      setLancamentos(resp.data.data);
+      setTotal(resp.data.pagination?.count ?? 0);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
       setError(e?.response?.data?.error?.message ?? "Erro ao carregar lançamentos.");
@@ -172,21 +173,24 @@ export function useLancamentos(filtros?: FiltrosLancamento) {
   }, [carregar]);
 
   const criar = async (dados: LancamentoCreate): Promise<Lancamento> => {
-    const resp = await api.post<Lancamento>("/financeiro/lancamentos/", dados);
+    const resp = await api.post<ApiResponse<Lancamento>>(
+      "/financeiro/lancamentos/",
+      dados
+    );
     await carregar();
-    return resp.data as Lancamento;
+    return resp.data.data;
   };
 
   const atualizar = async (
     id: string,
     dados: Partial<LancamentoCreate>
   ): Promise<Lancamento> => {
-    const resp = await api.patch<Lancamento>(
+    const resp = await api.patch<ApiResponse<Lancamento>>(
       `/financeiro/lancamentos/${id}/`,
       dados
     );
     await carregar();
-    return resp.data as Lancamento;
+    return resp.data.data;
   };
 
   const deletar = async (id: string): Promise<void> => {
@@ -195,12 +199,12 @@ export function useLancamentos(filtros?: FiltrosLancamento) {
   };
 
   const pagar = async (id: string, dados: LancamentoPagar): Promise<Lancamento> => {
-    const resp = await api.post<Lancamento>(
+    const resp = await api.post<ApiResponse<Lancamento>>(
       `/financeiro/lancamentos/${id}/pagar/`,
       dados
     );
     await carregar();
-    return resp.data as Lancamento;
+    return resp.data.data;
   };
 
   return {
@@ -221,14 +225,19 @@ export function useLancamentos(filtros?: FiltrosLancamento) {
 export function useCategorias() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const resp = await api.get<Categoria[]>("/financeiro/categorias/");
-      setCategorias(resp.data || []);
-    } catch {
-      // silencia erro de categorias
+      const resp = await api.get<ApiResponse<Categoria[]>>(
+        "/financeiro/categorias/"
+      );
+      setCategorias(resp.data.data);
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: { message?: string } } } };
+      setError(e?.response?.data?.error?.message ?? "Erro ao carregar categorias.");
     } finally {
       setLoading(false);
     }
@@ -239,15 +248,36 @@ export function useCategorias() {
   }, [carregar]);
 
   const criar = async (dados: CategoriaCreate): Promise<Categoria> => {
-    const resp = await api.post<Categoria>("/financeiro/categorias/", dados);
-    await carregar();
-    return resp.data as Categoria;
+    try {
+      const resp = await api.post<ApiResponse<Categoria>>(
+        "/financeiro/categorias/",
+        dados
+      );
+      return resp.data.data;
+    } finally {
+      await carregar();
+    }
+  };
+
+  const atualizar = async (id: string, dados: Partial<CategoriaCreate>): Promise<Categoria> => {
+    try {
+      const resp = await api.patch<ApiResponse<Categoria>>(
+        `/financeiro/categorias/${id}/`,
+        dados
+      );
+      return resp.data.data;
+    } finally {
+      await carregar();
+    }
   };
 
   const deletar = async (id: string): Promise<void> => {
-    await api.delete(`/financeiro/categorias/${id}/`);
-    await carregar();
+    try {
+      await api.delete(`/financeiro/categorias/${id}/`);
+    } finally {
+      await carregar();
+    }
   };
 
-  return { categorias, loading, recarregar: carregar, criar, deletar };
+  return { categorias, loading, error, recarregar: carregar, criar, atualizar, deletar };
 }

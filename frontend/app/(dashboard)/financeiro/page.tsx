@@ -2,8 +2,9 @@
 
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Tag } from "lucide-react";
 import { useState } from "react";
+import { CategoriaFinanceiroModal } from "@/components/financeiro/CategoriaFinanceiroModal";
 import { FluxoCaixaChart } from "@/components/financeiro/FluxoCaixaChart";
 import { LancamentoForm } from "@/components/financeiro/LancamentoForm";
 import { LancamentoTable } from "@/components/financeiro/LancamentoTable";
@@ -22,6 +23,7 @@ export default function FinanceiroPage() {
   const [mes, setMes] = useState(hoje.getMonth() + 1);
   const [ano, setAno] = useState(hoje.getFullYear());
   const [mostrarForm, setMostrarForm] = useState(false);
+  const [mostrarCategorias, setMostrarCategorias] = useState(false);
   const [lancamentoParaPagar, setLancamentoParaPagar] =
     useState<Lancamento | null>(null);
 
@@ -111,6 +113,13 @@ export default function FinanceiroPage() {
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">Novo Lançamento</span>
           </button>
+          <button
+            onClick={() => setMostrarCategorias(true)}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-medium text-slate-300 transition-colors"
+          >
+            <Tag className="w-4 h-4" />
+            <span className="hidden sm:inline">Gerenciar Categorias</span>
+          </button>
         </div>
       </div>
 
@@ -164,6 +173,10 @@ export default function FinanceiroPage() {
           onConfirmar={handlePagar}
           onClose={() => setLancamentoParaPagar(null)}
         />
+      )}
+
+      {mostrarCategorias && (
+        <CategoriaFinanceiroModal onClose={() => setMostrarCategorias(false)} />
       )}
     </div>
   );

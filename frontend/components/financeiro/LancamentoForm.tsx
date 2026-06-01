@@ -22,13 +22,23 @@ const lancamentoSchema = z
         "O valor deve ser maior que zero."
       ),
     categoria: z.string().optional().nullable(),
-    data_vencimento: z.string().min(1, "Informe a data de vencimento."),
+    data_vencimento: z.string().optional().nullable(),
     status: z.enum(["pendente", "pago", "atrasado", "cancelado"]),
     data_pagamento: z.string().optional().nullable(),
     recorrente: z.boolean(),
     recorrencia: z.enum(["semanal", "mensal", "anual", ""]),
     observacoes: z.string().optional(),
   })
+  .refine(
+    (data) => {
+      if (data.tipo === "despesa" && !data.data_vencimento) return false;
+      return true;
+    },
+    {
+      message: "Informe a data de vencimento para despesas.",
+      path: ["data_vencimento"],
+    }
+  )
   .refine(
     (data) => {
       if (data.status === "pago" && !data.data_pagamento) return false;
@@ -79,6 +89,7 @@ export function LancamentoForm({
       recorrente: false,
       recorrencia: "",
       data_vencimento: format(new Date(), "yyyy-MM-dd"),
+      data_pagamento: null,
     },
   });
 
@@ -95,7 +106,7 @@ export function LancamentoForm({
       descricao: data.descricao,
       valor: parseFloat(data.valor.replace(",", ".")),
       categoria: data.categoria || null,
-      data_vencimento: data.data_vencimento,
+      data_vencimento: data.data_vencimento || null,
       status: data.status,
       data_pagamento: data.data_pagamento || null,
       recorrente: data.recorrente,
@@ -211,7 +222,7 @@ export function LancamentoForm({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                Vencimento *
+                {tipo === "despesa" ? "Vencimento *" : "Data de recebimento (opcional)"}
               </label>
               <input
                 type="date"

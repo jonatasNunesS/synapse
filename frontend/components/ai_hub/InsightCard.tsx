@@ -39,6 +39,22 @@ export function InsightCard({ insight, onGerarInsight, gerando }: InsightCardPro
     );
   }
 
+  if (!insight.resultado) {
+    return (
+      <Card className="border-dashed border-amber-200 bg-amber-50/50">
+        <CardContent className="p-6 text-center">
+          <Lightbulb className="h-10 w-10 text-amber-400 mx-auto mb-3" />
+          <p className="text-sm font-medium text-slate-700 mb-1">
+            Gerando insight...
+          </p>
+          <p className="text-xs text-slate-500">
+            Seu insight semanal está sendo processado. Aguarde alguns instantes.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const linhas = insight.resultado
     .split("\n")
     .filter((l) => l.trim())
