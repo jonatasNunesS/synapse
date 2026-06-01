@@ -16,8 +16,8 @@ import { useHistoricoConteudos } from "@/hooks/useAIHub";
 import type { TipoConteudo } from "@/types/ai_hub";
 import { TIPO_CONTEUDO_LABELS, TIPO_CONTEUDO_ICONE } from "@/types/ai_hub";
 
-const TIPOS_FILTRO: { value: TipoConteudo | ""; label: string }[] = [
-  { value: "", label: "Todos os tipos" },
+const TIPOS_FILTRO: { value: TipoConteudo | "todos"; label: string }[] = [
+  { value: "todos", label: "Todos os tipos" },
   { value: "legenda_instagram", label: "Instagram" },
   { value: "legenda_facebook", label: "Facebook" },
   { value: "legenda_linkedin", label: "LinkedIn" },
@@ -44,8 +44,9 @@ function ConteudoCard({
     setTimeout(() => setCopiado(false), 2000);
   };
 
-  const preview = conteudo.resultado.slice(0, 150);
-  const temMais = conteudo.resultado.length > 150;
+  const resultado = conteudo.resultado ?? "";
+  const preview = resultado.slice(0, 150);
+  const temMais = resultado.length > 150;
 
   return (
     <Card className={`transition-all ${conteudo.favorito ? "border-amber-200 bg-amber-50/30" : ""}`}>
@@ -99,7 +100,7 @@ function ConteudoCard({
         )}
 
         <div className="bg-white rounded border border-slate-100 p-3 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
-          {expandido ? conteudo.resultado : preview}
+          {expandido ? resultado : preview}
           {temMais && !expandido && "..."}
         </div>
 
@@ -121,11 +122,11 @@ function ConteudoCard({
 }
 
 export function HistoricoConteudos() {
-  const [tipoFiltro, setTipoFiltro] = useState<TipoConteudo | "">("");
+  const [tipoFiltro, setTipoFiltro] = useState<TipoConteudo | "todos">("todos");
   const [favoritoFiltro, setFavoritoFiltro] = useState<boolean | undefined>(undefined);
 
   const { conteudos, isLoading, toggleFavorito } = useHistoricoConteudos(
-    tipoFiltro,
+    tipoFiltro === "todos" ? "" : tipoFiltro,
     favoritoFiltro
   );
 
@@ -139,7 +140,7 @@ export function HistoricoConteudos() {
         </div>
         <Select
           value={tipoFiltro}
-          onValueChange={(v) => setTipoFiltro(v as TipoConteudo | "")}
+          onValueChange={(v) => setTipoFiltro(v as TipoConteudo | "todos")}
         >
           <SelectTrigger className="w-48 h-8 text-sm">
             <SelectValue />
@@ -181,7 +182,7 @@ export function HistoricoConteudos() {
             <p className="text-sm text-slate-400">
               {favoritoFiltro
                 ? "Nenhum conteúdo favorito encontrado."
-                : tipoFiltro
+                : tipoFiltro !== "todos"
                 ? "Nenhum conteúdo deste tipo encontrado."
                 : "Nenhum conteúdo gerado ainda. Use o formulário ao lado para começar!"}
             </p>

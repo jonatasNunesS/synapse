@@ -5,6 +5,7 @@ import { ptBR } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Plus, Tag } from "lucide-react";
 import { useState } from "react";
 import { CategoriaFinanceiroModal } from "@/components/financeiro/CategoriaFinanceiroModal";
+import { CaixinhasSection } from "@/components/financeiro/CaixinhasSection";
 import { FluxoCaixaChart } from "@/components/financeiro/FluxoCaixaChart";
 import { LancamentoForm } from "@/components/financeiro/LancamentoForm";
 import { LancamentoTable } from "@/components/financeiro/LancamentoTable";
@@ -156,6 +157,11 @@ export default function FinanceiroPage() {
           onPagar={setLancamentoParaPagar}
           onDeletar={handleDeletar}
         />
+      </div>
+
+      {/* Caixinhas */}
+      <div className="mt-6 bg-white rounded-xl border border-slate-200 p-5">
+        <CaixinhasSection />
       </div>
 
       {/* Modals */}

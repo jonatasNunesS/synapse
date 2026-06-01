@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { List, Kanban, RefreshCw } from "lucide-react";
+import { List, Kanban, RefreshCw, Calendar } from "lucide-react";
 import { ResumoCards } from "@/components/clientes/ResumoCards";
 import { ClienteTable } from "@/components/clientes/ClienteTable";
 import { FunilKanban } from "@/components/clientes/FunilKanban";
@@ -17,6 +17,9 @@ export default function ClientesPage() {
   const [clienteEditando, setClienteEditando] = useState<ClienteList | null>(null);
   const [formLoading, setFormLoading] = useState(false);
   const [page, setPage] = useState(1);
+  const now = new Date();
+  const [mesFiltro, setMesFiltro] = useState(String(now.getMonth() + 1));
+  const [anoFiltro, setAnoFiltro] = useState(String(now.getFullYear()));
 
   const { clientes, pagination, loading, carregar, criar, atualizar, deletar } = useClientes();
   const { funil, loading: funilLoading, carregar: carregarFunil, moverCard } = useFunilKanban();
@@ -24,11 +27,11 @@ export default function ClientesPage() {
 
   const carregarTudo = useCallback(async () => {
     await Promise.all([
-      carregar({ page }),
+      carregar({ page, mes: mesFiltro, ano: anoFiltro }),
       carregarFunil(),
-      carregarResumo(),
+      carregarResumo({ mes: mesFiltro, ano: anoFiltro }),
     ]);
-  }, [carregar, carregarFunil, carregarResumo, page]);
+  }, [carregar, carregarFunil, carregarResumo, page, mesFiltro, anoFiltro]);
 
   useEffect(() => {
     carregarTudo();
@@ -96,6 +99,29 @@ export default function ClientesPage() {
               <Kanban className="w-3.5 h-3.5" />
               Kanban
             </button>
+          </div>
+
+          {/* Filtro de período */}
+          <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-lg px-2 py-1">
+            <Calendar className="w-3.5 h-3.5 text-gray-400" />
+            <select
+              value={mesFiltro}
+              onChange={(e) => setMesFiltro(e.target.value)}
+              className="bg-transparent text-xs text-gray-300 outline-none"
+            >
+              {["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"].map((m, i) => (
+                <option key={i} value={String(i + 1)} className="bg-zinc-900">{m}</option>
+              ))}
+            </select>
+            <select
+              value={anoFiltro}
+              onChange={(e) => setAnoFiltro(e.target.value)}
+              className="bg-transparent text-xs text-gray-300 outline-none"
+            >
+              {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map((a) => (
+                <option key={a} value={String(a)} className="bg-zinc-900">{a}</option>
+              ))}
+            </select>
           </div>
 
           <button

@@ -20,6 +20,8 @@ import {
   Zap,
   LogOut,
   X,
+  CalendarDays,
+  Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
@@ -41,8 +43,11 @@ const navigation: NavItem[] = [
   { label: "Clientes", href: "/clientes", icon: Users },
   { label: "Fornecedores", href: "/fornecedores", icon: Truck },
   { label: "Projetos", href: "/projetos", icon: FolderKanban },
+  { label: "Agenda", href: "/agenda", icon: CalendarDays },
   { label: "Equipe", href: "/equipe", icon: UserCog },
   { label: "Documentos", href: "/documentos", icon: FileText },
+  { label: "Investimentos", href: "/financeiro/investimentos", icon: BarChart2 },
+  { label: "Mensagens", href: "/mensagens", icon: Mail },
   { label: "Notificações", href: "/notificacoes", icon: Bell },
   { label: "Analytics", href: "/analytics", icon: BarChart2 },
   { label: "AI Hub", href: "/ai-hub", icon: Sparkles },

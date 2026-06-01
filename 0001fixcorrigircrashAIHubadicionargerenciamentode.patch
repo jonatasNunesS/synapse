@@ -1,0 +1,951 @@
+From c024014a71f7b8f52f0af1ebc7414f3d64ec606a Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Mon, 1 Jun 2026 17:54:43 +0000
+Subject: [PATCH 1/2] =?UTF-8?q?fix:=20corrigir=20crash=20AI=20Hub,=20adici?=
+ =?UTF-8?q?onar=20gerenciamento=20de=20categorias=20e=20melhorar=20hist?=
+ =?UTF-8?q?=C3=B3ricos?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- InsightCard: guard para insight.resultado null (status pendente não crasha)
+- HistoricoConteudos: Select.Item value="" substituído por "todos" (causa raiz do crash em /ai-hub/historico); guard em resultado nullable
+- LancamentoForm: data_vencimento opcional para receita, obrigatório apenas para despesa; label dinâmico por tipo
+- CategoriaFinanceiroModal: novo modal CRUD completo com color picker, filtro por tipo e confirmação inline de exclusão
+- financeiro/page: botão Gerenciar Categorias no cabeçalho
+- useFinanceiro/useCategorias: adiciona atualizar(), corrige silenciamento de erro, padrão finally para recarregar lista
+- HistoricoMovimentacoes: botão Estornar com confirmação inline por linha
+- HistoricoCompras: botões Editar/Excluir por linha; NovaCompraForm reaproveitado para modo edição
+- useFornecedores/useComprasFornecedor: adiciona atualizar() e deletar()
+- types/financeiro: LancamentoCreate.data_vencimento aceita null
+---
+ frontend/app/(dashboard)/financeiro/page.tsx  |  15 +-
+ .../components/ai_hub/HistoricoConteudos.tsx  |  19 +-
+ frontend/components/ai_hub/InsightCard.tsx    |  16 +
+ .../estoque/HistoricoMovimentacoes.tsx        |  89 +++++-
+ .../financeiro/CategoriaFinanceiroModal.tsx   | 283 ++++++++++++++++++
+ .../components/financeiro/LancamentoForm.tsx  |  17 +-
+ .../fornecedores/HistoricoCompras.tsx         |  98 +++++-
+ frontend/hooks/useFinanceiro.ts               |  43 ++-
+ frontend/hooks/useFornecedores.ts             |  17 +-
+ frontend/types/financeiro.ts                  |   2 +-
+ 10 files changed, 549 insertions(+), 50 deletions(-)
+ create mode 100644 frontend/components/financeiro/CategoriaFinanceiroModal.tsx
+
+diff --git a/frontend/app/(dashboard)/financeiro/page.tsx b/frontend/app/(dashboard)/financeiro/page.tsx
+index 8d63ed1..7572c3a 100644
+--- a/frontend/app/(dashboard)/financeiro/page.tsx
++++ b/frontend/app/(dashboard)/financeiro/page.tsx
+@@ -2,8 +2,9 @@
+ 
+ import { format } from "date-fns";
+ import { ptBR } from "date-fns/locale";
+-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
++import { ChevronLeft, ChevronRight, Plus, Tag } from "lucide-react";
+ import { useState } from "react";
++import { CategoriaFinanceiroModal } from "@/components/financeiro/CategoriaFinanceiroModal";
+ import { FluxoCaixaChart } from "@/components/financeiro/FluxoCaixaChart";
+ import { LancamentoForm } from "@/components/financeiro/LancamentoForm";
+ import { LancamentoTable } from "@/components/financeiro/LancamentoTable";
+@@ -22,6 +23,7 @@ export default function FinanceiroPage() {
+   const [mes, setMes] = useState(hoje.getMonth() + 1);
+   const [ano, setAno] = useState(hoje.getFullYear());
+   const [mostrarForm, setMostrarForm] = useState(false);
++  const [mostrarCategorias, setMostrarCategorias] = useState(false);
+   const [lancamentoParaPagar, setLancamentoParaPagar] =
+     useState<Lancamento | null>(null);
+ 
+@@ -111,6 +113,13 @@ export default function FinanceiroPage() {
+             <Plus className="w-4 h-4" />
+             <span className="hidden sm:inline">Novo Lançamento</span>
+           </button>
++          <button
++            onClick={() => setMostrarCategorias(true)}
++            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-medium text-slate-300 transition-colors"
++          >
++            <Tag className="w-4 h-4" />
++            <span className="hidden sm:inline">Gerenciar Categorias</span>
++          </button>
+         </div>
+       </div>
+ 
+@@ -165,6 +174,10 @@ export default function FinanceiroPage() {
+           onClose={() => setLancamentoParaPagar(null)}
+         />
+       )}
++
++      {mostrarCategorias && (
++        <CategoriaFinanceiroModal onClose={() => setMostrarCategorias(false)} />
++      )}
+     </div>
+   );
+ }
+diff --git a/frontend/components/ai_hub/HistoricoConteudos.tsx b/frontend/components/ai_hub/HistoricoConteudos.tsx
+index f94d858..d691949 100644
+--- a/frontend/components/ai_hub/HistoricoConteudos.tsx
++++ b/frontend/components/ai_hub/HistoricoConteudos.tsx
+@@ -16,8 +16,8 @@ import { useHistoricoConteudos } from "@/hooks/useAIHub";
+ import type { TipoConteudo } from "@/types/ai_hub";
+ import { TIPO_CONTEUDO_LABELS, TIPO_CONTEUDO_ICONE } from "@/types/ai_hub";
+ 
+-const TIPOS_FILTRO: { value: TipoConteudo | ""; label: string }[] = [
+-  { value: "", label: "Todos os tipos" },
++const TIPOS_FILTRO: { value: TipoConteudo | "todos"; label: string }[] = [
++  { value: "todos", label: "Todos os tipos" },
+   { value: "legenda_instagram", label: "Instagram" },
+   { value: "legenda_facebook", label: "Facebook" },
+   { value: "legenda_linkedin", label: "LinkedIn" },
+@@ -44,8 +44,9 @@ function ConteudoCard({
+     setTimeout(() => setCopiado(false), 2000);
+   };
+ 
+-  const preview = conteudo.resultado.slice(0, 150);
+-  const temMais = conteudo.resultado.length > 150;
++  const resultado = conteudo.resultado ?? "";
++  const preview = resultado.slice(0, 150);
++  const temMais = resultado.length > 150;
+ 
+   return (
+     <Card className={`transition-all ${conteudo.favorito ? "border-amber-200 bg-amber-50/30" : ""}`}>
+@@ -99,7 +100,7 @@ function ConteudoCard({
+         )}
+ 
+         <div className="bg-white rounded border border-slate-100 p-3 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
+-          {expandido ? conteudo.resultado : preview}
++          {expandido ? resultado : preview}
+           {temMais && !expandido && "..."}
+         </div>
+ 
+@@ -121,11 +122,11 @@ function ConteudoCard({
+ }
+ 
+ export function HistoricoConteudos() {
+-  const [tipoFiltro, setTipoFiltro] = useState<TipoConteudo | "">("");
++  const [tipoFiltro, setTipoFiltro] = useState<TipoConteudo | "todos">("todos");
+   const [favoritoFiltro, setFavoritoFiltro] = useState<boolean | undefined>(undefined);
+ 
+   const { conteudos, isLoading, toggleFavorito } = useHistoricoConteudos(
+-    tipoFiltro,
++    tipoFiltro === "todos" ? "" : tipoFiltro,
+     favoritoFiltro
+   );
+ 
+@@ -139,7 +140,7 @@ export function HistoricoConteudos() {
+         </div>
+         <Select
+           value={tipoFiltro}
+-          onValueChange={(v) => setTipoFiltro(v as TipoConteudo | "")}
++          onValueChange={(v) => setTipoFiltro(v as TipoConteudo | "todos")}
+         >
+           <SelectTrigger className="w-48 h-8 text-sm">
+             <SelectValue />
+@@ -181,7 +182,7 @@ export function HistoricoConteudos() {
+             <p className="text-sm text-slate-400">
+               {favoritoFiltro
+                 ? "Nenhum conteúdo favorito encontrado."
+-                : tipoFiltro
++                : tipoFiltro !== "todos"
+                 ? "Nenhum conteúdo deste tipo encontrado."
+                 : "Nenhum conteúdo gerado ainda. Use o formulário ao lado para começar!"}
+             </p>
+diff --git a/frontend/components/ai_hub/InsightCard.tsx b/frontend/components/ai_hub/InsightCard.tsx
+index eb9c5d4..d2df4aa 100644
+--- a/frontend/components/ai_hub/InsightCard.tsx
++++ b/frontend/components/ai_hub/InsightCard.tsx
+@@ -39,6 +39,22 @@ export function InsightCard({ insight, onGerarInsight, gerando }: InsightCardPro
+     );
+   }
+ 
++  if (!insight.resultado) {
++    return (
++      <Card className="border-dashed border-amber-200 bg-amber-50/50">
++        <CardContent className="p-6 text-center">
++          <Lightbulb className="h-10 w-10 text-amber-400 mx-auto mb-3" />
++          <p className="text-sm font-medium text-slate-700 mb-1">
++            Gerando insight...
++          </p>
++          <p className="text-xs text-slate-500">
++            Seu insight semanal está sendo processado. Aguarde alguns instantes.
++          </p>
++        </CardContent>
++      </Card>
++    );
++  }
++
+   const linhas = insight.resultado
+     .split("\n")
+     .filter((l) => l.trim())
+diff --git a/frontend/components/estoque/HistoricoMovimentacoes.tsx b/frontend/components/estoque/HistoricoMovimentacoes.tsx
+index 6aacb0c..a2aaaf4 100644
+--- a/frontend/components/estoque/HistoricoMovimentacoes.tsx
++++ b/frontend/components/estoque/HistoricoMovimentacoes.tsx
+@@ -1,8 +1,10 @@
+ "use client";
+ 
++import { useState } from "react";
+ import { format } from "date-fns";
+ import { ptBR } from "date-fns/locale";
+-import { ArrowDown, ArrowUp, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
++import { ArrowDown, ArrowUp, RefreshCw, ChevronLeft, ChevronRight, Undo2 } from "lucide-react";
++import { api } from "@/lib/api";
+ import type { Movimentacao, TipoMovimentacao } from "@/types/estoque";
+ 
+ interface HistoricoMovimentacoesProps {
+@@ -10,6 +12,7 @@ interface HistoricoMovimentacoesProps {
+   paginacao: { total: number; pagina: number; totalPaginas: number };
+   loading?: boolean;
+   onPaginaChange?: (pagina: number) => void;
++  onEstornar?: () => void;
+ }
+ 
+ const TIPO_CONFIG: Record<TipoMovimentacao, {
+@@ -71,8 +74,27 @@ export function HistoricoMovimentacoes({
+   paginacao,
+   loading,
+   onPaginaChange,
++  onEstornar,
+ }: HistoricoMovimentacoesProps) {
+-  if (!loading && movimentacoes.length === 0) {
++  const [confirmandoEstorno, setConfirmandoEstorno] = useState<string | null>(null);
++  const [estornando, setEstornando] = useState(false);
++  const [erroEstorno, setErroEstorno] = useState<string | null>(null);
++
++  const handleEstornar = async (mov: Movimentacao) => {
++    setEstornando(true);
++    setErroEstorno(null);
++    try {
++      await api.post(`/estoque/movimentacoes/${mov.id}/estornar/`);
++      setConfirmandoEstorno(null);
++      onEstornar?.();
++    } catch (err: unknown) {
++      const e = err as { response?: { data?: { error?: { message?: string } } } };
++      setErroEstorno(e?.response?.data?.error?.message ?? "Erro ao estornar movimentação.");
++    } finally {
++      setEstornando(false);
++    }
++  };
++  if (!loading && movimentacoes.length === 0 && !erroEstorno) {
+     return (
+       <div className="flex flex-col items-center justify-center py-12 text-center">
+         <RefreshCw className="h-10 w-10 text-slate-600 mb-3" />
+@@ -86,6 +108,11 @@ export function HistoricoMovimentacoes({
+ 
+   return (
+     <div>
++      {erroEstorno && (
++        <div className="mx-4 mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
++          {erroEstorno}
++        </div>
++      )}
+       <div className="divide-y divide-white/5">
+         {loading
+           ? Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
+@@ -140,21 +167,51 @@ export function HistoricoMovimentacoes({
+                     )}
+                   </div>
+ 
+-                  <div className="text-right flex-shrink-0">
+-                    <div
+-                      className={`text-sm font-bold ${
+-                        delta > 0 ? "text-emerald-400" : delta < 0 ? "text-red-400" : "text-blue-400"
+-                      }`}
+-                    >
+-                      {delta > 0 ? "+" : ""}
+-                      {delta.toLocaleString("pt-BR")}
+-                    </div>
+-                    <div className="text-xs text-slate-500 mt-0.5">
+-                      {Number(mov.estoque_antes).toLocaleString("pt-BR")} →{" "}
+-                      <span className="text-white">
+-                        {Number(mov.estoque_depois).toLocaleString("pt-BR")}
+-                      </span>
++                  <div className="flex items-center gap-3 flex-shrink-0">
++                    <div className="text-right">
++                      <div
++                        className={`text-sm font-bold ${
++                          delta > 0 ? "text-emerald-400" : delta < 0 ? "text-red-400" : "text-blue-400"
++                        }`}
++                      >
++                        {delta > 0 ? "+" : ""}
++                        {delta.toLocaleString("pt-BR")}
++                      </div>
++                      <div className="text-xs text-slate-500 mt-0.5">
++                        {Number(mov.estoque_antes).toLocaleString("pt-BR")} →{" "}
++                        <span className="text-white">
++                          {Number(mov.estoque_depois).toLocaleString("pt-BR")}
++                        </span>
++                      </div>
+                     </div>
++                    {confirmandoEstorno === mov.id ? (
++                      <div className="flex flex-col items-end gap-1">
++                        <span className="text-xs text-slate-400">Confirmar estorno?</span>
++                        <div className="flex gap-1">
++                          <button
++                            onClick={() => handleEstornar(mov)}
++                            disabled={estornando}
++                            className="px-2 py-0.5 rounded text-xs bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 transition-colors disabled:opacity-50"
++                          >
++                            {estornando ? "..." : "Sim"}
++                          </button>
++                          <button
++                            onClick={() => setConfirmandoEstorno(null)}
++                            className="px-2 py-0.5 rounded text-xs text-slate-400 hover:text-white transition-colors"
++                          >
++                            Não
++                          </button>
++                        </div>
++                      </div>
++                    ) : (
++                      <button
++                        onClick={() => setConfirmandoEstorno(mov.id)}
++                        className="p-1.5 rounded-lg text-slate-600 hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
++                        title={`Estornar — cria movimentação inversa de ${Math.abs(delta)} unidades`}
++                      >
++                        <Undo2 className="h-3.5 w-3.5" />
++                      </button>
++                    )}
+                   </div>
+                 </div>
+               );
+diff --git a/frontend/components/financeiro/CategoriaFinanceiroModal.tsx b/frontend/components/financeiro/CategoriaFinanceiroModal.tsx
+new file mode 100644
+index 0000000..56dea12
+--- /dev/null
++++ b/frontend/components/financeiro/CategoriaFinanceiroModal.tsx
+@@ -0,0 +1,283 @@
++"use client";
++
++import { useState } from "react";
++import { useForm } from "react-hook-form";
++import { zodResolver } from "@hookform/resolvers/zod";
++import { z } from "zod";
++import { X, Plus, Pencil, Trash2, Loader2, Tag } from "lucide-react";
++import { useCategorias } from "@/hooks/useFinanceiro";
++import type { Categoria } from "@/types/financeiro";
++
++const CORES_PRESET = [
++  "#6366f1", "#8b5cf6", "#ec4899", "#ef4444",
++  "#f97316", "#eab308", "#22c55e", "#14b8a6",
++  "#3b82f6", "#06b6d4", "#64748b", "#78716c",
++];
++
++const categoriaSchema = z.object({
++  nome: z.string().min(2, "Mínimo 2 caracteres.").max(50, "Máximo 50 caracteres."),
++  tipo: z.enum(["receita", "despesa"]),
++  cor: z.string().min(1, "Escolha uma cor."),
++});
++
++type CategoriaFormData = z.infer<typeof categoriaSchema>;
++
++interface CategoriaFinanceiroModalProps {
++  onClose: () => void;
++}
++
++export function CategoriaFinanceiroModal({ onClose }: CategoriaFinanceiroModalProps) {
++  const { categorias, loading, criar, atualizar, deletar } = useCategorias();
++  const [editando, setEditando] = useState<Categoria | null>(null);
++  const [confirmandoDelete, setConfirmandoDelete] = useState<string | null>(null);
++  const [serverError, setServerError] = useState<string | null>(null);
++  const [tipoFiltro, setTipoFiltro] = useState<"receita" | "despesa" | "todos">("todos");
++
++  const {
++    register,
++    handleSubmit,
++    watch,
++    setValue,
++    reset,
++    formState: { errors, isSubmitting },
++  } = useForm<CategoriaFormData>({
++    resolver: zodResolver(categoriaSchema),
++    defaultValues: { tipo: "receita", cor: CORES_PRESET[0] },
++  });
++
++  const corSelecionada = watch("cor");
++
++  const abrirEdicao = (cat: Categoria) => {
++    setEditando(cat);
++    reset({ nome: cat.nome, tipo: cat.tipo, cor: cat.cor || CORES_PRESET[0] });
++    setServerError(null);
++  };
++
++  const fecharForm = () => {
++    setEditando(null);
++    reset({ tipo: "receita", cor: CORES_PRESET[0], nome: "" });
++    setServerError(null);
++  };
++
++  const onSubmit = async (data: CategoriaFormData) => {
++    setServerError(null);
++    try {
++      if (editando) {
++        await atualizar(editando.id, data);
++      } else {
++        await criar(data);
++      }
++      fecharForm();
++    } catch (err: unknown) {
++      const e = err as { response?: { data?: { error?: { message?: string } } } };
++      setServerError(e?.response?.data?.error?.message ?? "Erro ao salvar categoria.");
++    }
++  };
++
++  const handleDeletar = async (id: string) => {
++    setServerError(null);
++    try {
++      await deletar(id);
++    } catch (err: unknown) {
++      const e = err as { response?: { data?: { error?: { message?: string } } } };
++      setServerError(e?.response?.data?.error?.message ?? "Erro ao excluir categoria.");
++    } finally {
++      setConfirmandoDelete(null);
++    }
++  };
++
++  const categoriasFiltradas = tipoFiltro === "todos"
++    ? categorias
++    : categorias.filter((c) => c.tipo === tipoFiltro);
++
++  return (
++    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
++      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
++      <div className="relative w-full max-w-2xl bg-[#0f1117] border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
++        {/* Header */}
++        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 flex-shrink-0">
++          <div className="flex items-center gap-2">
++            <Tag className="h-5 w-5 text-violet-400" />
++            <h2 className="text-lg font-semibold text-white">Categorias Financeiras</h2>
++          </div>
++          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
++            <X className="w-5 h-5" />
++          </button>
++        </div>
++
++        <div className="flex flex-col lg:flex-row flex-1 min-h-0">
++          {/* Form */}
++          <div className="w-full lg:w-80 border-b lg:border-b-0 lg:border-r border-white/10 p-6 flex-shrink-0">
++            <h3 className="text-sm font-medium text-slate-300 mb-4">
++              {editando ? "Editar categoria" : "Nova categoria"}
++            </h3>
++
++            {serverError && (
++              <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
++                {serverError}
++              </div>
++            )}
++
++            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
++              <div>
++                <label className="block text-xs font-medium text-slate-400 mb-1.5">Nome *</label>
++                <input
++                  {...register("nome")}
++                  placeholder="Ex: Vendas, Aluguel..."
++                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
++                />
++                {errors.nome && <p className="mt-1 text-xs text-red-400">{errors.nome.message}</p>}
++              </div>
++
++              <div>
++                <label className="block text-xs font-medium text-slate-400 mb-1.5">Tipo *</label>
++                <div className="grid grid-cols-2 gap-2">
++                  {(["receita", "despesa"] as const).map((t) => (
++                    <button
++                      key={t}
++                      type="button"
++                      onClick={() => setValue("tipo", t)}
++                      className={`py-2 rounded-lg text-xs font-medium transition-all capitalize ${
++                        watch("tipo") === t
++                          ? t === "receita"
++                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50"
++                            : "bg-red-500/20 text-red-400 border border-red-500/50"
++                          : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
++                      }`}
++                    >
++                      {t === "receita" ? "Receita" : "Despesa"}
++                    </button>
++                  ))}
++                </div>
++              </div>
++
++              <div>
++                <label className="block text-xs font-medium text-slate-400 mb-1.5">Cor *</label>
++                <div className="flex flex-wrap gap-2">
++                  {CORES_PRESET.map((cor) => (
++                    <button
++                      key={cor}
++                      type="button"
++                      onClick={() => setValue("cor", cor)}
++                      className={`w-6 h-6 rounded-full transition-all ${
++                        corSelecionada === cor ? "ring-2 ring-white ring-offset-2 ring-offset-[#0f1117] scale-110" : "hover:scale-110"
++                      }`}
++                      style={{ backgroundColor: cor }}
++                    />
++                  ))}
++                </div>
++                <input {...register("cor")} type="hidden" />
++                {errors.cor && <p className="mt-1 text-xs text-red-400">{errors.cor.message}</p>}
++              </div>
++
++              <div className="flex gap-2 pt-1">
++                {editando && (
++                  <button
++                    type="button"
++                    onClick={fecharForm}
++                    className="flex-1 py-2 px-3 rounded-lg border border-white/10 text-xs font-medium text-slate-400 hover:bg-white/5 transition-colors"
++                  >
++                    Cancelar
++                  </button>
++                )}
++                <button
++                  type="submit"
++                  disabled={isSubmitting}
++                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-xs font-medium text-white transition-colors"
++                >
++                  {isSubmitting ? (
++                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
++                  ) : editando ? (
++                    <Pencil className="h-3.5 w-3.5" />
++                  ) : (
++                    <Plus className="h-3.5 w-3.5" />
++                  )}
++                  {editando ? "Salvar" : "Criar"}
++                </button>
++              </div>
++            </form>
++          </div>
++
++          {/* List */}
++          <div className="flex-1 flex flex-col min-h-0">
++            <div className="flex items-center gap-2 px-5 py-3 border-b border-white/10 flex-shrink-0">
++              {(["todos", "receita", "despesa"] as const).map((t) => (
++                <button
++                  key={t}
++                  onClick={() => setTipoFiltro(t)}
++                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors capitalize ${
++                    tipoFiltro === t
++                      ? "bg-violet-500/20 text-violet-400"
++                      : "text-slate-400 hover:text-white"
++                  }`}
++                >
++                  {t === "todos" ? "Todos" : t === "receita" ? "Receitas" : "Despesas"}
++                </button>
++              ))}
++            </div>
++
++            <div className="overflow-y-auto flex-1">
++              {loading ? (
++                <div className="flex items-center justify-center py-10 text-sm text-slate-500">
++                  <Loader2 className="h-4 w-4 animate-spin mr-2" /> Carregando...
++                </div>
++              ) : categoriasFiltradas.length === 0 ? (
++                <div className="flex flex-col items-center justify-center py-10 text-center">
++                  <Tag className="h-8 w-8 text-slate-600 mb-2" />
++                  <p className="text-sm text-slate-500">Nenhuma categoria encontrada.</p>
++                </div>
++              ) : (
++                <div className="divide-y divide-white/5">
++                  {categoriasFiltradas.map((cat) => (
++                    <div key={cat.id} className="flex items-center gap-3 px-5 py-3 hover:bg-white/5 transition-colors">
++                      <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: cat.cor || "#6366f1" }} />
++                      <div className="flex-1 min-w-0">
++                        <span className="text-sm text-white truncate block">{cat.nome}</span>
++                        <span className={`text-xs ${cat.tipo === "receita" ? "text-emerald-400" : "text-red-400"}`}>
++                          {cat.tipo === "receita" ? "Receita" : "Despesa"}
++                        </span>
++                      </div>
++                      <div className="flex items-center gap-1">
++                        <button
++                          onClick={() => abrirEdicao(cat)}
++                          className="p-1.5 rounded-lg text-slate-400 hover:text-violet-400 hover:bg-violet-500/10 transition-colors"
++                          title="Editar"
++                        >
++                          <Pencil className="h-3.5 w-3.5" />
++                        </button>
++                        {confirmandoDelete === cat.id ? (
++                          <div className="flex items-center gap-1">
++                            <button
++                              onClick={() => handleDeletar(cat.id)}
++                              className="px-2 py-1 rounded text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
++                            >
++                              Confirmar
++                            </button>
++                            <button
++                              onClick={() => setConfirmandoDelete(null)}
++                              className="px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition-colors"
++                            >
++                              Não
++                            </button>
++                          </div>
++                        ) : (
++                          <button
++                            onClick={() => setConfirmandoDelete(cat.id)}
++                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
++                            title="Excluir"
++                          >
++                            <Trash2 className="h-3.5 w-3.5" />
++                          </button>
++                        )}
++                      </div>
++                    </div>
++                  ))}
++                </div>
++              )}
++            </div>
++          </div>
++        </div>
++      </div>
++    </div>
++  );
++}
+diff --git a/frontend/components/financeiro/LancamentoForm.tsx b/frontend/components/financeiro/LancamentoForm.tsx
+index 4966830..d7a828c 100644
+--- a/frontend/components/financeiro/LancamentoForm.tsx
++++ b/frontend/components/financeiro/LancamentoForm.tsx
+@@ -22,13 +22,23 @@ const lancamentoSchema = z
+         "O valor deve ser maior que zero."
+       ),
+     categoria: z.string().optional().nullable(),
+-    data_vencimento: z.string().min(1, "Informe a data de vencimento."),
++    data_vencimento: z.string().optional().nullable(),
+     status: z.enum(["pendente", "pago", "atrasado", "cancelado"]),
+     data_pagamento: z.string().optional().nullable(),
+     recorrente: z.boolean(),
+     recorrencia: z.enum(["semanal", "mensal", "anual", ""]),
+     observacoes: z.string().optional(),
+   })
++  .refine(
++    (data) => {
++      if (data.tipo === "despesa" && !data.data_vencimento) return false;
++      return true;
++    },
++    {
++      message: "Informe a data de vencimento para despesas.",
++      path: ["data_vencimento"],
++    }
++  )
+   .refine(
+     (data) => {
+       if (data.status === "pago" && !data.data_pagamento) return false;
+@@ -79,6 +89,7 @@ export function LancamentoForm({
+       recorrente: false,
+       recorrencia: "",
+       data_vencimento: format(new Date(), "yyyy-MM-dd"),
++      data_pagamento: null,
+     },
+   });
+ 
+@@ -95,7 +106,7 @@ export function LancamentoForm({
+       descricao: data.descricao,
+       valor: parseFloat(data.valor.replace(",", ".")),
+       categoria: data.categoria || null,
+-      data_vencimento: data.data_vencimento,
++      data_vencimento: data.data_vencimento || null,
+       status: data.status,
+       data_pagamento: data.data_pagamento || null,
+       recorrente: data.recorrente,
+@@ -211,7 +222,7 @@ export function LancamentoForm({
+           <div className="grid grid-cols-2 gap-3">
+             <div>
+               <label className="block text-sm font-medium text-slate-300 mb-1.5">
+-                Vencimento *
++                {tipo === "despesa" ? "Vencimento *" : "Data de recebimento (opcional)"}
+               </label>
+               <input
+                 type="date"
+diff --git a/frontend/components/fornecedores/HistoricoCompras.tsx b/frontend/components/fornecedores/HistoricoCompras.tsx
+index 1273c06..6a693bb 100644
+--- a/frontend/components/fornecedores/HistoricoCompras.tsx
++++ b/frontend/components/fornecedores/HistoricoCompras.tsx
+@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
+ import { useForm } from "react-hook-form";
+ import { zodResolver } from "@hookform/resolvers/zod";
+ import { z } from "zod";
+-import { Plus, X, Loader2, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
++import { Plus, X, Loader2, ShoppingCart, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
+ import { useComprasFornecedor } from "@/hooks/useFornecedores";
+ import type { CompraFornecedor } from "@/types/fornecedores";
+ 
+@@ -36,11 +36,14 @@ interface NovaCompraFormProps {
+   fornecedorId: string;
+   onSuccess: () => void;
+   onClose: () => void;
++  compraId?: string;
++  initialData?: Partial<CompraFormValues>;
+ }
+ 
+-function NovaCompraForm({ fornecedorId, onSuccess, onClose }: NovaCompraFormProps) {
+-  const { criar } = useComprasFornecedor();
++function NovaCompraForm({ fornecedorId, onSuccess, onClose, compraId, initialData }: NovaCompraFormProps) {
++  const { criar, atualizar } = useComprasFornecedor();
+   const [serverError, setServerError] = useState<string | null>(null);
++  const isEdit = !!compraId;
+ 
+   const {
+     register,
+@@ -52,6 +55,7 @@ function NovaCompraForm({ fornecedorId, onSuccess, onClose }: NovaCompraFormProp
+     defaultValues: {
+       status: "pendente",
+       data_compra: new Date().toISOString().split("T")[0],
++      ...initialData,
+     },
+   });
+ 
+@@ -63,11 +67,15 @@ function NovaCompraForm({ fornecedorId, onSuccess, onClose }: NovaCompraFormProp
+       const payload = Object.fromEntries(
+         Object.entries(values).filter(([, v]) => v !== "" && v !== undefined)
+       ) as CompraFormValues;
+-      await criar(fornecedorId, payload);
++      if (isEdit && compraId) {
++        await atualizar(compraId, payload);
++      } else {
++        await criar(fornecedorId, payload);
++      }
+       onSuccess();
+     } catch (err: unknown) {
+       const e = err as { response?: { data?: { error?: { message?: string } } } };
+-      setServerError(e?.response?.data?.error?.message ?? "Erro ao registrar compra");
++      setServerError(e?.response?.data?.error?.message ?? (isEdit ? "Erro ao editar compra" : "Erro ao registrar compra"));
+     }
+   };
+ 
+@@ -75,7 +83,7 @@ function NovaCompraForm({ fornecedorId, onSuccess, onClose }: NovaCompraFormProp
+     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+       <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl">
+         <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+-          <h3 className="text-base font-semibold text-white">Registrar Compra</h3>
++          <h3 className="text-base font-semibold text-white">{isEdit ? "Editar Compra" : "Registrar Compra"}</h3>
+           <button onClick={onClose} className="rounded-lg p-1.5 text-zinc-400 hover:bg-white/10 hover:text-white">
+             <X className="h-5 w-5" />
+           </button>
+@@ -131,7 +139,7 @@ function NovaCompraForm({ fornecedorId, onSuccess, onClose }: NovaCompraFormProp
+             </button>
+             <button type="submit" disabled={isSubmitting} className="flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-60">
+               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+-              Registrar Compra
++              {isEdit ? "Salvar Alterações" : "Registrar Compra"}
+             </button>
+           </div>
+         </form>
+@@ -145,9 +153,12 @@ interface HistoricoComprasProps {
+ }
+ 
+ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
+-  const { data, total, loading, error, fetch } = useComprasFornecedor();
++  const { data, total, loading, error, fetch, atualizar, deletar } = useComprasFornecedor();
+   const [page, setPage] = useState(1);
+   const [showForm, setShowForm] = useState(false);
++  const [editando, setEditando] = useState<CompraFornecedor | null>(null);
++  const [confirmandoDelete, setConfirmandoDelete] = useState<string | null>(null);
++  const [actionError, setActionError] = useState<string | null>(null);
+   const pageSize = 25;
+ 
+   useEffect(() => {
+@@ -158,11 +169,31 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
+ 
+   const handleSuccess = () => {
+     setShowForm(false);
++    setEditando(null);
+     fetch(fornecedorId, page);
+   };
+ 
++  const handleDeletar = async (id: string) => {
++    setActionError(null);
++    try {
++      await deletar(id);
++      fetch(fornecedorId, page);
++    } catch (err: unknown) {
++      const e = err as { response?: { data?: { error?: { message?: string } } } };
++      setActionError(e?.response?.data?.error?.message ?? "Erro ao excluir compra.");
++    } finally {
++      setConfirmandoDelete(null);
++    }
++  };
++
+   return (
+     <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm">
++      {actionError && (
++        <div className="mx-4 mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
++          {actionError}
++        </div>
++      )}
++
+       {/* Header */}
+       <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+         <div className="flex items-center gap-2">
+@@ -228,6 +259,39 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
+                 <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${status.color}`}>
+                   {status.label}
+                 </span>
++                <div className="flex items-center gap-1 mt-0.5">
++                  <button
++                    onClick={() => setEditando(c)}
++                    className="p-1 rounded text-zinc-500 hover:text-violet-400 hover:bg-violet-500/10 transition-colors"
++                    title="Editar compra"
++                  >
++                    <Pencil className="h-3 w-3" />
++                  </button>
++                  {confirmandoDelete === c.id ? (
++                    <div className="flex items-center gap-1">
++                      <button
++                        onClick={() => handleDeletar(c.id)}
++                        className="px-1.5 py-0.5 rounded text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
++                      >
++                        Sim
++                      </button>
++                      <button
++                        onClick={() => setConfirmandoDelete(null)}
++                        className="px-1.5 py-0.5 rounded text-xs text-zinc-400 hover:text-white transition-colors"
++                      >
++                        Não
++                      </button>
++                    </div>
++                  ) : (
++                    <button
++                      onClick={() => setConfirmandoDelete(c.id)}
++                      className="p-1 rounded text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
++                      title="Excluir compra"
++                    >
++                      <Trash2 className="h-3 w-3" />
++                    </button>
++                  )}
++                </div>
+               </div>
+             </div>
+           );
+@@ -257,6 +321,24 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
+           onClose={() => setShowForm(false)}
+         />
+       )}
++
++      {editando && (
++        <NovaCompraForm
++          fornecedorId={fornecedorId}
++          compraId={editando.id}
++          initialData={{
++            descricao: editando.descricao,
++            valor: typeof editando.valor === "string" ? parseFloat(editando.valor) : editando.valor,
++            data_compra: editando.data_compra,
++            numero_nf: editando.numero_nf ?? "",
++            status: editando.status as "pendente" | "pago" | "cancelado",
++            data_pagamento: editando.data_pagamento ?? "",
++            observacoes: editando.observacoes ?? "",
++          }}
++          onSuccess={handleSuccess}
++          onClose={() => setEditando(null)}
++        />
++      )}
+     </div>
+   );
+ }
+diff --git a/frontend/hooks/useFinanceiro.ts b/frontend/hooks/useFinanceiro.ts
+index 8013dce..ffe6cb5 100644
+--- a/frontend/hooks/useFinanceiro.ts
++++ b/frontend/hooks/useFinanceiro.ts
+@@ -225,16 +225,19 @@ export function useLancamentos(filtros?: FiltrosLancamento) {
+ export function useCategorias() {
+   const [categorias, setCategorias] = useState<Categoria[]>([]);
+   const [loading, setLoading] = useState(true);
++  const [error, setError] = useState<string | null>(null);
+ 
+   const carregar = useCallback(async () => {
+     setLoading(true);
++    setError(null);
+     try {
+       const resp = await api.get<ApiResponse<Categoria[]>>(
+         "/financeiro/categorias/"
+       );
+       setCategorias(resp.data.data);
+-    } catch {
+-      // silencia erro de categorias
++    } catch (err: unknown) {
++      const e = err as { response?: { data?: { error?: { message?: string } } } };
++      setError(e?.response?.data?.error?.message ?? "Erro ao carregar categorias.");
+     } finally {
+       setLoading(false);
+     }
+@@ -245,18 +248,36 @@ export function useCategorias() {
+   }, [carregar]);
+ 
+   const criar = async (dados: CategoriaCreate): Promise<Categoria> => {
+-    const resp = await api.post<ApiResponse<Categoria>>(
+-      "/financeiro/categorias/",
+-      dados
+-    );
+-    await carregar();
+-    return resp.data.data;
++    try {
++      const resp = await api.post<ApiResponse<Categoria>>(
++        "/financeiro/categorias/",
++        dados
++      );
++      return resp.data.data;
++    } finally {
++      await carregar();
++    }
++  };
++
++  const atualizar = async (id: string, dados: Partial<CategoriaCreate>): Promise<Categoria> => {
++    try {
++      const resp = await api.patch<ApiResponse<Categoria>>(
++        `/financeiro/categorias/${id}/`,
++        dados
++      );
++      return resp.data.data;
++    } finally {
++      await carregar();
++    }
+   };
+ 
+   const deletar = async (id: string): Promise<void> => {
+-    await api.delete(`/financeiro/categorias/${id}/`);
+-    await carregar();
++    try {
++      await api.delete(`/financeiro/categorias/${id}/`);
++    } finally {
++      await carregar();
++    }
+   };
+ 
+-  return { categorias, loading, recarregar: carregar, criar, deletar };
++  return { categorias, loading, error, recarregar: carregar, criar, atualizar, deletar };
+ }
+diff --git a/frontend/hooks/useFornecedores.ts b/frontend/hooks/useFornecedores.ts
+index affdbe5..b6f2c68 100644
+--- a/frontend/hooks/useFornecedores.ts
++++ b/frontend/hooks/useFornecedores.ts
+@@ -256,5 +256,20 @@ export function useComprasFornecedor() {
+     []
+   );
+ 
+-  return { data, total, loading, error, fetch, criar };
++  const atualizar = useCallback(
++    async (compraId: string, payload: Partial<CompraFormData>) => {
++      const res = await api.patch<SingleResponse<CompraFornecedor>>(
++        `/fornecedores/compras/${compraId}/`,
++        payload
++      );
++      return res.data.data;
++    },
++    []
++  );
++
++  const deletar = useCallback(async (compraId: string) => {
++    await api.delete(`/fornecedores/compras/${compraId}/`);
++  }, []);
++
++  return { data, total, loading, error, fetch, criar, atualizar, deletar };
+ }
+diff --git a/frontend/types/financeiro.ts b/frontend/types/financeiro.ts
+index 1a83315..644b288 100644
+--- a/frontend/types/financeiro.ts
++++ b/frontend/types/financeiro.ts
+@@ -53,7 +53,7 @@ export interface LancamentoCreate {
+   descricao: string;
+   valor: number | string;
+   categoria?: string | null;
+-  data_vencimento: string;
++  data_vencimento: string | null;
+   data_pagamento?: string | null;
+   status?: StatusLancamento;
+   recorrente?: boolean;
+-- 
+2.43.0
+

@@ -159,3 +159,45 @@ class DRESerializer(serializers.Serializer):
     total_despesas = serializers.DecimalField(max_digits=14, decimal_places=2)
     lucro_bruto = serializers.DecimalField(max_digits=14, decimal_places=2)
     margem = serializers.DecimalField(max_digits=6, decimal_places=2)
+
+
+# ── Caixinhas ────────────────────────────────────────────────────────────────
+
+class CaixinhaSerializer(serializers.ModelSerializer):
+    progresso = serializers.FloatField(read_only=True)
+
+    class Meta:
+        from .models import Caixinha
+        model = Caixinha
+        fields = [
+            "id", "nome", "descricao", "cor", "icone",
+            "meta", "saldo_atual", "data_meta", "ativa",
+            "progresso", "criado_em", "atualizado_em",
+        ]
+        read_only_fields = ["id", "saldo_atual", "progresso", "criado_em", "atualizado_em"]
+
+
+class CaixinhaCreateSerializer(serializers.Serializer):
+    nome = serializers.CharField(max_length=100)
+    descricao = serializers.CharField(required=False, allow_blank=True, default="")
+    cor = serializers.CharField(max_length=7, required=False, default="#6D28D9")
+    icone = serializers.CharField(max_length=50, required=False, default="piggy-bank")
+    meta = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
+    data_meta = serializers.DateField(required=False, allow_null=True)
+
+
+class MovimentoCaixinhaSerializer(serializers.ModelSerializer):
+    class Meta:
+        from .models import MovimentoCaixinha
+        model = MovimentoCaixinha
+        fields = [
+            "id", "tipo", "valor", "descricao",
+            "saldo_anterior", "saldo_posterior", "criado_em",
+        ]
+        read_only_fields = ["id", "saldo_anterior", "saldo_posterior", "criado_em"]
+
+
+class MovimentoCaixinhaCreateSerializer(serializers.Serializer):
+    tipo = serializers.ChoiceField(choices=["deposito", "retirada"])
+    valor = serializers.DecimalField(max_digits=12, decimal_places=2, min_value="0.01")
+    descricao = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")

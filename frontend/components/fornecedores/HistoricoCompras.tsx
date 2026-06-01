@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, X, Loader2, ShoppingCart, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { Plus, X, Loader2, ShoppingCart, ChevronLeft, ChevronRight, Pencil, Trash2, Package } from "lucide-react";
 import { useComprasFornecedor } from "@/hooks/useFornecedores";
 import type { CompraFornecedor } from "@/types/fornecedores";
+import { AdicionarAoEstoqueModal } from "./AdicionarAoEstoqueModal";
 
 const STATUS_COMPRA: Record<string, { label: string; color: string }> = {
   pendente: { label: "Pendente", color: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
@@ -159,6 +160,7 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
   const [editando, setEditando] = useState<CompraFornecedor | null>(null);
   const [confirmandoDelete, setConfirmandoDelete] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [adicionandoEstoque, setAdicionandoEstoque] = useState<CompraFornecedor | null>(null);
   const pageSize = 25;
 
   useEffect(() => {
@@ -261,6 +263,13 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
                 </span>
                 <div className="flex items-center gap-1 mt-0.5">
                   <button
+                    onClick={() => setAdicionandoEstoque(c)}
+                    className="p-1 rounded text-zinc-500 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                    title="Adicionar ao estoque"
+                  >
+                    <Package className="h-3 w-3" />
+                  </button>
+                  <button
                     onClick={() => setEditando(c)}
                     className="p-1 rounded text-zinc-500 hover:text-violet-400 hover:bg-violet-500/10 transition-colors"
                     title="Editar compra"
@@ -319,6 +328,19 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
           fornecedorId={fornecedorId}
           onSuccess={handleSuccess}
           onClose={() => setShowForm(false)}
+        />
+      )}
+
+      {adicionandoEstoque && (
+        <AdicionarAoEstoqueModal
+          compra={{
+            id: adicionandoEstoque.id,
+            fornecedor_id: fornecedorId,
+            descricao: adicionandoEstoque.descricao,
+            valor: typeof adicionandoEstoque.valor === "string" ? parseFloat(adicionandoEstoque.valor) : adicionandoEstoque.valor,
+          }}
+          onClose={() => setAdicionandoEstoque(null)}
+          onSuccess={() => fetch(fornecedorId, page)}
         />
       )}
 

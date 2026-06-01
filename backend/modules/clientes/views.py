@@ -39,6 +39,8 @@ class ClienteListCreateView(EmpresaQuerySetMixin, APIView):
             "busca": request.query_params.get("busca"),
             "tags": request.query_params.get("tags"),
             "tem_followup_atrasado": request.query_params.get("followup_atrasado"),
+            "mes": request.query_params.get("mes"),
+            "ano": request.query_params.get("ano"),
         }
         # Remove filtros nulos
         filtros = {k: v for k, v in filtros.items() if v is not None}
@@ -194,7 +196,11 @@ class ClienteResumoView(EmpresaQuerySetMixin, APIView):
     permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def get(self, request):
-        resumo = ClienteService.obter_resumo(self.get_empresa_id())
+        filtros = {
+            "mes": request.query_params.get("mes"),
+            "ano": request.query_params.get("ano"),
+        }
+        resumo = ClienteService.obter_resumo(self.get_empresa_id(), filtros)
         serializer = ResumoClientesSerializer(resumo)
         return success_response(
             data=serializer.data,

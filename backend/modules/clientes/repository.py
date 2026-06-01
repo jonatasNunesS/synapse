@@ -53,6 +53,20 @@ class ClienteRepository:
         if followup_atrasado in (True, "true", "1"):
             qs = qs.filter(proximo_followup__lt=date.today())
 
+        # Filtro de período (mes/ano)
+        mes = filtros.get("mes")
+        ano = filtros.get("ano")
+        if mes and ano:
+            try:
+                qs = qs.filter(criado_em__month=int(mes), criado_em__year=int(ano))
+            except (ValueError, TypeError):
+                pass
+        elif ano:
+            try:
+                qs = qs.filter(criado_em__year=int(ano))
+            except (ValueError, TypeError):
+                pass
+
         return qs.select_related("criado_por").order_by("-criado_em")
 
     @staticmethod
@@ -138,30 +152,46 @@ class ClienteRepository:
         return resultado
 
     @staticmethod
-    def calcular_resumo(empresa_id) -> dict:
+    def calcular_resumo(empresa_id, filtros: dict = None) -> dict:
         """Calcula KPIs do CRM para a empresa."""
+        filtros = filtros or {}
         hoje = date.today()
         inicio_mes = hoje.replace(day=1)
 
         base_qs = Cliente.objects.filter(empresa_id=empresa_id)
 
-        total_clientes = base_qs.count()
-        clientes_ativos = base_qs.filter(ativo=True).count()
-        novos_este_mes = base_qs.filter(criado_em__date__gte=inicio_mes).count()
+        # Aplicar filtro de período ao base_qs
+        mes = filtros.get("mes")
+        ano = filtros.get("ano")
+        periodo_qs = base_qs
+        if mes and ano:
+            try:
+                periodo_qs = base_qs.filter(criado_em__month=int(mes), criado_em__year=int(ano))
+            except (ValueError, TypeError):
+                pass
+        elif ano:
+            try:
+                periodo_qs = base_qs.filter(criado_em__year=int(ano))
+            except (ValueError, TypeError):
+                pass
 
-        agg = base_qs.filter(ativo=True).aggregate(
+        total_clientes = periodo_qs.count()
+        clientes_ativos = periodo_qs.filter(ativo=True).count()
+        novos_este_mes = periodo_qs.filter(criado_em__date__gte=inicio_mes).count()
+
+        agg = periodo_qs.filter(ativo=True).aggregate(
             valor_total=Sum("valor_total_compras"),
             ticket_medio=Avg("valor_total_compras"),
         )
 
-        followups_atrasados = base_qs.filter(
+        followups_atrasados = periodo_qs.filter(
             ativo=True,
             proximo_followup__lt=hoje,
         ).count()
 
         # Clientes por status
         por_status_qs = (
-            base_qs.filter(ativo=True)
+            periodo_qs.filter(ativo=True)
             .values("status_funil")
             .annotate(count=Count("id"))
         )

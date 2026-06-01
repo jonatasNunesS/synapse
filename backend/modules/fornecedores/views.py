@@ -24,6 +24,7 @@ from .serializers import (
     ResumoFornecedoresSerializer,
 )
 from .services import FornecedorService
+from modules.estoque.services import EstoqueService
 
 logger = logging.getLogger(__name__)
 
@@ -283,50 +284,81 @@ class CompraFornecedorListCreateView(APIView):
             return error_response("NOT_FOUND", str(exc), status_code=404)
 
 
-class CompraFornecedorDetailView(APIView):
-    """
-    GET    /api/fornecedores/{fornecedor_pk}/compras/{pk}/  — detalhe
-    PATCH  /api/fornecedores/{fornecedor_pk}/compras/{pk}/  — editar
-    DELETE /api/fornecedores/{fornecedor_pk}/compras/{pk}/  — excluir
-    """
+class CompraAdicionarAoEstoqueView(APIView):
+    """POST /api/fornecedores/<fornecedor_pk>/compras/<compra_pk>/adicionar-ao-estoque/"""
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsEmpresaMember]
 
-    def get(self, request, fornecedor_pk, pk):
+    def post(self, request, fornecedor_pk, compra_pk):
         empresa_id = request.user.empresa_id
-        try:
-            compra = FornecedorService.obter_compra(empresa_id, pk)
-        except ResourceNotFound as exc:
-            return error_response("NOT_FOUND", str(exc), status_code=404)
-        return success_response(data=CompraFornecedorSerializer(compra).data)
 
-    def patch(self, request, fornecedor_pk, pk):
-        empresa_id = request.user.empresa_id
         try:
-            compra = FornecedorService.obter_compra(empresa_id, pk)
+            compra = FornecedorService.obter_compra(empresa_id, fornecedor_pk, compra_pk)
         except ResourceNotFound as exc:
             return error_response("NOT_FOUND", str(exc), status_code=404)
 
-        serializer = CompraFornecedorCreateSerializer(
-            compra, data=request.data, partial=True
-        )
-        if not serializer.is_valid():
-            return error_response("VALIDATION_ERROR", "Dados inválidos.", details=serializer.errors)
+        produto_id = request.data.get("produto_id")
+        quantidade = request.data.get("quantidade")
+        criar_produto = request.data.get("criar_produto", False)
+        dados_produto = request.data.get("dados_produto", {})
 
-        dados = {k: v for k, v in serializer.validated_data.items() if k != "fornecedor"}
+        if not quantidade:
+            return error_response("VALIDATION_ERROR", "O campo 'quantidade' é obrigatório.")
+
         try:
-            compra = FornecedorService.atualizar_compra(empresa_id, pk, dados)
-            return success_response(
-                data=CompraFornecedorSerializer(compra).data,
-                message="Compra atualizada com sucesso.",
+            quantidade = float(quantidade)
+            if quantidade <= 0:
+                raise ValueError()
+        except (ValueError, TypeError):
+            return error_response("VALIDATION_ERROR", "Quantidade deve ser um número positivo.")
+
+        try:
+            if criar_produto:
+                if not dados_produto.get("nome"):
+                    return error_response("VALIDATION_ERROR", "Nome do produto é obrigatório.")
+                produto = EstoqueService.criar_produto(
+                    empresa_id,
+                    request.user.id,
+                    {
+                        "nome": dados_produto["nome"],
+                        "preco_custo": dados_produto.get("preco_custo", compra.valor),
+                        "preco_venda": dados_produto.get("preco_venda", 0),
+                        "estoque_atual": 0,
+                        "estoque_minimo": dados_produto.get("estoque_minimo", 0),
+                        "unidade": dados_produto.get("unidade", "unidade"),
+                    }
+                )
+                produto_id = str(produto.id)
+            elif not produto_id:
+                return error_response("VALIDATION_ERROR", "Informe 'produto_id' ou defina 'criar_produto' como true.")
+
+            movimentacao, produto = EstoqueService.registrar_movimentacao(
+                empresa_id,
+                request.user.id,
+                {
+                    "produto": produto_id,
+                    "tipo": "entrada",
+                    "quantidade": quantidade,
+                    "motivo": "compra",
+                    "referencia": f"Compra #{str(compra_pk)[:8]} — {compra.descricao}",
+                    "observacoes": f"Entrada automática vinculada à compra de {compra.fornecedor.nome}",
+                }
+            )
+
+            return created_response(
+                data={
+                    "movimentacao_id": str(movimentacao.id),
+                    "produto_id": str(produto.id),
+                    "produto_nome": produto.nome,
+                    "quantidade": float(movimentacao.quantidade),
+                    "estoque_atual": float(produto.estoque_atual),
+                },
+                message="Entrada no estoque registrada com sucesso.",
             )
         except ResourceNotFound as exc:
             return error_response("NOT_FOUND", str(exc), status_code=404)
-
-    def delete(self, request, fornecedor_pk, pk):
-        empresa_id = request.user.empresa_id
-        try:
-            FornecedorService.excluir_compra(empresa_id, pk)
-            return no_content_response()
-        except ResourceNotFound as exc:
-            return error_response("NOT_FOUND", str(exc), status_code=404)
+        except BusinessRuleViolation as exc:
+            return error_response("BUSINESS_ERROR", str(exc))
+        except Exception as exc:
+            logger.error(f"Erro ao adicionar compra ao estoque: {exc}")
+            return error_response("SERVER_ERROR", "Erro interno ao registrar entrada.", status_code=500)

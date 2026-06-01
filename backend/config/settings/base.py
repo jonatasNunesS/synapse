@@ -54,6 +54,8 @@ LOCAL_APPS = [
     "modules.documentos",
     "modules.dashboard",
     "modules.ai_hub",
+    "modules.agenda",
+    "modules.mensagens",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -164,17 +166,6 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": (
         "rest_framework.renderers.JSONRenderer",
     ),
-    # ── Rate limiting (R2 — Auditoria v2.0) ──────────────────────────────
-    # Escopos usados via throttle_scope nas views sensíveis.
-    # login: 5 tentativas/minuto por IP (previne brute-force)
-    # ai_gerar: 10 requisições/minuto por usuário autenticado
-    "DEFAULT_THROTTLE_CLASSES": [
-        "rest_framework.throttling.ScopedRateThrottle",
-    ],
-    "DEFAULT_THROTTLE_RATES": {
-        "login": "5/minute",
-        "ai_gerar": "10/minute",
-    },
 }
 
 # ════════════════════════════════════════════════════════════

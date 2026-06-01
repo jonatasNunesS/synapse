@@ -13,6 +13,11 @@ from .views import (
     LancamentoPagarView,
     ResumoFinanceiroView,
     VencimentosView,
+    CaixinhaListCreateView,
+    CaixinhaDetailView,
+    CaixinhaMovimentoView,
+    InvestimentoListCreateView,
+    InvestimentoDetailView,
 )
 
 app_name = "financeiro"
@@ -32,4 +37,13 @@ urlpatterns = [
     path("fluxo-caixa/", FluxoCaixaView.as_view(), name="fluxo-caixa"),
     path("dre/", DREView.as_view(), name="dre"),
     path("vencimentos/", VencimentosView.as_view(), name="vencimentos"),
+
+    # ── Caixinhas ──────────────────────────────────────────
+    path("caixinhas/", CaixinhaListCreateView.as_view(), name="caixinha-list"),
+    path("caixinhas/<uuid:pk>/", CaixinhaDetailView.as_view(), name="caixinha-detail"),
+    path("caixinhas/<uuid:pk>/movimentar/", CaixinhaMovimentoView.as_view(), name="caixinha-movimentar"),
+
+    # ── Investimentos ───────────────────────────────────────
+    path("investimentos/", InvestimentoListCreateView.as_view(), name="investimento-list"),
+    path("investimentos/<uuid:pk>/", InvestimentoDetailView.as_view(), name="investimento-detail"),
 ]

@@ -24,6 +24,8 @@ export interface FiltrosClientes {
   tags?: string;
   followup_atrasado?: string;
   page?: number;
+  mes?: string;
+  ano?: string;
 }
 
 // ─── Hook principal de listagem ───────────────────────────────────────────────
@@ -192,10 +194,14 @@ export function useResumoClientes() {
   const [resumo, setResumo] = useState<ResumoClientes | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const carregar = useCallback(async () => {
+  const carregar = useCallback(async (filtros: { mes?: string; ano?: string } = {}) => {
     setLoading(true);
     try {
-      const resp = await api.get<ResumoClientes>("/clientes/resumo/");
+      const params = new URLSearchParams();
+      if (filtros.mes) params.set("mes", filtros.mes);
+      if (filtros.ano) params.set("ano", filtros.ano);
+      const query = params.toString();
+      const resp = await api.get<ResumoClientes>(`/clientes/resumo/${query ? `?${query}` : ""}`);
       if (resp.success && resp.data) setResumo(resp.data);
     } finally {
       setLoading(false);

@@ -169,9 +169,12 @@ class FornecedorService:
 
     @staticmethod
     def listar_compras(empresa_id: int, fornecedor_id, filtros: dict = None):
-        # Valida que fornecedor pertence à empresa
         FornecedorRepository.obter_fornecedor(empresa_id, fornecedor_id)
         return FornecedorRepository.listar_compras(empresa_id, fornecedor_id, filtros)
+
+    @staticmethod
+    def obter_compra(empresa_id, fornecedor_id, compra_id):
+        return FornecedorRepository.obter_compra(empresa_id, fornecedor_id, compra_id)
 
     @staticmethod
     def registrar_compra(empresa_id: int, fornecedor_id, usuario_id, dados: dict):
@@ -180,18 +183,3 @@ class FornecedorService:
         compra = FornecedorRepository.criar_compra(fornecedor_id, empresa_id, dados, usuario_id)
         invalidate_cache(empresa_id, "fornecedores")
         return compra
-
-    @staticmethod
-    def obter_compra(empresa_id: int, compra_id):
-        return FornecedorRepository.obter_compra(empresa_id, compra_id)
-
-    @staticmethod
-    def atualizar_compra(empresa_id: int, compra_id, dados: dict):
-        compra = FornecedorRepository.atualizar_compra(empresa_id, compra_id, dados)
-        invalidate_cache(empresa_id, "fornecedores")
-        return compra
-
-    @staticmethod
-    def excluir_compra(empresa_id: int, compra_id):
-        FornecedorRepository.excluir_compra(empresa_id, compra_id)
-        invalidate_cache(empresa_id, "fornecedores")

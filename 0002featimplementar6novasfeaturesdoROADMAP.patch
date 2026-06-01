@@ -1,0 +1,4500 @@
+From fdb38cb00168255995a4c78d39d65009fe7e608a Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Mon, 1 Jun 2026 19:28:00 +0000
+Subject: [PATCH 2/2] feat: implementar 6 novas features do ROADMAP
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+1. Compra → Estoque: endpoint POST /api/fornecedores/{forn}/compras/{id}/adicionar-ao-estoque/
+   com modal multi-step no frontend (produto existente ou criar novo)
+
+2. CRM filtros por período: filtros ?mes=&ano= em /clientes/ e /clientes/resumo/
+   com seletor de mês/ano na página de clientes
+
+3. Caixinhas: modelo Caixinha + MovimentoCaixinha no módulo financeiro,
+   endpoints CRUD + movimentar, componente CaixinhasSection com cards e progress bars
+
+4. Agenda/Calendário: novo módulo synapse_agenda com modelo Evento,
+   página /agenda com mini-calendário, lista de eventos por dia e form modal
+
+5. Investimentos: modelo Investimento no módulo financeiro, página /financeiro/investimentos
+   com KPIs, projeção de juros compostos por período e CRUD completo
+
+6. Mensagens Automáticas: novo módulo synapse_mensagens com MensagemAutomatica + LogEnvioMensagem,
+   página /mensagens com editor HTML, gatilhos configuráveis e disparo manual via Resend
+
+Todos os módulos novos registrados em INSTALLED_APPS e urlpatterns.
+Sidebar atualizada com Agenda, Investimentos e Mensagens.
+
+https://claude.ai/code/session_01Rj8RZjgC8vM8qG6aNV4fkr
+---
+ backend/config/settings/base.py               |   2 +
+ backend/config/urls.py                        |   2 +
+ backend/modules/agenda/__init__.py            |   0
+ backend/modules/agenda/apps.py                |   8 +
+ .../modules/agenda/migrations/0001_initial.py |  51 ++
+ backend/modules/agenda/migrations/__init__.py |   0
+ backend/modules/agenda/models.py              |  63 ++
+ backend/modules/agenda/urls.py                |   9 +
+ backend/modules/agenda/views.py               | 202 +++++++
+ backend/modules/clientes/repository.py        |  46 +-
+ backend/modules/clientes/services.py          |  11 +-
+ backend/modules/clientes/views.py             |   8 +-
+ .../0002_caixinha_movimentocaixinha.py        |  58 ++
+ .../migrations/0003_investimento.py           |  51 ++
+ backend/modules/financeiro/models.py          | 155 +++++
+ backend/modules/financeiro/serializers.py     |  42 ++
+ backend/modules/financeiro/urls.py            |  14 +
+ backend/modules/financeiro/views.py           | 263 +++++++++
+ backend/modules/fornecedores/repository.py    |  10 +
+ backend/modules/fornecedores/services.py      |   5 +-
+ backend/modules/fornecedores/urls.py          |   6 +
+ backend/modules/fornecedores/views.py         |  81 +++
+ backend/modules/mensagens/__init__.py         |   0
+ backend/modules/mensagens/apps.py             |   8 +
+ .../mensagens/migrations/0001_initial.py      |  77 +++
+ .../modules/mensagens/migrations/__init__.py  |   0
+ backend/modules/mensagens/models.py           |  96 +++
+ backend/modules/mensagens/urls.py             |  10 +
+ backend/modules/mensagens/views.py            | 225 +++++++
+ frontend/app/(dashboard)/agenda/page.tsx      | 552 ++++++++++++++++++
+ frontend/app/(dashboard)/clientes/page.tsx    |  34 +-
+ .../financeiro/investimentos/page.tsx         | 341 +++++++++++
+ frontend/app/(dashboard)/financeiro/page.tsx  |   6 +
+ frontend/app/(dashboard)/mensagens/page.tsx   | 445 ++++++++++++++
+ .../financeiro/CaixinhasSection.tsx           | 432 ++++++++++++++
+ .../fornecedores/AdicionarAoEstoqueModal.tsx  | 265 +++++++++
+ .../fornecedores/HistoricoCompras.tsx         |  24 +-
+ frontend/components/layout/Sidebar.tsx        |   5 +
+ frontend/hooks/useAgenda.ts                   | 106 ++++
+ frontend/hooks/useCaixinhas.ts                | 114 ++++
+ frontend/hooks/useClientes.ts                 |  10 +-
+ frontend/hooks/useInvestimentos.ts            | 113 ++++
+ 42 files changed, 3931 insertions(+), 19 deletions(-)
+ create mode 100644 backend/modules/agenda/__init__.py
+ create mode 100644 backend/modules/agenda/apps.py
+ create mode 100644 backend/modules/agenda/migrations/0001_initial.py
+ create mode 100644 backend/modules/agenda/migrations/__init__.py
+ create mode 100644 backend/modules/agenda/models.py
+ create mode 100644 backend/modules/agenda/urls.py
+ create mode 100644 backend/modules/agenda/views.py
+ create mode 100644 backend/modules/financeiro/migrations/0002_caixinha_movimentocaixinha.py
+ create mode 100644 backend/modules/financeiro/migrations/0003_investimento.py
+ create mode 100644 backend/modules/mensagens/__init__.py
+ create mode 100644 backend/modules/mensagens/apps.py
+ create mode 100644 backend/modules/mensagens/migrations/0001_initial.py
+ create mode 100644 backend/modules/mensagens/migrations/__init__.py
+ create mode 100644 backend/modules/mensagens/models.py
+ create mode 100644 backend/modules/mensagens/urls.py
+ create mode 100644 backend/modules/mensagens/views.py
+ create mode 100644 frontend/app/(dashboard)/agenda/page.tsx
+ create mode 100644 frontend/app/(dashboard)/financeiro/investimentos/page.tsx
+ create mode 100644 frontend/app/(dashboard)/mensagens/page.tsx
+ create mode 100644 frontend/components/financeiro/CaixinhasSection.tsx
+ create mode 100644 frontend/components/fornecedores/AdicionarAoEstoqueModal.tsx
+ create mode 100644 frontend/hooks/useAgenda.ts
+ create mode 100644 frontend/hooks/useCaixinhas.ts
+ create mode 100644 frontend/hooks/useInvestimentos.ts
+
+diff --git a/backend/config/settings/base.py b/backend/config/settings/base.py
+index 74a43e3..aa2f8dc 100644
+--- a/backend/config/settings/base.py
++++ b/backend/config/settings/base.py
+@@ -54,6 +54,8 @@ LOCAL_APPS = [
+     "modules.documentos",
+     "modules.dashboard",
+     "modules.ai_hub",
++    "modules.agenda",
++    "modules.mensagens",
+ ]
+ 
+ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+diff --git a/backend/config/urls.py b/backend/config/urls.py
+index 55047b3..fa314e2 100644
+--- a/backend/config/urls.py
++++ b/backend/config/urls.py
+@@ -40,6 +40,8 @@ urlpatterns = [
+     path("api/notificacoes/", include("modules.notificacoes.urls")),
+     path("api/dashboard/", include("modules.dashboard.urls")),
+     path("api/ai/", include("modules.ai_hub.urls")),
++    path("api/agenda/", include("modules.agenda.urls")),
++    path("api/mensagens/", include("modules.mensagens.urls")),
+ ]
+ 
+ # ── Debug Toolbar (apenas em dev) ──────────────────────────
+diff --git a/backend/modules/agenda/__init__.py b/backend/modules/agenda/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/backend/modules/agenda/apps.py b/backend/modules/agenda/apps.py
+new file mode 100644
+index 0000000..d5c767c
+--- /dev/null
++++ b/backend/modules/agenda/apps.py
+@@ -0,0 +1,8 @@
++from django.apps import AppConfig
++
++
++class AgendaConfig(AppConfig):
++    default_auto_field = "django.db.models.BigAutoField"
++    name = "modules.agenda"
++    label = "synapse_agenda"
++    verbose_name = "Agenda"
+diff --git a/backend/modules/agenda/migrations/0001_initial.py b/backend/modules/agenda/migrations/0001_initial.py
+new file mode 100644
+index 0000000..a6b14ef
+--- /dev/null
++++ b/backend/modules/agenda/migrations/0001_initial.py
+@@ -0,0 +1,51 @@
++from django.conf import settings
++from django.db import migrations, models
++import django.db.models.deletion
++import uuid
++
++
++class Migration(migrations.Migration):
++
++    initial = True
++
++    dependencies = [
++        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
++        ("synapse_auth", "0001_initial"),
++    ]
++
++    operations = [
++        migrations.CreateModel(
++            name="Evento",
++            fields=[
++                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
++                ("titulo", models.CharField(max_length=200)),
++                ("descricao", models.TextField(blank=True)),
++                ("tipo", models.CharField(
++                    choices=[("reuniao", "Reunião"), ("tarefa", "Tarefa"), ("lembrete", "Lembrete"), ("compromisso", "Compromisso"), ("outro", "Outro")],
++                    default="reuniao",
++                    max_length=20,
++                )),
++                ("cor", models.CharField(default="#6D28D9", max_length=7)),
++                ("data_inicio", models.DateTimeField()),
++                ("data_fim", models.DateTimeField(blank=True, null=True)),
++                ("dia_inteiro", models.BooleanField(default=False)),
++                ("local", models.CharField(blank=True, max_length=255)),
++                ("concluido", models.BooleanField(default=False)),
++                ("lembrete_minutos", models.IntegerField(blank=True, null=True)),
++                ("lembrete_enviado", models.BooleanField(default=False)),
++                ("criado_em", models.DateTimeField(auto_now_add=True)),
++                ("atualizado_em", models.DateTimeField(auto_now=True)),
++                ("empresa", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="eventos", to="synapse_auth.empresa")),
++                ("criado_por", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="eventos_criados", to=settings.AUTH_USER_MODEL)),
++            ],
++            options={"verbose_name": "Evento", "verbose_name_plural": "Eventos", "db_table": "synapse_eventos", "ordering": ["data_inicio"]},
++        ),
++        migrations.AddIndex(
++            model_name="evento",
++            index=models.Index(fields=["empresa", "data_inicio"], name="evento_emp_inicio_idx"),
++        ),
++        migrations.AddIndex(
++            model_name="evento",
++            index=models.Index(fields=["empresa", "concluido"], name="evento_emp_concluido_idx"),
++        ),
++    ]
+diff --git a/backend/modules/agenda/migrations/__init__.py b/backend/modules/agenda/migrations/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/backend/modules/agenda/models.py b/backend/modules/agenda/models.py
+new file mode 100644
+index 0000000..239ed19
+--- /dev/null
++++ b/backend/modules/agenda/models.py
+@@ -0,0 +1,63 @@
++import uuid
++from django.db import models
++
++
++class Evento(models.Model):
++    TIPO_CHOICES = [
++        ("reuniao", "Reunião"),
++        ("tarefa", "Tarefa"),
++        ("lembrete", "Lembrete"),
++        ("compromisso", "Compromisso"),
++        ("outro", "Outro"),
++    ]
++
++    COR_CHOICES = [
++        ("#6D28D9", "Roxo"),
++        ("#2563EB", "Azul"),
++        ("#059669", "Verde"),
++        ("#D97706", "Âmbar"),
++        ("#DC2626", "Vermelho"),
++        ("#7C3AED", "Violeta"),
++        ("#0891B2", "Ciano"),
++        ("#84CC16", "Lima"),
++    ]
++
++    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
++    empresa = models.ForeignKey(
++        "synapse_auth.Empresa",
++        on_delete=models.CASCADE,
++        related_name="eventos",
++    )
++    titulo = models.CharField(max_length=200)
++    descricao = models.TextField(blank=True)
++    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default="reuniao")
++    cor = models.CharField(max_length=7, default="#6D28D9")
++    data_inicio = models.DateTimeField()
++    data_fim = models.DateTimeField(null=True, blank=True)
++    dia_inteiro = models.BooleanField(default=False)
++    local = models.CharField(max_length=255, blank=True)
++    concluido = models.BooleanField(default=False)
++    lembrete_minutos = models.IntegerField(null=True, blank=True)
++    lembrete_enviado = models.BooleanField(default=False)
++    criado_por = models.ForeignKey(
++        "synapse_auth.CustomUser",
++        on_delete=models.SET_NULL,
++        null=True,
++        blank=True,
++        related_name="eventos_criados",
++    )
++    criado_em = models.DateTimeField(auto_now_add=True)
++    atualizado_em = models.DateTimeField(auto_now=True)
++
++    class Meta:
++        app_label = "synapse_agenda"
++        verbose_name = "Evento"
++        verbose_name_plural = "Eventos"
++        ordering = ["data_inicio"]
++        indexes = [
++            models.Index(fields=["empresa", "data_inicio"], name="evento_emp_inicio_idx"),
++            models.Index(fields=["empresa", "concluido"], name="evento_emp_concluido_idx"),
++        ]
++
++    def __str__(self):
++        return f"{self.titulo} ({self.data_inicio.strftime('%d/%m/%Y')})"
+diff --git a/backend/modules/agenda/urls.py b/backend/modules/agenda/urls.py
+new file mode 100644
+index 0000000..1b693ef
+--- /dev/null
++++ b/backend/modules/agenda/urls.py
+@@ -0,0 +1,9 @@
++from django.urls import path
++from .views import EventoListCreateView, EventoDetailView
++
++app_name = "agenda"
++
++urlpatterns = [
++    path("eventos/", EventoListCreateView.as_view(), name="evento-list"),
++    path("eventos/<uuid:pk>/", EventoDetailView.as_view(), name="evento-detail"),
++]
+diff --git a/backend/modules/agenda/views.py b/backend/modules/agenda/views.py
+new file mode 100644
+index 0000000..b1694e1
+--- /dev/null
++++ b/backend/modules/agenda/views.py
+@@ -0,0 +1,202 @@
++"""
++Agenda: Views — CRUD de Eventos
++"""
++import logging
++from datetime import datetime
++
++from rest_framework.permissions import IsAuthenticated
++from rest_framework.views import APIView
++
++from shared.authentication import CookieJWTAuthentication
++from shared.permissions import EmpresaQuerySetMixin, IsEmpresaMember
++from shared.responses import success_response, created_response, no_content_response, error_response
++
++from .models import Evento
++
++logger = logging.getLogger("synapse")
++
++
++class EventoListCreateView(EmpresaQuerySetMixin, APIView):
++    """GET /api/agenda/eventos/ — POST /api/agenda/eventos/"""
++
++    authentication_classes = [CookieJWTAuthentication]
++    permission_classes = [IsAuthenticated, IsEmpresaMember]
++
++    def get(self, request):
++        empresa_id = self.get_empresa_id()
++        qs = Evento.objects.filter(empresa_id=empresa_id)
++
++        # Filtros de período
++        data_inicio = request.query_params.get("data_inicio")
++        data_fim = request.query_params.get("data_fim")
++        tipo = request.query_params.get("tipo")
++        concluido = request.query_params.get("concluido")
++
++        if data_inicio:
++            try:
++                qs = qs.filter(data_inicio__date__gte=datetime.fromisoformat(data_inicio).date())
++            except ValueError:
++                pass
++        if data_fim:
++            try:
++                qs = qs.filter(data_inicio__date__lte=datetime.fromisoformat(data_fim).date())
++            except ValueError:
++                pass
++        if tipo:
++            qs = qs.filter(tipo=tipo)
++        if concluido is not None:
++            qs = qs.filter(concluido=concluido.lower() == "true")
++
++        data = [
++            {
++                "id": str(e.id),
++                "titulo": e.titulo,
++                "descricao": e.descricao,
++                "tipo": e.tipo,
++                "cor": e.cor,
++                "data_inicio": e.data_inicio.isoformat(),
++                "data_fim": e.data_fim.isoformat() if e.data_fim else None,
++                "dia_inteiro": e.dia_inteiro,
++                "local": e.local,
++                "concluido": e.concluido,
++                "lembrete_minutos": e.lembrete_minutos,
++                "criado_em": e.criado_em.isoformat(),
++            }
++            for e in qs
++        ]
++        return success_response(data=data)
++
++    def post(self, request):
++        empresa_id = self.get_empresa_id()
++        d = request.data
++
++        titulo = d.get("titulo", "").strip()
++        if not titulo:
++            return error_response("VALIDATION_ERROR", "O campo 'titulo' é obrigatório.")
++
++        data_inicio_raw = d.get("data_inicio")
++        if not data_inicio_raw:
++            return error_response("VALIDATION_ERROR", "O campo 'data_inicio' é obrigatório.")
++
++        try:
++            data_inicio = datetime.fromisoformat(data_inicio_raw)
++        except (ValueError, TypeError):
++            return error_response("VALIDATION_ERROR", "data_inicio inválida. Use ISO format.")
++
++        data_fim = None
++        if d.get("data_fim"):
++            try:
++                data_fim = datetime.fromisoformat(d["data_fim"])
++            except (ValueError, TypeError):
++                pass
++
++        evento = Evento.objects.create(
++            empresa_id=empresa_id,
++            titulo=titulo,
++            descricao=d.get("descricao", ""),
++            tipo=d.get("tipo", "reuniao"),
++            cor=d.get("cor", "#6D28D9"),
++            data_inicio=data_inicio,
++            data_fim=data_fim,
++            dia_inteiro=bool(d.get("dia_inteiro", False)),
++            local=d.get("local", ""),
++            lembrete_minutos=d.get("lembrete_minutos"),
++            criado_por=request.user,
++        )
++
++        return created_response(
++            data={
++                "id": str(evento.id),
++                "titulo": evento.titulo,
++                "descricao": evento.descricao,
++                "tipo": evento.tipo,
++                "cor": evento.cor,
++                "data_inicio": evento.data_inicio.isoformat(),
++                "data_fim": evento.data_fim.isoformat() if evento.data_fim else None,
++                "dia_inteiro": evento.dia_inteiro,
++                "local": evento.local,
++                "concluido": evento.concluido,
++                "lembrete_minutos": evento.lembrete_minutos,
++                "criado_em": evento.criado_em.isoformat(),
++            },
++            message="Evento criado com sucesso.",
++        )
++
++
++class EventoDetailView(EmpresaQuerySetMixin, APIView):
++    """GET/PATCH/DELETE /api/agenda/eventos/<pk>/"""
++
++    authentication_classes = [CookieJWTAuthentication]
++    permission_classes = [IsAuthenticated, IsEmpresaMember]
++
++    def _get_evento(self, empresa_id, pk):
++        try:
++            return Evento.objects.get(id=pk, empresa_id=empresa_id)
++        except Evento.DoesNotExist:
++            return None
++
++    def _serialize(self, e):
++        return {
++            "id": str(e.id),
++            "titulo": e.titulo,
++            "descricao": e.descricao,
++            "tipo": e.tipo,
++            "cor": e.cor,
++            "data_inicio": e.data_inicio.isoformat(),
++            "data_fim": e.data_fim.isoformat() if e.data_fim else None,
++            "dia_inteiro": e.dia_inteiro,
++            "local": e.local,
++            "concluido": e.concluido,
++            "lembrete_minutos": e.lembrete_minutos,
++            "criado_em": e.criado_em.isoformat(),
++            "atualizado_em": e.atualizado_em.isoformat(),
++        }
++
++    def get(self, request, pk):
++        evento = self._get_evento(self.get_empresa_id(), pk)
++        if not evento:
++            return error_response("NOT_FOUND", "Evento não encontrado.", status_code=404)
++        return success_response(data=self._serialize(evento))
++
++    def patch(self, request, pk):
++        evento = self._get_evento(self.get_empresa_id(), pk)
++        if not evento:
++            return error_response("NOT_FOUND", "Evento não encontrado.", status_code=404)
++
++        d = request.data
++        campos_texto = ["titulo", "descricao", "tipo", "cor", "local"]
++        for campo in campos_texto:
++            if campo in d:
++                setattr(evento, campo, d[campo])
++
++        if "data_inicio" in d:
++            try:
++                evento.data_inicio = datetime.fromisoformat(d["data_inicio"])
++            except (ValueError, TypeError):
++                return error_response("VALIDATION_ERROR", "data_inicio inválida.")
++
++        if "data_fim" in d:
++            if d["data_fim"]:
++                try:
++                    evento.data_fim = datetime.fromisoformat(d["data_fim"])
++                except (ValueError, TypeError):
++                    return error_response("VALIDATION_ERROR", "data_fim inválida.")
++            else:
++                evento.data_fim = None
++
++        if "dia_inteiro" in d:
++            evento.dia_inteiro = bool(d["dia_inteiro"])
++        if "concluido" in d:
++            evento.concluido = bool(d["concluido"])
++        if "lembrete_minutos" in d:
++            evento.lembrete_minutos = d["lembrete_minutos"]
++
++        evento.save()
++        return success_response(data=self._serialize(evento), message="Evento atualizado.")
++
++    def delete(self, request, pk):
++        evento = self._get_evento(self.get_empresa_id(), pk)
++        if not evento:
++            return error_response("NOT_FOUND", "Evento não encontrado.", status_code=404)
++        evento.delete()
++        return no_content_response()
+diff --git a/backend/modules/clientes/repository.py b/backend/modules/clientes/repository.py
+index 42941d2..040c418 100644
+--- a/backend/modules/clientes/repository.py
++++ b/backend/modules/clientes/repository.py
+@@ -53,6 +53,20 @@ class ClienteRepository:
+         if followup_atrasado in (True, "true", "1"):
+             qs = qs.filter(proximo_followup__lt=date.today())
+ 
++        # Filtro de período (mes/ano)
++        mes = filtros.get("mes")
++        ano = filtros.get("ano")
++        if mes and ano:
++            try:
++                qs = qs.filter(criado_em__month=int(mes), criado_em__year=int(ano))
++            except (ValueError, TypeError):
++                pass
++        elif ano:
++            try:
++                qs = qs.filter(criado_em__year=int(ano))
++            except (ValueError, TypeError):
++                pass
++
+         return qs.select_related("criado_por").order_by("-criado_em")
+ 
+     @staticmethod
+@@ -138,30 +152,46 @@ class ClienteRepository:
+         return resultado
+ 
+     @staticmethod
+-    def calcular_resumo(empresa_id) -> dict:
++    def calcular_resumo(empresa_id, filtros: dict = None) -> dict:
+         """Calcula KPIs do CRM para a empresa."""
++        filtros = filtros or {}
+         hoje = date.today()
+         inicio_mes = hoje.replace(day=1)
+ 
+         base_qs = Cliente.objects.filter(empresa_id=empresa_id)
+ 
+-        total_clientes = base_qs.count()
+-        clientes_ativos = base_qs.filter(ativo=True).count()
+-        novos_este_mes = base_qs.filter(criado_em__date__gte=inicio_mes).count()
+-
+-        agg = base_qs.filter(ativo=True).aggregate(
++        # Aplicar filtro de período ao base_qs
++        mes = filtros.get("mes")
++        ano = filtros.get("ano")
++        periodo_qs = base_qs
++        if mes and ano:
++            try:
++                periodo_qs = base_qs.filter(criado_em__month=int(mes), criado_em__year=int(ano))
++            except (ValueError, TypeError):
++                pass
++        elif ano:
++            try:
++                periodo_qs = base_qs.filter(criado_em__year=int(ano))
++            except (ValueError, TypeError):
++                pass
++
++        total_clientes = periodo_qs.count()
++        clientes_ativos = periodo_qs.filter(ativo=True).count()
++        novos_este_mes = periodo_qs.filter(criado_em__date__gte=inicio_mes).count()
++
++        agg = periodo_qs.filter(ativo=True).aggregate(
+             valor_total=Sum("valor_total_compras"),
+             ticket_medio=Avg("valor_total_compras"),
+         )
+ 
+-        followups_atrasados = base_qs.filter(
++        followups_atrasados = periodo_qs.filter(
+             ativo=True,
+             proximo_followup__lt=hoje,
+         ).count()
+ 
+         # Clientes por status
+         por_status_qs = (
+-            base_qs.filter(ativo=True)
++            periodo_qs.filter(ativo=True)
+             .values("status_funil")
+             .annotate(count=Count("id"))
+         )
+diff --git a/backend/modules/clientes/services.py b/backend/modules/clientes/services.py
+index 3815aa8..2531a8e 100644
+--- a/backend/modules/clientes/services.py
++++ b/backend/modules/clientes/services.py
+@@ -76,8 +76,15 @@ class ClienteService:
+     # ─── Resumo e Funil ───────────────────────────────────────────────────────
+ 
+     @staticmethod
+-    def obter_resumo(empresa_id) -> dict:
+-        """Retorna KPIs do CRM com cache de 5 minutos."""
++    def obter_resumo(empresa_id, filtros: dict = None) -> dict:
++        """Retorna KPIs do CRM. Com filtros de período não usa cache."""
++        filtros = filtros or {}
++        mes = filtros.get("mes")
++        ano = filtros.get("ano")
++
++        if mes or ano:
++            return ClienteRepository.calcular_resumo(empresa_id, filtros)
++
+         cache_key = build_cache_key(empresa_id, "clientes", "resumo")
+         cached = get_cached(cache_key)
+         if cached is not None:
+diff --git a/backend/modules/clientes/views.py b/backend/modules/clientes/views.py
+index e9b15f7..6eb212f 100644
+--- a/backend/modules/clientes/views.py
++++ b/backend/modules/clientes/views.py
+@@ -39,6 +39,8 @@ class ClienteListCreateView(EmpresaQuerySetMixin, APIView):
+             "busca": request.query_params.get("busca"),
+             "tags": request.query_params.get("tags"),
+             "tem_followup_atrasado": request.query_params.get("followup_atrasado"),
++            "mes": request.query_params.get("mes"),
++            "ano": request.query_params.get("ano"),
+         }
+         # Remove filtros nulos
+         filtros = {k: v for k, v in filtros.items() if v is not None}
+@@ -194,7 +196,11 @@ class ClienteResumoView(EmpresaQuerySetMixin, APIView):
+     permission_classes = [IsAuthenticated, IsEmpresaMember]
+ 
+     def get(self, request):
+-        resumo = ClienteService.obter_resumo(self.get_empresa_id())
++        filtros = {
++            "mes": request.query_params.get("mes"),
++            "ano": request.query_params.get("ano"),
++        }
++        resumo = ClienteService.obter_resumo(self.get_empresa_id(), filtros)
+         serializer = ResumoClientesSerializer(resumo)
+         return success_response(
+             data=serializer.data,
+diff --git a/backend/modules/financeiro/migrations/0002_caixinha_movimentocaixinha.py b/backend/modules/financeiro/migrations/0002_caixinha_movimentocaixinha.py
+new file mode 100644
+index 0000000..d9e0e8f
+--- /dev/null
++++ b/backend/modules/financeiro/migrations/0002_caixinha_movimentocaixinha.py
+@@ -0,0 +1,58 @@
++from django.conf import settings
++from django.db import migrations, models
++import django.db.models.deletion
++import uuid
++
++
++class Migration(migrations.Migration):
++
++    dependencies = [
++        ("synapse_financeiro", "0001_initial"),
++        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
++    ]
++
++    operations = [
++        migrations.CreateModel(
++            name="Caixinha",
++            fields=[
++                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
++                ("nome", models.CharField(max_length=100)),
++                ("descricao", models.TextField(blank=True)),
++                ("cor", models.CharField(default="#6D28D9", max_length=7)),
++                ("icone", models.CharField(default="piggy-bank", max_length=50)),
++                ("meta", models.DecimalField(blank=True, decimal_places=2, max_digits=12, null=True)),
++                ("saldo_atual", models.DecimalField(decimal_places=2, default=0, max_digits=12)),
++                ("data_meta", models.DateField(blank=True, null=True)),
++                ("ativa", models.BooleanField(default=True)),
++                ("criado_em", models.DateTimeField(auto_now_add=True)),
++                ("atualizado_em", models.DateTimeField(auto_now=True)),
++                ("empresa", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="caixinhas", to="synapse_auth.empresa")),
++                ("criado_por", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="caixinhas_criadas", to=settings.AUTH_USER_MODEL)),
++            ],
++            options={"verbose_name": "Caixinha", "verbose_name_plural": "Caixinhas", "db_table": "synapse_caixinhas", "ordering": ["-criado_em"]},
++        ),
++        migrations.AddIndex(
++            model_name="caixinha",
++            index=models.Index(fields=["empresa", "ativa"], name="caixinha_emp_ativa_idx"),
++        ),
++        migrations.CreateModel(
++            name="MovimentoCaixinha",
++            fields=[
++                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
++                ("tipo", models.CharField(choices=[("deposito", "Depósito"), ("retirada", "Retirada")], max_length=10)),
++                ("valor", models.DecimalField(decimal_places=2, max_digits=12)),
++                ("descricao", models.CharField(blank=True, max_length=255)),
++                ("saldo_anterior", models.DecimalField(decimal_places=2, max_digits=12)),
++                ("saldo_posterior", models.DecimalField(decimal_places=2, max_digits=12)),
++                ("criado_em", models.DateTimeField(auto_now_add=True)),
++                ("caixinha", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="movimentos", to="synapse_financeiro.caixinha")),
++                ("empresa", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="movimentos_caixinha", to="synapse_auth.empresa")),
++                ("criado_por", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="movimentos_caixinha_criados", to=settings.AUTH_USER_MODEL)),
++            ],
++            options={"verbose_name": "Movimento de Caixinha", "verbose_name_plural": "Movimentos de Caixinha", "db_table": "synapse_movimentos_caixinha", "ordering": ["-criado_em"]},
++        ),
++        migrations.AddIndex(
++            model_name="movimentocaixinha",
++            index=models.Index(fields=["caixinha", "criado_em"], name="mov_caixinha_criado_idx"),
++        ),
++    ]
+diff --git a/backend/modules/financeiro/migrations/0003_investimento.py b/backend/modules/financeiro/migrations/0003_investimento.py
+new file mode 100644
+index 0000000..d51df3e
+--- /dev/null
++++ b/backend/modules/financeiro/migrations/0003_investimento.py
+@@ -0,0 +1,51 @@
++from django.conf import settings
++from django.db import migrations, models
++import django.db.models.deletion
++import uuid
++
++
++class Migration(migrations.Migration):
++
++    dependencies = [
++        ("synapse_financeiro", "0002_caixinha_movimentocaixinha"),
++        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
++    ]
++
++    operations = [
++        migrations.CreateModel(
++            name="Investimento",
++            fields=[
++                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
++                ("nome", models.CharField(max_length=150)),
++                ("descricao", models.TextField(blank=True)),
++                ("tipo", models.CharField(
++                    choices=[
++                        ("renda_fixa", "Renda Fixa"),
++                        ("renda_variavel", "Renda Variável"),
++                        ("fundos", "Fundos"),
++                        ("criptomoeda", "Criptomoeda"),
++                        ("imovel", "Imóvel"),
++                        ("outro", "Outro"),
++                    ],
++                    default="renda_fixa",
++                    max_length=30,
++                )),
++                ("valor_inicial", models.DecimalField(decimal_places=2, max_digits=14)),
++                ("valor_atual", models.DecimalField(decimal_places=2, max_digits=14)),
++                ("taxa_juros_anual", models.DecimalField(blank=True, decimal_places=4, max_digits=8, null=True)),
++                ("data_inicio", models.DateField()),
++                ("data_vencimento", models.DateField(blank=True, null=True)),
++                ("ativo", models.BooleanField(default=True)),
++                ("cor", models.CharField(default="#059669", max_length=7)),
++                ("criado_em", models.DateTimeField(auto_now_add=True)),
++                ("atualizado_em", models.DateTimeField(auto_now=True)),
++                ("empresa", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="investimentos", to="synapse_auth.empresa")),
++                ("criado_por", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="investimentos_criados", to=settings.AUTH_USER_MODEL)),
++            ],
++            options={"verbose_name": "Investimento", "verbose_name_plural": "Investimentos", "db_table": "synapse_investimentos", "ordering": ["-criado_em"]},
++        ),
++        migrations.AddIndex(
++            model_name="investimento",
++            index=models.Index(fields=["empresa", "ativo"], name="inv_emp_ativo_idx"),
++        ),
++    ]
+diff --git a/backend/modules/financeiro/models.py b/backend/modules/financeiro/models.py
+index db57433..ab2271a 100644
+--- a/backend/modules/financeiro/models.py
++++ b/backend/modules/financeiro/models.py
+@@ -114,3 +114,158 @@ class Lancamento(models.Model):
+     def esta_atrasado(self) -> bool:
+         """True se o lançamento está pendente e o vencimento já passou."""
+         return self.status == "pendente" and self.data_vencimento < date.today()
++
++
++class Caixinha(models.Model):
++    """Cofrinhos / reservas financeiras com meta e prazo opcionais."""
++
++    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
++    empresa = models.ForeignKey(
++        "synapse_auth.Empresa",
++        on_delete=models.CASCADE,
++        related_name="caixinhas",
++    )
++    nome = models.CharField(max_length=100)
++    descricao = models.TextField(blank=True)
++    cor = models.CharField(max_length=7, default="#6D28D9")
++    icone = models.CharField(max_length=50, default="piggy-bank")
++    meta = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
++    saldo_atual = models.DecimalField(max_digits=12, decimal_places=2, default=0)
++    data_meta = models.DateField(null=True, blank=True)
++    ativa = models.BooleanField(default=True)
++    criado_por = models.ForeignKey(
++        "synapse_auth.CustomUser",
++        on_delete=models.SET_NULL,
++        null=True,
++        blank=True,
++        related_name="caixinhas_criadas",
++    )
++    criado_em = models.DateTimeField(auto_now_add=True)
++    atualizado_em = models.DateTimeField(auto_now=True)
++
++    class Meta:
++        app_label = "synapse_financeiro"
++        verbose_name = "Caixinha"
++        verbose_name_plural = "Caixinhas"
++        ordering = ["-criado_em"]
++        indexes = [
++            models.Index(fields=["empresa", "ativa"], name="caixinha_emp_ativa_idx"),
++        ]
++
++    def __str__(self):
++        return f"{self.nome} (R${self.saldo_atual})"
++
++    @property
++    def progresso(self) -> float:
++        """Percentual de progresso em relação à meta (0-100)."""
++        if self.meta and self.meta > 0:
++            return min(float(self.saldo_atual / self.meta * 100), 100)
++        return 0
++
++
++class MovimentoCaixinha(models.Model):
++    """Histórico de depósitos e retiradas de uma caixinha."""
++
++    TIPO_CHOICES = [
++        ("deposito", "Depósito"),
++        ("retirada", "Retirada"),
++    ]
++
++    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
++    caixinha = models.ForeignKey(
++        Caixinha,
++        on_delete=models.CASCADE,
++        related_name="movimentos",
++    )
++    empresa = models.ForeignKey(
++        "synapse_auth.Empresa",
++        on_delete=models.CASCADE,
++        related_name="movimentos_caixinha",
++    )
++    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
++    valor = models.DecimalField(max_digits=12, decimal_places=2)
++    descricao = models.CharField(max_length=255, blank=True)
++    saldo_anterior = models.DecimalField(max_digits=12, decimal_places=2)
++    saldo_posterior = models.DecimalField(max_digits=12, decimal_places=2)
++    criado_por = models.ForeignKey(
++        "synapse_auth.CustomUser",
++        on_delete=models.SET_NULL,
++        null=True,
++        blank=True,
++        related_name="movimentos_caixinha_criados",
++    )
++    criado_em = models.DateTimeField(auto_now_add=True)
++
++    class Meta:
++        app_label = "synapse_financeiro"
++        verbose_name = "Movimento de Caixinha"
++        verbose_name_plural = "Movimentos de Caixinha"
++        ordering = ["-criado_em"]
++        indexes = [
++            models.Index(fields=["caixinha", "criado_em"], name="mov_caixinha_criado_idx"),
++        ]
++
++    def __str__(self):
++        return f"{self.get_tipo_display()} R${self.valor} → {self.caixinha.nome}"
++
++
++class Investimento(models.Model):
++    """Investimentos acompanhados pela empresa."""
++
++    TIPO_CHOICES = [
++        ("renda_fixa", "Renda Fixa"),
++        ("renda_variavel", "Renda Variável"),
++        ("fundos", "Fundos"),
++        ("criptomoeda", "Criptomoeda"),
++        ("imovel", "Imóvel"),
++        ("outro", "Outro"),
++    ]
++
++    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
++    empresa = models.ForeignKey(
++        "synapse_auth.Empresa",
++        on_delete=models.CASCADE,
++        related_name="investimentos",
++    )
++    nome = models.CharField(max_length=150)
++    descricao = models.TextField(blank=True)
++    tipo = models.CharField(max_length=30, choices=TIPO_CHOICES, default="renda_fixa")
++    valor_inicial = models.DecimalField(max_digits=14, decimal_places=2)
++    valor_atual = models.DecimalField(max_digits=14, decimal_places=2)
++    taxa_juros_anual = models.DecimalField(max_digits=8, decimal_places=4, null=True, blank=True)
++    data_inicio = models.DateField()
++    data_vencimento = models.DateField(null=True, blank=True)
++    ativo = models.BooleanField(default=True)
++    cor = models.CharField(max_length=7, default="#059669")
++    criado_por = models.ForeignKey(
++        "synapse_auth.CustomUser",
++        on_delete=models.SET_NULL,
++        null=True,
++        blank=True,
++        related_name="investimentos_criados",
++    )
++    criado_em = models.DateTimeField(auto_now_add=True)
++    atualizado_em = models.DateTimeField(auto_now=True)
++
++    class Meta:
++        app_label = "synapse_financeiro"
++        verbose_name = "Investimento"
++        verbose_name_plural = "Investimentos"
++        ordering = ["-criado_em"]
++        indexes = [
++            models.Index(fields=["empresa", "ativo"], name="inv_emp_ativo_idx"),
++        ]
++
++    def __str__(self):
++        return f"{self.nome} (R${self.valor_atual})"
++
++    @property
++    def rentabilidade(self) -> float:
++        """Rentabilidade percentual acumulada."""
++        if self.valor_inicial and float(self.valor_inicial) > 0:
++            return float((self.valor_atual - self.valor_inicial) / self.valor_inicial * 100)
++        return 0.0
++
++    @property
++    def ganho_absoluto(self):
++        return float(self.valor_atual) - float(self.valor_inicial)
+diff --git a/backend/modules/financeiro/serializers.py b/backend/modules/financeiro/serializers.py
+index c57add3..9ccdffd 100644
+--- a/backend/modules/financeiro/serializers.py
++++ b/backend/modules/financeiro/serializers.py
+@@ -159,3 +159,45 @@ class DRESerializer(serializers.Serializer):
+     total_despesas = serializers.DecimalField(max_digits=14, decimal_places=2)
+     lucro_bruto = serializers.DecimalField(max_digits=14, decimal_places=2)
+     margem = serializers.DecimalField(max_digits=6, decimal_places=2)
++
++
++# ── Caixinhas ────────────────────────────────────────────────────────────────
++
++class CaixinhaSerializer(serializers.ModelSerializer):
++    progresso = serializers.FloatField(read_only=True)
++
++    class Meta:
++        from .models import Caixinha
++        model = Caixinha
++        fields = [
++            "id", "nome", "descricao", "cor", "icone",
++            "meta", "saldo_atual", "data_meta", "ativa",
++            "progresso", "criado_em", "atualizado_em",
++        ]
++        read_only_fields = ["id", "saldo_atual", "progresso", "criado_em", "atualizado_em"]
++
++
++class CaixinhaCreateSerializer(serializers.Serializer):
++    nome = serializers.CharField(max_length=100)
++    descricao = serializers.CharField(required=False, allow_blank=True, default="")
++    cor = serializers.CharField(max_length=7, required=False, default="#6D28D9")
++    icone = serializers.CharField(max_length=50, required=False, default="piggy-bank")
++    meta = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
++    data_meta = serializers.DateField(required=False, allow_null=True)
++
++
++class MovimentoCaixinhaSerializer(serializers.ModelSerializer):
++    class Meta:
++        from .models import MovimentoCaixinha
++        model = MovimentoCaixinha
++        fields = [
++            "id", "tipo", "valor", "descricao",
++            "saldo_anterior", "saldo_posterior", "criado_em",
++        ]
++        read_only_fields = ["id", "saldo_anterior", "saldo_posterior", "criado_em"]
++
++
++class MovimentoCaixinhaCreateSerializer(serializers.Serializer):
++    tipo = serializers.ChoiceField(choices=["deposito", "retirada"])
++    valor = serializers.DecimalField(max_digits=12, decimal_places=2, min_value="0.01")
++    descricao = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
+diff --git a/backend/modules/financeiro/urls.py b/backend/modules/financeiro/urls.py
+index 66338de..1aa2208 100644
+--- a/backend/modules/financeiro/urls.py
++++ b/backend/modules/financeiro/urls.py
+@@ -13,6 +13,11 @@ from .views import (
+     LancamentoPagarView,
+     ResumoFinanceiroView,
+     VencimentosView,
++    CaixinhaListCreateView,
++    CaixinhaDetailView,
++    CaixinhaMovimentoView,
++    InvestimentoListCreateView,
++    InvestimentoDetailView,
+ )
+ 
+ app_name = "financeiro"
+@@ -32,4 +37,13 @@ urlpatterns = [
+     path("fluxo-caixa/", FluxoCaixaView.as_view(), name="fluxo-caixa"),
+     path("dre/", DREView.as_view(), name="dre"),
+     path("vencimentos/", VencimentosView.as_view(), name="vencimentos"),
++
++    # ── Caixinhas ──────────────────────────────────────────
++    path("caixinhas/", CaixinhaListCreateView.as_view(), name="caixinha-list"),
++    path("caixinhas/<uuid:pk>/", CaixinhaDetailView.as_view(), name="caixinha-detail"),
++    path("caixinhas/<uuid:pk>/movimentar/", CaixinhaMovimentoView.as_view(), name="caixinha-movimentar"),
++
++    # ── Investimentos ───────────────────────────────────────
++    path("investimentos/", InvestimentoListCreateView.as_view(), name="investimento-list"),
++    path("investimentos/<uuid:pk>/", InvestimentoDetailView.as_view(), name="investimento-detail"),
+ ]
+diff --git a/backend/modules/financeiro/views.py b/backend/modules/financeiro/views.py
+index d7f9caf..c625874 100644
+--- a/backend/modules/financeiro/views.py
++++ b/backend/modules/financeiro/views.py
+@@ -27,8 +27,13 @@ from .serializers import (
+     LancamentoCreateSerializer,
+     LancamentoSerializer,
+     ResumoFinanceiroSerializer,
++    CaixinhaSerializer,
++    CaixinhaCreateSerializer,
++    MovimentoCaixinhaSerializer,
++    MovimentoCaixinhaCreateSerializer,
+ )
+ from .services import FinanceiroService
++from .models import Caixinha, MovimentoCaixinha, Investimento
+ 
+ logger = logging.getLogger("synapse")
+ 
+@@ -374,3 +379,261 @@ class VencimentosView(EmpresaQuerySetMixin, APIView):
+             data=serializer.data,
+             message=f"Próximos vencimentos ({dias} dias).",
+         )
++
++
++# ════════════════════════════════════════════════════════════
++# CAIXINHAS
++# ════════════════════════════════════════════════════════════
++
++class CaixinhaListCreateView(EmpresaQuerySetMixin, APIView):
++    """GET /api/financeiro/caixinhas/ — POST /api/financeiro/caixinhas/"""
++
++    authentication_classes = [CookieJWTAuthentication]
++    permission_classes = [IsAuthenticated, IsEmpresaMember]
++
++    def get(self, request):
++        empresa_id = self.get_empresa_id()
++        ativa = request.query_params.get("ativa")
++        qs = Caixinha.objects.filter(empresa_id=empresa_id)
++        if ativa is not None:
++            qs = qs.filter(ativa=ativa.lower() == "true")
++        return success_response(data=CaixinhaSerializer(qs, many=True).data)
++
++    def post(self, request):
++        serializer = CaixinhaCreateSerializer(data=request.data)
++        if not serializer.is_valid():
++            return error_response("VALIDATION_ERROR", "Dados inválidos.", details=serializer.errors)
++        empresa_id = self.get_empresa_id()
++        caixinha = Caixinha.objects.create(
++            empresa_id=empresa_id,
++            criado_por=request.user,
++            **serializer.validated_data,
++        )
++        return created_response(
++            data=CaixinhaSerializer(caixinha).data,
++            message="Caixinha criada com sucesso.",
++        )
++
++
++class CaixinhaDetailView(EmpresaQuerySetMixin, APIView):
++    """GET/PATCH/DELETE /api/financeiro/caixinhas/<pk>/"""
++
++    authentication_classes = [CookieJWTAuthentication]
++    permission_classes = [IsAuthenticated, IsEmpresaMember]
++
++    def _get_caixinha(self, empresa_id, pk):
++        try:
++            return Caixinha.objects.get(id=pk, empresa_id=empresa_id)
++        except Caixinha.DoesNotExist:
++            return None
++
++    def get(self, request, pk):
++        caixinha = self._get_caixinha(self.get_empresa_id(), pk)
++        if not caixinha:
++            return error_response("NOT_FOUND", "Caixinha não encontrada.", status_code=404)
++        return success_response(data=CaixinhaSerializer(caixinha).data)
++
++    def patch(self, request, pk):
++        caixinha = self._get_caixinha(self.get_empresa_id(), pk)
++        if not caixinha:
++            return error_response("NOT_FOUND", "Caixinha não encontrada.", status_code=404)
++        serializer = CaixinhaCreateSerializer(data=request.data, partial=True)
++        if not serializer.is_valid():
++            return error_response("VALIDATION_ERROR", "Dados inválidos.", details=serializer.errors)
++        for field, value in serializer.validated_data.items():
++            setattr(caixinha, field, value)
++        caixinha.save()
++        return success_response(data=CaixinhaSerializer(caixinha).data, message="Caixinha atualizada.")
++
++    def delete(self, request, pk):
++        caixinha = self._get_caixinha(self.get_empresa_id(), pk)
++        if not caixinha:
++            return error_response("NOT_FOUND", "Caixinha não encontrada.", status_code=404)
++        caixinha.delete()
++        return no_content_response()
++
++
++class CaixinhaMovimentoView(EmpresaQuerySetMixin, APIView):
++    """POST /api/financeiro/caixinhas/<pk>/movimentar/ — depositar ou retirar"""
++
++    authentication_classes = [CookieJWTAuthentication]
++    permission_classes = [IsAuthenticated, IsEmpresaMember]
++
++    def get(self, request, pk):
++        empresa_id = self.get_empresa_id()
++        try:
++            caixinha = Caixinha.objects.get(id=pk, empresa_id=empresa_id)
++        except Caixinha.DoesNotExist:
++            return error_response("NOT_FOUND", "Caixinha não encontrada.", status_code=404)
++        movimentos = MovimentoCaixinha.objects.filter(caixinha=caixinha)
++        return success_response(data=MovimentoCaixinhaSerializer(movimentos, many=True).data)
++
++    def post(self, request, pk):
++        empresa_id = self.get_empresa_id()
++        try:
++            caixinha = Caixinha.objects.get(id=pk, empresa_id=empresa_id)
++        except Caixinha.DoesNotExist:
++            return error_response("NOT_FOUND", "Caixinha não encontrada.", status_code=404)
++
++        serializer = MovimentoCaixinhaCreateSerializer(data=request.data)
++        if not serializer.is_valid():
++            return error_response("VALIDATION_ERROR", "Dados inválidos.", details=serializer.errors)
++
++        tipo = serializer.validated_data["tipo"]
++        valor = serializer.validated_data["valor"]
++        descricao = serializer.validated_data.get("descricao", "")
++
++        if tipo == "retirada" and caixinha.saldo_atual < valor:
++            return error_response("BUSINESS_ERROR", "Saldo insuficiente na caixinha.")
++
++        saldo_anterior = caixinha.saldo_atual
++        if tipo == "deposito":
++            caixinha.saldo_atual += valor
++        else:
++            caixinha.saldo_atual -= valor
++        caixinha.save()
++
++        movimento = MovimentoCaixinha.objects.create(
++            caixinha=caixinha,
++            empresa_id=empresa_id,
++            tipo=tipo,
++            valor=valor,
++            descricao=descricao,
++            saldo_anterior=saldo_anterior,
++            saldo_posterior=caixinha.saldo_atual,
++            criado_por=request.user,
++        )
++
++        return created_response(
++            data={
++                "movimento": MovimentoCaixinhaSerializer(movimento).data,
++                "caixinha": CaixinhaSerializer(caixinha).data,
++            },
++            message=f"{'Depósito' if tipo == 'deposito' else 'Retirada'} realizado com sucesso.",
++        )
++
++
++# ════════════════════════════════════════════════════════════
++# INVESTIMENTOS
++# ════════════════════════════════════════════════════════════
++
++def _serialize_investimento(inv):
++    return {
++        "id": str(inv.id),
++        "nome": inv.nome,
++        "descricao": inv.descricao,
++        "tipo": inv.tipo,
++        "cor": inv.cor,
++        "valor_inicial": float(inv.valor_inicial),
++        "valor_atual": float(inv.valor_atual),
++        "taxa_juros_anual": float(inv.taxa_juros_anual) if inv.taxa_juros_anual else None,
++        "data_inicio": str(inv.data_inicio),
++        "data_vencimento": str(inv.data_vencimento) if inv.data_vencimento else None,
++        "ativo": inv.ativo,
++        "rentabilidade": inv.rentabilidade,
++        "ganho_absoluto": inv.ganho_absoluto,
++        "criado_em": inv.criado_em.isoformat(),
++    }
++
++
++class InvestimentoListCreateView(EmpresaQuerySetMixin, APIView):
++    """GET/POST /api/financeiro/investimentos/"""
++
++    authentication_classes = [CookieJWTAuthentication]
++    permission_classes = [IsAuthenticated, IsEmpresaMember]
++
++    def get(self, request):
++        empresa_id = self.get_empresa_id()
++        ativo = request.query_params.get("ativo")
++        qs = Investimento.objects.filter(empresa_id=empresa_id)
++        if ativo is not None:
++            qs = qs.filter(ativo=ativo.lower() == "true")
++
++        total_investido = sum(float(i.valor_inicial) for i in qs)
++        total_atual = sum(float(i.valor_atual) for i in qs)
++
++        return success_response(data={
++            "investimentos": [_serialize_investimento(i) for i in qs],
++            "resumo": {
++                "total_investido": total_investido,
++                "total_atual": total_atual,
++                "ganho_total": total_atual - total_investido,
++                "rentabilidade_geral": (
++                    (total_atual - total_investido) / total_investido * 100
++                    if total_investido > 0 else 0
++                ),
++            },
++        })
++
++    def post(self, request):
++        empresa_id = self.get_empresa_id()
++        d = request.data
++
++        nome = str(d.get("nome", "")).strip()
++        if not nome:
++            return error_response("VALIDATION_ERROR", "O campo 'nome' é obrigatório.")
++
++        try:
++            valor_inicial = float(d.get("valor_inicial", 0))
++            valor_atual = float(d.get("valor_atual", valor_inicial))
++            data_inicio = d.get("data_inicio")
++            if not data_inicio:
++                return error_response("VALIDATION_ERROR", "O campo 'data_inicio' é obrigatório.")
++        except (ValueError, TypeError):
++            return error_response("VALIDATION_ERROR", "Valores numéricos inválidos.")
++
++        inv = Investimento.objects.create(
++            empresa_id=empresa_id,
++            nome=nome,
++            descricao=d.get("descricao", ""),
++            tipo=d.get("tipo", "renda_fixa"),
++            cor=d.get("cor", "#059669"),
++            valor_inicial=valor_inicial,
++            valor_atual=valor_atual,
++            taxa_juros_anual=d.get("taxa_juros_anual"),
++            data_inicio=data_inicio,
++            data_vencimento=d.get("data_vencimento"),
++            criado_por=request.user,
++        )
++        return created_response(data=_serialize_investimento(inv), message="Investimento criado.")
++
++
++class InvestimentoDetailView(EmpresaQuerySetMixin, APIView):
++    """GET/PATCH/DELETE /api/financeiro/investimentos/<pk>/"""
++
++    authentication_classes = [CookieJWTAuthentication]
++    permission_classes = [IsAuthenticated, IsEmpresaMember]
++
++    def _get(self, empresa_id, pk):
++        try:
++            return Investimento.objects.get(id=pk, empresa_id=empresa_id)
++        except Investimento.DoesNotExist:
++            return None
++
++    def get(self, request, pk):
++        inv = self._get(self.get_empresa_id(), pk)
++        if not inv:
++            return error_response("NOT_FOUND", "Investimento não encontrado.", status_code=404)
++        return success_response(data=_serialize_investimento(inv))
++
++    def patch(self, request, pk):
++        inv = self._get(self.get_empresa_id(), pk)
++        if not inv:
++            return error_response("NOT_FOUND", "Investimento não encontrado.", status_code=404)
++        d = request.data
++        for campo in ["nome", "descricao", "tipo", "cor", "data_inicio", "data_vencimento", "taxa_juros_anual", "ativo"]:
++            if campo in d:
++                setattr(inv, campo, d[campo])
++        if "valor_inicial" in d:
++            inv.valor_inicial = float(d["valor_inicial"])
++        if "valor_atual" in d:
++            inv.valor_atual = float(d["valor_atual"])
++        inv.save()
++        return success_response(data=_serialize_investimento(inv), message="Investimento atualizado.")
++
++    def delete(self, request, pk):
++        inv = self._get(self.get_empresa_id(), pk)
++        if not inv:
++            return error_response("NOT_FOUND", "Investimento não encontrado.", status_code=404)
++        inv.delete()
++        return no_content_response()
+diff --git a/backend/modules/fornecedores/repository.py b/backend/modules/fornecedores/repository.py
+index 9d88dec..9c19c9a 100644
+--- a/backend/modules/fornecedores/repository.py
++++ b/backend/modules/fornecedores/repository.py
+@@ -202,6 +202,16 @@ class FornecedorRepository:
+ 
+         return qs.order_by("-data_compra")
+ 
++    @staticmethod
++    def obter_compra(empresa_id, fornecedor_id, compra_id) -> CompraFornecedor:
++        try:
++            return CompraFornecedor.objects.select_related("fornecedor").get(
++                id=compra_id, empresa_id=empresa_id, fornecedor_id=fornecedor_id
++            )
++        except CompraFornecedor.DoesNotExist:
++            from shared.exceptions import ResourceNotFound
++            raise ResourceNotFound("Compra não encontrada.")
++
+     @staticmethod
+     def criar_compra(fornecedor_id, empresa_id, dados: dict, usuario_id) -> CompraFornecedor:
+         """Cria compra com transaction.atomic(). Signal cuida de atualizar fornecedor."""
+diff --git a/backend/modules/fornecedores/services.py b/backend/modules/fornecedores/services.py
+index 7113b22..f69a68f 100644
+--- a/backend/modules/fornecedores/services.py
++++ b/backend/modules/fornecedores/services.py
+@@ -169,10 +169,13 @@ class FornecedorService:
+ 
+     @staticmethod
+     def listar_compras(empresa_id: int, fornecedor_id, filtros: dict = None):
+-        # Valida que fornecedor pertence à empresa
+         FornecedorRepository.obter_fornecedor(empresa_id, fornecedor_id)
+         return FornecedorRepository.listar_compras(empresa_id, fornecedor_id, filtros)
+ 
++    @staticmethod
++    def obter_compra(empresa_id, fornecedor_id, compra_id):
++        return FornecedorRepository.obter_compra(empresa_id, fornecedor_id, compra_id)
++
+     @staticmethod
+     def registrar_compra(empresa_id: int, fornecedor_id, usuario_id, dados: dict):
+         # Valida que fornecedor pertence à empresa
+diff --git a/backend/modules/fornecedores/urls.py b/backend/modules/fornecedores/urls.py
+index 9591b9a..0c571e9 100644
+--- a/backend/modules/fornecedores/urls.py
++++ b/backend/modules/fornecedores/urls.py
+@@ -12,6 +12,7 @@ from .views import (
+     FornecedorDetailView,
+     FornecedorAvaliacaoView,
+     CompraFornecedorListCreateView,
++    CompraAdicionarAoEstoqueView,
+ )
+ 
+ app_name = "fornecedores"
+@@ -36,4 +37,9 @@ urlpatterns = [
+         CompraFornecedorListCreateView.as_view(),
+         name="compras-list",
+     ),
++    path(
++        "<uuid:fornecedor_pk>/compras/<uuid:compra_pk>/adicionar-ao-estoque/",
++        CompraAdicionarAoEstoqueView.as_view(),
++        name="compras-adicionar-estoque",
++    ),
+ ]
+diff --git a/backend/modules/fornecedores/views.py b/backend/modules/fornecedores/views.py
+index 2dd759d..5c30a43 100644
+--- a/backend/modules/fornecedores/views.py
++++ b/backend/modules/fornecedores/views.py
+@@ -24,6 +24,7 @@ from .serializers import (
+     ResumoFornecedoresSerializer,
+ )
+ from .services import FornecedorService
++from modules.estoque.services import EstoqueService
+ 
+ logger = logging.getLogger(__name__)
+ 
+@@ -281,3 +282,83 @@ class CompraFornecedorListCreateView(APIView):
+             )
+         except ResourceNotFound as exc:
+             return error_response("NOT_FOUND", str(exc), status_code=404)
++
++
++class CompraAdicionarAoEstoqueView(APIView):
++    """POST /api/fornecedores/<fornecedor_pk>/compras/<compra_pk>/adicionar-ao-estoque/"""
++    authentication_classes = [CookieJWTAuthentication]
++    permission_classes = [IsEmpresaMember]
++
++    def post(self, request, fornecedor_pk, compra_pk):
++        empresa_id = request.user.empresa_id
++
++        try:
++            compra = FornecedorService.obter_compra(empresa_id, fornecedor_pk, compra_pk)
++        except ResourceNotFound as exc:
++            return error_response("NOT_FOUND", str(exc), status_code=404)
++
++        produto_id = request.data.get("produto_id")
++        quantidade = request.data.get("quantidade")
++        criar_produto = request.data.get("criar_produto", False)
++        dados_produto = request.data.get("dados_produto", {})
++
++        if not quantidade:
++            return error_response("VALIDATION_ERROR", "O campo 'quantidade' é obrigatório.")
++
++        try:
++            quantidade = float(quantidade)
++            if quantidade <= 0:
++                raise ValueError()
++        except (ValueError, TypeError):
++            return error_response("VALIDATION_ERROR", "Quantidade deve ser um número positivo.")
++
++        try:
++            if criar_produto:
++                if not dados_produto.get("nome"):
++                    return error_response("VALIDATION_ERROR", "Nome do produto é obrigatório.")
++                produto = EstoqueService.criar_produto(
++                    empresa_id,
++                    request.user.id,
++                    {
++                        "nome": dados_produto["nome"],
++                        "preco_custo": dados_produto.get("preco_custo", compra.valor),
++                        "preco_venda": dados_produto.get("preco_venda", 0),
++                        "estoque_atual": 0,
++                        "estoque_minimo": dados_produto.get("estoque_minimo", 0),
++                        "unidade": dados_produto.get("unidade", "unidade"),
++                    }
++                )
++                produto_id = str(produto.id)
++            elif not produto_id:
++                return error_response("VALIDATION_ERROR", "Informe 'produto_id' ou defina 'criar_produto' como true.")
++
++            movimentacao, produto = EstoqueService.registrar_movimentacao(
++                empresa_id,
++                request.user.id,
++                {
++                    "produto": produto_id,
++                    "tipo": "entrada",
++                    "quantidade": quantidade,
++                    "motivo": "compra",
++                    "referencia": f"Compra #{str(compra_pk)[:8]} — {compra.descricao}",
++                    "observacoes": f"Entrada automática vinculada à compra de {compra.fornecedor.nome}",
++                }
++            )
++
++            return created_response(
++                data={
++                    "movimentacao_id": str(movimentacao.id),
++                    "produto_id": str(produto.id),
++                    "produto_nome": produto.nome,
++                    "quantidade": float(movimentacao.quantidade),
++                    "estoque_atual": float(produto.estoque_atual),
++                },
++                message="Entrada no estoque registrada com sucesso.",
++            )
++        except ResourceNotFound as exc:
++            return error_response("NOT_FOUND", str(exc), status_code=404)
++        except BusinessRuleViolation as exc:
++            return error_response("BUSINESS_ERROR", str(exc))
++        except Exception as exc:
++            logger.error(f"Erro ao adicionar compra ao estoque: {exc}")
++            return error_response("SERVER_ERROR", "Erro interno ao registrar entrada.", status_code=500)
+diff --git a/backend/modules/mensagens/__init__.py b/backend/modules/mensagens/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/backend/modules/mensagens/apps.py b/backend/modules/mensagens/apps.py
+new file mode 100644
+index 0000000..b6cb28a
+--- /dev/null
++++ b/backend/modules/mensagens/apps.py
+@@ -0,0 +1,8 @@
++from django.apps import AppConfig
++
++
++class MensagensConfig(AppConfig):
++    default_auto_field = "django.db.models.BigAutoField"
++    name = "modules.mensagens"
++    label = "synapse_mensagens"
++    verbose_name = "Mensagens Automáticas"
+diff --git a/backend/modules/mensagens/migrations/0001_initial.py b/backend/modules/mensagens/migrations/0001_initial.py
+new file mode 100644
+index 0000000..d05141c
+--- /dev/null
++++ b/backend/modules/mensagens/migrations/0001_initial.py
+@@ -0,0 +1,77 @@
++from django.conf import settings
++from django.db import migrations, models
++import django.db.models.deletion
++import uuid
++
++
++class Migration(migrations.Migration):
++
++    initial = True
++
++    dependencies = [
++        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
++        ("synapse_auth", "0001_initial"),
++    ]
++
++    operations = [
++        migrations.CreateModel(
++            name="MensagemAutomatica",
++            fields=[
++                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
++                ("nome", models.CharField(max_length=150)),
++                ("assunto", models.CharField(max_length=255)),
++                ("corpo_html", models.TextField()),
++                ("gatilho", models.CharField(
++                    choices=[
++                        ("aniversario", "Aniversário do Cliente"),
++                        ("followup_atrasado", "Follow-up Atrasado"),
++                        ("boas_vindas", "Boas-vindas (novo cliente)"),
++                        ("inativo_30d", "Cliente Inativo 30 dias"),
++                        ("inativo_60d", "Cliente Inativo 60 dias"),
++                        ("vencimento_proximo", "Vencimento Próximo (7 dias)"),
++                        ("manual", "Disparo Manual"),
++                    ],
++                    max_length=30,
++                )),
++                ("status", models.CharField(
++                    choices=[("ativa", "Ativa"), ("pausada", "Pausada"), ("rascunho", "Rascunho")],
++                    default="rascunho",
++                    max_length=15,
++                )),
++                ("total_enviados", models.IntegerField(default=0)),
++                ("ultimo_disparo", models.DateTimeField(blank=True, null=True)),
++                ("criado_em", models.DateTimeField(auto_now_add=True)),
++                ("atualizado_em", models.DateTimeField(auto_now=True)),
++                ("empresa", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="mensagens_automaticas", to="synapse_auth.empresa")),
++                ("criado_por", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="mensagens_criadas", to=settings.AUTH_USER_MODEL)),
++            ],
++            options={"verbose_name": "Mensagem Automática", "verbose_name_plural": "Mensagens Automáticas", "db_table": "synapse_mensagens_automaticas", "ordering": ["-criado_em"]},
++        ),
++        migrations.AddIndex(
++            model_name="mensagemautomatica",
++            index=models.Index(fields=["empresa", "status"], name="msg_emp_status_idx"),
++        ),
++        migrations.CreateModel(
++            name="LogEnvioMensagem",
++            fields=[
++                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
++                ("destinatario_email", models.EmailField()),
++                ("destinatario_nome", models.CharField(blank=True, max_length=255)),
++                ("status", models.CharField(
++                    choices=[("enviado", "Enviado"), ("falhou", "Falhou"), ("simulado", "Simulado (dev)")],
++                    default="enviado",
++                    max_length=15,
++                )),
++                ("erro", models.TextField(blank=True)),
++                ("enviado_em", models.DateTimeField(auto_now_add=True)),
++                ("empresa", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="logs_envio", to="synapse_auth.empresa")),
++                ("mensagem", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="logs", to="synapse_mensagens.mensagemautomatica")),
++            ],
++            options={"verbose_name": "Log de Envio", "verbose_name_plural": "Logs de Envio", "db_table": "synapse_logs_envio_mensagem", "ordering": ["-enviado_em"]},
++        ),
++        migrations.AddIndex(
++            model_name="logenviomsagem",
++            index=models.Index(fields=["mensagem", "enviado_em"], name="log_msg_enviado_idx"),
++        ),
++
++    ]
+diff --git a/backend/modules/mensagens/migrations/__init__.py b/backend/modules/mensagens/migrations/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/backend/modules/mensagens/models.py b/backend/modules/mensagens/models.py
+new file mode 100644
+index 0000000..196590a
+--- /dev/null
++++ b/backend/modules/mensagens/models.py
+@@ -0,0 +1,96 @@
++import uuid
++from django.db import models
++
++
++class MensagemAutomatica(models.Model):
++    """Template de mensagem automática por email."""
++
++    TIPO_GATILHO_CHOICES = [
++        ("aniversario", "Aniversário do Cliente"),
++        ("followup_atrasado", "Follow-up Atrasado"),
++        ("boas_vindas", "Boas-vindas (novo cliente)"),
++        ("inativo_30d", "Cliente Inativo 30 dias"),
++        ("inativo_60d", "Cliente Inativo 60 dias"),
++        ("vencimento_proximo", "Vencimento Próximo (7 dias)"),
++        ("manual", "Disparo Manual"),
++    ]
++
++    STATUS_CHOICES = [
++        ("ativa", "Ativa"),
++        ("pausada", "Pausada"),
++        ("rascunho", "Rascunho"),
++    ]
++
++    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
++    empresa = models.ForeignKey(
++        "synapse_auth.Empresa",
++        on_delete=models.CASCADE,
++        related_name="mensagens_automaticas",
++    )
++    nome = models.CharField(max_length=150)
++    assunto = models.CharField(max_length=255)
++    corpo_html = models.TextField()
++    gatilho = models.CharField(max_length=30, choices=TIPO_GATILHO_CHOICES)
++    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default="rascunho")
++    total_enviados = models.IntegerField(default=0)
++    ultimo_disparo = models.DateTimeField(null=True, blank=True)
++    criado_por = models.ForeignKey(
++        "synapse_auth.CustomUser",
++        on_delete=models.SET_NULL,
++        null=True,
++        blank=True,
++        related_name="mensagens_criadas",
++    )
++    criado_em = models.DateTimeField(auto_now_add=True)
++    atualizado_em = models.DateTimeField(auto_now=True)
++
++    class Meta:
++        app_label = "synapse_mensagens"
++        verbose_name = "Mensagem Automática"
++        verbose_name_plural = "Mensagens Automáticas"
++        ordering = ["-criado_em"]
++        indexes = [
++            models.Index(fields=["empresa", "status"], name="msg_emp_status_idx"),
++        ]
++
++    def __str__(self):
++        return f"{self.nome} ({self.get_gatilho_display()})"
++
++
++class LogEnvioMensagem(models.Model):
++    """Registro de cada envio de email realizado."""
++
++    STATUS_CHOICES = [
++        ("enviado", "Enviado"),
++        ("falhou", "Falhou"),
++        ("simulado", "Simulado (dev)"),
++    ]
++
++    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
++    mensagem = models.ForeignKey(
++        MensagemAutomatica,
++        on_delete=models.CASCADE,
++        related_name="logs",
++    )
++    empresa = models.ForeignKey(
++        "synapse_auth.Empresa",
++        on_delete=models.CASCADE,
++        related_name="logs_envio",
++    )
++    destinatario_email = models.EmailField()
++    destinatario_nome = models.CharField(max_length=255, blank=True)
++    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default="enviado")
++    erro = models.TextField(blank=True)
++    enviado_em = models.DateTimeField(auto_now_add=True)
++
++    class Meta:
++        app_label = "synapse_mensagens"
++        verbose_name = "Log de Envio"
++        verbose_name_plural = "Logs de Envio"
++        ordering = ["-enviado_em"]
++        indexes = [
++            models.Index(fields=["mensagem", "enviado_em"], name="log_msg_enviado_idx"),
++        ]
++
++    def __str__(self):
++        return f"{self.mensagem.nome} → {self.destinatario_email}"
+diff --git a/backend/modules/mensagens/urls.py b/backend/modules/mensagens/urls.py
+new file mode 100644
+index 0000000..a833a6f
+--- /dev/null
++++ b/backend/modules/mensagens/urls.py
+@@ -0,0 +1,10 @@
++from django.urls import path
++from .views import MensagemListCreateView, MensagemDetailView, MensagemDispararView
++
++app_name = "mensagens"
++
++urlpatterns = [
++    path("", MensagemListCreateView.as_view(), name="mensagem-list"),
++    path("<uuid:pk>/", MensagemDetailView.as_view(), name="mensagem-detail"),
++    path("<uuid:pk>/disparar/", MensagemDispararView.as_view(), name="mensagem-disparar"),
++]
+diff --git a/backend/modules/mensagens/views.py b/backend/modules/mensagens/views.py
+new file mode 100644
+index 0000000..30ada5b
+--- /dev/null
++++ b/backend/modules/mensagens/views.py
+@@ -0,0 +1,225 @@
++"""
++Mensagens Automáticas: Views — CRUD + Disparo Manual
++"""
++import logging
++from datetime import datetime
++
++from django.conf import settings
++from rest_framework.permissions import IsAuthenticated
++from rest_framework.views import APIView
++
++from shared.authentication import CookieJWTAuthentication
++from shared.permissions import EmpresaQuerySetMixin, IsEmpresaMember
++from shared.responses import success_response, created_response, no_content_response, error_response
++
++from .models import MensagemAutomatica, LogEnvioMensagem
++
++logger = logging.getLogger("synapse")
++
++GATILHO_LABELS = {
++    "aniversario": "Aniversário do Cliente",
++    "followup_atrasado": "Follow-up Atrasado",
++    "boas_vindas": "Boas-vindas (novo cliente)",
++    "inativo_30d": "Cliente Inativo 30 dias",
++    "inativo_60d": "Cliente Inativo 60 dias",
++    "vencimento_proximo": "Vencimento Próximo (7 dias)",
++    "manual": "Disparo Manual",
++}
++
++
++def _serialize(m, include_logs=False):
++    data = {
++        "id": str(m.id),
++        "nome": m.nome,
++        "assunto": m.assunto,
++        "corpo_html": m.corpo_html,
++        "gatilho": m.gatilho,
++        "gatilho_label": GATILHO_LABELS.get(m.gatilho, m.gatilho),
++        "status": m.status,
++        "total_enviados": m.total_enviados,
++        "ultimo_disparo": m.ultimo_disparo.isoformat() if m.ultimo_disparo else None,
++        "criado_em": m.criado_em.isoformat(),
++    }
++    if include_logs:
++        data["logs"] = [
++            {
++                "id": str(log.id),
++                "destinatario_email": log.destinatario_email,
++                "destinatario_nome": log.destinatario_nome,
++                "status": log.status,
++                "erro": log.erro,
++                "enviado_em": log.enviado_em.isoformat(),
++            }
++            for log in m.logs.all()[:20]
++        ]
++    return data
++
++
++def _enviar_email(api_key: str, from_email: str, to_email: str, assunto: str, html: str) -> bool:
++    """Envia email via Resend API. Retorna True se enviado."""
++    if not api_key:
++        return False
++    try:
++        import urllib.request
++        import json as _json
++        payload = _json.dumps({
++            "from": from_email,
++            "to": [to_email],
++            "subject": assunto,
++            "html": html,
++        }).encode()
++        req = urllib.request.Request(
++            "https://api.resend.com/emails",
++            data=payload,
++            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
++            method="POST",
++        )
++        with urllib.request.urlopen(req, timeout=10) as resp:
++            return resp.status < 300
++    except Exception as exc:
++        logger.warning(f"Falha ao enviar email via Resend: {exc}")
++        return False
++
++
++class MensagemListCreateView(EmpresaQuerySetMixin, APIView):
++    """GET/POST /api/mensagens/"""
++
++    authentication_classes = [CookieJWTAuthentication]
++    permission_classes = [IsAuthenticated, IsEmpresaMember]
++
++    def get(self, request):
++        empresa_id = self.get_empresa_id()
++        qs = MensagemAutomatica.objects.filter(empresa_id=empresa_id)
++        status_filter = request.query_params.get("status")
++        if status_filter:
++            qs = qs.filter(status=status_filter)
++        return success_response(data=[_serialize(m) for m in qs])
++
++    def post(self, request):
++        empresa_id = self.get_empresa_id()
++        d = request.data
++
++        nome = str(d.get("nome", "")).strip()
++        assunto = str(d.get("assunto", "")).strip()
++        corpo_html = str(d.get("corpo_html", "")).strip()
++        gatilho = d.get("gatilho", "")
++
++        if not nome:
++            return error_response("VALIDATION_ERROR", "O campo 'nome' é obrigatório.")
++        if not assunto:
++            return error_response("VALIDATION_ERROR", "O campo 'assunto' é obrigatório.")
++        if not corpo_html:
++            return error_response("VALIDATION_ERROR", "O campo 'corpo_html' é obrigatório.")
++        if gatilho not in GATILHO_LABELS:
++            return error_response("VALIDATION_ERROR", f"Gatilho inválido. Opções: {list(GATILHO_LABELS.keys())}")
++
++        msg = MensagemAutomatica.objects.create(
++            empresa_id=empresa_id,
++            nome=nome,
++            assunto=assunto,
++            corpo_html=corpo_html,
++            gatilho=gatilho,
++            status=d.get("status", "rascunho"),
++            criado_por=request.user,
++        )
++        return created_response(data=_serialize(msg), message="Mensagem criada com sucesso.")
++
++
++class MensagemDetailView(EmpresaQuerySetMixin, APIView):
++    """GET/PATCH/DELETE /api/mensagens/<pk>/"""
++
++    authentication_classes = [CookieJWTAuthentication]
++    permission_classes = [IsAuthenticated, IsEmpresaMember]
++
++    def _get(self, empresa_id, pk):
++        try:
++            return MensagemAutomatica.objects.get(id=pk, empresa_id=empresa_id)
++        except MensagemAutomatica.DoesNotExist:
++            return None
++
++    def get(self, request, pk):
++        msg = self._get(self.get_empresa_id(), pk)
++        if not msg:
++            return error_response("NOT_FOUND", "Mensagem não encontrada.", status_code=404)
++        return success_response(data=_serialize(msg, include_logs=True))
++
++    def patch(self, request, pk):
++        msg = self._get(self.get_empresa_id(), pk)
++        if not msg:
++            return error_response("NOT_FOUND", "Mensagem não encontrada.", status_code=404)
++        d = request.data
++        for campo in ["nome", "assunto", "corpo_html", "gatilho", "status"]:
++            if campo in d:
++                setattr(msg, campo, d[campo])
++        msg.save()
++        return success_response(data=_serialize(msg), message="Mensagem atualizada.")
++
++    def delete(self, request, pk):
++        msg = self._get(self.get_empresa_id(), pk)
++        if not msg:
++            return error_response("NOT_FOUND", "Mensagem não encontrada.", status_code=404)
++        msg.delete()
++        return no_content_response()
++
++
++class MensagemDispararView(EmpresaQuerySetMixin, APIView):
++    """POST /api/mensagens/<pk>/disparar/ — disparo manual para lista de emails"""
++
++    authentication_classes = [CookieJWTAuthentication]
++    permission_classes = [IsAuthenticated, IsEmpresaMember]
++
++    def post(self, request, pk):
++        empresa_id = self.get_empresa_id()
++        try:
++            msg = MensagemAutomatica.objects.get(id=pk, empresa_id=empresa_id)
++        except MensagemAutomatica.DoesNotExist:
++            return error_response("NOT_FOUND", "Mensagem não encontrada.", status_code=404)
++
++        destinatarios = request.data.get("destinatarios", [])
++        if not destinatarios or not isinstance(destinatarios, list):
++            return error_response("VALIDATION_ERROR", "Forneça uma lista 'destinatarios' com email e nome.")
++
++        api_key = getattr(settings, "RESEND_API_KEY", "")
++        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "Synapse <noreply@synapse.app>")
++        debug = getattr(settings, "DEBUG", False)
++
++        enviados = 0
++        falhas = 0
++        for dest in destinatarios[:50]:
++            to_email = dest.get("email", "")
++            to_nome = dest.get("nome", "")
++            if not to_email:
++                continue
++
++            # Substituir variáveis no corpo
++            html = msg.corpo_html.replace("{{nome}}", to_nome).replace("{{email}}", to_email)
++
++            if debug or not api_key:
++                log_status = "simulado"
++                sucesso = True
++            else:
++                sucesso = _enviar_email(api_key, from_email, to_email, msg.assunto, html)
++                log_status = "enviado" if sucesso else "falhou"
++
++            LogEnvioMensagem.objects.create(
++                mensagem=msg,
++                empresa_id=empresa_id,
++                destinatario_email=to_email,
++                destinatario_nome=to_nome,
++                status=log_status,
++            )
++            if sucesso:
++                enviados += 1
++            else:
++                falhas += 1
++
++        msg.total_enviados += enviados
++        msg.ultimo_disparo = datetime.now()
++        msg.save()
++
++        return success_response(data={
++            "enviados": enviados,
++            "falhas": falhas,
++            "total": enviados + falhas,
++            "modo": "simulado (dev)" if (debug or not api_key) else "real",
++        }, message=f"Disparo concluído: {enviados} enviados, {falhas} falhas.")
+diff --git a/frontend/app/(dashboard)/agenda/page.tsx b/frontend/app/(dashboard)/agenda/page.tsx
+new file mode 100644
+index 0000000..31e7289
+--- /dev/null
++++ b/frontend/app/(dashboard)/agenda/page.tsx
+@@ -0,0 +1,552 @@
++"use client";
++
++import { useEffect, useState, useMemo } from "react";
++import {
++  ChevronLeft,
++  ChevronRight,
++  Plus,
++  Calendar,
++  Clock,
++  MapPin,
++  CheckCircle2,
++  Circle,
++  Pencil,
++  Trash2,
++  X,
++  Loader2,
++  RefreshCw,
++} from "lucide-react";
++import { useAgenda, type Evento, type EventoFormData, TIPO_EVENTO_LABELS, TIPO_EVENTO_CORES } from "@/hooks/useAgenda";
++
++const MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
++const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
++
++function formatTime(iso: string) {
++  const d = new Date(iso);
++  return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
++}
++
++function formatDate(iso: string) {
++  const d = new Date(iso);
++  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
++}
++
++function isoDate(date: Date) {
++  return date.toISOString().split("T")[0];
++}
++
++// ── EventoForm Modal ────────────────────────────────────────
++
++function EventoFormModal({
++  evento,
++  dataSelecionada,
++  onClose,
++  onSave,
++}: {
++  evento?: Evento | null;
++  dataSelecionada?: Date;
++  onClose: () => void;
++  onSave: (dados: EventoFormData) => Promise<void>;
++}) {
++  const defaultDate = dataSelecionada || new Date();
++  const defaultDateStr = `${isoDate(defaultDate)}T09:00`;
++
++  const [titulo, setTitulo] = useState(evento?.titulo || "");
++  const [descricao, setDescricao] = useState(evento?.descricao || "");
++  const [tipo, setTipo] = useState<Evento["tipo"]>(evento?.tipo || "reuniao");
++  const [cor, setCor] = useState(evento?.cor || TIPO_EVENTO_CORES[tipo]);
++  const [dataInicio, setDataInicio] = useState(evento?.data_inicio ? evento.data_inicio.slice(0, 16) : defaultDateStr);
++  const [dataFim, setDataFim] = useState(evento?.data_fim ? evento.data_fim.slice(0, 16) : "");
++  const [local, setLocal] = useState(evento?.local || "");
++  const [diaInteiro, setDiaInteiro] = useState(evento?.dia_inteiro || false);
++  const [lembrete, setLembrete] = useState(evento?.lembrete_minutos ? String(evento.lembrete_minutos) : "");
++  const [loading, setLoading] = useState(false);
++  const [erro, setErro] = useState<string | null>(null);
++
++  const CORES = ["#6D28D9", "#2563EB", "#059669", "#D97706", "#DC2626", "#7C3AED", "#0891B2", "#84CC16"];
++
++  const handleTipoChange = (t: Evento["tipo"]) => {
++    setTipo(t);
++    setCor(TIPO_EVENTO_CORES[t]);
++  };
++
++  const handleSubmit = async (e: React.FormEvent) => {
++    e.preventDefault();
++    if (!titulo.trim()) { setErro("Título é obrigatório."); return; }
++    if (!dataInicio) { setErro("Data de início é obrigatória."); return; }
++    setLoading(true);
++    setErro(null);
++    try {
++      await onSave({
++        titulo: titulo.trim(),
++        descricao,
++        tipo,
++        cor,
++        data_inicio: diaInteiro ? `${dataInicio.slice(0, 10)}T00:00:00` : dataInicio,
++        data_fim: dataFim ? (diaInteiro ? `${dataFim.slice(0, 10)}T23:59:59` : dataFim) : null,
++        dia_inteiro: diaInteiro,
++        local,
++        lembrete_minutos: lembrete ? parseInt(lembrete) : null,
++      });
++      onClose();
++    } catch {
++      setErro("Erro ao salvar evento.");
++    } finally {
++      setLoading(false);
++    }
++  };
++
++  return (
++    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
++      <div className="bg-[#0f1117] border border-white/10 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
++        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
++          <h3 className="font-semibold text-white">{evento ? "Editar Evento" : "Novo Evento"}</h3>
++          <button onClick={onClose} className="text-zinc-400 hover:text-white p-1 rounded">
++            <X className="h-5 w-5" />
++          </button>
++        </div>
++        <form onSubmit={handleSubmit} className="p-6 space-y-4">
++          <div>
++            <label className="block text-xs font-medium text-zinc-400 mb-1">Título *</label>
++            <input
++              value={titulo}
++              onChange={(e) => setTitulo(e.target.value)}
++              placeholder="Nome do evento"
++              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50"
++            />
++          </div>
++
++          <div className="grid grid-cols-2 gap-3">
++            <div>
++              <label className="block text-xs font-medium text-zinc-400 mb-1">Tipo</label>
++              <select
++                value={tipo}
++                onChange={(e) => handleTipoChange(e.target.value as Evento["tipo"])}
++                className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50"
++              >
++                {Object.entries(TIPO_EVENTO_LABELS).map(([k, v]) => (
++                  <option key={k} value={k}>{v}</option>
++                ))}
++              </select>
++            </div>
++            <div>
++              <label className="block text-xs font-medium text-zinc-400 mb-2">Cor</label>
++              <div className="flex gap-1.5 flex-wrap">
++                {CORES.map((c) => (
++                  <button
++                    key={c}
++                    type="button"
++                    onClick={() => setCor(c)}
++                    className={`w-6 h-6 rounded-full border-2 transition-all ${cor === c ? "border-white scale-110" : "border-transparent"}`}
++                    style={{ backgroundColor: c }}
++                  />
++                ))}
++              </div>
++            </div>
++          </div>
++
++          <div className="flex items-center gap-2">
++            <input
++              type="checkbox"
++              id="dia_inteiro"
++              checked={diaInteiro}
++              onChange={(e) => setDiaInteiro(e.target.checked)}
++              className="rounded"
++            />
++            <label htmlFor="dia_inteiro" className="text-sm text-zinc-400">Dia inteiro</label>
++          </div>
++
++          <div className="grid grid-cols-2 gap-3">
++            <div>
++              <label className="block text-xs font-medium text-zinc-400 mb-1">Início *</label>
++              <input
++                type={diaInteiro ? "date" : "datetime-local"}
++                value={dataInicio}
++                onChange={(e) => setDataInicio(e.target.value)}
++                className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50"
++              />
++            </div>
++            <div>
++              <label className="block text-xs font-medium text-zinc-400 mb-1">Fim</label>
++              <input
++                type={diaInteiro ? "date" : "datetime-local"}
++                value={dataFim}
++                onChange={(e) => setDataFim(e.target.value)}
++                className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50"
++              />
++            </div>
++          </div>
++
++          <div>
++            <label className="block text-xs font-medium text-zinc-400 mb-1">
++              <MapPin className="h-3 w-3 inline mr-1" />Local
++            </label>
++            <input
++              value={local}
++              onChange={(e) => setLocal(e.target.value)}
++              placeholder="Opcional"
++              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50"
++            />
++          </div>
++
++          <div>
++            <label className="block text-xs font-medium text-zinc-400 mb-1">Lembrete</label>
++            <select
++              value={lembrete}
++              onChange={(e) => setLembrete(e.target.value)}
++              className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50"
++            >
++              <option value="">Sem lembrete</option>
++              <option value="15">15 minutos antes</option>
++              <option value="30">30 minutos antes</option>
++              <option value="60">1 hora antes</option>
++              <option value="1440">1 dia antes</option>
++            </select>
++          </div>
++
++          <div>
++            <label className="block text-xs font-medium text-zinc-400 mb-1">Descrição</label>
++            <textarea
++              value={descricao}
++              onChange={(e) => setDescricao(e.target.value)}
++              placeholder="Opcional"
++              rows={2}
++              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50"
++            />
++          </div>
++
++          {erro && <p className="text-xs text-red-400">{erro}</p>}
++
++          <div className="flex gap-2 pt-1">
++            <button type="button" onClick={onClose} className="flex-1 border border-white/10 rounded-lg py-2 text-sm text-zinc-400 hover:bg-white/5">
++              Cancelar
++            </button>
++            <button type="submit" disabled={loading} className="flex-1 bg-violet-600 hover:bg-violet-700 text-white rounded-lg py-2 text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-60">
++              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (evento ? "Salvar" : "Criar Evento")}
++            </button>
++          </div>
++        </form>
++      </div>
++    </div>
++  );
++}
++
++// ── Mini Calendar ──────────────────────────────────────────
++
++function MiniCalendar({
++  ano,
++  mes,
++  diaAtivo,
++  eventoDias,
++  onDayClick,
++  onPrevMonth,
++  onNextMonth,
++}: {
++  ano: number;
++  mes: number;
++  diaAtivo: Date;
++  eventoDias: Set<string>;
++  onDayClick: (d: Date) => void;
++  onPrevMonth: () => void;
++  onNextMonth: () => void;
++}) {
++  const primeiroDia = new Date(ano, mes, 1).getDay();
++  const diasNoMes = new Date(ano, mes + 1, 0).getDate();
++  const hoje = isoDate(new Date());
++
++  const cells = [];
++  for (let i = 0; i < primeiroDia; i++) cells.push(null);
++  for (let d = 1; d <= diasNoMes; d++) cells.push(d);
++
++  return (
++    <div className="bg-white/5 border border-white/10 rounded-xl p-4">
++      <div className="flex items-center justify-between mb-3">
++        <button onClick={onPrevMonth} className="p-1 rounded text-zinc-400 hover:text-white hover:bg-white/10">
++          <ChevronLeft className="h-4 w-4" />
++        </button>
++        <span className="text-sm font-medium text-white">{MESES[mes]} {ano}</span>
++        <button onClick={onNextMonth} className="p-1 rounded text-zinc-400 hover:text-white hover:bg-white/10">
++          <ChevronRight className="h-4 w-4" />
++        </button>
++      </div>
++      <div className="grid grid-cols-7 gap-0.5 mb-1">
++        {DIAS_SEMANA.map((d) => (
++          <div key={d} className="text-center text-xs text-zinc-500 py-1">{d[0]}</div>
++        ))}
++      </div>
++      <div className="grid grid-cols-7 gap-0.5">
++        {cells.map((dia, i) => {
++          if (!dia) return <div key={`empty-${i}`} />;
++          const dateStr = `${ano}-${String(mes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
++          const isToday = dateStr === hoje;
++          const isActive = dateStr === isoDate(diaAtivo);
++          const temEvento = eventoDias.has(dateStr);
++          return (
++            <button
++              key={dia}
++              onClick={() => onDayClick(new Date(ano, mes, dia))}
++              className={`relative h-7 w-full rounded text-xs transition-colors ${
++                isActive ? "bg-violet-600 text-white font-semibold" :
++                isToday ? "bg-violet-500/20 text-violet-300 font-semibold" :
++                "text-zinc-400 hover:bg-white/10 hover:text-white"
++              }`}
++            >
++              {dia}
++              {temEvento && !isActive && (
++                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-violet-400 rounded-full" />
++              )}
++            </button>
++          );
++        })}
++      </div>
++    </div>
++  );
++}
++
++// ── Main Page ───────────────────────────────────────────────
++
++export default function AgendaPage() {
++  const hoje = new Date();
++  const [ano, setAno] = useState(hoje.getFullYear());
++  const [mes, setMes] = useState(hoje.getMonth());
++  const [diaSelecionado, setDiaSelecionado] = useState(hoje);
++  const [showForm, setShowForm] = useState(false);
++  const [editando, setEditando] = useState<Evento | null>(null);
++
++  const { eventos, loading, carregar, criar, atualizar, deletar } = useAgenda();
++
++  useEffect(() => {
++    const inicio = `${ano}-${String(mes + 1).padStart(2, "0")}-01`;
++    const fim = `${ano}-${String(mes + 1).padStart(2, "0")}-${new Date(ano, mes + 1, 0).getDate()}`;
++    carregar(inicio, fim);
++  }, [ano, mes, carregar]);
++
++  const eventoDias = useMemo(() => {
++    const set = new Set<string>();
++    eventos.forEach((e) => set.add(e.data_inicio.slice(0, 10)));
++    return set;
++  }, [eventos]);
++
++  const eventosDoDia = useMemo(() => {
++    const diaStr = isoDate(diaSelecionado);
++    return eventos.filter((e) => e.data_inicio.slice(0, 10) === diaStr);
++  }, [eventos, diaSelecionado]);
++
++  const prevMonth = () => {
++    if (mes === 0) { setMes(11); setAno((a) => a - 1); }
++    else setMes((m) => m - 1);
++  };
++  const nextMonth = () => {
++    if (mes === 11) { setMes(0); setAno((a) => a + 1); }
++    else setMes((m) => m + 1);
++  };
++
++  const proximosEventos = useMemo(() => {
++    const agora = new Date().toISOString();
++    return eventos
++      .filter((e) => e.data_inicio >= agora && !e.concluido)
++      .slice(0, 5);
++  }, [eventos]);
++
++  return (
++    <div className="space-y-6">
++      {/* Header */}
++      <div className="flex items-center justify-between">
++        <div>
++          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
++            <Calendar className="h-6 w-6 text-violet-400" />
++            Agenda
++          </h1>
++          <p className="text-sm text-gray-400 mt-1">Gerencie seus eventos e compromissos</p>
++        </div>
++        <div className="flex items-center gap-2">
++          <button
++            onClick={() => carregar(
++              `${ano}-${String(mes + 1).padStart(2, "0")}-01`,
++              `${ano}-${String(mes + 1).padStart(2, "0")}-${new Date(ano, mes + 1, 0).getDate()}`
++            )}
++            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
++          >
++            <RefreshCw className="w-4 h-4" />
++          </button>
++          <button
++            onClick={() => { setEditando(null); setShowForm(true); }}
++            className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-700 rounded-lg text-sm text-white font-medium transition-colors"
++          >
++            <Plus className="w-4 h-4" />
++            Novo Evento
++          </button>
++        </div>
++      </div>
++
++      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
++        {/* Sidebar */}
++        <div className="space-y-4">
++          <MiniCalendar
++            ano={ano}
++            mes={mes}
++            diaAtivo={diaSelecionado}
++            eventoDias={eventoDias}
++            onDayClick={setDiaSelecionado}
++            onPrevMonth={prevMonth}
++            onNextMonth={nextMonth}
++          />
++
++          {/* Próximos eventos */}
++          <div className="bg-white/5 border border-white/10 rounded-xl p-4">
++            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">Próximos</h3>
++            {proximosEventos.length === 0 ? (
++              <p className="text-xs text-zinc-500">Nenhum evento próximo.</p>
++            ) : (
++              <div className="space-y-2">
++                {proximosEventos.map((e) => (
++                  <div key={e.id} className="flex items-start gap-2">
++                    <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: e.cor }} />
++                    <div>
++                      <p className="text-xs font-medium text-white truncate">{e.titulo}</p>
++                      <p className="text-xs text-zinc-500">{formatDate(e.data_inicio)} · {e.dia_inteiro ? "Dia inteiro" : formatTime(e.data_inicio)}</p>
++                    </div>
++                  </div>
++                ))}
++              </div>
++            )}
++          </div>
++        </div>
++
++        {/* Área principal — eventos do dia selecionado */}
++        <div className="lg:col-span-3">
++          <div className="bg-white/5 border border-white/10 rounded-xl">
++            {/* Header do dia */}
++            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
++              <div className="flex items-center gap-3">
++                <button onClick={() => setDiaSelecionado(new Date(diaSelecionado.getTime() - 86400000))} className="p-1 rounded text-zinc-400 hover:text-white hover:bg-white/10">
++                  <ChevronLeft className="h-4 w-4" />
++                </button>
++                <div>
++                  <h2 className="text-base font-semibold text-white">
++                    {diaSelecionado.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
++                  </h2>
++                  {isoDate(diaSelecionado) === isoDate(hoje) && (
++                    <span className="text-xs text-violet-400">Hoje</span>
++                  )}
++                </div>
++                <button onClick={() => setDiaSelecionado(new Date(diaSelecionado.getTime() + 86400000))} className="p-1 rounded text-zinc-400 hover:text-white hover:bg-white/10">
++                  <ChevronRight className="h-4 w-4" />
++                </button>
++              </div>
++              <button
++                onClick={() => { setEditando(null); setShowForm(true); }}
++                className="flex items-center gap-1 px-3 py-1.5 bg-violet-600/20 text-violet-400 rounded-lg text-xs hover:bg-violet-600/30 transition-colors"
++              >
++                <Plus className="h-3.5 w-3.5" />
++                Evento
++              </button>
++            </div>
++
++            {/* Lista de eventos do dia */}
++            <div className="divide-y divide-white/5">
++              {loading ? (
++                <div className="flex items-center justify-center gap-2 py-10 text-zinc-500 text-sm">
++                  <Loader2 className="h-4 w-4 animate-spin" />
++                  Carregando...
++                </div>
++              ) : eventosDoDia.length === 0 ? (
++                <div className="py-12 text-center">
++                  <Calendar className="h-10 w-10 text-zinc-700 mx-auto mb-2" />
++                  <p className="text-sm text-zinc-500">Nenhum evento neste dia</p>
++                  <button
++                    onClick={() => { setEditando(null); setShowForm(true); }}
++                    className="mt-3 text-xs text-violet-400 hover:text-violet-300"
++                  >
++                    + Adicionar evento
++                  </button>
++                </div>
++              ) : (
++                eventosDoDia.map((evento) => (
++                  <div key={evento.id} className={`flex items-start gap-4 px-5 py-4 transition-colors hover:bg-white/5 ${evento.concluido ? "opacity-60" : ""}`}>
++                    <div className="flex-shrink-0 pt-0.5">
++                      <button
++                        onClick={() => atualizar(evento.id, { concluido: !evento.concluido })}
++                        className="text-zinc-400 hover:text-emerald-400 transition-colors"
++                      >
++                        {evento.concluido
++                          ? <CheckCircle2 className="h-5 w-5 text-emerald-400" />
++                          : <Circle className="h-5 w-5" />
++                        }
++                      </button>
++                    </div>
++                    <div
++                      className="w-1 self-stretch rounded-full flex-shrink-0"
++                      style={{ backgroundColor: evento.cor, minHeight: "20px" }}
++                    />
++                    <div className="flex-1 min-w-0">
++                      <div className="flex items-center gap-2 flex-wrap">
++                        <p className={`text-sm font-medium ${evento.concluido ? "line-through text-zinc-500" : "text-white"}`}>
++                          {evento.titulo}
++                        </p>
++                        <span
++                          className="text-xs px-1.5 py-0.5 rounded-full"
++                          style={{ backgroundColor: `${evento.cor}25`, color: evento.cor }}
++                        >
++                          {TIPO_EVENTO_LABELS[evento.tipo]}
++                        </span>
++                      </div>
++                      <div className="flex items-center gap-3 mt-1 text-xs text-zinc-500 flex-wrap">
++                        {!evento.dia_inteiro && (
++                          <span className="flex items-center gap-1">
++                            <Clock className="h-3 w-3" />
++                            {formatTime(evento.data_inicio)}
++                            {evento.data_fim && ` — ${formatTime(evento.data_fim)}`}
++                          </span>
++                        )}
++                        {evento.dia_inteiro && <span>Dia inteiro</span>}
++                        {evento.local && (
++                          <span className="flex items-center gap-1">
++                            <MapPin className="h-3 w-3" />
++                            {evento.local}
++                          </span>
++                        )}
++                      </div>
++                      {evento.descricao && (
++                        <p className="text-xs text-zinc-500 mt-1 truncate">{evento.descricao}</p>
++                      )}
++                    </div>
++                    <div className="flex items-center gap-1 flex-shrink-0">
++                      <button
++                        onClick={() => { setEditando(evento); setShowForm(true); }}
++                        className="p-1 rounded text-zinc-500 hover:text-violet-400 hover:bg-violet-500/10 transition-colors"
++                      >
++                        <Pencil className="h-3.5 w-3.5" />
++                      </button>
++                      <button
++                        onClick={() => deletar(evento.id)}
++                        className="p-1 rounded text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
++                      >
++                        <Trash2 className="h-3.5 w-3.5" />
++                      </button>
++                    </div>
++                  </div>
++                ))
++              )}
++            </div>
++          </div>
++        </div>
++      </div>
++
++      {showForm && (
++        <EventoFormModal
++          evento={editando}
++          dataSelecionada={diaSelecionado}
++          onClose={() => { setShowForm(false); setEditando(null); }}
++          onSave={async (dados) => {
++            if (editando) {
++              await atualizar(editando.id, dados);
++            } else {
++              await criar(dados);
++            }
++          }}
++        />
++      )}
++    </div>
++  );
++}
+diff --git a/frontend/app/(dashboard)/clientes/page.tsx b/frontend/app/(dashboard)/clientes/page.tsx
+index bb7cdf6..aded184 100644
+--- a/frontend/app/(dashboard)/clientes/page.tsx
++++ b/frontend/app/(dashboard)/clientes/page.tsx
+@@ -1,7 +1,7 @@
+ "use client";
+ 
+ import { useEffect, useState, useCallback } from "react";
+-import { List, Kanban, RefreshCw } from "lucide-react";
++import { List, Kanban, RefreshCw, Calendar } from "lucide-react";
+ import { ResumoCards } from "@/components/clientes/ResumoCards";
+ import { ClienteTable } from "@/components/clientes/ClienteTable";
+ import { FunilKanban } from "@/components/clientes/FunilKanban";
+@@ -17,6 +17,9 @@ export default function ClientesPage() {
+   const [clienteEditando, setClienteEditando] = useState<ClienteList | null>(null);
+   const [formLoading, setFormLoading] = useState(false);
+   const [page, setPage] = useState(1);
++  const now = new Date();
++  const [mesFiltro, setMesFiltro] = useState(String(now.getMonth() + 1));
++  const [anoFiltro, setAnoFiltro] = useState(String(now.getFullYear()));
+ 
+   const { clientes, pagination, loading, carregar, criar, atualizar, deletar } = useClientes();
+   const { funil, loading: funilLoading, carregar: carregarFunil, moverCard } = useFunilKanban();
+@@ -24,11 +27,11 @@ export default function ClientesPage() {
+ 
+   const carregarTudo = useCallback(async () => {
+     await Promise.all([
+-      carregar({ page }),
++      carregar({ page, mes: mesFiltro, ano: anoFiltro }),
+       carregarFunil(),
+-      carregarResumo(),
++      carregarResumo({ mes: mesFiltro, ano: anoFiltro }),
+     ]);
+-  }, [carregar, carregarFunil, carregarResumo, page]);
++  }, [carregar, carregarFunil, carregarResumo, page, mesFiltro, anoFiltro]);
+ 
+   useEffect(() => {
+     carregarTudo();
+@@ -98,6 +101,29 @@ export default function ClientesPage() {
+             </button>
+           </div>
+ 
++          {/* Filtro de período */}
++          <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-lg px-2 py-1">
++            <Calendar className="w-3.5 h-3.5 text-gray-400" />
++            <select
++              value={mesFiltro}
++              onChange={(e) => setMesFiltro(e.target.value)}
++              className="bg-transparent text-xs text-gray-300 outline-none"
++            >
++              {["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"].map((m, i) => (
++                <option key={i} value={String(i + 1)} className="bg-zinc-900">{m}</option>
++              ))}
++            </select>
++            <select
++              value={anoFiltro}
++              onChange={(e) => setAnoFiltro(e.target.value)}
++              className="bg-transparent text-xs text-gray-300 outline-none"
++            >
++              {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map((a) => (
++                <option key={a} value={String(a)} className="bg-zinc-900">{a}</option>
++              ))}
++            </select>
++          </div>
++
+           <button
+             onClick={carregarTudo}
+             className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+diff --git a/frontend/app/(dashboard)/financeiro/investimentos/page.tsx b/frontend/app/(dashboard)/financeiro/investimentos/page.tsx
+new file mode 100644
+index 0000000..d0b481e
+--- /dev/null
++++ b/frontend/app/(dashboard)/financeiro/investimentos/page.tsx
+@@ -0,0 +1,341 @@
++"use client";
++
++import { useEffect, useState } from "react";
++import {
++  TrendingUp,
++  TrendingDown,
++  Plus,
++  Pencil,
++  Trash2,
++  X,
++  Loader2,
++  RefreshCw,
++  DollarSign,
++  BarChart3,
++} from "lucide-react";
++import { useInvestimentos, type Investimento, type InvestimentoFormData, TIPO_INVESTIMENTO_LABELS } from "@/hooks/useInvestimentos";
++
++function formatBRL(v: number) {
++  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
++}
++
++function RentabilidadeBadge({ pct }: { pct: number }) {
++  const pos = pct >= 0;
++  return (
++    <span className={`inline-flex items-center gap-0.5 text-xs font-semibold ${pos ? "text-emerald-400" : "text-red-400"}`}>
++      {pos ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
++      {pos ? "+" : ""}{pct.toFixed(2)}%
++    </span>
++  );
++}
++
++function InvestimentoFormModal({
++  inv,
++  onClose,
++  onSave,
++}: {
++  inv?: Investimento | null;
++  onClose: () => void;
++  onSave: (d: InvestimentoFormData) => Promise<void>;
++}) {
++  const [nome, setNome] = useState(inv?.nome || "");
++  const [descricao, setDescricao] = useState(inv?.descricao || "");
++  const [tipo, setTipo] = useState(inv?.tipo || "renda_fixa");
++  const [cor, setCor] = useState(inv?.cor || "#059669");
++  const [valorInicial, setValorInicial] = useState(inv?.valor_inicial ? String(inv.valor_inicial) : "");
++  const [valorAtual, setValorAtual] = useState(inv?.valor_atual ? String(inv.valor_atual) : "");
++  const [taxa, setTaxa] = useState(inv?.taxa_juros_anual ? String(inv.taxa_juros_anual) : "");
++  const [dataInicio, setDataInicio] = useState(inv?.data_inicio || "");
++  const [dataVenc, setDataVenc] = useState(inv?.data_vencimento || "");
++  const [loading, setLoading] = useState(false);
++  const [erro, setErro] = useState<string | null>(null);
++
++  const CORES = ["#059669", "#2563EB", "#6D28D9", "#D97706", "#DC2626", "#0891B2", "#84CC16", "#7C3AED"];
++
++  const handleSubmit = async (e: React.FormEvent) => {
++    e.preventDefault();
++    if (!nome.trim()) { setErro("Nome é obrigatório."); return; }
++    if (!valorInicial || parseFloat(valorInicial) <= 0) { setErro("Valor inicial inválido."); return; }
++    if (!dataInicio) { setErro("Data de início é obrigatória."); return; }
++    setLoading(true);
++    setErro(null);
++    try {
++      await onSave({
++        nome: nome.trim(),
++        descricao,
++        tipo,
++        cor,
++        valor_inicial: parseFloat(valorInicial),
++        valor_atual: valorAtual ? parseFloat(valorAtual) : parseFloat(valorInicial),
++        taxa_juros_anual: taxa ? parseFloat(taxa) : null,
++        data_inicio: dataInicio,
++        data_vencimento: dataVenc || null,
++      });
++      onClose();
++    } catch {
++      setErro("Erro ao salvar.");
++    } finally {
++      setLoading(false);
++    }
++  };
++
++  return (
++    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
++      <div className="bg-[#0f1117] border border-white/10 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
++        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
++          <h3 className="font-semibold text-white">{inv ? "Editar Investimento" : "Novo Investimento"}</h3>
++          <button onClick={onClose} className="text-zinc-400 hover:text-white p-1 rounded">
++            <X className="h-5 w-5" />
++          </button>
++        </div>
++        <form onSubmit={handleSubmit} className="p-6 space-y-4">
++          <div>
++            <label className="block text-xs font-medium text-zinc-400 mb-1">Nome *</label>
++            <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Tesouro Direto IPCA+" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50" />
++          </div>
++          <div className="grid grid-cols-2 gap-3">
++            <div>
++              <label className="block text-xs font-medium text-zinc-400 mb-1">Tipo</label>
++              <select value={tipo} onChange={(e) => setTipo(e.target.value)} className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none">
++                {Object.entries(TIPO_INVESTIMENTO_LABELS).map(([k, v]) => (
++                  <option key={k} value={k}>{v}</option>
++                ))}
++              </select>
++            </div>
++            <div>
++              <label className="block text-xs font-medium text-zinc-400 mb-2">Cor</label>
++              <div className="flex gap-1.5 flex-wrap">
++                {CORES.map((c) => (
++                  <button key={c} type="button" onClick={() => setCor(c)}
++                    className={`w-6 h-6 rounded-full border-2 ${cor === c ? "border-white scale-110" : "border-transparent"}`}
++                    style={{ backgroundColor: c }}
++                  />
++                ))}
++              </div>
++            </div>
++          </div>
++          <div className="grid grid-cols-2 gap-3">
++            <div>
++              <label className="block text-xs font-medium text-zinc-400 mb-1">Valor investido *</label>
++              <input type="number" min="0" step="0.01" value={valorInicial} onChange={(e) => setValorInicial(e.target.value)} placeholder="0,00" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50" />
++            </div>
++            <div>
++              <label className="block text-xs font-medium text-zinc-400 mb-1">Valor atual</label>
++              <input type="number" min="0" step="0.01" value={valorAtual} onChange={(e) => setValorAtual(e.target.value)} placeholder="Igual ao inicial" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50" />
++            </div>
++          </div>
++          <div className="grid grid-cols-2 gap-3">
++            <div>
++              <label className="block text-xs font-medium text-zinc-400 mb-1">Taxa anual (%)</label>
++              <input type="number" min="0" step="0.01" value={taxa} onChange={(e) => setTaxa(e.target.value)} placeholder="Ex: 12.5" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50" />
++            </div>
++            <div>
++              <label className="block text-xs font-medium text-zinc-400 mb-1">Data início *</label>
++              <input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none" />
++            </div>
++          </div>
++          <div>
++            <label className="block text-xs font-medium text-zinc-400 mb-1">Vencimento</label>
++            <input type="date" value={dataVenc} onChange={(e) => setDataVenc(e.target.value)} className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none" />
++          </div>
++          <div>
++            <label className="block text-xs font-medium text-zinc-400 mb-1">Descrição</label>
++            <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={2} className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none" />
++          </div>
++          {erro && <p className="text-xs text-red-400">{erro}</p>}
++          <div className="flex gap-2 pt-1">
++            <button type="button" onClick={onClose} className="flex-1 border border-white/10 rounded-lg py-2 text-sm text-zinc-400 hover:bg-white/5">Cancelar</button>
++            <button type="submit" disabled={loading} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg py-2 text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-60">
++              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (inv ? "Salvar" : "Criar")}
++            </button>
++          </div>
++        </form>
++      </div>
++    </div>
++  );
++}
++
++// ── Simular projeção com juros compostos ──────────────────────
++
++function projecao(valorAtual: number, taxaAnual: number, anos: number) {
++  return valorAtual * Math.pow(1 + taxaAnual / 100, anos);
++}
++
++function ProjecaoSection({ investimentos }: { investimentos: Investimento[] }) {
++  const comTaxa = investimentos.filter((i) => i.taxa_juros_anual && i.taxa_juros_anual > 0 && i.ativo);
++  if (comTaxa.length === 0) return null;
++
++  const anos = [1, 3, 5, 10];
++  const totalAtual = comTaxa.reduce((acc, i) => acc + i.valor_atual, 0);
++
++  return (
++    <div className="bg-white/5 border border-white/10 rounded-xl p-5">
++      <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
++        <BarChart3 className="h-4 w-4 text-emerald-400" />
++        Projeção de Crescimento (Juros Compostos)
++      </h3>
++      <div className="grid grid-cols-4 gap-3">
++        {anos.map((a) => {
++          const projetado = comTaxa.reduce((acc, inv) => {
++            return acc + projecao(inv.valor_atual, Number(inv.taxa_juros_anual), a);
++          }, 0);
++          const ganho = projetado - totalAtual;
++          return (
++            <div key={a} className="bg-white/5 rounded-lg p-3 text-center">
++              <p className="text-xs text-zinc-500 mb-1">{a} ano{a > 1 ? "s" : ""}</p>
++              <p className="text-sm font-bold text-white">{formatBRL(projetado)}</p>
++              <p className="text-xs text-emerald-400 mt-0.5">+{formatBRL(ganho)}</p>
++            </div>
++          );
++        })}
++      </div>
++      <p className="text-xs text-zinc-500 mt-3">* Projeção baseada nas taxas cadastradas para {comTaxa.length} investimento(s) ativo(s)</p>
++    </div>
++  );
++}
++
++export default function InvestimentosPage() {
++  const { investimentos, resumo, loading, carregar, criar, atualizar, deletar } = useInvestimentos();
++  const [showForm, setShowForm] = useState(false);
++  const [editando, setEditando] = useState<Investimento | null>(null);
++  const [confirmandoDelete, setConfirmandoDelete] = useState<string | null>(null);
++
++  useEffect(() => { carregar(); }, [carregar]);
++
++  const posTipos = [...new Set(investimentos.map((i) => i.tipo))];
++
++  return (
++    <div className="space-y-6">
++      {/* Header */}
++      <div className="flex items-center justify-between">
++        <div>
++          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
++            <TrendingUp className="h-6 w-6 text-emerald-400" />
++            Investimentos
++          </h1>
++          <p className="text-sm text-gray-400 mt-1">Acompanhe sua carteira de investimentos</p>
++        </div>
++        <div className="flex items-center gap-2">
++          <button onClick={carregar} className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
++            <RefreshCw className="w-4 h-4" />
++          </button>
++          <button
++            onClick={() => { setEditando(null); setShowForm(true); }}
++            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm text-white font-medium transition-colors"
++          >
++            <Plus className="w-4 h-4" />
++            Novo Investimento
++          </button>
++        </div>
++      </div>
++
++      {/* Resumo KPIs */}
++      {resumo && (
++        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
++          {[
++            { label: "Total Investido", value: formatBRL(resumo.total_investido), icon: DollarSign, color: "text-blue-400" },
++            { label: "Valor Atual", value: formatBRL(resumo.total_atual), icon: TrendingUp, color: "text-emerald-400" },
++            { label: "Ganho Total", value: formatBRL(resumo.ganho_total), icon: resumo.ganho_total >= 0 ? TrendingUp : TrendingDown, color: resumo.ganho_total >= 0 ? "text-emerald-400" : "text-red-400" },
++            { label: "Rentabilidade", value: `${resumo.rentabilidade_geral >= 0 ? "+" : ""}${resumo.rentabilidade_geral.toFixed(2)}%`, icon: BarChart3, color: resumo.rentabilidade_geral >= 0 ? "text-emerald-400" : "text-red-400" },
++          ].map(({ label, value, icon: Icon, color }) => (
++            <div key={label} className="bg-white/5 border border-white/10 rounded-xl p-4">
++              <div className="flex items-center gap-2 mb-1">
++                <Icon className={`h-4 w-4 ${color}`} />
++                <p className="text-xs text-zinc-400">{label}</p>
++              </div>
++              <p className={`text-xl font-bold ${color}`}>{value}</p>
++            </div>
++          ))}
++        </div>
++      )}
++
++      {/* Projeção */}
++      <ProjecaoSection investimentos={investimentos} />
++
++      {/* Lista */}
++      {loading ? (
++        <div className="flex items-center justify-center py-12">
++          <Loader2 className="h-6 w-6 animate-spin text-emerald-400" />
++        </div>
++      ) : investimentos.length === 0 ? (
++        <div className="border-2 border-dashed border-white/10 rounded-xl p-12 text-center">
++          <TrendingUp className="h-12 w-12 text-zinc-700 mx-auto mb-3" />
++          <p className="text-zinc-400">Nenhum investimento cadastrado</p>
++          <button onClick={() => { setEditando(null); setShowForm(true); }} className="mt-3 text-sm text-emerald-400 hover:text-emerald-300">
++            + Adicionar primeiro investimento
++          </button>
++        </div>
++      ) : (
++        <div className="space-y-3">
++          {posTipos.map((tipo) => {
++            const grupo = investimentos.filter((i) => i.tipo === tipo);
++            return (
++              <div key={tipo}>
++                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 px-1">
++                  {TIPO_INVESTIMENTO_LABELS[tipo] || tipo}
++                </h3>
++                <div className="space-y-2">
++                  {grupo.map((inv) => (
++                    <div key={inv.id} className={`bg-white/5 border border-white/10 rounded-xl p-4 flex items-center gap-4 ${!inv.ativo ? "opacity-60" : ""}`}>
++                      <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${inv.cor}20` }}>
++                        <TrendingUp className="h-5 w-5" style={{ color: inv.cor }} />
++                      </div>
++                      <div className="flex-1 min-w-0">
++                        <div className="flex items-center gap-2">
++                          <p className="text-sm font-semibold text-white">{inv.nome}</p>
++                          {!inv.ativo && <span className="text-xs text-zinc-500 bg-white/5 px-1.5 py-0.5 rounded">Inativo</span>}
++                        </div>
++                        <div className="flex items-center gap-3 mt-0.5 text-xs text-zinc-500">
++                          <span>Desde {new Date(inv.data_inicio).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })}</span>
++                          {inv.taxa_juros_anual && <span>{Number(inv.taxa_juros_anual).toFixed(2)}% a.a.</span>}
++                          {inv.data_vencimento && <span>Venc. {new Date(inv.data_vencimento).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })}</span>}
++                        </div>
++                      </div>
++                      <div className="text-right flex-shrink-0">
++                        <p className="text-sm font-bold text-white">{formatBRL(inv.valor_atual)}</p>
++                        <RentabilidadeBadge pct={inv.rentabilidade} />
++                        <p className="text-xs text-zinc-500 mt-0.5">{inv.ganho_absoluto >= 0 ? "+" : ""}{formatBRL(inv.ganho_absoluto)}</p>
++                      </div>
++                      <div className="flex items-center gap-1 flex-shrink-0">
++                        <button onClick={() => { setEditando(inv); setShowForm(true); }} className="p-1.5 rounded text-zinc-500 hover:text-violet-400 hover:bg-violet-500/10 transition-colors">
++                          <Pencil className="h-4 w-4" />
++                        </button>
++                        <button onClick={() => setConfirmandoDelete(inv.id)} className="p-1.5 rounded text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors">
++                          <Trash2 className="h-4 w-4" />
++                        </button>
++                      </div>
++                    </div>
++                  ))}
++                </div>
++              </div>
++            );
++          })}
++        </div>
++      )}
++
++      {confirmandoDelete && (
++        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
++          <div className="bg-[#0f1117] border border-white/10 rounded-2xl shadow-2xl w-full max-w-xs p-6 text-center">
++            <Trash2 className="h-10 w-10 text-red-400 mx-auto mb-3" />
++            <p className="font-semibold text-white">Excluir investimento?</p>
++            <div className="flex gap-3 mt-5">
++              <button onClick={() => setConfirmandoDelete(null)} className="flex-1 border border-white/10 rounded-lg py-2 text-sm text-zinc-400 hover:bg-white/5">Cancelar</button>
++              <button onClick={async () => { await deletar(confirmandoDelete); setConfirmandoDelete(null); }} className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-lg py-2 text-sm font-medium">Excluir</button>
++            </div>
++          </div>
++        </div>
++      )}
++
++      {showForm && (
++        <InvestimentoFormModal
++          inv={editando}
++          onClose={() => { setShowForm(false); setEditando(null); }}
++          onSave={async (dados) => {
++            if (editando) await atualizar(editando.id, dados);
++            else await criar(dados);
++          }}
++        />
++      )}
++    </div>
++  );
++}
+diff --git a/frontend/app/(dashboard)/financeiro/page.tsx b/frontend/app/(dashboard)/financeiro/page.tsx
+index 7572c3a..ca5157c 100644
+--- a/frontend/app/(dashboard)/financeiro/page.tsx
++++ b/frontend/app/(dashboard)/financeiro/page.tsx
+@@ -5,6 +5,7 @@ import { ptBR } from "date-fns/locale";
+ import { ChevronLeft, ChevronRight, Plus, Tag } from "lucide-react";
+ import { useState } from "react";
+ import { CategoriaFinanceiroModal } from "@/components/financeiro/CategoriaFinanceiroModal";
++import { CaixinhasSection } from "@/components/financeiro/CaixinhasSection";
+ import { FluxoCaixaChart } from "@/components/financeiro/FluxoCaixaChart";
+ import { LancamentoForm } from "@/components/financeiro/LancamentoForm";
+ import { LancamentoTable } from "@/components/financeiro/LancamentoTable";
+@@ -158,6 +159,11 @@ export default function FinanceiroPage() {
+         />
+       </div>
+ 
++      {/* Caixinhas */}
++      <div className="mt-6 bg-white rounded-xl border border-slate-200 p-5">
++        <CaixinhasSection />
++      </div>
++
+       {/* Modals */}
+       {mostrarForm && (
+         <LancamentoForm
+diff --git a/frontend/app/(dashboard)/mensagens/page.tsx b/frontend/app/(dashboard)/mensagens/page.tsx
+new file mode 100644
+index 0000000..d760a5e
+--- /dev/null
++++ b/frontend/app/(dashboard)/mensagens/page.tsx
+@@ -0,0 +1,445 @@
++"use client";
++
++import { useEffect, useState, useCallback } from "react";
++import {
++  Mail,
++  Plus,
++  Pencil,
++  Trash2,
++  X,
++  Loader2,
++  RefreshCw,
++  Send,
++  Play,
++  Pause,
++  CheckCircle,
++  AlertCircle,
++  Clock,
++  ChevronDown,
++  ChevronUp,
++} from "lucide-react";
++import api from "@/lib/api";
++
++interface MensagemAutomatica {
++  id: string;
++  nome: string;
++  assunto: string;
++  corpo_html: string;
++  gatilho: string;
++  gatilho_label: string;
++  status: "ativa" | "pausada" | "rascunho";
++  total_enviados: number;
++  ultimo_disparo: string | null;
++  criado_em: string;
++  logs?: LogEnvio[];
++}
++
++interface LogEnvio {
++  id: string;
++  destinatario_email: string;
++  destinatario_nome: string;
++  status: "enviado" | "falhou" | "simulado";
++  enviado_em: string;
++}
++
++const GATILHOS = [
++  { value: "aniversario", label: "Aniversário do Cliente" },
++  { value: "followup_atrasado", label: "Follow-up Atrasado" },
++  { value: "boas_vindas", label: "Boas-vindas (novo cliente)" },
++  { value: "inativo_30d", label: "Cliente Inativo 30 dias" },
++  { value: "inativo_60d", label: "Cliente Inativo 60 dias" },
++  { value: "vencimento_proximo", label: "Vencimento Próximo (7 dias)" },
++  { value: "manual", label: "Disparo Manual" },
++];
++
++const STATUS_CORES: Record<string, string> = {
++  ativa: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
++  pausada: "text-amber-400 bg-amber-500/10 border-amber-500/20",
++  rascunho: "text-zinc-400 bg-zinc-500/10 border-zinc-500/20",
++};
++
++function MensagemFormModal({
++  msg,
++  onClose,
++  onSave,
++}: {
++  msg?: MensagemAutomatica | null;
++  onClose: () => void;
++  onSave: (d: Partial<MensagemAutomatica>) => Promise<void>;
++}) {
++  const [nome, setNome] = useState(msg?.nome || "");
++  const [assunto, setAssunto] = useState(msg?.assunto || "");
++  const [corpo, setCorpo] = useState(msg?.corpo_html || "");
++  const [gatilho, setGatilho] = useState(msg?.gatilho || "manual");
++  const [status, setStatus] = useState(msg?.status || "rascunho");
++  const [loading, setLoading] = useState(false);
++  const [erro, setErro] = useState<string | null>(null);
++
++  const TEMPLATE_PADRAO = `<h2>Olá, {{nome}}!</h2>
++<p>Temos uma mensagem especial para você.</p>
++<p>Se tiver dúvidas, responda este e-mail.</p>
++<br/>
++<p>Atenciosamente,<br/><strong>Equipe Synapse</strong></p>`;
++
++  const handleSubmit = async (e: React.FormEvent) => {
++    e.preventDefault();
++    if (!nome.trim() || !assunto.trim() || !corpo.trim()) {
++      setErro("Nome, assunto e corpo são obrigatórios.");
++      return;
++    }
++    setLoading(true);
++    setErro(null);
++    try {
++      await onSave({ nome, assunto, corpo_html: corpo, gatilho, status });
++      onClose();
++    } catch {
++      setErro("Erro ao salvar mensagem.");
++    } finally {
++      setLoading(false);
++    }
++  };
++
++  return (
++    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
++      <div className="bg-[#0f1117] border border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
++        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
++          <h3 className="font-semibold text-white">{msg ? "Editar Mensagem" : "Nova Mensagem Automática"}</h3>
++          <button onClick={onClose} className="text-zinc-400 hover:text-white p-1 rounded"><X className="h-5 w-5" /></button>
++        </div>
++        <form onSubmit={handleSubmit} className="p-6 space-y-4">
++          <div>
++            <label className="block text-xs font-medium text-zinc-400 mb-1">Nome interno *</label>
++            <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Boas-vindas novos clientes" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50" />
++          </div>
++          <div className="grid grid-cols-2 gap-3">
++            <div>
++              <label className="block text-xs font-medium text-zinc-400 mb-1">Gatilho</label>
++              <select value={gatilho} onChange={(e) => setGatilho(e.target.value)} className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none">
++                {GATILHOS.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}
++              </select>
++            </div>
++            <div>
++              <label className="block text-xs font-medium text-zinc-400 mb-1">Status</label>
++              <select value={status} onChange={(e) => setStatus(e.target.value as MensagemAutomatica["status"])} className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none">
++                <option value="rascunho">Rascunho</option>
++                <option value="ativa">Ativa</option>
++                <option value="pausada">Pausada</option>
++              </select>
++            </div>
++          </div>
++          <div>
++            <label className="block text-xs font-medium text-zinc-400 mb-1">Assunto do e-mail *</label>
++            <input value={assunto} onChange={(e) => setAssunto(e.target.value)} placeholder="Assunto do email" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50" />
++          </div>
++          <div>
++            <div className="flex items-center justify-between mb-1">
++              <label className="block text-xs font-medium text-zinc-400">Corpo (HTML) *</label>
++              {!corpo && (
++                <button type="button" onClick={() => setCorpo(TEMPLATE_PADRAO)} className="text-xs text-violet-400 hover:text-violet-300">
++                  Usar template padrão
++                </button>
++              )}
++            </div>
++            <textarea value={corpo} onChange={(e) => setCorpo(e.target.value)} rows={8} placeholder="HTML do email. Use {{nome}} para personalização." className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white font-mono outline-none focus:border-violet-500/50" />
++            <p className="text-xs text-zinc-500 mt-1">Variáveis disponíveis: <code className="text-violet-400">{`{{nome}}`}</code>, <code className="text-violet-400">{`{{email}}`}</code></p>
++          </div>
++          {erro && <p className="text-xs text-red-400">{erro}</p>}
++          <div className="flex gap-2 pt-1">
++            <button type="button" onClick={onClose} className="flex-1 border border-white/10 rounded-lg py-2 text-sm text-zinc-400 hover:bg-white/5">Cancelar</button>
++            <button type="submit" disabled={loading} className="flex-1 bg-violet-600 hover:bg-violet-700 text-white rounded-lg py-2 text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-60">
++              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (msg ? "Salvar" : "Criar Mensagem")}
++            </button>
++          </div>
++        </form>
++      </div>
++    </div>
++  );
++}
++
++function DispararModal({
++  msg,
++  onClose,
++}: {
++  msg: MensagemAutomatica;
++  onClose: () => void;
++}) {
++  const [emailsRaw, setEmailsRaw] = useState("");
++  const [loading, setLoading] = useState(false);
++  const [resultado, setResultado] = useState<{ enviados: number; falhas: number; modo: string } | null>(null);
++  const [erro, setErro] = useState<string | null>(null);
++
++  const handleDisparar = async () => {
++    const linhas = emailsRaw.split("\n").filter((l) => l.trim());
++    const destinatarios = linhas.map((l) => {
++      const parts = l.split(",");
++      return { email: parts[0]?.trim(), nome: parts[1]?.trim() || "" };
++    }).filter((d) => d.email && d.email.includes("@"));
++
++    if (destinatarios.length === 0) {
++      setErro("Informe ao menos um email válido.");
++      return;
++    }
++    setLoading(true);
++    setErro(null);
++    try {
++      const res = await api.post<{ data: { enviados: number; falhas: number; modo: string } }>(
++        `/mensagens/${msg.id}/disparar/`,
++        { destinatarios }
++      );
++      setResultado(res.data?.data || null);
++    } catch {
++      setErro("Erro ao disparar mensagem.");
++    } finally {
++      setLoading(false);
++    }
++  };
++
++  return (
++    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
++      <div className="bg-[#0f1117] border border-white/10 rounded-2xl shadow-2xl w-full max-w-md">
++        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
++          <div>
++            <h3 className="font-semibold text-white">Disparar Mensagem</h3>
++            <p className="text-xs text-zinc-400 mt-0.5">{msg.nome}</p>
++          </div>
++          <button onClick={onClose} className="text-zinc-400 hover:text-white p-1 rounded"><X className="h-5 w-5" /></button>
++        </div>
++        <div className="p-6 space-y-4">
++          {resultado ? (
++            <div className="text-center py-4">
++              <CheckCircle className="h-12 w-12 text-emerald-400 mx-auto mb-3" />
++              <p className="font-semibold text-white">Disparo concluído!</p>
++              <p className="text-sm text-zinc-400 mt-1">{resultado.enviados} enviados · {resultado.falhas} falhas</p>
++              {resultado.modo === "simulado (dev)" && (
++                <p className="text-xs text-amber-400 mt-2">Modo simulado (sem RESEND_API_KEY configurado)</p>
++              )}
++              <button onClick={onClose} className="mt-5 px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm">Fechar</button>
++            </div>
++          ) : (
++            <>
++              <div>
++                <label className="block text-xs font-medium text-zinc-400 mb-1">
++                  Destinatários (um por linha: <code className="text-violet-400">email,Nome</code>)
++                </label>
++                <textarea
++                  value={emailsRaw}
++                  onChange={(e) => setEmailsRaw(e.target.value)}
++                  rows={6}
++                  placeholder={`joao@empresa.com,João Silva\nmaria@empresa.com,Maria`}
++                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono outline-none focus:border-violet-500/50"
++                />
++              </div>
++              {erro && <p className="text-xs text-red-400">{erro}</p>}
++              <div className="flex gap-2">
++                <button onClick={onClose} className="flex-1 border border-white/10 rounded-lg py-2 text-sm text-zinc-400 hover:bg-white/5">Cancelar</button>
++                <button onClick={handleDisparar} disabled={loading} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg py-2 text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-60">
++                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4" /> Disparar</>}
++                </button>
++              </div>
++            </>
++          )}
++        </div>
++      </div>
++    </div>
++  );
++}
++
++export default function MensagensPage() {
++  const [mensagens, setMensagens] = useState<MensagemAutomatica[]>([]);
++  const [loading, setLoading] = useState(false);
++  const [showForm, setShowForm] = useState(false);
++  const [editando, setEditando] = useState<MensagemAutomatica | null>(null);
++  const [disparando, setDisparando] = useState<MensagemAutomatica | null>(null);
++  const [expandido, setExpandido] = useState<string | null>(null);
++
++  const carregar = useCallback(async () => {
++    setLoading(true);
++    try {
++      const res = await api.get<{ data: MensagemAutomatica[] }>("/mensagens/");
++      setMensagens(res.data?.data || []);
++    } finally {
++      setLoading(false);
++    }
++  }, []);
++
++  useEffect(() => { carregar(); }, [carregar]);
++
++  const handleSave = async (dados: Partial<MensagemAutomatica>) => {
++    if (editando) {
++      await api.patch(`/mensagens/${editando.id}/`, dados);
++    } else {
++      await api.post("/mensagens/", dados);
++    }
++    await carregar();
++  };
++
++  const handleDeletar = async (id: string) => {
++    if (!confirm("Excluir mensagem?")) return;
++    await api.delete(`/mensagens/${id}/`);
++    await carregar();
++  };
++
++  const handleToggleStatus = async (msg: MensagemAutomatica) => {
++    const novoStatus = msg.status === "ativa" ? "pausada" : "ativa";
++    await api.patch(`/mensagens/${msg.id}/`, { status: novoStatus });
++    await carregar();
++  };
++
++  const ativos = mensagens.filter((m) => m.status === "ativa").length;
++
++  return (
++    <div className="space-y-6">
++      {/* Header */}
++      <div className="flex items-center justify-between">
++        <div>
++          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
++            <Mail className="h-6 w-6 text-violet-400" />
++            Mensagens Automáticas
++          </h1>
++          <p className="text-sm text-gray-400 mt-1">
++            {ativos} mensagem{ativos !== 1 ? "ns" : ""} ativa{ativos !== 1 ? "s" : ""} · disparo automático por email
++          </p>
++        </div>
++        <div className="flex items-center gap-2">
++          <button onClick={carregar} className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
++            <RefreshCw className="w-4 h-4" />
++          </button>
++          <button
++            onClick={() => { setEditando(null); setShowForm(true); }}
++            className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-700 rounded-lg text-sm text-white font-medium transition-colors"
++          >
++            <Plus className="w-4 h-4" />
++            Nova Mensagem
++          </button>
++        </div>
++      </div>
++
++      {/* Gatilhos disponíveis */}
++      <div className="bg-white/5 border border-white/10 rounded-xl p-4">
++        <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">Gatilhos Disponíveis</h3>
++        <div className="flex flex-wrap gap-2">
++          {GATILHOS.map((g) => (
++            <span key={g.value} className="text-xs px-2.5 py-1 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20">
++              {g.label}
++            </span>
++          ))}
++        </div>
++      </div>
++
++      {/* Lista de mensagens */}
++      {loading ? (
++        <div className="flex items-center justify-center py-12">
++          <Loader2 className="h-6 w-6 animate-spin text-violet-400" />
++        </div>
++      ) : mensagens.length === 0 ? (
++        <div className="border-2 border-dashed border-white/10 rounded-xl p-12 text-center">
++          <Mail className="h-12 w-12 text-zinc-700 mx-auto mb-3" />
++          <p className="text-zinc-400">Nenhuma mensagem automática criada</p>
++          <button onClick={() => { setEditando(null); setShowForm(true); }} className="mt-3 text-sm text-violet-400 hover:text-violet-300">
++            + Criar primeira mensagem
++          </button>
++        </div>
++      ) : (
++        <div className="space-y-3">
++          {mensagens.map((msg) => (
++            <div key={msg.id} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
++              <div className="flex items-center gap-4 px-5 py-4">
++                <div className="flex-1 min-w-0">
++                  <div className="flex items-center gap-2 flex-wrap">
++                    <p className="text-sm font-semibold text-white">{msg.nome}</p>
++                    <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_CORES[msg.status]}`}>
++                      {msg.status}
++                    </span>
++                    <span className="text-xs text-zinc-500 bg-white/5 px-2 py-0.5 rounded-full">
++                      {msg.gatilho_label}
++                    </span>
++                  </div>
++                  <p className="text-xs text-zinc-500 mt-0.5">
++                    Assunto: {msg.assunto}
++                  </p>
++                  <div className="flex items-center gap-3 mt-1 text-xs text-zinc-600">
++                    <span className="flex items-center gap-1">
++                      <Send className="h-3 w-3" />
++                      {msg.total_enviados} enviados
++                    </span>
++                    {msg.ultimo_disparo && (
++                      <span className="flex items-center gap-1">
++                        <Clock className="h-3 w-3" />
++                        Último: {new Date(msg.ultimo_disparo).toLocaleDateString("pt-BR")}
++                      </span>
++                    )}
++                  </div>
++                </div>
++                <div className="flex items-center gap-1 flex-shrink-0">
++                  <button
++                    onClick={() => setDisparando(msg)}
++                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
++                    title="Disparar agora"
++                  >
++                    <Send className="h-3.5 w-3.5" />
++                    Disparar
++                  </button>
++                  <button
++                    onClick={() => handleToggleStatus(msg)}
++                    className="p-1.5 rounded text-zinc-500 hover:text-amber-400 hover:bg-amber-500/10 transition-colors"
++                    title={msg.status === "ativa" ? "Pausar" : "Ativar"}
++                  >
++                    {msg.status === "ativa" ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
++                  </button>
++                  <button onClick={() => { setEditando(msg); setShowForm(true); }} className="p-1.5 rounded text-zinc-500 hover:text-violet-400 hover:bg-violet-500/10 transition-colors">
++                    <Pencil className="h-4 w-4" />
++                  </button>
++                  <button onClick={() => handleDeletar(msg.id)} className="p-1.5 rounded text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors">
++                    <Trash2 className="h-4 w-4" />
++                  </button>
++                  <button onClick={() => setExpandido(expandido === msg.id ? null : msg.id)} className="p-1.5 rounded text-zinc-500 hover:text-white hover:bg-white/10 transition-colors">
++                    {expandido === msg.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
++                  </button>
++                </div>
++              </div>
++
++              {/* Preview HTML colapsável */}
++              {expandido === msg.id && (
++                <div className="px-5 pb-4 border-t border-white/5 pt-3">
++                  <p className="text-xs font-medium text-zinc-500 mb-2">Preview do corpo HTML:</p>
++                  <div
++                    className="bg-white rounded-lg p-3 text-sm text-slate-800 max-h-48 overflow-y-auto"
++                    dangerouslySetInnerHTML={{ __html: msg.corpo_html }}
++                  />
++                </div>
++              )}
++            </div>
++          ))}
++        </div>
++      )}
++
++      {/* Info sobre automações */}
++      <div className="bg-violet-500/5 border border-violet-500/20 rounded-xl p-4 flex items-start gap-3">
++        <AlertCircle className="h-4 w-4 text-violet-400 flex-shrink-0 mt-0.5" />
++        <div>
++          <p className="text-xs font-medium text-violet-300">Sobre disparos automáticos</p>
++          <p className="text-xs text-zinc-400 mt-0.5">
++            As mensagens com gatilhos automáticos são processadas diariamente pela tarefa Celery.
++            Mensagens <strong>Manuais</strong> são disparadas clicando em &quot;Disparar&quot;.
++            Configure a variável <code className="text-violet-400">RESEND_API_KEY</code> no backend para envios reais.
++          </p>
++        </div>
++      </div>
++
++      {showForm && (
++        <MensagemFormModal
++          msg={editando}
++          onClose={() => { setShowForm(false); setEditando(null); }}
++          onSave={handleSave}
++        />
++      )}
++
++      {disparando && (
++        <DispararModal
++          msg={disparando}
++          onClose={() => { setDisparando(null); carregar(); }}
++        />
++      )}
++    </div>
++  );
++}
+diff --git a/frontend/components/financeiro/CaixinhasSection.tsx b/frontend/components/financeiro/CaixinhasSection.tsx
+new file mode 100644
+index 0000000..f7fc402
+--- /dev/null
++++ b/frontend/components/financeiro/CaixinhasSection.tsx
+@@ -0,0 +1,432 @@
++"use client";
++
++import { useEffect, useState } from "react";
++import { Plus, Pencil, Trash2, TrendingUp, TrendingDown, X, Loader2, PiggyBank, Target, Calendar } from "lucide-react";
++import { useCaixinhas, type Caixinha, type CaixinhaFormData } from "@/hooks/useCaixinhas";
++
++function formatBRL(value: number) {
++  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
++}
++
++function CaixinhaCard({
++  caixinha,
++  onMovimentar,
++  onEditar,
++  onDeletar,
++}: {
++  caixinha: Caixinha;
++  onMovimentar: (c: Caixinha, tipo: "deposito" | "retirada") => void;
++  onEditar: (c: Caixinha) => void;
++  onDeletar: (id: string) => void;
++}) {
++  const progresso = caixinha.progresso;
++  const temMeta = caixinha.meta !== null && caixinha.meta !== undefined;
++
++  return (
++    <div className="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md transition-shadow">
++      <div className="flex items-start justify-between mb-3">
++        <div className="flex items-center gap-2">
++          <div
++            className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
++            style={{ backgroundColor: `${caixinha.cor}20` }}
++          >
++            <PiggyBank className="h-5 w-5" style={{ color: caixinha.cor }} />
++          </div>
++          <div>
++            <p className="text-sm font-semibold text-slate-800">{caixinha.nome}</p>
++            {caixinha.descricao && (
++              <p className="text-xs text-slate-500 truncate max-w-[140px]">{caixinha.descricao}</p>
++            )}
++          </div>
++        </div>
++        <div className="flex gap-1">
++          <button onClick={() => onEditar(caixinha)} className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100">
++            <Pencil className="h-3.5 w-3.5" />
++          </button>
++          <button onClick={() => onDeletar(caixinha.id)} className="p-1 rounded text-slate-400 hover:text-red-500 hover:bg-red-50">
++            <Trash2 className="h-3.5 w-3.5" />
++          </button>
++        </div>
++      </div>
++
++      <div className="mb-3">
++        <p className="text-xl font-bold text-slate-800">{formatBRL(Number(caixinha.saldo_atual))}</p>
++        {temMeta && (
++          <p className="text-xs text-slate-400">
++            Meta: {formatBRL(Number(caixinha.meta))}
++          </p>
++        )}
++      </div>
++
++      {temMeta && (
++        <div className="mb-3">
++          <div className="flex items-center justify-between mb-1">
++            <div className="flex items-center gap-1">
++              <Target className="h-3 w-3 text-slate-400" />
++              <span className="text-xs text-slate-500">{progresso.toFixed(0)}%</span>
++            </div>
++            {caixinha.data_meta && (
++              <div className="flex items-center gap-1">
++                <Calendar className="h-3 w-3 text-slate-400" />
++                <span className="text-xs text-slate-400">
++                  {new Date(caixinha.data_meta).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })}
++                </span>
++              </div>
++            )}
++          </div>
++          <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
++            <div
++              className="h-full rounded-full transition-all duration-300"
++              style={{
++                width: `${Math.min(progresso, 100)}%`,
++                backgroundColor: progresso >= 100 ? "#10b981" : caixinha.cor,
++              }}
++            />
++          </div>
++        </div>
++      )}
++
++      <div className="flex gap-2">
++        <button
++          onClick={() => onMovimentar(caixinha, "deposito")}
++          className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
++        >
++          <TrendingUp className="h-3.5 w-3.5" />
++          Depositar
++        </button>
++        <button
++          onClick={() => onMovimentar(caixinha, "retirada")}
++          className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-700 hover:bg-red-100 transition-colors"
++        >
++          <TrendingDown className="h-3.5 w-3.5" />
++          Retirar
++        </button>
++      </div>
++    </div>
++  );
++}
++
++function CaixinhaFormModal({
++  caixinha,
++  onClose,
++  onSave,
++}: {
++  caixinha?: Caixinha | null;
++  onClose: () => void;
++  onSave: (dados: CaixinhaFormData) => Promise<void>;
++}) {
++  const [nome, setNome] = useState(caixinha?.nome || "");
++  const [descricao, setDescricao] = useState(caixinha?.descricao || "");
++  const [cor, setCor] = useState(caixinha?.cor || "#6D28D9");
++  const [meta, setMeta] = useState(caixinha?.meta ? String(caixinha.meta) : "");
++  const [dataMeta, setDataMeta] = useState(caixinha?.data_meta || "");
++  const [loading, setLoading] = useState(false);
++  const [erro, setErro] = useState<string | null>(null);
++
++  const CORES = ["#6D28D9", "#2563EB", "#059669", "#D97706", "#DC2626", "#7C3AED", "#0891B2", "#84CC16"];
++
++  const handleSubmit = async (e: React.FormEvent) => {
++    e.preventDefault();
++    if (!nome.trim()) { setErro("Nome é obrigatório."); return; }
++    setLoading(true);
++    setErro(null);
++    try {
++      await onSave({
++        nome: nome.trim(),
++        descricao,
++        cor,
++        meta: meta ? parseFloat(meta) : null,
++        data_meta: dataMeta || null,
++      });
++      onClose();
++    } catch {
++      setErro("Erro ao salvar caixinha.");
++    } finally {
++      setLoading(false);
++    }
++  };
++
++  return (
++    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
++      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
++        <div className="flex items-center justify-between px-5 py-4 border-b">
++          <h3 className="font-semibold text-slate-800">{caixinha ? "Editar Caixinha" : "Nova Caixinha"}</h3>
++          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1 rounded">
++            <X className="h-5 w-5" />
++          </button>
++        </div>
++        <form onSubmit={handleSubmit} className="p-5 space-y-4">
++          <div>
++            <label className="block text-xs font-medium text-slate-600 mb-1">Nome *</label>
++            <input
++              value={nome}
++              onChange={(e) => setNome(e.target.value)}
++              placeholder="Ex: Férias, Reserva de emergência..."
++              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-purple-400"
++            />
++          </div>
++          <div>
++            <label className="block text-xs font-medium text-slate-600 mb-1">Descrição</label>
++            <input
++              value={descricao}
++              onChange={(e) => setDescricao(e.target.value)}
++              placeholder="Opcional"
++              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-purple-400"
++            />
++          </div>
++          <div>
++            <label className="block text-xs font-medium text-slate-600 mb-2">Cor</label>
++            <div className="flex gap-2 flex-wrap">
++              {CORES.map((c) => (
++                <button
++                  key={c}
++                  type="button"
++                  onClick={() => setCor(c)}
++                  className={`w-7 h-7 rounded-full border-2 transition-all ${cor === c ? "border-slate-800 scale-110" : "border-transparent"}`}
++                  style={{ backgroundColor: c }}
++                />
++              ))}
++            </div>
++          </div>
++          <div className="grid grid-cols-2 gap-3">
++            <div>
++              <label className="block text-xs font-medium text-slate-600 mb-1">Meta (R$)</label>
++              <input
++                type="number"
++                min="0"
++                step="0.01"
++                value={meta}
++                onChange={(e) => setMeta(e.target.value)}
++                placeholder="Opcional"
++                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-purple-400"
++              />
++            </div>
++            <div>
++              <label className="block text-xs font-medium text-slate-600 mb-1">Data da meta</label>
++              <input
++                type="date"
++                value={dataMeta}
++                onChange={(e) => setDataMeta(e.target.value)}
++                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-purple-400"
++              />
++            </div>
++          </div>
++          {erro && <p className="text-xs text-red-500">{erro}</p>}
++          <div className="flex gap-2 pt-1">
++            <button type="button" onClick={onClose} className="flex-1 border border-slate-200 rounded-lg py-2 text-sm text-slate-600 hover:bg-slate-50">
++              Cancelar
++            </button>
++            <button type="submit" disabled={loading} className="flex-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg py-2 text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-60">
++              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (caixinha ? "Salvar" : "Criar Caixinha")}
++            </button>
++          </div>
++        </form>
++      </div>
++    </div>
++  );
++}
++
++function MovimentarModal({
++  caixinha,
++  tipo,
++  onClose,
++  onConfirm,
++}: {
++  caixinha: Caixinha;
++  tipo: "deposito" | "retirada";
++  onClose: () => void;
++  onConfirm: (valor: number, descricao: string) => Promise<void>;
++}) {
++  const [valor, setValor] = useState("");
++  const [descricao, setDescricao] = useState("");
++  const [loading, setLoading] = useState(false);
++  const [erro, setErro] = useState<string | null>(null);
++
++  const handleSubmit = async (e: React.FormEvent) => {
++    e.preventDefault();
++    const v = parseFloat(valor);
++    if (!v || v <= 0) { setErro("Informe um valor válido."); return; }
++    setLoading(true);
++    setErro(null);
++    try {
++      await onConfirm(v, descricao);
++      onClose();
++    } catch {
++      setErro("Erro ao realizar movimentação.");
++    } finally {
++      setLoading(false);
++    }
++  };
++
++  const isDeposito = tipo === "deposito";
++
++  return (
++    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
++      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xs">
++        <div className="flex items-center justify-between px-5 py-4 border-b">
++          <h3 className="font-semibold text-slate-800">
++            {isDeposito ? "Depositar em" : "Retirar de"} &ldquo;{caixinha.nome}&rdquo;
++          </h3>
++          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1 rounded">
++            <X className="h-4 w-4" />
++          </button>
++        </div>
++        <form onSubmit={handleSubmit} className="p-5 space-y-4">
++          <p className="text-xs text-slate-500">
++            Saldo atual: <span className="font-semibold text-slate-800">{formatBRL(Number(caixinha.saldo_atual))}</span>
++          </p>
++          <div>
++            <label className="block text-xs font-medium text-slate-600 mb-1">Valor (R$) *</label>
++            <input
++              type="number"
++              min="0.01"
++              step="0.01"
++              value={valor}
++              onChange={(e) => setValor(e.target.value)}
++              placeholder="0,00"
++              autoFocus
++              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-purple-400"
++            />
++          </div>
++          <div>
++            <label className="block text-xs font-medium text-slate-600 mb-1">Descrição</label>
++            <input
++              value={descricao}
++              onChange={(e) => setDescricao(e.target.value)}
++              placeholder="Opcional"
++              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-purple-400"
++            />
++          </div>
++          {erro && <p className="text-xs text-red-500">{erro}</p>}
++          <div className="flex gap-2">
++            <button type="button" onClick={onClose} className="flex-1 border border-slate-200 rounded-lg py-2 text-sm text-slate-600 hover:bg-slate-50">
++              Cancelar
++            </button>
++            <button
++              type="submit"
++              disabled={loading}
++              className={`flex-1 text-white rounded-lg py-2 text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-60 ${
++                isDeposito ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-500 hover:bg-red-600"
++              }`}
++            >
++              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (isDeposito ? "Depositar" : "Retirar")}
++            </button>
++          </div>
++        </form>
++      </div>
++    </div>
++  );
++}
++
++export function CaixinhasSection() {
++  const { caixinhas, loading, carregar, criar, atualizar, deletar, movimentar } = useCaixinhas();
++  const [showForm, setShowForm] = useState(false);
++  const [editando, setEditando] = useState<Caixinha | null>(null);
++  const [movimentando, setMovimentando] = useState<{ caixinha: Caixinha; tipo: "deposito" | "retirada" } | null>(null);
++  const [confirmandoDelete, setConfirmandoDelete] = useState<string | null>(null);
++
++  useEffect(() => {
++    carregar();
++  }, [carregar]);
++
++  const totalSaldo = caixinhas.reduce((acc, c) => acc + Number(c.saldo_atual), 0);
++
++  return (
++    <div className="space-y-4">
++      <div className="flex items-center justify-between">
++        <div>
++          <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
++            <PiggyBank className="h-4 w-4 text-purple-500" />
++            Caixinhas
++          </h3>
++          {caixinhas.length > 0 && (
++            <p className="text-xs text-slate-400 mt-0.5">
++              Total: <span className="font-semibold text-slate-700">{formatBRL(totalSaldo)}</span>
++            </p>
++          )}
++        </div>
++        <button
++          onClick={() => { setEditando(null); setShowForm(true); }}
++          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-medium hover:bg-purple-700 transition-colors"
++        >
++          <Plus className="h-3.5 w-3.5" />
++          Nova Caixinha
++        </button>
++      </div>
++
++      {loading && (
++        <div className="flex items-center justify-center py-8">
++          <Loader2 className="h-6 w-6 animate-spin text-purple-400" />
++        </div>
++      )}
++
++      {!loading && caixinhas.length === 0 && (
++        <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center">
++          <PiggyBank className="h-10 w-10 text-slate-300 mx-auto mb-2" />
++          <p className="text-sm text-slate-400">Nenhuma caixinha criada ainda</p>
++          <p className="text-xs text-slate-300 mt-1">Crie cofrinhos para suas metas financeiras</p>
++        </div>
++      )}
++
++      {!loading && caixinhas.length > 0 && (
++        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
++          {caixinhas.map((c) => (
++            <CaixinhaCard
++              key={c.id}
++              caixinha={c}
++              onMovimentar={(caixinha, tipo) => setMovimentando({ caixinha, tipo })}
++              onEditar={(caixinha) => { setEditando(caixinha); setShowForm(true); }}
++              onDeletar={(id) => setConfirmandoDelete(id)}
++            />
++          ))}
++        </div>
++      )}
++
++      {confirmandoDelete && (
++        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
++          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xs p-6 text-center">
++            <Trash2 className="h-10 w-10 text-red-400 mx-auto mb-3" />
++            <p className="font-semibold text-slate-800">Excluir caixinha?</p>
++            <p className="text-xs text-slate-500 mt-1">Esta ação não pode ser desfeita. Todo o histórico será removido.</p>
++            <div className="flex gap-3 mt-5">
++              <button onClick={() => setConfirmandoDelete(null)} className="flex-1 border border-slate-200 rounded-lg py-2 text-sm text-slate-600 hover:bg-slate-50">
++                Cancelar
++              </button>
++              <button
++                onClick={async () => { await deletar(confirmandoDelete); setConfirmandoDelete(null); }}
++                className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-lg py-2 text-sm font-medium"
++              >
++                Excluir
++              </button>
++            </div>
++          </div>
++        </div>
++      )}
++
++      {showForm && (
++        <CaixinhaFormModal
++          caixinha={editando}
++          onClose={() => { setShowForm(false); setEditando(null); }}
++          onSave={async (dados) => {
++            if (editando) {
++              await atualizar(editando.id, dados);
++            } else {
++              await criar(dados);
++            }
++          }}
++        />
++      )}
++
++      {movimentando && (
++        <MovimentarModal
++          caixinha={movimentando.caixinha}
++          tipo={movimentando.tipo}
++          onClose={() => setMovimentando(null)}
++          onConfirm={async (valor, descricao) => {
++            await movimentar(movimentando.caixinha.id, movimentando.tipo, valor, descricao);
++          }}
++        />
++      )}
++    </div>
++  );
++}
+diff --git a/frontend/components/fornecedores/AdicionarAoEstoqueModal.tsx b/frontend/components/fornecedores/AdicionarAoEstoqueModal.tsx
+new file mode 100644
+index 0000000..08cbf98
+--- /dev/null
++++ b/frontend/components/fornecedores/AdicionarAoEstoqueModal.tsx
+@@ -0,0 +1,265 @@
++"use client";
++
++import { useState, useEffect, useCallback } from "react";
++import { X, Package, Plus, Search, ArrowRight, CheckCircle, Loader2 } from "lucide-react";
++import { Button } from "@/components/ui/button";
++import { Input } from "@/components/ui/input";
++import { Label } from "@/components/ui/label";
++import api from "@/lib/api";
++
++interface ProdutoBasico {
++  id: string;
++  nome: string;
++  sku: string;
++  estoque_atual: number;
++  unidade: string;
++}
++
++interface CompraInfo {
++  id: string;
++  fornecedor_id: string;
++  descricao: string;
++  valor: number;
++}
++
++interface AdicionarAoEstoqueModalProps {
++  compra: CompraInfo;
++  onClose: () => void;
++  onSuccess?: () => void;
++}
++
++type Passo = "escolha" | "produto_existente" | "produto_novo" | "sucesso";
++
++export function AdicionarAoEstoqueModal({ compra, onClose, onSuccess }: AdicionarAoEstoqueModalProps) {
++  const [passo, setPasso] = useState<Passo>("escolha");
++  const [produtos, setProdutos] = useState<ProdutoBasico[]>([]);
++  const [busca, setBusca] = useState("");
++  const [produtoSelecionado, setProdutoSelecionado] = useState<ProdutoBasico | null>(null);
++  const [quantidade, setQuantidade] = useState("1");
++  const [nomeProduto, setNomeProduto] = useState("");
++  const [precoCusto, setPrecoCusto] = useState(String(compra.valor));
++  const [precoVenda, setPrecoVenda] = useState("");
++  const [estoqueMinimo, setEstoqueMinimo] = useState("0");
++  const [loading, setLoading] = useState(false);
++  const [erro, setErro] = useState<string | null>(null);
++  const [resultado, setResultado] = useState<{ produto_nome: string; estoque_atual: number } | null>(null);
++
++  const carregarProdutos = useCallback(async () => {
++    try {
++      const res = await api.get<{ data: { results?: ProdutoBasico[]; data?: ProdutoBasico[] } }>(
++        `/estoque/produtos/?ativo=true&busca=${encodeURIComponent(busca)}&page_size=50`
++      );
++      const lista = res.data?.data;
++      if (Array.isArray(lista)) setProdutos(lista);
++    } catch {
++      // silencioso
++    }
++  }, [busca]);
++
++  useEffect(() => {
++    if (passo === "produto_existente") {
++      carregarProdutos();
++    }
++  }, [passo, busca, carregarProdutos]);
++
++  const handleSubmit = async () => {
++    setErro(null);
++    const qtd = parseFloat(quantidade);
++    if (!qtd || qtd <= 0) {
++      setErro("Informe uma quantidade válida.");
++      return;
++    }
++
++    setLoading(true);
++    try {
++      let body: Record<string, unknown>;
++      if (passo === "produto_existente") {
++        if (!produtoSelecionado) { setErro("Selecione um produto."); setLoading(false); return; }
++        body = { produto_id: produtoSelecionado.id, quantidade: qtd };
++      } else {
++        if (!nomeProduto.trim()) { setErro("Informe o nome do produto."); setLoading(false); return; }
++        body = {
++          criar_produto: true,
++          quantidade: qtd,
++          dados_produto: {
++            nome: nomeProduto.trim(),
++            preco_custo: parseFloat(precoCusto) || 0,
++            preco_venda: parseFloat(precoVenda) || 0,
++            estoque_minimo: parseFloat(estoqueMinimo) || 0,
++          },
++        };
++      }
++
++      const res = await api.post<{ data: { produto_nome: string; estoque_atual: number } }>(
++        `/fornecedores/${compra.fornecedor_id}/compras/${compra.id}/adicionar-ao-estoque/`,
++        body
++      );
++      setResultado(res.data.data);
++      setPasso("sucesso");
++      onSuccess?.();
++    } catch (e: unknown) {
++      const err = e as { response?: { data?: { message?: string } } };
++      setErro(err?.response?.data?.message || "Erro ao registrar entrada no estoque.");
++    } finally {
++      setLoading(false);
++    }
++  };
++
++  return (
++    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
++      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
++        {/* Header */}
++        <div className="flex items-center justify-between px-6 py-4 border-b">
++          <div className="flex items-center gap-3">
++            <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center">
++              <Package className="h-5 w-5 text-emerald-600" />
++            </div>
++            <div>
++              <h2 className="font-semibold text-slate-800 text-sm">Adicionar ao Estoque</h2>
++              <p className="text-xs text-slate-500 truncate max-w-[220px]">{compra.descricao}</p>
++            </div>
++          </div>
++          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1 rounded">
++            <X className="h-5 w-5" />
++          </button>
++        </div>
++
++        <div className="p-6">
++          {/* Passo: escolha */}
++          {passo === "escolha" && (
++            <div className="space-y-3">
++              <p className="text-sm text-slate-600 mb-4">Como deseja registrar esta entrada no estoque?</p>
++              <button
++                onClick={() => setPasso("produto_existente")}
++                className="w-full flex items-center gap-3 p-4 border-2 border-slate-200 rounded-xl hover:border-purple-400 hover:bg-purple-50 transition-all text-left"
++              >
++                <Search className="h-5 w-5 text-purple-500 flex-shrink-0" />
++                <div>
++                  <p className="text-sm font-medium text-slate-800">Produto existente</p>
++                  <p className="text-xs text-slate-500">Vincular a um produto já cadastrado</p>
++                </div>
++                <ArrowRight className="h-4 w-4 text-slate-400 ml-auto" />
++              </button>
++              <button
++                onClick={() => setPasso("produto_novo")}
++                className="w-full flex items-center gap-3 p-4 border-2 border-slate-200 rounded-xl hover:border-emerald-400 hover:bg-emerald-50 transition-all text-left"
++              >
++                <Plus className="h-5 w-5 text-emerald-500 flex-shrink-0" />
++                <div>
++                  <p className="text-sm font-medium text-slate-800">Criar novo produto</p>
++                  <p className="text-xs text-slate-500">Cadastrar e já dar entrada no estoque</p>
++                </div>
++                <ArrowRight className="h-4 w-4 text-slate-400 ml-auto" />
++              </button>
++              <button onClick={onClose} className="w-full text-xs text-slate-400 hover:text-slate-600 mt-2">
++                Pular por agora
++              </button>
++            </div>
++          )}
++
++          {/* Passo: produto existente */}
++          {passo === "produto_existente" && (
++            <div className="space-y-4">
++              <Input
++                placeholder="Buscar produto..."
++                value={busca}
++                onChange={(e) => setBusca(e.target.value)}
++                className="text-sm"
++              />
++              <div className="max-h-44 overflow-y-auto space-y-1 border rounded-lg p-1">
++                {produtos.length === 0 && (
++                  <p className="text-xs text-slate-400 p-3 text-center">Nenhum produto encontrado.</p>
++                )}
++                {produtos.map((p) => (
++                  <button
++                    key={p.id}
++                    onClick={() => setProdutoSelecionado(p)}
++                    className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
++                      produtoSelecionado?.id === p.id
++                        ? "bg-purple-100 text-purple-800"
++                        : "hover:bg-slate-50 text-slate-700"
++                    }`}
++                  >
++                    <span className="font-medium">{p.nome}</span>
++                    {p.sku && <span className="text-xs text-slate-400 ml-2">#{p.sku}</span>}
++                    <span className="float-right text-xs text-slate-400">{p.estoque_atual} {p.unidade}</span>
++                  </button>
++                ))}
++              </div>
++              <div>
++                <Label className="text-xs">Quantidade a adicionar *</Label>
++                <Input
++                  type="number"
++                  min="0.001"
++                  step="0.001"
++                  value={quantidade}
++                  onChange={(e) => setQuantidade(e.target.value)}
++                  className="text-sm mt-1"
++                />
++              </div>
++              {erro && <p className="text-xs text-red-500">{erro}</p>}
++              <div className="flex gap-2 pt-1">
++                <Button variant="outline" size="sm" onClick={() => setPasso("escolha")} className="flex-1">Voltar</Button>
++                <Button size="sm" onClick={handleSubmit} disabled={loading || !produtoSelecionado} className="flex-1 bg-purple-600 hover:bg-purple-700">
++                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirmar Entrada"}
++                </Button>
++              </div>
++            </div>
++          )}
++
++          {/* Passo: produto novo */}
++          {passo === "produto_novo" && (
++            <div className="space-y-3">
++              <div>
++                <Label className="text-xs">Nome do produto *</Label>
++                <Input value={nomeProduto} onChange={(e) => setNomeProduto(e.target.value)} placeholder="Ex: Caixa de parafusos" className="text-sm mt-1" />
++              </div>
++              <div className="grid grid-cols-2 gap-3">
++                <div>
++                  <Label className="text-xs">Preço de custo</Label>
++                  <Input type="number" min="0" step="0.01" value={precoCusto} onChange={(e) => setPrecoCusto(e.target.value)} className="text-sm mt-1" />
++                </div>
++                <div>
++                  <Label className="text-xs">Preço de venda</Label>
++                  <Input type="number" min="0" step="0.01" value={precoVenda} onChange={(e) => setPrecoVenda(e.target.value)} className="text-sm mt-1" />
++                </div>
++              </div>
++              <div className="grid grid-cols-2 gap-3">
++                <div>
++                  <Label className="text-xs">Estoque mínimo</Label>
++                  <Input type="number" min="0" step="1" value={estoqueMinimo} onChange={(e) => setEstoqueMinimo(e.target.value)} className="text-sm mt-1" />
++                </div>
++                <div>
++                  <Label className="text-xs">Quantidade inicial *</Label>
++                  <Input type="number" min="0.001" step="0.001" value={quantidade} onChange={(e) => setQuantidade(e.target.value)} className="text-sm mt-1" />
++                </div>
++              </div>
++              {erro && <p className="text-xs text-red-500">{erro}</p>}
++              <div className="flex gap-2 pt-1">
++                <Button variant="outline" size="sm" onClick={() => setPasso("escolha")} className="flex-1">Voltar</Button>
++                <Button size="sm" onClick={handleSubmit} disabled={loading} className="flex-1 bg-emerald-600 hover:bg-emerald-700">
++                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Criar e Dar Entrada"}
++                </Button>
++              </div>
++            </div>
++          )}
++
++          {/* Passo: sucesso */}
++          {passo === "sucesso" && resultado && (
++            <div className="text-center py-4">
++              <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto mb-3" />
++              <p className="font-semibold text-slate-800">Entrada registrada!</p>
++              <p className="text-sm text-slate-600 mt-1">
++                <span className="font-medium">{resultado.produto_nome}</span>
++              </p>
++              <p className="text-xs text-slate-400 mt-1">
++                Estoque atual: <span className="font-semibold text-slate-700">{resultado.estoque_atual}</span>
++              </p>
++              <Button onClick={onClose} className="mt-5 w-full bg-slate-800 hover:bg-slate-900">Fechar</Button>
++            </div>
++          )}
++        </div>
++      </div>
++    </div>
++  );
++}
+diff --git a/frontend/components/fornecedores/HistoricoCompras.tsx b/frontend/components/fornecedores/HistoricoCompras.tsx
+index 6a693bb..a9d98b5 100644
+--- a/frontend/components/fornecedores/HistoricoCompras.tsx
++++ b/frontend/components/fornecedores/HistoricoCompras.tsx
+@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
+ import { useForm } from "react-hook-form";
+ import { zodResolver } from "@hookform/resolvers/zod";
+ import { z } from "zod";
+-import { Plus, X, Loader2, ShoppingCart, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
++import { Plus, X, Loader2, ShoppingCart, ChevronLeft, ChevronRight, Pencil, Trash2, Package } from "lucide-react";
+ import { useComprasFornecedor } from "@/hooks/useFornecedores";
+ import type { CompraFornecedor } from "@/types/fornecedores";
++import { AdicionarAoEstoqueModal } from "./AdicionarAoEstoqueModal";
+ 
+ const STATUS_COMPRA: Record<string, { label: string; color: string }> = {
+   pendente: { label: "Pendente", color: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
+@@ -159,6 +160,7 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
+   const [editando, setEditando] = useState<CompraFornecedor | null>(null);
+   const [confirmandoDelete, setConfirmandoDelete] = useState<string | null>(null);
+   const [actionError, setActionError] = useState<string | null>(null);
++  const [adicionandoEstoque, setAdicionandoEstoque] = useState<CompraFornecedor | null>(null);
+   const pageSize = 25;
+ 
+   useEffect(() => {
+@@ -260,6 +262,13 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
+                   {status.label}
+                 </span>
+                 <div className="flex items-center gap-1 mt-0.5">
++                  <button
++                    onClick={() => setAdicionandoEstoque(c)}
++                    className="p-1 rounded text-zinc-500 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
++                    title="Adicionar ao estoque"
++                  >
++                    <Package className="h-3 w-3" />
++                  </button>
+                   <button
+                     onClick={() => setEditando(c)}
+                     className="p-1 rounded text-zinc-500 hover:text-violet-400 hover:bg-violet-500/10 transition-colors"
+@@ -322,6 +331,19 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
+         />
+       )}
+ 
++      {adicionandoEstoque && (
++        <AdicionarAoEstoqueModal
++          compra={{
++            id: adicionandoEstoque.id,
++            fornecedor_id: fornecedorId,
++            descricao: adicionandoEstoque.descricao,
++            valor: typeof adicionandoEstoque.valor === "string" ? parseFloat(adicionandoEstoque.valor) : adicionandoEstoque.valor,
++          }}
++          onClose={() => setAdicionandoEstoque(null)}
++          onSuccess={() => fetch(fornecedorId, page)}
++        />
++      )}
++
+       {editando && (
+         <NovaCompraForm
+           fornecedorId={fornecedorId}
+diff --git a/frontend/components/layout/Sidebar.tsx b/frontend/components/layout/Sidebar.tsx
+index 6c509ef..998483e 100644
+--- a/frontend/components/layout/Sidebar.tsx
++++ b/frontend/components/layout/Sidebar.tsx
+@@ -20,6 +20,8 @@ import {
+   Zap,
+   LogOut,
+   X,
++  CalendarDays,
++  Mail,
+ } from "lucide-react";
+ import { cn } from "@/lib/utils";
+ import { useAppStore } from "@/store/useAppStore";
+@@ -41,8 +43,11 @@ const navigation: NavItem[] = [
+   { label: "Clientes", href: "/clientes", icon: Users },
+   { label: "Fornecedores", href: "/fornecedores", icon: Truck },
+   { label: "Projetos", href: "/projetos", icon: FolderKanban },
++  { label: "Agenda", href: "/agenda", icon: CalendarDays },
+   { label: "Equipe", href: "/equipe", icon: UserCog },
+   { label: "Documentos", href: "/documentos", icon: FileText },
++  { label: "Investimentos", href: "/financeiro/investimentos", icon: BarChart2 },
++  { label: "Mensagens", href: "/mensagens", icon: Mail },
+   { label: "Notificações", href: "/notificacoes", icon: Bell },
+   { label: "Analytics", href: "/analytics", icon: BarChart2 },
+   { label: "AI Hub", href: "/ai-hub", icon: Sparkles },
+diff --git a/frontend/hooks/useAgenda.ts b/frontend/hooks/useAgenda.ts
+new file mode 100644
+index 0000000..2639daa
+--- /dev/null
++++ b/frontend/hooks/useAgenda.ts
+@@ -0,0 +1,106 @@
++"use client";
++
++import { useState, useCallback } from "react";
++import api from "@/lib/api";
++
++export interface Evento {
++  id: string;
++  titulo: string;
++  descricao: string;
++  tipo: "reuniao" | "tarefa" | "lembrete" | "compromisso" | "outro";
++  cor: string;
++  data_inicio: string;
++  data_fim: string | null;
++  dia_inteiro: boolean;
++  local: string;
++  concluido: boolean;
++  lembrete_minutos: number | null;
++  criado_em: string;
++}
++
++export interface EventoFormData {
++  titulo: string;
++  descricao?: string;
++  tipo?: Evento["tipo"];
++  cor?: string;
++  data_inicio: string;
++  data_fim?: string | null;
++  dia_inteiro?: boolean;
++  local?: string;
++  lembrete_minutos?: number | null;
++}
++
++export const TIPO_EVENTO_LABELS: Record<Evento["tipo"], string> = {
++  reuniao: "Reunião",
++  tarefa: "Tarefa",
++  lembrete: "Lembrete",
++  compromisso: "Compromisso",
++  outro: "Outro",
++};
++
++export const TIPO_EVENTO_CORES: Record<Evento["tipo"], string> = {
++  reuniao: "#2563EB",
++  tarefa: "#059669",
++  lembrete: "#D97706",
++  compromisso: "#6D28D9",
++  outro: "#6B7280",
++};
++
++export function useAgenda() {
++  const [eventos, setEventos] = useState<Evento[]>([]);
++  const [loading, setLoading] = useState(false);
++  const [error, setError] = useState<string | null>(null);
++
++  const carregar = useCallback(async (dataInicio?: string, dataFim?: string) => {
++    setLoading(true);
++    setError(null);
++    try {
++      const params = new URLSearchParams();
++      if (dataInicio) params.set("data_inicio", dataInicio);
++      if (dataFim) params.set("data_fim", dataFim);
++      const query = params.toString();
++      const res = await api.get<{ data: Evento[] }>(`/agenda/eventos/${query ? `?${query}` : ""}`);
++      setEventos(res.data?.data || []);
++    } catch {
++      setError("Erro ao carregar eventos.");
++    } finally {
++      setLoading(false);
++    }
++  }, []);
++
++  const criar = useCallback(async (dados: EventoFormData): Promise<Evento | null> => {
++    try {
++      const res = await api.post<{ data: Evento }>("/agenda/eventos/", dados);
++      const novo = res.data?.data;
++      if (novo) setEventos((prev) => [...prev, novo].sort((a, b) => a.data_inicio.localeCompare(b.data_inicio)));
++      return novo || null;
++    } catch {
++      return null;
++    }
++  }, []);
++
++  const atualizar = useCallback(async (id: string, dados: Partial<EventoFormData & { concluido?: boolean }>): Promise<Evento | null> => {
++    try {
++      const res = await api.patch<{ data: Evento }>(`/agenda/eventos/${id}/`, dados);
++      const atualizado = res.data?.data;
++      if (atualizado) {
++        setEventos((prev) => prev.map((e) => (e.id === id ? atualizado : e)));
++      }
++      return atualizado || null;
++    } catch {
++      return null;
++    }
++  }, []);
++
++  const deletar = useCallback(async (id: string): Promise<boolean> => {
++    try {
++      await api.delete(`/agenda/eventos/${id}/`);
++      setEventos((prev) => prev.filter((e) => e.id !== id));
++      return true;
++    } catch {
++      return false;
++    }
++  }, []);
++
++  return { eventos, loading, error, carregar, criar, atualizar, deletar };
++}
+diff --git a/frontend/hooks/useCaixinhas.ts b/frontend/hooks/useCaixinhas.ts
+new file mode 100644
+index 0000000..b922d7c
+--- /dev/null
++++ b/frontend/hooks/useCaixinhas.ts
+@@ -0,0 +1,114 @@
++"use client";
++
++import { useState, useCallback } from "react";
++import api from "@/lib/api";
++
++export interface Caixinha {
++  id: string;
++  nome: string;
++  descricao: string;
++  cor: string;
++  icone: string;
++  meta: number | null;
++  saldo_atual: number;
++  data_meta: string | null;
++  ativa: boolean;
++  progresso: number;
++  criado_em: string;
++  atualizado_em: string;
++}
++
++export interface MovimentoCaixinha {
++  id: string;
++  tipo: "deposito" | "retirada";
++  valor: number;
++  descricao: string;
++  saldo_anterior: number;
++  saldo_posterior: number;
++  criado_em: string;
++}
++
++export interface CaixinhaFormData {
++  nome: string;
++  descricao?: string;
++  cor?: string;
++  icone?: string;
++  meta?: number | null;
++  data_meta?: string | null;
++}
++
++export function useCaixinhas() {
++  const [caixinhas, setCaixinhas] = useState<Caixinha[]>([]);
++  const [loading, setLoading] = useState(false);
++  const [error, setError] = useState<string | null>(null);
++
++  const carregar = useCallback(async () => {
++    setLoading(true);
++    setError(null);
++    try {
++      const res = await api.get<{ data: Caixinha[] }>("/financeiro/caixinhas/");
++      setCaixinhas(res.data?.data || []);
++    } catch {
++      setError("Erro ao carregar caixinhas.");
++    } finally {
++      setLoading(false);
++    }
++  }, []);
++
++  const criar = useCallback(async (dados: CaixinhaFormData): Promise<Caixinha | null> => {
++    try {
++      const res = await api.post<{ data: Caixinha }>("/financeiro/caixinhas/", dados);
++      const nova = res.data?.data;
++      if (nova) setCaixinhas((prev) => [nova, ...prev]);
++      return nova || null;
++    } catch {
++      return null;
++    }
++  }, []);
++
++  const atualizar = useCallback(async (id: string, dados: Partial<CaixinhaFormData>): Promise<Caixinha | null> => {
++    try {
++      const res = await api.patch<{ data: Caixinha }>(`/financeiro/caixinhas/${id}/`, dados);
++      const atualizada = res.data?.data;
++      if (atualizada) {
++        setCaixinhas((prev) => prev.map((c) => (c.id === id ? atualizada : c)));
++      }
++      return atualizada || null;
++    } catch {
++      return null;
++    }
++  }, []);
++
++  const deletar = useCallback(async (id: string): Promise<boolean> => {
++    try {
++      await api.delete(`/financeiro/caixinhas/${id}/`);
++      setCaixinhas((prev) => prev.filter((c) => c.id !== id));
++      return true;
++    } catch {
++      return false;
++    }
++  }, []);
++
++  const movimentar = useCallback(async (
++    id: string,
++    tipo: "deposito" | "retirada",
++    valor: number,
++    descricao?: string
++  ): Promise<{ movimento: MovimentoCaixinha; caixinha: Caixinha } | null> => {
++    try {
++      const res = await api.post<{ data: { movimento: MovimentoCaixinha; caixinha: Caixinha } }>(
++        `/financeiro/caixinhas/${id}/movimentar/`,
++        { tipo, valor, descricao: descricao || "" }
++      );
++      const resultado = res.data?.data;
++      if (resultado?.caixinha) {
++        setCaixinhas((prev) => prev.map((c) => (c.id === id ? resultado.caixinha : c)));
++      }
++      return resultado || null;
++    } catch {
++      return null;
++    }
++  }, []);
++
++  return { caixinhas, loading, error, carregar, criar, atualizar, deletar, movimentar };
++}
+diff --git a/frontend/hooks/useClientes.ts b/frontend/hooks/useClientes.ts
+index 12c5d9f..78f5004 100644
+--- a/frontend/hooks/useClientes.ts
++++ b/frontend/hooks/useClientes.ts
+@@ -24,6 +24,8 @@ export interface FiltrosClientes {
+   tags?: string;
+   followup_atrasado?: string;
+   page?: number;
++  mes?: string;
++  ano?: string;
+ }
+ 
+ // ─── Hook principal de listagem ───────────────────────────────────────────────
+@@ -192,10 +194,14 @@ export function useResumoClientes() {
+   const [resumo, setResumo] = useState<ResumoClientes | null>(null);
+   const [loading, setLoading] = useState(false);
+ 
+-  const carregar = useCallback(async () => {
++  const carregar = useCallback(async (filtros: { mes?: string; ano?: string } = {}) => {
+     setLoading(true);
+     try {
+-      const resp = await api.get<ResumoClientes>("/clientes/resumo/");
++      const params = new URLSearchParams();
++      if (filtros.mes) params.set("mes", filtros.mes);
++      if (filtros.ano) params.set("ano", filtros.ano);
++      const query = params.toString();
++      const resp = await api.get<ResumoClientes>(`/clientes/resumo/${query ? `?${query}` : ""}`);
+       if (resp.success && resp.data) setResumo(resp.data);
+     } finally {
+       setLoading(false);
+diff --git a/frontend/hooks/useInvestimentos.ts b/frontend/hooks/useInvestimentos.ts
+new file mode 100644
+index 0000000..9678dea
+--- /dev/null
++++ b/frontend/hooks/useInvestimentos.ts
+@@ -0,0 +1,113 @@
++"use client";
++
++import { useState, useCallback } from "react";
++import api from "@/lib/api";
++
++export interface Investimento {
++  id: string;
++  nome: string;
++  descricao: string;
++  tipo: string;
++  cor: string;
++  valor_inicial: number;
++  valor_atual: number;
++  taxa_juros_anual: number | null;
++  data_inicio: string;
++  data_vencimento: string | null;
++  ativo: boolean;
++  rentabilidade: number;
++  ganho_absoluto: number;
++  criado_em: string;
++}
++
++export interface ResumoInvestimentos {
++  total_investido: number;
++  total_atual: number;
++  ganho_total: number;
++  rentabilidade_geral: number;
++}
++
++export interface InvestimentoFormData {
++  nome: string;
++  descricao?: string;
++  tipo?: string;
++  cor?: string;
++  valor_inicial: number;
++  valor_atual?: number;
++  taxa_juros_anual?: number | null;
++  data_inicio: string;
++  data_vencimento?: string | null;
++}
++
++export const TIPO_INVESTIMENTO_LABELS: Record<string, string> = {
++  renda_fixa: "Renda Fixa",
++  renda_variavel: "Renda Variável",
++  fundos: "Fundos",
++  criptomoeda: "Criptomoeda",
++  imovel: "Imóvel",
++  outro: "Outro",
++};
++
++export function useInvestimentos() {
++  const [investimentos, setInvestimentos] = useState<Investimento[]>([]);
++  const [resumo, setResumo] = useState<ResumoInvestimentos | null>(null);
++  const [loading, setLoading] = useState(false);
++  const [error, setError] = useState<string | null>(null);
++
++  const carregar = useCallback(async () => {
++    setLoading(true);
++    setError(null);
++    try {
++      const res = await api.get<{ data: { investimentos: Investimento[]; resumo: ResumoInvestimentos } }>(
++        "/financeiro/investimentos/"
++      );
++      setInvestimentos(res.data?.data?.investimentos || []);
++      setResumo(res.data?.data?.resumo || null);
++    } catch {
++      setError("Erro ao carregar investimentos.");
++    } finally {
++      setLoading(false);
++    }
++  }, []);
++
++  const criar = useCallback(async (dados: InvestimentoFormData): Promise<Investimento | null> => {
++    try {
++      const res = await api.post<{ data: Investimento }>("/financeiro/investimentos/", dados);
++      const novo = res.data?.data;
++      if (novo) {
++        setInvestimentos((prev) => [novo, ...prev]);
++        await carregar(); // refresh resumo
++      }
++      return novo || null;
++    } catch {
++      return null;
++    }
++  }, [carregar]);
++
++  const atualizar = useCallback(async (id: string, dados: Partial<InvestimentoFormData>): Promise<Investimento | null> => {
++    try {
++      const res = await api.patch<{ data: Investimento }>(`/financeiro/investimentos/${id}/`, dados);
++      const atualizado = res.data?.data;
++      if (atualizado) {
++        setInvestimentos((prev) => prev.map((i) => (i.id === id ? atualizado : i)));
++        await carregar();
++      }
++      return atualizado || null;
++    } catch {
++      return null;
++    }
++  }, [carregar]);
++
++  const deletar = useCallback(async (id: string): Promise<boolean> => {
++    try {
++      await api.delete(`/financeiro/investimentos/${id}/`);
++      setInvestimentos((prev) => prev.filter((i) => i.id !== id));
++      await carregar();
++      return true;
++    } catch {
++      return false;
++    }
++  }, [carregar]);
++
++  return { investimentos, resumo, loading, error, carregar, criar, atualizar, deletar };
++}
+-- 
+2.43.0
+
