@@ -53,7 +53,7 @@ export interface LancamentoCreate {
   descricao: string;
   valor: number | string;
   categoria?: string | null;
-  data_vencimento: string;
+  data_vencimento: string | null;
   data_pagamento?: string | null;
   status?: StatusLancamento;
   recorrente?: boolean;

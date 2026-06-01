@@ -14,6 +14,23 @@ import type {
   ResumoFornecedores,
 } from "@/types/fornecedores";
 
+interface PaginatedResponse<T> {
+  success: boolean;
+  data: T[];
+  pagination: {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    page_size: number;
+  };
+}
+
+interface SingleResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+}
+
 // ─── Resumo ─────────────────────────────────────────────────────────────────
 
 export function useResumoFornecedores() {
@@ -25,8 +42,10 @@ export function useResumoFornecedores() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get<ResumoFornecedores>("/fornecedores/resumo/");
-      setData(res.data || null);
+      const res = await api.get<SingleResponse<ResumoFornecedores>>(
+        "/fornecedores/resumo/"
+      );
+      setData(res.data.data);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
       setError(e?.response?.data?.error?.message ?? "Erro ao carregar resumo");
@@ -49,8 +68,10 @@ export function useRankingFornecedores() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get<RankingFornecedor[]>("/fornecedores/ranking/");
-      setData(res.data || []);
+      const res = await api.get<PaginatedResponse<RankingFornecedor>>(
+        "/fornecedores/ranking/"
+      );
+      setData(res.data.data);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
       setError(e?.response?.data?.error?.message ?? "Erro ao carregar ranking");
@@ -73,8 +94,10 @@ export function useCategoriasFornecedor() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get<CategoriaFornecedor[]>("/fornecedores/categorias/");
-      setData(res.data || []);
+      const res = await api.get<PaginatedResponse<CategoriaFornecedor>>(
+        "/fornecedores/categorias/"
+      );
+      setData(res.data.data);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
       setError(e?.response?.data?.error?.message ?? "Erro ao carregar categorias");
@@ -84,33 +107,17 @@ export function useCategoriasFornecedor() {
   }, []);
 
   const criar = useCallback(
-    async (payload: { nome: string; cor?: string }): Promise<CategoriaFornecedor> => {
-      // Item 5 fix: erro propaga + recarrega lista após sucesso
-      const res = await api.post<CategoriaFornecedor>("/fornecedores/categorias/", payload);
-      await fetch();
-      return res.data;
+    async (payload: { nome: string; cor?: string }) => {
+      const res = await api.post<SingleResponse<CategoriaFornecedor>>(
+        "/fornecedores/categorias/",
+        payload
+      );
+      return res.data.data;
     },
-    [fetch]
+    []
   );
 
-  const atualizar = useCallback(
-    async (id: string, payload: { nome: string; cor?: string }): Promise<CategoriaFornecedor> => {
-      const res = await api.patch<CategoriaFornecedor>(`/fornecedores/categorias/${id}/`, payload);
-      await fetch();
-      return res.data;
-    },
-    [fetch]
-  );
-
-  const excluir = useCallback(
-    async (id: string): Promise<void> => {
-      await api.delete(`/fornecedores/categorias/${id}/`);
-      await fetch();
-    },
-    [fetch]
-  );
-
-  return { data, loading, error, fetch, criar, atualizar, excluir };
+  return { data, loading, error, fetch, criar };
 }
 
 // ─── Fornecedores ─────────────────────────────────────────────────────────────
@@ -139,9 +146,9 @@ export function useFornecedores() {
       if (filters.page) params.set("page", String(filters.page));
 
       const url = `/fornecedores/?${params.toString()}`;
-      const res = await api.get<FornecedorList[]>(url);
-      setData(res.data || []);
-      setTotal(res.pagination?.count ?? 0);
+      const res = await api.get<PaginatedResponse<FornecedorList>>(url);
+      setData(res.data.data);
+      setTotal(res.data.pagination?.count ?? 0);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
       setError(e?.response?.data?.error?.message ?? "Erro ao carregar fornecedores");
@@ -151,8 +158,11 @@ export function useFornecedores() {
   }, []);
 
   const criar = useCallback(async (payload: FornecedorFormData) => {
-    const res = await api.post<FornecedorDetail>("/fornecedores/", payload);
-    return res.data;
+    const res = await api.post<SingleResponse<FornecedorDetail>>(
+      "/fornecedores/",
+      payload
+    );
+    return res.data.data;
   }, []);
 
   return { data, total, loading, error, fetch, criar };
@@ -169,8 +179,10 @@ export function useFornecedorDetail() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get<FornecedorDetail>(`/fornecedores/${id}/`);
-      setData(res.data || null);
+      const res = await api.get<SingleResponse<FornecedorDetail>>(
+        `/fornecedores/${id}/`
+      );
+      setData(res.data.data);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
       setError(e?.response?.data?.error?.message ?? "Erro ao carregar fornecedor");
@@ -181,11 +193,11 @@ export function useFornecedorDetail() {
 
   const atualizar = useCallback(
     async (id: string, payload: Partial<FornecedorFormData>) => {
-      const res = await api.patch<FornecedorDetail>(
+      const res = await api.patch<SingleResponse<FornecedorDetail>>(
         `/fornecedores/${id}/`,
         payload
       );
-      return res.data;
+      return res.data.data;
     },
     []
   );
@@ -196,11 +208,11 @@ export function useFornecedorDetail() {
 
   const avaliar = useCallback(
     async (id: string, payload: AvaliacaoFormData) => {
-      const res = await api.post<FornecedorDetail>(
+      const res = await api.post<SingleResponse<FornecedorDetail>>(
         `/fornecedores/${id}/avaliar/`,
         payload
       );
-      return res.data;
+      return res.data.data;
     },
     []
   );
@@ -220,11 +232,11 @@ export function useComprasFornecedor() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get<CompraFornecedor[]>(
+      const res = await api.get<PaginatedResponse<CompraFornecedor>>(
         `/fornecedores/${fornecedorId}/compras/?page=${page}`
       );
-      setData(res.data || []);
-      setTotal(res.pagination?.count ?? 0);
+      setData(res.data.data);
+      setTotal(res.data.pagination?.count ?? 0);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
       setError(e?.response?.data?.error?.message ?? "Erro ao carregar compras");
@@ -235,14 +247,29 @@ export function useComprasFornecedor() {
 
   const criar = useCallback(
     async (fornecedorId: string, payload: CompraFormData) => {
-      const res = await api.post<CompraFornecedor>(
+      const res = await api.post<SingleResponse<CompraFornecedor>>(
         `/fornecedores/${fornecedorId}/compras/`,
         payload
       );
-      return res.data;
+      return res.data.data;
     },
     []
   );
 
-  return { data, total, loading, error, fetch, criar };
+  const atualizar = useCallback(
+    async (compraId: string, payload: Partial<CompraFormData>) => {
+      const res = await api.patch<SingleResponse<CompraFornecedor>>(
+        `/fornecedores/compras/${compraId}/`,
+        payload
+      );
+      return res.data.data;
+    },
+    []
+  );
+
+  const deletar = useCallback(async (compraId: string) => {
+    await api.delete(`/fornecedores/compras/${compraId}/`);
+  }, []);
+
+  return { data, total, loading, error, fetch, criar, atualizar, deletar };
 }
