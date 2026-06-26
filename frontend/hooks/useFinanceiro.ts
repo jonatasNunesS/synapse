@@ -18,7 +18,6 @@ import type {
   LancamentoPagar,
   ResumoFinanceiro,
 } from "@/types/financeiro";
-import type { ApiResponse, PaginatedResponse } from "@/types/api";
 
 // ── Resumo ────────────────────────────────────────────────
 
@@ -35,10 +34,10 @@ export function useResumoFinanceiro(mes?: number, ano?: number) {
     setLoading(true);
     setError(null);
     try {
-      const resp = await api.get<ApiResponse<ResumoFinanceiro>>(
+      const resp = await api.get<ResumoFinanceiro>(
         `/financeiro/resumo/?mes=${m}&ano=${a}`
       );
-      setResumo(resp.data.data);
+      setResumo(resp.data);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
       setError(e?.response?.data?.error?.message ?? "Erro ao carregar resumo.");
@@ -73,10 +72,10 @@ export function useFluxoCaixa(dataInicio?: string, dataFim?: string) {
     setLoading(true);
     setError(null);
     try {
-      const resp = await api.get<ApiResponse<FluxoCaixaDia[]>>(
+      const resp = await api.get<FluxoCaixaDia[]>(
         `/financeiro/fluxo-caixa/?data_inicio=${inicio}&data_fim=${fim}`
       );
-      setFluxo(resp.data.data);
+      setFluxo(resp.data);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
       setError(e?.response?.data?.error?.message ?? "Erro ao carregar fluxo.");
@@ -107,10 +106,10 @@ export function useDRE(mes?: number, ano?: number) {
     setLoading(true);
     setError(null);
     try {
-      const resp = await api.get<ApiResponse<DRE>>(
+      const resp = await api.get<DRE>(
         `/financeiro/dre/?mes=${m}&ano=${a}`
       );
-      setDre(resp.data.data);
+      setDre(resp.data);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
       setError(e?.response?.data?.error?.message ?? "Erro ao carregar DRE.");
@@ -147,11 +146,11 @@ export function useLancamentos(filtros?: FiltrosLancamento) {
       if (filtros?.busca) params.set("busca", filtros.busca);
       if (filtros?.page) params.set("page", String(filtros.page));
 
-      const resp = await api.get<PaginatedResponse<Lancamento>>(
+      const resp = await api.get<Lancamento[]>(
         `/financeiro/lancamentos/?${params.toString()}`
       );
-      setLancamentos(resp.data.data);
-      setTotal(resp.data.pagination?.count ?? 0);
+      setLancamentos(resp.data);
+      setTotal(resp.pagination?.count ?? 0);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
       setError(e?.response?.data?.error?.message ?? "Erro ao carregar lançamentos.");
@@ -173,24 +172,24 @@ export function useLancamentos(filtros?: FiltrosLancamento) {
   }, [carregar]);
 
   const criar = async (dados: LancamentoCreate): Promise<Lancamento> => {
-    const resp = await api.post<ApiResponse<Lancamento>>(
+    const resp = await api.post<Lancamento>(
       "/financeiro/lancamentos/",
       dados
     );
     await carregar();
-    return resp.data.data;
+    return resp.data;
   };
 
   const atualizar = async (
     id: string,
     dados: Partial<LancamentoCreate>
   ): Promise<Lancamento> => {
-    const resp = await api.patch<ApiResponse<Lancamento>>(
+    const resp = await api.patch<Lancamento>(
       `/financeiro/lancamentos/${id}/`,
       dados
     );
     await carregar();
-    return resp.data.data;
+    return resp.data;
   };
 
   const deletar = async (id: string): Promise<void> => {
@@ -199,12 +198,12 @@ export function useLancamentos(filtros?: FiltrosLancamento) {
   };
 
   const pagar = async (id: string, dados: LancamentoPagar): Promise<Lancamento> => {
-    const resp = await api.post<ApiResponse<Lancamento>>(
+    const resp = await api.post<Lancamento>(
       `/financeiro/lancamentos/${id}/pagar/`,
       dados
     );
     await carregar();
-    return resp.data.data;
+    return resp.data;
   };
 
   return {
@@ -231,10 +230,10 @@ export function useCategorias() {
     setLoading(true);
     setError(null);
     try {
-      const resp = await api.get<ApiResponse<Categoria[]>>(
+      const resp = await api.get<Categoria[]>(
         "/financeiro/categorias/"
       );
-      setCategorias(resp.data.data);
+      setCategorias(resp.data);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
       setError(e?.response?.data?.error?.message ?? "Erro ao carregar categorias.");
@@ -249,11 +248,11 @@ export function useCategorias() {
 
   const criar = async (dados: CategoriaCreate): Promise<Categoria> => {
     try {
-      const resp = await api.post<ApiResponse<Categoria>>(
+      const resp = await api.post<Categoria>(
         "/financeiro/categorias/",
         dados
       );
-      return resp.data.data;
+      return resp.data;
     } finally {
       await carregar();
     }
@@ -261,11 +260,11 @@ export function useCategorias() {
 
   const atualizar = async (id: string, dados: Partial<CategoriaCreate>): Promise<Categoria> => {
     try {
-      const resp = await api.patch<ApiResponse<Categoria>>(
+      const resp = await api.patch<Categoria>(
         `/financeiro/categorias/${id}/`,
         dados
       );
-      return resp.data.data;
+      return resp.data;
     } finally {
       await carregar();
     }

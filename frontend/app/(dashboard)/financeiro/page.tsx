@@ -151,7 +151,7 @@ export default function FinanceiroPage() {
           </a>
         </div>
         <LancamentoTable
-          lancamentos={lancamentos.slice(0, 10)}
+          lancamentos={lancamentos}
           loading={loadingLancamentos}
           onPagar={setLancamentoParaPagar}
           onDeletar={handleDeletar}
