@@ -39,9 +39,9 @@ from django.db import transaction
 # ── Imports dos models ───────────────────────────────────────────────────────
 from modules.auth.models import CustomUser, Empresa
 from modules.financeiro.models import Categoria as CatFin, Lancamento
-from modules.estoque.models import CategoriaEstoque, Produto, MovimentacaoEstoque
+from modules.estoque.models import CategoriaEstoque, Produto
 from modules.clientes.models import Cliente, InteracaoCliente
-from modules.fornecedores.models import Fornecedor
+from modules.fornecedores.models import Fornecedor, CategoriaFornecedor
 from modules.projetos.models import Projeto, Tarefa, Comentario
 from modules.equipe.models import MembroEquipe, MetaMembro
 from modules.documentos.models import Documento, VersaoDocumento
@@ -61,8 +61,6 @@ def seed():
             nome="Loja Demo Synapse",
             defaults={
                 "cnpj": "12.345.678/0001-90",
-                "email": "contato@synapse.demo",
-                "telefone": "(11) 99999-0000",
                 "segmento": "varejo",
                 "plano": "pro",
             },
@@ -74,9 +72,8 @@ def seed():
             defaults={
                 "nome": "Admin Synapse",
                 "empresa": empresa,
-                "cargo": "Fundador",
                 "is_active": True,
-                "role": "admin",
+                "perfil": "admin",
             },
         )
         if criado:
@@ -186,12 +183,12 @@ def seed():
 
         # ── Clientes ─────────────────────────────────────────────
         clientes_data = [
-            {"nome": "Carlos Eduardo Silva", "email": "carlos@empresa.com", "telefone": "(11) 98765-4321", "funil_status": "cliente", "segmento": "varejo"},
-            {"nome": "Ana Paula Ferreira", "email": "ana@startup.io", "telefone": "(21) 97654-3210", "funil_status": "proposta", "segmento": "tecnologia"},
-            {"nome": "Roberto Mendes", "email": "roberto@construtora.com", "telefone": "(31) 96543-2109", "funil_status": "negociacao", "segmento": "construção"},
-            {"nome": "Juliana Costa", "email": "juliana@moda.com", "telefone": "(41) 95432-1098", "funil_status": "lead", "segmento": "moda"},
-            {"nome": "Marcos Oliveira", "email": "marcos@logistica.com", "telefone": "(51) 94321-0987", "funil_status": "prospecto", "segmento": "logística"},
-            {"nome": "Fernanda Lima", "email": "fernanda@saude.com", "telefone": "(61) 93210-9876", "funil_status": "cliente", "segmento": "saúde"},
+            {"nome": "Carlos Eduardo Silva", "email": "carlos@empresa.com", "telefone": "(11) 98765-4321", "status_funil": "fechado", "segmento": "varejo"},
+            {"nome": "Ana Paula Ferreira", "email": "ana@startup.io", "telefone": "(21) 97654-3210", "status_funil": "proposta", "segmento": "tecnologia"},
+            {"nome": "Roberto Mendes", "email": "roberto@construtora.com", "telefone": "(31) 96543-2109", "status_funil": "negociacao", "segmento": "construção"},
+            {"nome": "Juliana Costa", "email": "juliana@moda.com", "telefone": "(41) 95432-1098", "status_funil": "lead", "segmento": "moda"},
+            {"nome": "Marcos Oliveira", "email": "marcos@logistica.com", "telefone": "(51) 94321-0987", "status_funil": "contato", "segmento": "logística"},
+            {"nome": "Fernanda Lima", "email": "fernanda@saude.com", "telefone": "(61) 93210-9876", "status_funil": "fechado", "segmento": "saúde"},
         ]
         clientes = []
         for c in clientes_data:
@@ -200,7 +197,7 @@ def seed():
                 defaults={
                     "nome": c["nome"],
                     "telefone": c["telefone"],
-                    "funil_status": c["funil_status"],
+                    "status_funil": c["status_funil"],
                     "segmento": c["segmento"],
                     "ativo": True,
                     "criado_por": admin,
@@ -235,11 +232,25 @@ def seed():
             )
         print(f"✓ {len(interacoes)} interações com clientes")
 
+        # ── Categorias de Fornecedores ────────────────────────────
+        cats_forn = [
+            {"nome": "Eletrônicos", "cor": "#3b82f6"},
+            {"nome": "Acessórios", "cor": "#8b5cf6"},
+            {"nome": "Cabos e Conectores", "cor": "#22c55e"},
+        ]
+        categorias_forn = {}
+        for c in cats_forn:
+            obj, _ = CategoriaFornecedor.objects.get_or_create(
+                empresa=empresa, nome=c["nome"],
+                defaults={"cor": c["cor"]},
+            )
+            categorias_forn[c["nome"]] = obj
+
         # ── Fornecedores ─────────────────────────────────────────
         fornecedores_data = [
-            {"nome": "TechDistrib Ltda", "email": "compras@techdistrib.com", "telefone": "(11) 3333-4444", "cnpj": "11.222.333/0001-44", "categoria": "eletronicos"},
-            {"nome": "Acessórios Brasil", "email": "vendas@acessoriosbr.com", "telefone": "(21) 4444-5555", "cnpj": "22.333.444/0001-55", "categoria": "acessorios"},
-            {"nome": "Cabos & Cia", "email": "pedidos@cabosecia.com", "telefone": "(31) 5555-6666", "cnpj": "33.444.555/0001-66", "categoria": "cabos"},
+            {"nome": "TechDistrib Ltda", "email": "compras@techdistrib.com", "telefone": "(11) 3333-4444", "cnpj": "11.222.333/0001-44", "categoria": "Eletrônicos"},
+            {"nome": "Acessórios Brasil", "email": "vendas@acessoriosbr.com", "telefone": "(21) 4444-5555", "cnpj": "22.333.444/0001-55", "categoria": "Acessórios"},
+            {"nome": "Cabos & Cia", "email": "pedidos@cabosecia.com", "telefone": "(31) 5555-6666", "cnpj": "33.444.555/0001-66", "categoria": "Cabos e Conectores"},
         ]
         for f in fornecedores_data:
             Fornecedor.objects.get_or_create(
@@ -248,7 +259,7 @@ def seed():
                     "nome": f["nome"],
                     "email": f["email"],
                     "telefone": f["telefone"],
-                    "categoria": f["categoria"],
+                    "categoria": categorias_forn[f["categoria"]],
                     "ativo": True,
                     "criado_por": admin,
                 },
@@ -309,7 +320,7 @@ def seed():
                     tarefa=t,
                     empresa=empresa,
                     autor=admin,
-                    conteudo=f"Tarefa '{titulo}' concluída com sucesso.",
+                    texto=f"Tarefa '{titulo}' concluída com sucesso.",
                 )
 
         tarefas_p2 = [
@@ -345,9 +356,8 @@ def seed():
                 defaults={
                     "nome": m["nome"],
                     "empresa": empresa,
-                    "cargo": m["cargo"],
                     "is_active": True,
-                    "role": "membro",
+                    "perfil": "colaborador",
                 },
             )
             if _:
@@ -372,10 +382,12 @@ def seed():
                 titulo="Atingir R$ 50.000 em vendas no mês",
                 defaults={
                     "descricao": "Meta mensal de vendas para o time comercial.",
-                    "meta_valor": Decimal("50000.00"),
+                    "tipo": "vendas",
+                    "valor_meta": Decimal("50000.00"),
                     "valor_atual": Decimal("32000.00"),
-                    "data_prazo": HOJE + timedelta(days=10),
-                    "status": "em_andamento",
+                    "periodo": "mensal",
+                    "data_inicio": HOJE,
+                    "data_fim": HOJE + timedelta(days=30),
                 },
             )
         print(f"✓ {len(membros)} membros de equipe")
