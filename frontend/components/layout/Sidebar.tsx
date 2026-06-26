@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
 import { useAuth } from "@/hooks/useAuth";
 import { PLANO_CORES, PLANO_LABELS } from "@/types/auth";
+import { VERSION_LABEL } from "@/lib/version";
 
 interface NavItem {
   label: string;
@@ -235,6 +236,11 @@ export function Sidebar() {
                 {iniciais}
               </button>
             </div>
+          )}
+          {sidebarOpen && (
+            <p className="mt-1 px-3 pb-0.5 text-[10px] tabular-nums text-slate-600 select-none">
+              {VERSION_LABEL}
+            </p>
           )}
         </div>
       </aside>

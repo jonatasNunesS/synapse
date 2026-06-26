@@ -130,6 +130,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        GIT_SHA: ${GIT_SHA:-dev}
     env_file:
       - .env
     container_name: synapse-frontend
