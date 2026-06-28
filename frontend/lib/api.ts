@@ -36,12 +36,22 @@ private buildUrl(
   endpoint: string,
   params?: Record<string, string | number | boolean | undefined>
 ): string {
-  // 1. Garantir barra final no path (antes do ?) para evitar 301 em POST
+  // 1. Normaliza a barra final do path (antes do ?) conforme o destino:
+  //    - Browser (baseUrl "/api"): a request passa pelo proxy do Next (next.config.mjs),
+  //      cujo rewrite já adiciona a barra final no destino. Enviar COM barra faz o Next
+  //      responder 308 (trailingSlash:false) a cada chamada. Então removemos a barra aqui.
+  //    - SSR (baseUrl backend direto): sem proxy; o Django exige a barra (APPEND_SLASH → 301).
+  //      Então garantimos a barra final.
   const [path, existingQuery] = endpoint.split('?');
-  const pathWithSlash = path.endsWith('/') ? path : `${path}/`;
+  const viaProxy = this.baseUrl === '/api';
+  const normalizedPath = viaProxy
+    ? path.replace(/\/+$/, '')
+    : path.endsWith('/')
+      ? path
+      : `${path}/`;
   let url = existingQuery
-    ? `${this.baseUrl}${pathWithSlash}?${existingQuery}`
-    : `${this.baseUrl}${pathWithSlash}`;
+    ? `${this.baseUrl}${normalizedPath}?${existingQuery}`
+    : `${this.baseUrl}${normalizedPath}`;
 
   // 2. Adicionar params extras se existirem
   if (params) {
