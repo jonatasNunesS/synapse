@@ -785,3 +785,147 @@ class TestCenarioCompleto:
 
         # 7. Verificar link WhatsApp
         assert resp_joao_detalhe.data["data"]["link_whatsapp"] == "https://wa.me/5511999990001"
+
+
+# ─── Registro com campos de data vazios (bug do formulário) ──────────────────
+
+@pytest.mark.django_db
+class TestInteracaoCamposVazios:
+    """
+    O formulário do frontend envia "" para datas não preenchidas. Antes, o DRF
+    DateField/DateTimeField rejeitava "" e a interação falhava com 400.
+    """
+
+    def test_criar_interacao_com_followup_vazio(self, client_a, cliente_joao):
+        """proximo_followup="" não deve quebrar o registro → 201."""
+        resp = client_a.post(f"/api/clientes/{cliente_joao.id}/interacoes/", {
+            "tipo": "ligacao",
+            "titulo": "Ligação simples",
+            "descricao": "",
+            "valor": "",
+            "data_interacao": "2026-06-30T14:30",
+            "proximo_followup": "",
+        }, format="json")
+        assert resp.status_code == 201
+        assert resp.data["data"]["proximo_followup"] is None
+
+    def test_criar_venda_com_followup_vazio(self, client_a, cliente_maria):
+        """Venda com followup vazio também deve funcionar e atualizar agregados."""
+        resp = client_a.post(f"/api/clientes/{cliente_maria.id}/interacoes/", {
+            "tipo": "venda",
+            "titulo": "Venda sem followup",
+            "valor": "1500.00",
+            "data_interacao": "2026-06-30T14:30",
+            "proximo_followup": "",
+        }, format="json")
+        assert resp.status_code == 201
+        cliente_maria.refresh_from_db()
+        assert cliente_maria.valor_total_compras == Decimal("1500.00")
+
+    def test_data_interacao_vazia_usa_default(self, client_a, cliente_joao):
+        """data_interacao="" deve cair no default do model (timezone.now)."""
+        resp = client_a.post(f"/api/clientes/{cliente_joao.id}/interacoes/", {
+            "tipo": "email",
+            "titulo": "E-mail sem data",
+            "data_interacao": "",
+            "proximo_followup": "",
+        }, format="json")
+        assert resp.status_code == 201
+        assert resp.data["data"]["data_interacao"] is not None
+
+
+# ─── Editar e Apagar interações ──────────────────────────────────────────────
+
+@pytest.mark.django_db
+class TestInteracaoEditarApagar:
+
+    def _criar_venda(self, client, cliente, valor="500.00"):
+        resp = client.post(f"/api/clientes/{cliente.id}/interacoes/", {
+            "tipo": "venda",
+            "titulo": "Venda inicial",
+            "valor": valor,
+            "data_interacao": timezone.now().isoformat(),
+        }, format="json")
+        assert resp.status_code == 201
+        return resp.data["data"]["id"]
+
+    def test_editar_interacao(self, client_a, cliente_maria):
+        """PATCH atualiza os campos da interação → 200."""
+        iid = self._criar_venda(client_a, cliente_maria, "500.00")
+        resp = client_a.patch(
+            f"/api/clientes/{cliente_maria.id}/interacoes/{iid}/",
+            {"titulo": "Venda revisada", "valor": "750.00"},
+            format="json",
+        )
+        assert resp.status_code == 200
+        assert resp.data["data"]["titulo"] == "Venda revisada"
+        assert Decimal(resp.data["data"]["valor"]) == Decimal("750.00")
+
+    def test_editar_venda_recalcula_agregados(self, client_a, cliente_maria):
+        """Editar o valor de uma venda recalcula valor_total_compras do cliente."""
+        iid = self._criar_venda(client_a, cliente_maria, "500.00")
+        cliente_maria.refresh_from_db()
+        assert cliente_maria.valor_total_compras == Decimal("500.00")
+
+        client_a.patch(
+            f"/api/clientes/{cliente_maria.id}/interacoes/{iid}/",
+            {"valor": "800.00"},
+            format="json",
+        )
+        cliente_maria.refresh_from_db()
+        assert cliente_maria.valor_total_compras == Decimal("800.00")
+        assert cliente_maria.quantidade_compras == 1
+
+    def test_apagar_interacao(self, client_a, cliente_maria):
+        """DELETE remove a interação → 204."""
+        iid = self._criar_venda(client_a, cliente_maria, "500.00")
+        resp = client_a.delete(
+            f"/api/clientes/{cliente_maria.id}/interacoes/{iid}/"
+        )
+        assert resp.status_code == 204
+        assert not InteracaoCliente.objects.filter(id=iid).exists()
+
+    def test_apagar_venda_reduz_agregados(self, client_a, cliente_maria):
+        """Apagar uma venda reduz valor_total_compras e quantidade_compras."""
+        iid1 = self._criar_venda(client_a, cliente_maria, "300.00")
+        self._criar_venda(client_a, cliente_maria, "200.00")
+        cliente_maria.refresh_from_db()
+        assert cliente_maria.valor_total_compras == Decimal("500.00")
+        assert cliente_maria.quantidade_compras == 2
+
+        client_a.delete(f"/api/clientes/{cliente_maria.id}/interacoes/{iid1}/")
+        cliente_maria.refresh_from_db()
+        assert cliente_maria.valor_total_compras == Decimal("200.00")
+        assert cliente_maria.quantidade_compras == 1
+
+    def test_editar_interacao_inexistente_404(self, client_a, cliente_maria):
+        import uuid
+        resp = client_a.patch(
+            f"/api/clientes/{cliente_maria.id}/interacoes/{uuid.uuid4()}/",
+            {"titulo": "x"},
+            format="json",
+        )
+        assert resp.status_code == 404
+
+    def test_multitenant_nao_edita_interacao_de_outra_empresa(
+        self, client_b, client_a, cliente_maria
+    ):
+        """Empresa B não pode editar interação de cliente da empresa A → 404."""
+        iid = self._criar_venda(client_a, cliente_maria, "500.00")
+        resp = client_b.patch(
+            f"/api/clientes/{cliente_maria.id}/interacoes/{iid}/",
+            {"titulo": "hack"},
+            format="json",
+        )
+        assert resp.status_code == 404
+
+    def test_multitenant_nao_apaga_interacao_de_outra_empresa(
+        self, client_b, client_a, cliente_maria
+    ):
+        """Empresa B não pode apagar interação de cliente da empresa A → 404."""
+        iid = self._criar_venda(client_a, cliente_maria, "500.00")
+        resp = client_b.delete(
+            f"/api/clientes/{cliente_maria.id}/interacoes/{iid}/"
+        )
+        assert resp.status_code == 404
+        assert InteracaoCliente.objects.filter(id=iid).exists()

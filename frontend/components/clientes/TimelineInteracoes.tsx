@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import type { InteracaoCliente } from "@/types/clientes";
 import { TIPO_INTERACAO_LABELS, TIPO_INTERACAO_ICONS } from "@/types/clientes";
 
@@ -8,6 +8,8 @@ interface TimelineInteracoesProps {
   interacoes: InteracaoCliente[];
   loading?: boolean;
   onNovaInteracao?: () => void;
+  onEditar?: (interacao: InteracaoCliente) => void;
+  onApagar?: (interacao: InteracaoCliente) => void;
 }
 
 function formatDateTime(dt: string): string {
@@ -31,6 +33,8 @@ export function TimelineInteracoes({
   interacoes,
   loading,
   onNovaInteracao,
+  onEditar,
+  onApagar,
 }: TimelineInteracoesProps) {
   return (
     <div className="bg-[#0f1117] border border-white/10 rounded-xl">
@@ -94,11 +98,31 @@ export function TimelineInteracoes({
                           {interacao.titulo}
                         </h4>
                       </div>
-                      {interacao.valor && (
-                        <span className="text-sm font-semibold text-green-400 flex-shrink-0">
-                          {formatCurrency(interacao.valor)}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {interacao.valor && (
+                          <span className="text-sm font-semibold text-green-400">
+                            {formatCurrency(interacao.valor)}
+                          </span>
+                        )}
+                        {onEditar && (
+                          <button
+                            onClick={() => onEditar(interacao)}
+                            title="Editar interação"
+                            className="p-1 text-gray-500 hover:text-purple-400 hover:bg-white/10 rounded transition-colors"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        {onApagar && (
+                          <button
+                            onClick={() => onApagar(interacao)}
+                            title="Excluir interação"
+                            className="p-1 text-gray-500 hover:text-red-400 hover:bg-white/10 rounded transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {interacao.descricao && (

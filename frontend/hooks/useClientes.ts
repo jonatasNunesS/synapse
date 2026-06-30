@@ -230,26 +230,52 @@ export function useInteracoes(clienteId: string) {
     }
   }, [clienteId]);
 
+  // Propaga o erro (lança) para que a UI exiba feedback. Antes, o catch
+  // silencioso engolia o 400 do backend e a tela "não fazia nada".
   const registrar = useCallback(
-    async (dados: InteracaoCreate): Promise<InteracaoCliente | null> => {
-      try {
-        const resp = await api.post<InteracaoCliente>(
-          `/clientes/${clienteId}/interacoes/`,
-          dados
-        );
-        if (resp.success && resp.data) {
-          setInteracoes((prev) => [resp.data!, ...prev]);
-          return resp.data;
-        }
-        return null;
-      } catch {
-        return null;
+    async (dados: InteracaoCreate): Promise<InteracaoCliente> => {
+      const resp = await api.post<InteracaoCliente>(
+        `/clientes/${clienteId}/interacoes/`,
+        dados
+      );
+      if (resp.success && resp.data) {
+        setInteracoes((prev) => [resp.data!, ...prev]);
+        return resp.data;
       }
+      throw new Error("Não foi possível registrar a interação.");
     },
     [clienteId]
   );
 
-  return { interacoes, loading, error, carregar, registrar };
+  const editar = useCallback(
+    async (
+      interacaoId: string,
+      dados: InteracaoCreate
+    ): Promise<InteracaoCliente> => {
+      const resp = await api.patch<InteracaoCliente>(
+        `/clientes/${clienteId}/interacoes/${interacaoId}/`,
+        dados
+      );
+      if (resp.success && resp.data) {
+        setInteracoes((prev) =>
+          prev.map((i) => (i.id === interacaoId ? resp.data! : i))
+        );
+        return resp.data;
+      }
+      throw new Error("Não foi possível editar a interação.");
+    },
+    [clienteId]
+  );
+
+  const apagar = useCallback(
+    async (interacaoId: string): Promise<void> => {
+      await api.delete(`/clientes/${clienteId}/interacoes/${interacaoId}/`);
+      setInteracoes((prev) => prev.filter((i) => i.id !== interacaoId));
+    },
+    [clienteId]
+  );
+
+  return { interacoes, loading, error, carregar, registrar, editar, apagar };
 }
 
 // ─── Hook de follow-ups ───────────────────────────────────────────────────────

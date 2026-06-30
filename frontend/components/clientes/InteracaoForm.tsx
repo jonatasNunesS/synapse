@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { X, Loader2, Phone, Mail, Users, MessageCircle, DollarSign, FileText } from "lucide-react";
-import type { TipoInteracao } from "@/types/clientes";
+import type { TipoInteracao, InteracaoCliente } from "@/types/clientes";
+import { getErrorMessage } from "@/lib/api";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -51,11 +53,16 @@ interface InteracaoFormProps {
   onSubmit: (dados: FormData) => Promise<void>;
   onClose: () => void;
   loading?: boolean;
+  /** Quando presente, o formulário entra em modo edição. */
+  interacao?: InteracaoCliente | null;
 }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 
-export function InteracaoForm({ onSubmit, onClose, loading }: InteracaoFormProps) {
+export function InteracaoForm({ onSubmit, onClose, loading, interacao }: InteracaoFormProps) {
+  const modoEdicao = !!interacao;
+  const [serverError, setServerError] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -64,11 +71,36 @@ export function InteracaoForm({ onSubmit, onClose, loading }: InteracaoFormProps
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      tipo: "ligacao",
-      data_interacao: new Date().toISOString().slice(0, 16),
-    },
+    defaultValues: interacao
+      ? {
+          tipo: interacao.tipo,
+          titulo: interacao.titulo,
+          descricao: interacao.descricao ?? "",
+          valor: interacao.valor ?? "",
+          // ISO → "YYYY-MM-DDTHH:mm" exigido pelo input datetime-local
+          data_interacao: interacao.data_interacao?.slice(0, 16) ?? "",
+          proximo_followup: interacao.proximo_followup ?? "",
+        }
+      : {
+          tipo: "ligacao",
+          data_interacao: new Date().toISOString().slice(0, 16),
+        },
   });
+
+  // Normaliza campos vazios (DRF rejeita "" em datas) e exibe erro do backend
+  // sem fechar o modal.
+  const submit = async (data: FormData) => {
+    setServerError(null);
+    const payload: FormData = { ...data };
+    if (!payload.proximo_followup) delete payload.proximo_followup;
+    if (!payload.data_interacao) delete payload.data_interacao;
+    if (!payload.valor) delete payload.valor;
+    try {
+      await onSubmit(payload);
+    } catch (err) {
+      setServerError(getErrorMessage(err));
+    }
+  };
 
   const tipoSelecionado = watch("tipo");
 
@@ -82,7 +114,9 @@ export function InteracaoForm({ onSubmit, onClose, loading }: InteracaoFormProps
       <div className="bg-[#0f1117] border border-white/10 rounded-2xl w-full max-w-lg">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/10">
-          <h2 className="text-lg font-semibold text-white">Registrar Interação</h2>
+          <h2 className="text-lg font-semibold text-white">
+            {modoEdicao ? "Editar Interação" : "Registrar Interação"}
+          </h2>
           <button
             onClick={onClose}
             className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
@@ -91,7 +125,13 @@ export function InteracaoForm({ onSubmit, onClose, loading }: InteracaoFormProps
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit(submit)} className="p-6 space-y-5">
+          {serverError && (
+            <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-400">
+              {serverError}
+            </div>
+          )}
+
           {/* Tipo de interação */}
           <div>
             <label className={labelClass}>Tipo de Interação *</label>
@@ -189,7 +229,7 @@ export function InteracaoForm({ onSubmit, onClose, loading }: InteracaoFormProps
               className="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 rounded-lg text-sm text-white font-medium transition-colors flex items-center justify-center gap-2"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              Registrar
+              {modoEdicao ? "Salvar" : "Registrar"}
             </button>
           </div>
         </form>

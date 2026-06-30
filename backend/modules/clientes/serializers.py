@@ -53,6 +53,23 @@ class InteracaoClienteCreateSerializer(serializers.ModelSerializer):
             "data_interacao": {"required": False},
         }
 
+    def to_internal_value(self, data):
+        # O formulário do frontend envia strings vazias ("") para datas/valor
+        # não preenchidos. O DRF DateField/DateTimeField rejeita "" com erro de
+        # formato — normalizamos antes da validação para evitar 400 indevido.
+        if hasattr(data, "dict"):  # QueryDict → dict mutável
+            data = data.dict()
+        else:
+            data = dict(data)
+        if data.get("proximo_followup") == "":
+            data["proximo_followup"] = None
+        if data.get("valor") == "":
+            data["valor"] = None
+        if data.get("data_interacao") == "":
+            # Sem data informada: deixa o default do model (timezone.now) agir.
+            data.pop("data_interacao", None)
+        return super().to_internal_value(data)
+
     def validate(self, attrs):
         tipo = attrs.get("tipo")
         valor = attrs.get("valor")

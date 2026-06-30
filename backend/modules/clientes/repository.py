@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 from django.db import transaction
-from django.db.models import Count, Sum, Avg, Q
+from django.db.models import Count, Sum, Avg, Max, Q
 from django.utils import timezone
 
 from .models import Cliente, InteracaoCliente
@@ -200,6 +200,57 @@ class ClienteRepository:
             empresa_id=empresa_id,
             criado_por_id=usuario_id,
             **dados,
+        )
+
+    @staticmethod
+    def obter_interacao(interacao_id, empresa_id, cliente_id=None):
+        """Retorna uma interação verificando multi-tenant (empresa e cliente)."""
+        qs = InteracaoCliente.objects.filter(
+            id=interacao_id, empresa_id=empresa_id
+        )
+        if cliente_id is not None:
+            qs = qs.filter(cliente_id=cliente_id)
+        return qs.select_related("criado_por").first()
+
+    @staticmethod
+    @transaction.atomic
+    def atualizar_interacao(interacao: InteracaoCliente, dados: dict) -> InteracaoCliente:
+        """Atualiza uma interação e recalcula os agregados de venda do cliente."""
+        for field, value in dados.items():
+            setattr(interacao, field, value)
+        interacao.save()
+        ClienteRepository._recalcular_agregados_venda(interacao.cliente_id)
+        return interacao
+
+    @staticmethod
+    @transaction.atomic
+    def deletar_interacao(interacao: InteracaoCliente) -> None:
+        """Remove uma interação e recalcula os agregados de venda do cliente."""
+        cliente_id = interacao.cliente_id
+        interacao.delete()
+        ClienteRepository._recalcular_agregados_venda(cliente_id)
+
+    @staticmethod
+    def _recalcular_agregados_venda(cliente_id) -> None:
+        """
+        Recalcula valor_total_compras, quantidade_compras e ultima_compra do
+        cliente a partir das interações do tipo 'venda' existentes.
+
+        O signal post_save atualiza esses campos de forma incremental na criação;
+        em edição/exclusão recalculamos a partir da verdade (as interações reais)
+        para manter a consistência (ex.: apagar uma venda reduz o total).
+        """
+        agg = InteracaoCliente.objects.filter(
+            cliente_id=cliente_id, tipo="venda"
+        ).aggregate(
+            total=Sum("valor"),
+            qtd=Count("id"),
+            ultima=Max("data_interacao"),
+        )
+        Cliente.objects.filter(pk=cliente_id).update(
+            valor_total_compras=agg["total"] or 0,
+            quantidade_compras=agg["qtd"] or 0,
+            ultima_compra=agg["ultima"].date() if agg["ultima"] else None,
         )
 
     @staticmethod

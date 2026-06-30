@@ -21,7 +21,7 @@ import { TimelineInteracoes } from "@/components/clientes/TimelineInteracoes";
 import { InteracaoForm } from "@/components/clientes/InteracaoForm";
 import { ClienteForm } from "@/components/clientes/ClienteForm";
 import { STATUS_FUNIL_LABELS, STATUS_FUNIL_COLORS } from "@/types/clientes";
-import type { StatusFunil } from "@/types/clientes";
+import type { StatusFunil, InteracaoCliente } from "@/types/clientes";
 import { api } from "@/lib/api";
 
 function formatCurrency(value: string | number): string {
@@ -45,10 +45,17 @@ export default function ClienteDetalhePage() {
   const id = params.id as string;
 
   const { cliente, loading, carregar, setCliente } = useClienteDetalhe(id);
-  const { interacoes, loading: interacoesLoading, carregar: carregarInteracoes, registrar } =
-    useInteracoes(id);
+  const {
+    interacoes,
+    loading: interacoesLoading,
+    carregar: carregarInteracoes,
+    registrar,
+    editar,
+    apagar,
+  } = useInteracoes(id);
 
   const [showInteracaoForm, setShowInteracaoForm] = useState(false);
+  const [editingInteracao, setEditingInteracao] = useState<InteracaoCliente | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [interacaoLoading, setInteracaoLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
@@ -61,12 +68,31 @@ export default function ClienteDetalhePage() {
   const handleRegistrarInteracao = async (dados: Parameters<typeof registrar>[0]) => {
     setInteracaoLoading(true);
     try {
-      await registrar(dados);
+      await registrar(dados); // lança em caso de erro → o form exibe o banner
       setShowInteracaoForm(false);
       carregar(); // Recarrega para atualizar valor_total_compras etc.
     } finally {
       setInteracaoLoading(false);
     }
+  };
+
+  const handleEditarInteracao = async (dados: Parameters<typeof registrar>[0]) => {
+    if (!editingInteracao) return;
+    setInteracaoLoading(true);
+    try {
+      await editar(editingInteracao.id, dados); // lança → form mostra o erro
+      setEditingInteracao(null);
+      carregar(); // agregados (valor_total_compras) podem ter mudado
+    } finally {
+      setInteracaoLoading(false);
+    }
+  };
+
+  const handleApagarInteracao = async (interacao: InteracaoCliente) => {
+    if (!confirm(`Excluir a interação "${interacao.titulo}"? Esta ação não pode ser desfeita.`))
+      return;
+    await apagar(interacao.id);
+    carregar(); // recalcula agregados do cliente
   };
 
   const handleEditar = async (dados: Parameters<typeof api.patch>[1]) => {
@@ -308,15 +334,27 @@ export default function ClienteDetalhePage() {
             interacoes={interacoes}
             loading={interacoesLoading}
             onNovaInteracao={() => setShowInteracaoForm(true)}
+            onEditar={(interacao) => setEditingInteracao(interacao)}
+            onApagar={handleApagarInteracao}
           />
         </div>
       </div>
 
-      {/* Modal de interação */}
+      {/* Modal de nova interação */}
       {showInteracaoForm && (
         <InteracaoForm
           onSubmit={handleRegistrarInteracao}
           onClose={() => setShowInteracaoForm(false)}
+          loading={interacaoLoading}
+        />
+      )}
+
+      {/* Modal de edição de interação */}
+      {editingInteracao && (
+        <InteracaoForm
+          interacao={editingInteracao}
+          onSubmit={handleEditarInteracao}
+          onClose={() => setEditingInteracao(null)}
           loading={interacaoLoading}
         />
       )}

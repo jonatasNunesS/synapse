@@ -289,3 +289,58 @@ class InteracaoListCreateView(EmpresaQuerySetMixin, APIView):
             data=InteracaoClienteSerializer(interacao).data,
             message="Interação registrada com sucesso.",
         )
+
+
+class InteracaoDetailView(EmpresaQuerySetMixin, APIView):
+    """
+    PATCH  /api/clientes/{pk}/interacoes/{interacao_id}/ — editar interação
+    DELETE /api/clientes/{pk}/interacoes/{interacao_id}/ — excluir interação
+    """
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def patch(self, request, pk, interacao_id):
+        empresa_id = self.get_empresa_id()
+        try:
+            interacao = ClienteService.obter_interacao(empresa_id, pk, interacao_id)
+        except ResourceNotFound:
+            return error_response(
+                code="NOT_FOUND",
+                message="Interação não encontrada.",
+                status_code=404,
+            )
+
+        serializer = InteracaoClienteCreateSerializer(
+            interacao, data=request.data, partial=True
+        )
+        if not serializer.is_valid():
+            return error_response(
+                code="VALIDATION_ERROR",
+                message="Dados inválidos.",
+                details=serializer.errors,
+            )
+
+        dados = dict(serializer.validated_data)
+        interacao = ClienteService.atualizar_interacao(
+            empresa_id=empresa_id,
+            cliente_id=pk,
+            interacao_id=interacao_id,
+            dados=dados,
+        )
+        return success_response(
+            data=InteracaoClienteSerializer(interacao).data,
+            message="Interação atualizada com sucesso.",
+        )
+
+    def delete(self, request, pk, interacao_id):
+        empresa_id = self.get_empresa_id()
+        try:
+            ClienteService.remover_interacao(empresa_id, pk, interacao_id)
+        except ResourceNotFound:
+            return error_response(
+                code="NOT_FOUND",
+                message="Interação não encontrada.",
+                status_code=404,
+            )
+        return no_content_response()

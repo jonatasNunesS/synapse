@@ -7,6 +7,7 @@ from .views import (
     ClienteResumoView,
     ClienteFollowupsView,
     InteracaoListCreateView,
+    InteracaoDetailView,
 )
 
 app_name = "clientes"
@@ -22,4 +23,9 @@ urlpatterns = [
     path("<uuid:pk>/", ClienteDetailView.as_view(), name="cliente-detail"),
     path("<uuid:pk>/mover-funil/", ClienteMoverFunilView.as_view(), name="cliente-mover-funil"),
     path("<uuid:pk>/interacoes/", InteracaoListCreateView.as_view(), name="cliente-interacoes"),
+    path(
+        "<uuid:pk>/interacoes/<uuid:interacao_id>/",
+        InteracaoDetailView.as_view(),
+        name="cliente-interacao-detail",
+    ),
 ]

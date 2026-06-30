@@ -130,3 +130,33 @@ class ClienteService:
         # Verificar que o cliente pertence à empresa
         ClienteService.obter_cliente(empresa_id, cliente_id)
         return ClienteRepository.listar_interacoes(cliente_id, empresa_id, filtros)
+
+    @staticmethod
+    def obter_interacao(empresa_id, cliente_id, interacao_id) -> InteracaoCliente:
+        """Obtém uma interação verificando multi-tenant (empresa + cliente)."""
+        # Garante que o cliente pertence à empresa
+        ClienteService.obter_cliente(empresa_id, cliente_id)
+        interacao = ClienteRepository.obter_interacao(
+            interacao_id=interacao_id,
+            empresa_id=empresa_id,
+            cliente_id=cliente_id,
+        )
+        if not interacao:
+            raise ResourceNotFound(f"Interação {interacao_id} não encontrada.")
+        return interacao
+
+    @staticmethod
+    def atualizar_interacao(empresa_id, cliente_id, interacao_id, dados: dict) -> InteracaoCliente:
+        """Atualiza uma interação verificando multi-tenant e invalida cache."""
+        interacao = ClienteService.obter_interacao(empresa_id, cliente_id, interacao_id)
+        dados.pop("cliente", None)  # cliente nunca muda via update
+        interacao = ClienteRepository.atualizar_interacao(interacao, dados)
+        ClienteService._invalidar_todos(empresa_id)
+        return interacao
+
+    @staticmethod
+    def remover_interacao(empresa_id, cliente_id, interacao_id) -> None:
+        """Remove uma interação verificando multi-tenant e invalida cache."""
+        interacao = ClienteService.obter_interacao(empresa_id, cliente_id, interacao_id)
+        ClienteRepository.deletar_interacao(interacao)
+        ClienteService._invalidar_todos(empresa_id)
