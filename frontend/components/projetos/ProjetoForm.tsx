@@ -80,15 +80,15 @@ export function ProjetoForm({ aberto, projeto, onFechar, onSalvar }: ProjetoForm
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="bg-card text-card-foreground rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="text-lg font-semibold text-foreground">
             {projeto ? "Editar Projeto" : "Novo Projeto"}
           </h2>
           <button
             onClick={onFechar}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-muted-foreground hover:text-foreground transition-colors"
           >
             <X size={20} />
           </button>
@@ -97,29 +97,29 @@ export function ProjetoForm({ aberto, projeto, onFechar, onSalvar }: ProjetoForm
         {/* Form */}
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           {erro && (
-            <div className="bg-red-50 text-red-700 text-sm px-4 py-2 rounded-lg border border-red-200">
+            <div className="bg-destructive/10 text-destructive text-sm px-4 py-2 rounded-lg border border-destructive/30">
               {erro}
             </div>
           )}
 
           {/* Nome */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nome <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground mb-1">
+              Nome <span className="text-destructive">*</span>
             </label>
             <input
               type="text"
               value={dados.nome}
               onChange={(e) => setDados({ ...dados, nome: e.target.value })}
               placeholder="Ex: Lançamento do Produto X"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full bg-background text-foreground border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               maxLength={200}
             />
           </div>
 
           {/* Descrição */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Descrição
             </label>
             <textarea
@@ -127,14 +127,14 @@ export function ProjetoForm({ aberto, projeto, onFechar, onSalvar }: ProjetoForm
               onChange={(e) => setDados({ ...dados, descricao: e.target.value })}
               placeholder="Descreva o objetivo do projeto..."
               rows={3}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              className="w-full bg-background text-foreground border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
             />
           </div>
 
           {/* Status + Prioridade */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Status
               </label>
               <select
@@ -142,7 +142,7 @@ export function ProjetoForm({ aberto, projeto, onFechar, onSalvar }: ProjetoForm
                 onChange={(e) =>
                   setDados({ ...dados, status: e.target.value as ProjetoCreatePayload["status"] })
                 }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-background text-foreground border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="planejamento">Planejamento</option>
                 <option value="em_andamento">Em Andamento</option>
@@ -152,7 +152,7 @@ export function ProjetoForm({ aberto, projeto, onFechar, onSalvar }: ProjetoForm
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Prioridade
               </label>
               <select
@@ -160,7 +160,7 @@ export function ProjetoForm({ aberto, projeto, onFechar, onSalvar }: ProjetoForm
                 onChange={(e) =>
                   setDados({ ...dados, prioridade: e.target.value as ProjetoCreatePayload["prioridade"] })
                 }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-background text-foreground border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="baixa">Baixa</option>
                 <option value="media">Média</option>
@@ -173,32 +173,32 @@ export function ProjetoForm({ aberto, projeto, onFechar, onSalvar }: ProjetoForm
           {/* Datas */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Data de Início
               </label>
               <input
                 type="date"
                 value={dados.data_inicio ?? ""}
                 onChange={(e) => setDados({ ...dados, data_inicio: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-background text-foreground border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Prazo
               </label>
               <input
                 type="date"
                 value={dados.data_prazo ?? ""}
                 onChange={(e) => setDados({ ...dados, data_prazo: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-background text-foreground border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
           </div>
 
           {/* Cor */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Cor do Projeto
             </label>
             <div className="flex gap-2 flex-wrap">
@@ -208,7 +208,7 @@ export function ProjetoForm({ aberto, projeto, onFechar, onSalvar }: ProjetoForm
                   type="button"
                   onClick={() => setDados({ ...dados, cor })}
                   className={`w-7 h-7 rounded-full transition-transform ${
-                    dados.cor === cor ? "scale-125 ring-2 ring-offset-1 ring-gray-400" : ""
+                    dados.cor === cor ? "scale-125 ring-2 ring-offset-1 ring-offset-card ring-foreground/40" : ""
                   }`}
                   style={{ backgroundColor: cor }}
                   title={cor}
@@ -222,7 +222,7 @@ export function ProjetoForm({ aberto, projeto, onFechar, onSalvar }: ProjetoForm
             <button
               type="button"
               onClick={onFechar}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-secondary-foreground bg-secondary rounded-lg hover:bg-secondary/80 transition-colors"
             >
               Cancelar
             </button>

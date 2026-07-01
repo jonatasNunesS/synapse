@@ -32,7 +32,7 @@ export function ProjetoCard({ projeto, onEditar, onDeletar }: ProjetoCardProps) 
             style={{ backgroundColor: projeto.cor || "#6366f1" }}
           />
           <Link
-            href={`/dashboard/projetos/${projeto.id}`}
+            href={`/projetos/${projeto.id}`}
             className="font-semibold text-white truncate hover:text-indigo-400 transition-colors"
           >
             {projeto.nome}
