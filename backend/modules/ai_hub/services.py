@@ -88,12 +88,18 @@ class AIHubService:
     def incrementar_uso(empresa_id):
         """Incrementa o contador mensal de uso no Redis."""
         key = AIHubService._uso_key(empresa_id)
-        cache.incr(key)
-        # Garantir TTL até o fim do mês + 2 dias de margem
+        # TTL até o fim do mês + 2 dias de margem
         hoje = date.today()
         ultimo_dia = monthrange(hoje.year, hoje.month)[1]
-        dias_restantes = ultimo_dia - hoje.day + 2
-        cache.expire(key, dias_restantes * 86400)
+        ttl = (ultimo_dia - hoje.day + 2) * 86400
+        # cache.incr lança ValueError se a chave não existe (django-redis e
+        # locmem) — a 1ª geração do mês de cada empresa marcava a task como
+        # "erro" depois de já ter gasto a chamada na IA. add cria a chave
+        # com TTL apenas se ausente; touch renova o TTL (API padrão do
+        # Django, ao contrário de cache.expire, que é só do django-redis).
+        cache.add(key, 0, ttl)
+        cache.incr(key)
+        cache.touch(key, ttl)
 
     # ─── Contexto do negócio ──────────────────────────────────────────────────
 
