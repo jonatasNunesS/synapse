@@ -25,14 +25,18 @@ interface FormularioConteudoProps {
 
 const TIPOS_DISPONIVEIS: TipoConteudo[] = [
   "legenda_instagram",
-  "legenda_facebook",
-  "legenda_linkedin",
-  "email_marketing",
+  "titulo_produto",
   "descricao_produto",
-  "proposta_comercial",
+  "hashtags",
+  "ideia_pauta",
+  "email_marketing",
   "relatorio_negocio",
   "insight",
+  "outro",
 ];
+
+// Campos longos que rendem melhor em textarea
+const CAMPOS_TEXTAREA = ["objetivo", "diferenciais", "descricao"];
 
 export function FormularioConteudo({ onSubmit, gerando, erro }: FormularioConteudoProps) {
   const [tipo, setTipo] = useState<TipoConteudo>("legenda_instagram");
@@ -55,7 +59,7 @@ export function FormularioConteudo({ onSubmit, gerando, erro }: FormularioConteu
   };
 
   const camposObrigatoriosFaltando = campos
-    .filter((c) => !c.key.includes("opcional") && !parametros[c.key]?.trim())
+    .filter((c) => !parametros[c.key]?.trim())
     .length > 0;
 
   return (
@@ -101,7 +105,7 @@ export function FormularioConteudo({ onSubmit, gerando, erro }: FormularioConteu
             campos.map((campo) => (
               <div key={campo.key} className="space-y-1.5">
                 <Label htmlFor={campo.key}>{campo.label}</Label>
-                {campo.key === "objetivo" || campo.key === "caracteristicas" ? (
+                {CAMPOS_TEXTAREA.includes(campo.key) ? (
                   <Textarea
                     id={campo.key}
                     placeholder={campo.placeholder}

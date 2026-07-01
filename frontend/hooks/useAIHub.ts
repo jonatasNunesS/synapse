@@ -120,7 +120,15 @@ export function useAIHub() {
             apiErr.error.message || "Limite de gerações atingido. Faça upgrade do plano."
           );
         } else {
-          setErro(apiErr?.error?.message || "Erro ao solicitar geração.");
+          // Incluir details (erros por campo do serializer) — o message
+          // genérico "Dados inválidos." sozinho não diz qual campo falhou
+          const detalhes = apiErr?.error?.details
+            ? Object.values(apiErr.error.details).flat().join(" ")
+            : "";
+          const mensagem = [apiErr?.error?.message, detalhes]
+            .filter(Boolean)
+            .join(" ");
+          setErro(mensagem || "Erro ao solicitar geração.");
         }
       }
     },

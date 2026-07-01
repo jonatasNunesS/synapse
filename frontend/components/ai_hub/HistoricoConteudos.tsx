@@ -19,13 +19,14 @@ import { TIPO_CONTEUDO_LABELS, TIPO_CONTEUDO_ICONE } from "@/types/ai_hub";
 const TIPOS_FILTRO: { value: TipoConteudo | ""; label: string }[] = [
   { value: "", label: "Todos os tipos" },
   { value: "legenda_instagram", label: "Instagram" },
-  { value: "legenda_facebook", label: "Facebook" },
-  { value: "legenda_linkedin", label: "LinkedIn" },
-  { value: "email_marketing", label: "E-mail Marketing" },
+  { value: "titulo_produto", label: "Título de Produto" },
   { value: "descricao_produto", label: "Descrição de Produto" },
-  { value: "proposta_comercial", label: "Proposta Comercial" },
+  { value: "hashtags", label: "Hashtags" },
+  { value: "ideia_pauta", label: "Ideia de Pauta" },
+  { value: "email_marketing", label: "E-mail Marketing" },
   { value: "relatorio_negocio", label: "Relatório" },
   { value: "insight", label: "Insight" },
+  { value: "outro", label: "Pedido Livre" },
 ];
 
 function ConteudoCard({
