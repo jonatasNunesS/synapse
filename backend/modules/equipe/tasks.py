@@ -21,11 +21,13 @@ def enviar_email_boas_vindas(self, usuario_id: str, empresa_nome: str):
             return {"status": "skipped", "reason": "no_api_key"}
 
         resend.api_key = settings.RESEND_API_KEY
-        params = resend.Emails.SendParams(
-            from_=settings.DEFAULT_FROM_EMAIL,
-            to=[usuario.email],
-            subject=f"Bem-vindo ao Synapse — {empresa_nome}",
-            html=(
+        # A API do Resend exige a chave "from"; SendParams(from_=...) gerava
+        # a chave literal "from_", rejeitada com 422 em todo envio.
+        params = {
+            "from": settings.DEFAULT_FROM_EMAIL,
+            "to": [usuario.email],
+            "subject": f"Bem-vindo ao Synapse — {empresa_nome}",
+            "html": (
                 f"<h2>Olá, {usuario.nome}!</h2>"
                 f"<p>Você foi adicionado à equipe da empresa <strong>{empresa_nome}</strong> "
                 f"no Synapse.</p>"
@@ -33,7 +35,7 @@ def enviar_email_boas_vindas(self, usuario_id: str, empresa_nome: str):
                 f"<a href='https://synapse.app'>synapse.app</a></p>"
                 f"<p>Equipe Synapse</p>"
             ),
-        )
+        }
         resend.Emails.send(params)
         logger.info(
             "E-mail de boas-vindas enviado",

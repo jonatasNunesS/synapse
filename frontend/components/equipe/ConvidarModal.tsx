@@ -7,8 +7,10 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { toast } from "sonner";
 import { X, Loader2, UserPlus } from "lucide-react";
 import { api } from "@/lib/api";
+import type { ApiError } from "@/types/api";
 
 const schema = z.object({
   email: z.string().email("E-mail inválido"),
@@ -38,19 +40,33 @@ export function ConvidarModal({ onFechar, onConvidado }: ConvidarModalProps) {
 
   const onSubmit = async (dados: FormData) => {
     try {
-      await api.post("/equipe/convidar/", dados);
+      const resp = await api.post<{ email_convite_enviado?: boolean }>(
+        "/equipe/convidar/",
+        dados
+      );
+      const mensagem = resp.message || `Convite enviado para ${dados.email}.`;
+      if (resp.data?.email_convite_enviado === false) {
+        // Membro criado, mas o servidor não tem RESEND_API_KEY configurada
+        toast.warning(mensagem, { duration: 8000 });
+      } else {
+        toast.success(mensagem);
+      }
       onConvidado?.();
       onFechar();
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string; details?: Record<string, string[]> } } } };
-      const details = e?.response?.data?.error?.details;
-      if (details?.email) {
+      // api (lib/api.ts) é wrapper de fetch: lança o corpo ApiError direto,
+      // não existe err.response.data como no axios
+      const e = err as ApiError;
+      const details = e?.error?.details as Record<string, string[]> | undefined;
+      const mensagem = e?.error?.message ?? "Erro ao enviar convite.";
+      if (details?.email?.[0]) {
         setError("email", { message: details.email[0] });
+        toast.error(details.email[0]);
       } else {
-        setError("root", {
-          message: e?.response?.data?.error?.message ?? "Erro ao enviar convite.",
-        });
+        setError("root", { message: mensagem });
+        toast.error(mensagem);
       }
+      // Modal permanece aberto para o usuário corrigir e reenviar
     }
   };
 

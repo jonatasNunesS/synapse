@@ -27,7 +27,7 @@ export default function EquipePage() {
   const [showConvidar, setShowConvidar] = useState(false);
   const [membroEditando, setMembroEditando] = useState<MembroEquipe | null>(null);
 
-  const { membros, pagination, isLoading, adicionarMembro, atualizarMembro, removerMembro } =
+  const { membros, pagination, isLoading, adicionarMembro, atualizarMembro, removerMembro, mutate } =
     useMembros({
       busca: busca || undefined,
       ativo:
@@ -175,7 +175,7 @@ export default function EquipePage() {
       {showConvidar && (
         <ConvidarModal
           onFechar={() => setShowConvidar(false)}
-          onConvidado={() => { /* mutate é chamado automaticamente via SWR */ }}
+          onConvidado={() => mutate()}
         />
       )}
     </div>
