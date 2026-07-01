@@ -56,49 +56,31 @@ export function useClientes() {
     }
   }, []);
 
-  const criar = useCallback(async (dados: ClienteCreate): Promise<ClienteDetail | null> => {
-    try {
-      const resp = await api.post<ClienteDetail>("/clientes/", dados);
-      if (resp.success && resp.data) return resp.data;
-      return null;
-    } catch {
-      return null;
-    }
+  // Operações de escrita propagam o erro (ApiError) para a UI dar feedback —
+  // o padrão anterior catch { return null } fazia falhas passarem caladas.
+  const criar = useCallback(async (dados: ClienteCreate): Promise<ClienteDetail> => {
+    const resp = await api.post<ClienteDetail>("/clientes/", dados);
+    return resp.data as ClienteDetail;
   }, []);
 
   const atualizar = useCallback(
-    async (id: string, dados: Partial<ClienteCreate>): Promise<ClienteDetail | null> => {
-      try {
-        const resp = await api.patch<ClienteDetail>(`/clientes/${id}/`, dados);
-        if (resp.success && resp.data) return resp.data;
-        return null;
-      } catch {
-        return null;
-      }
+    async (id: string, dados: Partial<ClienteCreate>): Promise<ClienteDetail> => {
+      const resp = await api.patch<ClienteDetail>(`/clientes/${id}/`, dados);
+      return resp.data as ClienteDetail;
     },
     []
   );
 
-  const deletar = useCallback(async (id: string): Promise<boolean> => {
-    try {
-      await api.delete(`/clientes/${id}/`);
-      return true;
-    } catch {
-      return false;
-    }
+  const deletar = useCallback(async (id: string): Promise<void> => {
+    await api.delete(`/clientes/${id}/`);
   }, []);
 
   const moverFunil = useCallback(
-    async (id: string, status_funil: StatusFunil): Promise<ClienteDetail | null> => {
-      try {
-        const resp = await api.patch<ClienteDetail>(`/clientes/${id}/mover-funil/`, {
-          status_funil,
-        });
-        if (resp.success && resp.data) return resp.data;
-        return null;
-      } catch {
-        return null;
-      }
+    async (id: string, status_funil: StatusFunil): Promise<ClienteDetail> => {
+      const resp = await api.patch<ClienteDetail>(`/clientes/${id}/mover-funil/`, {
+        status_funil,
+      });
+      return resp.data as ClienteDetail;
     },
     []
   );

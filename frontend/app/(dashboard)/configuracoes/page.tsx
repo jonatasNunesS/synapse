@@ -16,6 +16,7 @@ import {
 import { useAppStore } from "@/store/useAppStore";
 import { api } from "@/lib/api";
 import { PLANO_LABELS, PLANO_CORES, SEGMENTOS } from "@/types/auth";
+import type { ApiError } from "@/types/api";
 
 // ── Schema de empresa ────────────────────────────────────────────────────────
 
@@ -55,8 +56,8 @@ export default function ConfiguracoesPage() {
       setEmpresaOk(true);
       setTimeout(() => setEmpresaOk(false), 3000);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setEmpresaErro(e?.response?.data?.error?.message ?? "Erro ao salvar configurações.");
+      const e = err as ApiError;
+      setEmpresaErro(e?.error?.message ?? "Erro ao salvar configurações.");
     }
   };
 

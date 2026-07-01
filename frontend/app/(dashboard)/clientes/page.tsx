@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { toast } from "sonner";
 import { List, Kanban, RefreshCw } from "lucide-react";
+import { getErrorMessage } from "@/lib/api";
 import { ResumoCards } from "@/components/clientes/ResumoCards";
 import { ClienteTable } from "@/components/clientes/ClienteTable";
 import { FunilKanban } from "@/components/clientes/FunilKanban";
@@ -39,12 +41,17 @@ export default function ClientesPage() {
     try {
       if (clienteEditando) {
         await atualizar(clienteEditando.id, dados);
+        toast.success("Cliente atualizado.");
       } else {
         await criar(dados);
+        toast.success("Cliente criado.");
       }
       setShowForm(false);
       setClienteEditando(null);
       carregarTudo();
+    } catch (err) {
+      // Mantém o modal aberto para o usuário corrigir
+      toast.error(getErrorMessage(err));
     } finally {
       setFormLoading(false);
     }
@@ -52,8 +59,13 @@ export default function ClientesPage() {
 
   const handleDeletar = async (id: string) => {
     if (!confirm("Tem certeza que deseja excluir este cliente?")) return;
-    const ok = await deletar(id);
-    if (ok) carregarTudo();
+    try {
+      await deletar(id);
+      toast.success("Cliente excluído.");
+      carregarTudo();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
   };
 
   const handleEditar = (cliente: ClienteList) => {

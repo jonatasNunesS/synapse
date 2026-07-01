@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { toast } from "sonner";
 import { Plus, Search, Filter, RefreshCw, Tag } from "lucide-react";
+import { getErrorMessage } from "@/lib/api";
 import { ResumoCards } from "@/components/estoque/ResumoCards";
 import { AlertasEstoque } from "@/components/estoque/AlertasEstoque";
 import { ProdutoTable } from "@/components/estoque/ProdutoTable";
@@ -65,21 +67,18 @@ export default function EstoquePage() {
     setErroForm(null);
     try {
       if (produtoEditando) {
-        const resultado = await atualizar(produtoEditando.id, dados);
-        if (!resultado) {
-          setErroForm("Erro ao atualizar produto. Verifique os dados e tente novamente.");
-          return;
-        }
+        await atualizar(produtoEditando.id, dados);
+        toast.success("Produto atualizado.");
       } else {
-        const resultado = await criar(dados);
-        if (!resultado) {
-          setErroForm("Erro ao criar produto. Verifique os dados e tente novamente.");
-          return;
-        }
+        await criar(dados);
+        toast.success("Produto criado.");
       }
       setMostrarForm(false);
       setProdutoEditando(null);
       await carregarTudo();
+    } catch (err) {
+      // Exibe o motivo real retornado pelo backend e mantém o modal aberto
+      setErroForm(getErrorMessage(err));
     } finally {
       setSalvando(false);
     }
@@ -93,9 +92,12 @@ export default function EstoquePage() {
 
   const handleExcluir = async (produto: ProdutoList) => {
     if (!confirm(`Deseja excluir o produto "${produto.nome}"?`)) return;
-    const ok = await excluir(produto.id);
-    if (ok) {
+    try {
+      await excluir(produto.id);
+      toast.success("Produto excluído.");
       await carregarTudo();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
     }
   };
 

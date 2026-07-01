@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import type { TarefaCreatePayload, TarefaDetail, TarefaStatus } from "@/types/projetos";
+import type { ApiError } from "@/types/api";
 
 interface TarefaFormProps {
   aberto: boolean;
@@ -69,8 +70,8 @@ export function TarefaForm({
       await onSalvar(dados);
       onFechar();
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setErro(e?.response?.data?.error?.message ?? "Erro ao salvar tarefa.");
+      const e = err as ApiError;
+      setErro(e?.error?.message ?? "Erro ao salvar tarefa.");
     } finally {
       setLoading(false);
     }

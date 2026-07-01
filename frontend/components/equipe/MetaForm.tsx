@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import type { MetaMembro, MetaFormData, TipoMeta, PeriodoMeta } from "@/types/equipe";
 import { TIPO_META_LABELS, PERIODO_META_LABELS } from "@/types/equipe";
+import type { ApiError } from "@/types/api";
 
 interface MetaFormProps {
   meta?: MetaMembro | null;
@@ -45,8 +46,8 @@ export function MetaForm({ meta, onSalvar, onFechar }: MetaFormProps) {
       onFechar();
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { error?: { message?: string } } } })
-          ?.response?.data?.error?.message ?? "Erro ao salvar meta.";
+        (err as ApiError)
+          ?.error?.message ?? "Erro ao salvar meta.";
       setErro(msg);
     } finally {
       setLoading(false);

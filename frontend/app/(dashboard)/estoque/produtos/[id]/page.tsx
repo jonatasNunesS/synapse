@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/api";
 import {
   ArrowLeft,
   Package,
@@ -88,14 +90,14 @@ export default function ProdutoDetailPage() {
     setSalvandoMov(true);
     setErroMov(null);
     try {
-      const resultado = await registrar({ ...dados, produto: id });
-      if (!resultado) {
-        setErroMov("Erro ao registrar movimentação. Verifique os dados.");
-        return;
-      }
+      await registrar({ ...dados, produto: id });
+      toast.success("Movimentação registrada.");
       setMostrarMovForm(false);
       await carregarProduto();
       await listarMov(id, { page: 1 });
+    } catch (err) {
+      // Exibe o motivo real retornado pelo backend e mantém o modal aberto
+      setErroMov(getErrorMessage(err));
     } finally {
       setSalvandoMov(false);
     }
@@ -105,13 +107,12 @@ export default function ProdutoDetailPage() {
     setSalvandoEdit(true);
     setErroEdit(null);
     try {
-      const resultado = await atualizar(id, dados);
-      if (!resultado) {
-        setErroEdit("Erro ao atualizar produto.");
-        return;
-      }
+      await atualizar(id, dados);
+      toast.success("Produto atualizado.");
       setMostrarEditForm(false);
       await carregarProduto();
+    } catch (err) {
+      setErroEdit(getErrorMessage(err));
     } finally {
       setSalvandoEdit(false);
     }

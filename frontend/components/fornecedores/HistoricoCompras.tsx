@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Plus, X, Loader2, ShoppingCart, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { useComprasFornecedor } from "@/hooks/useFornecedores";
 import type { CompraFornecedor } from "@/types/fornecedores";
+import type { ApiError } from "@/types/api";
 
 const STATUS_COMPRA: Record<string, { label: string; color: string }> = {
   pendente: { label: "Pendente", color: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
@@ -74,8 +75,8 @@ function NovaCompraForm({ fornecedorId, onSuccess, onClose, compraId, initialDat
       }
       onSuccess();
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setServerError(e?.response?.data?.error?.message ?? (isEdit ? "Erro ao editar compra" : "Erro ao registrar compra"));
+      const e = err as ApiError;
+      setServerError(e?.error?.message ?? (isEdit ? "Erro ao editar compra" : "Erro ao registrar compra"));
     }
   };
 
@@ -179,8 +180,8 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
       await deletar(id);
       fetch(fornecedorId, page);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setActionError(e?.response?.data?.error?.message ?? "Erro ao excluir compra.");
+      const e = err as ApiError;
+      setActionError(e?.error?.message ?? "Erro ao excluir compra.");
     } finally {
       setConfirmandoDelete(null);
     }

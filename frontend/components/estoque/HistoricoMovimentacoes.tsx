@@ -6,6 +6,7 @@ import { ptBR } from "date-fns/locale";
 import { ArrowDown, ArrowUp, RefreshCw, ChevronLeft, ChevronRight, Undo2 } from "lucide-react";
 import { api } from "@/lib/api";
 import type { Movimentacao, TipoMovimentacao } from "@/types/estoque";
+import type { ApiError } from "@/types/api";
 
 interface HistoricoMovimentacoesProps {
   movimentacoes: Movimentacao[];
@@ -88,8 +89,8 @@ export function HistoricoMovimentacoes({
       setConfirmandoEstorno(null);
       onEstornar?.();
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setErroEstorno(e?.response?.data?.error?.message ?? "Erro ao estornar movimentação.");
+      const e = err as ApiError;
+      setErroEstorno(e?.error?.message ?? "Erro ao estornar movimentação.");
     } finally {
       setEstornando(false);
     }

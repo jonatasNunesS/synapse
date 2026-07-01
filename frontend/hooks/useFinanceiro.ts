@@ -7,6 +7,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import type { ApiError } from "@/types/api";
 import type {
   Categoria,
   CategoriaCreate,
@@ -39,8 +40,8 @@ export function useResumoFinanceiro(mes?: number, ano?: number) {
       );
       setResumo(resp.data);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e?.response?.data?.error?.message ?? "Erro ao carregar resumo.");
+      const e = err as ApiError;
+      setError(e?.error?.message ?? "Erro ao carregar resumo.");
     } finally {
       setLoading(false);
     }
@@ -77,8 +78,8 @@ export function useFluxoCaixa(dataInicio?: string, dataFim?: string) {
       );
       setFluxo(resp.data);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e?.response?.data?.error?.message ?? "Erro ao carregar fluxo.");
+      const e = err as ApiError;
+      setError(e?.error?.message ?? "Erro ao carregar fluxo.");
     } finally {
       setLoading(false);
     }
@@ -111,8 +112,8 @@ export function useDRE(mes?: number, ano?: number) {
       );
       setDre(resp.data);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e?.response?.data?.error?.message ?? "Erro ao carregar DRE.");
+      const e = err as ApiError;
+      setError(e?.error?.message ?? "Erro ao carregar DRE.");
     } finally {
       setLoading(false);
     }
@@ -152,8 +153,8 @@ export function useLancamentos(filtros?: FiltrosLancamento) {
       setLancamentos(resp.data);
       setTotal(resp.pagination?.count ?? 0);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e?.response?.data?.error?.message ?? "Erro ao carregar lançamentos.");
+      const e = err as ApiError;
+      setError(e?.error?.message ?? "Erro ao carregar lançamentos.");
     } finally {
       setLoading(false);
     }
@@ -235,8 +236,8 @@ export function useCategorias() {
       );
       setCategorias(resp.data);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e?.response?.data?.error?.message ?? "Erro ao carregar categorias.");
+      const e = err as ApiError;
+      setError(e?.error?.message ?? "Erro ao carregar categorias.");
     } finally {
       setLoading(false);
     }

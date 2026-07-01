@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAppStore } from "@/store/useAppStore";
 import { api } from "@/lib/api";
 import type { AtualizarPerfilPayload } from "@/types/auth";
+import type { ApiError } from "@/types/api";
 
 // ── Schema de perfil ─────────────────────────────────────────────────────────
 
@@ -90,8 +91,8 @@ export default function PerfilPage() {
       resetSenha();
       setTimeout(() => setSenhaOk(false), 3000);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setSenhaErro(e?.response?.data?.error?.message ?? "Erro ao trocar senha.");
+      const e = err as ApiError;
+      setSenhaErro(e?.error?.message ?? "Erro ao trocar senha.");
     }
   };
 

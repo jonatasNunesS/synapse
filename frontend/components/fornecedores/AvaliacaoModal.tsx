@@ -5,6 +5,7 @@ import { X, Loader2, Star } from "lucide-react";
 import { useFornecedorDetail } from "@/hooks/useFornecedores";
 import { AvaliacaoStars } from "./AvaliacaoStars";
 import type { FornecedorDetail } from "@/types/fornecedores";
+import type { ApiError } from "@/types/api";
 
 interface AvaliacaoModalProps {
   fornecedor: FornecedorDetail;
@@ -35,8 +36,8 @@ export function AvaliacaoModal({ fornecedor, onSuccess, onClose }: AvaliacaoModa
       });
       onSuccess(result);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e?.response?.data?.error?.message ?? "Erro ao salvar avaliação");
+      const e = err as ApiError;
+      setError(e?.error?.message ?? "Erro ao salvar avaliação");
     } finally {
       setLoading(false);
     }
