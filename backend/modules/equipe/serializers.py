@@ -133,5 +133,9 @@ class ConvidarMembroSerializer(serializers.Serializer):
 class ResumoEquipeSerializer(serializers.Serializer):
     total_membros = serializers.IntegerField()
     membros_ativos = serializers.IntegerField()
+    membros_inativos = serializers.IntegerField()
     por_perfil = serializers.DictField()
     por_departamento = serializers.ListField()
+    departamentos = serializers.DictField()
+    metas_ativas = serializers.IntegerField()
+    metas_atingidas = serializers.IntegerField()

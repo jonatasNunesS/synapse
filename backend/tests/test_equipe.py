@@ -449,3 +449,26 @@ def test_convidado_pertence_a_empresa_certa_e_nao_ve_outra(auth_client_a, empres
     convidado = CustomUser.objects.get(email="tenant@empresa.com")
     assert convidado.empresa_id == empresa_a.id
     assert convidado.empresa_id != empresa_b.id
+
+
+# ─── Teste: Resumo inclui KPIs de metas (bug "undefined (0%)") ────────────────
+
+@pytest.mark.django_db
+def test_resumo_inclui_metas(auth_client_a, membro_a, empresa_a):
+    """O resumo deve trazer metas_ativas/metas_atingidas e membros_inativos."""
+    MetaMembro.objects.create(
+        membro=membro_a, empresa=empresa_a, titulo="Meta 1",
+        valor_meta=100, valor_atual=100, atingida=True,
+        data_inicio=date.today(), data_fim=date.today() + timedelta(days=30),
+    )
+    MetaMembro.objects.create(
+        membro=membro_a, empresa=empresa_a, titulo="Meta 2",
+        valor_meta=100, valor_atual=10, atingida=False,
+        data_inicio=date.today(), data_fim=date.today() + timedelta(days=30),
+    )
+    resp = auth_client_a.get("/api/equipe/resumo/")
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    assert data["metas_ativas"] == 2
+    assert data["metas_atingidas"] == 1
+    assert "membros_inativos" in data

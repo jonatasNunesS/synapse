@@ -85,7 +85,6 @@ class EquipeRepository:
         if cached:
             return cached
 
-        from django.db.models import Count
         membros = MembroEquipe.objects.filter(empresa_id=empresa_id).select_related("usuario")
         total = membros.count()
         ativos = membros.filter(ativo=True).count()
@@ -102,11 +101,21 @@ class EquipeRepository:
             {"departamento": k, "count": v} for k, v in sorted(por_dept.items())
         ]
 
+        # KPIs de metas — o frontend (ResumoEquipeCards) lê metas_ativas e
+        # metas_atingidas; sem eles o card exibia "undefined (0%)".
+        metas = MetaMembro.objects.filter(empresa_id=empresa_id)
+        metas_ativas = metas.count()
+        metas_atingidas = metas.filter(atingida=True).count()
+
         resultado = {
             "total_membros": total,
             "membros_ativos": ativos,
+            "membros_inativos": total - ativos,
             "por_perfil": por_perfil,
             "por_departamento": por_departamento,
+            "departamentos": {d["departamento"]: d["count"] for d in por_departamento},
+            "metas_ativas": metas_ativas,
+            "metas_atingidas": metas_atingidas,
         }
         cache.set(cache_key, resultado, CACHE_RESUMO_TTL)
         return resultado
