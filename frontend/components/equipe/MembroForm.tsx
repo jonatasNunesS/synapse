@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { MembroEquipe, MembroFormData } from "@/types/equipe";
+import type { ApiError } from "@/types/api";
 
 interface MembroFormProps {
   membro?: MembroEquipe | null;
@@ -40,8 +41,8 @@ export function MembroForm({ membro, usuariosDisponiveis = [], onSalvar, onFecha
       onFechar();
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { error?: { message?: string } } } })
-          ?.response?.data?.error?.message ?? "Erro ao salvar membro.";
+        (err as ApiError)
+          ?.error?.message ?? "Erro ao salvar membro.";
       setErro(msg);
     } finally {
       setLoading(false);

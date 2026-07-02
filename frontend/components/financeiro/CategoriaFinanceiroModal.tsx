@@ -7,6 +7,7 @@ import { z } from "zod";
 import { X, Plus, Pencil, Trash2, Loader2, Tag } from "lucide-react";
 import { useCategorias } from "@/hooks/useFinanceiro";
 import type { Categoria } from "@/types/financeiro";
+import type { ApiError } from "@/types/api";
 
 const CORES_PRESET = [
   "#6366f1", "#8b5cf6", "#ec4899", "#ef4444",
@@ -69,8 +70,8 @@ export function CategoriaFinanceiroModal({ onClose }: CategoriaFinanceiroModalPr
       }
       fecharForm();
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setServerError(e?.response?.data?.error?.message ?? "Erro ao salvar categoria.");
+      const e = err as ApiError;
+      setServerError(e?.error?.message ?? "Erro ao salvar categoria.");
     }
   };
 
@@ -79,8 +80,8 @@ export function CategoriaFinanceiroModal({ onClose }: CategoriaFinanceiroModalPr
     try {
       await deletar(id);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setServerError(e?.response?.data?.error?.message ?? "Erro ao excluir categoria.");
+      const e = err as ApiError;
+      setServerError(e?.error?.message ?? "Erro ao excluir categoria.");
     } finally {
       setConfirmandoDelete(null);
     }

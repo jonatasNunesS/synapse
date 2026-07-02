@@ -113,37 +113,26 @@ export function useProdutos() {
     }
   }, []);
 
-  const criar = useCallback(async (dados: ProdutoCreate): Promise<ProdutoDetail | null> => {
-    try {
-      const res = await api.post<ProdutoDetail>("/estoque/produtos/", dados);
-      return res.data || null;
-    } catch {
-      return null;
-    }
+  // Operações de escrita propagam o erro (ApiError) para a UI dar feedback —
+  // o padrão anterior catch { return null } fazia falhas passarem caladas.
+  const criar = useCallback(async (dados: ProdutoCreate): Promise<ProdutoDetail> => {
+    const res = await api.post<ProdutoDetail>("/estoque/produtos/", dados);
+    return res.data as ProdutoDetail;
   }, []);
 
   const atualizar = useCallback(
-    async (id: string, dados: Partial<ProdutoCreate>): Promise<ProdutoDetail | null> => {
-      try {
-        const res = await api.patch<ProdutoDetail>(
-          `/estoque/produtos/${id}/`,
-          dados
-        );
-        return res.data || null;
-      } catch {
-        return null;
-      }
+    async (id: string, dados: Partial<ProdutoCreate>): Promise<ProdutoDetail> => {
+      const res = await api.patch<ProdutoDetail>(
+        `/estoque/produtos/${id}/`,
+        dados
+      );
+      return res.data as ProdutoDetail;
     },
     []
   );
 
-  const excluir = useCallback(async (id: string): Promise<boolean> => {
-    try {
-      await api.delete(`/estoque/produtos/${id}/`);
-      return true;
-    } catch {
-      return false;
-    }
+  const excluir = useCallback(async (id: string): Promise<void> => {
+    await api.delete(`/estoque/produtos/${id}/`);
   }, []);
 
   return {
@@ -202,17 +191,14 @@ export function useMovimentacoes() {
     []
   );
 
+  // Propaga o erro (ApiError) para a UI dar feedback
   const registrar = useCallback(
-    async (dados: MovimentacaoCreate): Promise<Movimentacao | null> => {
-      try {
-        const res = await api.post<Movimentacao>(
-          "/estoque/movimentacoes/",
-          dados
-        );
-        return res.data || null;
-      } catch {
-        return null;
-      }
+    async (dados: MovimentacaoCreate): Promise<Movimentacao> => {
+      const res = await api.post<Movimentacao>(
+        "/estoque/movimentacoes/",
+        dados
+      );
+      return res.data as Movimentacao;
     },
     []
   );

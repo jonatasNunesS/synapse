@@ -3,6 +3,7 @@ Synapse — M7: Views do módulo Equipe.
 View → Service → Repository → Model (Clean Architecture).
 """
 import logging
+from django.conf import settings
 from django.core.cache import cache
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -124,9 +125,23 @@ class ConvidarMembroView(APIView):
         usuario, membro = EquipeService.convidar_membro(
             str(request.user.empresa_id), dados_usuario, dados_membro
         )
+
+        # Ser honesto sobre o e-mail: sem RESEND_API_KEY a task de envio
+        # apenas loga um warning e pula — o membro é criado mesmo assim.
+        email_configurado = bool(settings.RESEND_API_KEY)
+        if email_configurado:
+            mensagem = f"Convite enviado para {usuario.email}."
+        else:
+            mensagem = (
+                f"Membro {usuario.nome} adicionado, mas o e-mail de convite "
+                "não foi enviado: RESEND_API_KEY não configurada no servidor."
+            )
         return success_response(
-            MembroEquipeDetailSerializer(membro).data,
-            f"Convite enviado para {usuario.email}.",
+            {
+                **MembroEquipeDetailSerializer(membro).data,
+                "email_convite_enviado": email_configurado,
+            },
+            mensagem,
             status_code=201,
         )
 

@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import type { ProjetoCreatePayload, ProjetoList } from "@/types/projetos";
+import type { ApiError } from "@/types/api";
 
 interface ProjetoFormProps {
   aberto: boolean;
@@ -71,8 +72,8 @@ export function ProjetoForm({ aberto, projeto, onFechar, onSalvar }: ProjetoForm
       await onSalvar(dados);
       onFechar();
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setErro(e?.response?.data?.error?.message ?? "Erro ao salvar projeto.");
+      const e = err as ApiError;
+      setErro(e?.error?.message ?? "Erro ao salvar projeto.");
     } finally {
       setLoading(false);
     }

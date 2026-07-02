@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import type { Documento, DocumentoFormData, TipoDocumento, StatusDocumento } from "@/types/documentos";
 import { TIPO_DOCUMENTO_LABELS, STATUS_DOCUMENTO_LABELS } from "@/types/documentos";
+import type { ApiError } from "@/types/api";
 
 interface DocumentoFormProps {
   documento?: Documento | null;
@@ -56,8 +57,8 @@ export function DocumentoForm({ documento, onSalvar, onFechar }: DocumentoFormPr
       onFechar();
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { error?: { message?: string } } } })
-          ?.response?.data?.error?.message ?? "Erro ao salvar documento.";
+        (err as ApiError)
+          ?.error?.message ?? "Erro ao salvar documento.";
       setErro(msg);
     } finally {
       setLoading(false);

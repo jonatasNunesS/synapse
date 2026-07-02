@@ -7,6 +7,7 @@ import { z } from "zod";
 import { X, Loader2 } from "lucide-react";
 import { useFornecedores, useFornecedorDetail, useCategoriasFornecedor } from "@/hooks/useFornecedores";
 import type { FornecedorDetail } from "@/types/fornecedores";
+import type { ApiError } from "@/types/api";
 
 const schema = z.object({
   nome: z.string({ message: "Nome é obrigatório" }).min(2, "Mínimo 2 caracteres"),
@@ -96,15 +97,15 @@ export function FornecedorForm({ fornecedor, onSuccess, onClose }: FornecedorFor
       }
       onSuccess(result);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string; details?: Record<string, string[]> } } } };
-      const details = e?.response?.data?.error?.details;
+      const e = err as ApiError;
+      const details = e?.error?.details;
       if (details) {
         const msgs = Object.entries(details)
           .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`)
           .join(" | ");
         setServerError(msgs);
       } else {
-        setServerError(e?.response?.data?.error?.message ?? "Erro ao salvar fornecedor");
+        setServerError(e?.error?.message ?? "Erro ao salvar fornecedor");
       }
     }
   };

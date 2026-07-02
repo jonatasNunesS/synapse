@@ -4,12 +4,14 @@
  * Rota: /projetos
  */
 import { useState } from "react";
+import { toast } from "sonner";
 import { Plus, Search, Filter, FolderOpen } from "lucide-react";
 import { ProjetoCard } from "@/components/projetos/ProjetoCard";
 import { ProjetoForm } from "@/components/projetos/ProjetoForm";
 import { ResumoProjetosCards } from "@/components/projetos/ResumoProjetosCards";
 import { useProjetos, useResumoProjetoS } from "@/hooks/useProjetos";
 import type { ProjetoCreatePayload, ProjetoList, ProjetoStatus } from "@/types/projetos";
+import type { ApiError } from "@/types/api";
 
 export default function ProjetosPage() {
   const [busca, setBusca] = useState("");
@@ -47,8 +49,8 @@ export default function ProjetosPage() {
       try {
         await deletar(id);
       } catch (err: unknown) {
-        const e = err as { response?: { data?: { error?: { message?: string } } } };
-        alert(e?.response?.data?.error?.message ?? "Não foi possível excluir o projeto.");
+        const e = err as ApiError;
+        toast.error(e?.error?.message ?? "Não foi possível excluir o projeto.");
       }
       setConfirmandoDeletar(null);
     } else {

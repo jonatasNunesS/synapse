@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { api } from "@/lib/api";
+import type { ApiError } from "@/types/api";
 import type {
   FornecedorList,
   FornecedorDetail,
@@ -28,8 +29,8 @@ export function useResumoFornecedores() {
       const res = await api.get<ResumoFornecedores>("/fornecedores/resumo/");
       setData(res.data);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e?.response?.data?.error?.message ?? "Erro ao carregar resumo");
+      const e = err as ApiError;
+      setError(e?.error?.message ?? "Erro ao carregar resumo");
     } finally {
       setLoading(false);
     }
@@ -52,8 +53,8 @@ export function useRankingFornecedores() {
       const res = await api.get<RankingFornecedor[]>("/fornecedores/ranking/");
       setData(res.data);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e?.response?.data?.error?.message ?? "Erro ao carregar ranking");
+      const e = err as ApiError;
+      setError(e?.error?.message ?? "Erro ao carregar ranking");
     } finally {
       setLoading(false);
     }
@@ -76,8 +77,8 @@ export function useCategoriasFornecedor() {
       const res = await api.get<CategoriaFornecedor[]>("/fornecedores/categorias/");
       setData(res.data);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e?.response?.data?.error?.message ?? "Erro ao carregar categorias");
+      const e = err as ApiError;
+      setError(e?.error?.message ?? "Erro ao carregar categorias");
     } finally {
       setLoading(false);
     }
@@ -145,8 +146,8 @@ export function useFornecedores() {
       setData(res.data);
       setTotal(res.pagination?.count ?? 0);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e?.response?.data?.error?.message ?? "Erro ao carregar fornecedores");
+      const e = err as ApiError;
+      setError(e?.error?.message ?? "Erro ao carregar fornecedores");
     } finally {
       setLoading(false);
     }
@@ -174,8 +175,8 @@ export function useFornecedorDetail() {
       const res = await api.get<FornecedorDetail>(`/fornecedores/${id}/`);
       setData(res.data);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e?.response?.data?.error?.message ?? "Erro ao carregar fornecedor");
+      const e = err as ApiError;
+      setError(e?.error?.message ?? "Erro ao carregar fornecedor");
     } finally {
       setLoading(false);
     }
@@ -225,8 +226,8 @@ export function useComprasFornecedor() {
       setData(res.data);
       setTotal(res.pagination?.count ?? 0);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e?.response?.data?.error?.message ?? "Erro ao carregar compras");
+      const e = err as ApiError;
+      setError(e?.error?.message ?? "Erro ao carregar compras");
     } finally {
       setLoading(false);
     }

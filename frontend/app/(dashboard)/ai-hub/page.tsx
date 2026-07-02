@@ -116,7 +116,7 @@ export default function AIHubPage() {
           </li>
           <li className="flex items-start gap-1.5">
             <span className="text-purple-400 mt-0.5">→</span>
-            Propostas comerciais ficam melhores com valor e prazo preenchidos
+            Use o Pedido Livre para qualquer conteúdo fora dos tipos prontos
           </li>
         </ul>
       </div>

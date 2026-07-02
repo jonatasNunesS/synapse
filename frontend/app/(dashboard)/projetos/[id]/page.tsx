@@ -4,6 +4,7 @@
  * Rota: /projetos/[id]
  */
 import { useState } from "react";
+import { toast } from "sonner";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -40,6 +41,7 @@ import {
   PROJETO_STATUS_LABELS,
 } from "@/types/projetos";
 import { api } from "@/lib/api";
+import type { ApiError } from "@/types/api";
 
 export default function ProjetoDetalhePage() {
   const params = useParams();
@@ -105,8 +107,8 @@ export default function ProjetoDetalhePage() {
       await api.delete(`/projetos/${projetoId}/`);
       router.push("/projetos");
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      alert(e?.response?.data?.error?.message ?? "Não foi possível excluir o projeto.");
+      const e = err as ApiError;
+      toast.error(e?.error?.message ?? "Não foi possível excluir o projeto.");
       setDeletando(false);
     }
   };
