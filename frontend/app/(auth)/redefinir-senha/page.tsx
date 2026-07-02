@@ -32,6 +32,8 @@ function RedefinirSenhaContent() {
   const { redefinirSenha } = useAuth();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
+  // Mesmo fluxo/endpoint do reset, com textos de onboarding quando é convite
+  const isConvite = searchParams.get("convite") === "1";
 
   const [showNova, setShowNova] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -49,11 +51,14 @@ function RedefinirSenhaContent() {
     setServerError(null);
     setIsSubmitting(true);
     try {
-      await redefinirSenha({
-        token,
-        nova_senha: data.nova_senha,
-        confirmar_senha: data.confirmar_senha,
-      });
+      await redefinirSenha(
+        {
+          token,
+          nova_senha: data.nova_senha,
+          confirmar_senha: data.confirmar_senha,
+        },
+        isConvite,
+      );
     } catch (err) {
       setServerError(getErrorMessage(err));
     } finally {
@@ -85,13 +90,15 @@ function RedefinirSenhaContent() {
             </div>
             <h1 className="text-xl font-semibold text-white mb-2">Link inválido</h1>
             <p className="text-sm text-slate-400 mb-6">
-              O link de redefinição de senha é inválido ou expirou.
+              {isConvite
+                ? "O link de convite é inválido ou expirou. Peça ao administrador para reenviar o convite."
+                : "O link de redefinição de senha é inválido ou expirou."}
             </p>
             <Link
-              href="/recuperar-senha"
+              href={isConvite ? "/login" : "/recuperar-senha"}
               className="inline-flex items-center gap-2 text-sm text-violet-400 hover:text-violet-300 transition-colors"
             >
-              Solicitar novo link
+              {isConvite ? "Ir para o login" : "Solicitar novo link"}
             </Link>
           </div>
         ) : (
@@ -104,9 +111,13 @@ function RedefinirSenhaContent() {
               Voltar
             </Link>
 
-            <h1 className="text-xl font-semibold text-white mb-1">Nova senha</h1>
+            <h1 className="text-xl font-semibold text-white mb-1">
+              {isConvite ? "Bem-vindo(a) ao Synapse!" : "Nova senha"}
+            </h1>
             <p className="text-sm text-slate-400 mb-6">
-              Escolha uma senha forte para sua conta.
+              {isConvite
+                ? "Defina sua senha para acessar sua conta."
+                : "Escolha uma senha forte para sua conta."}
             </p>
 
             {serverError && (
@@ -185,8 +196,10 @@ function RedefinirSenhaContent() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Redefinindo...
+                    {isConvite ? "Salvando..." : "Redefinindo..."}
                   </>
+                ) : isConvite ? (
+                  "Definir senha e acessar"
                 ) : (
                   "Redefinir senha"
                 )}

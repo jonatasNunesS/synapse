@@ -366,3 +366,86 @@ def test_convidar_membro_sem_autenticacao():
         "perfil": "colaborador",
     })
     assert resp.status_code == 401
+
+
+# ─── Testes: Fluxo de Primeiro Acesso (convite → definir senha) ──────────────
+
+@pytest.mark.django_db
+def test_convidado_nasce_sem_senha_utilizavel(auth_client_a):
+    """O convidado não deve ter senha utilizável nem conseguir logar antes do link."""
+    resp = auth_client_a.post(
+        "/api/equipe/convidar/",
+        data={"email": "primeiro@empresa.com", "nome": "Primeiro Acesso", "perfil": "colaborador"},
+        content_type="application/json",
+    )
+    assert resp.status_code == 201
+    convidado = CustomUser.objects.get(email="primeiro@empresa.com")
+    assert convidado.has_usable_password() is False
+
+
+@pytest.mark.django_db
+def test_convite_gera_token_de_convite_48h(auth_client_a):
+    """Convidar deve gerar um PasswordResetToken tipo=convite válido por ~48h."""
+    from django.utils import timezone
+    from modules.auth.models import PasswordResetToken
+
+    auth_client_a.post(
+        "/api/equipe/convidar/",
+        data={"email": "token@empresa.com", "nome": "Token Convite", "perfil": "colaborador"},
+        content_type="application/json",
+    )
+    convidado = CustomUser.objects.get(email="token@empresa.com")
+    token = PasswordResetToken.objects.get(usuario=convidado)
+    assert token.tipo == "convite"
+    assert token.valido is True
+    horas = (token.expira_em - timezone.now()).total_seconds() / 3600
+    assert 47 <= horas <= 48
+
+
+@pytest.mark.django_db
+def test_convidado_define_senha_e_loga(auth_client_a):
+    """Ponta a ponta: convite → definir senha via /redefinir-senha/ → login OK."""
+    from rest_framework.test import APIClient
+    from modules.auth.models import PasswordResetToken
+
+    auth_client_a.post(
+        "/api/equipe/convidar/",
+        data={"email": "acesso@empresa.com", "nome": "Novo Acesso", "perfil": "colaborador"},
+        content_type="application/json",
+    )
+    convidado = CustomUser.objects.get(email="acesso@empresa.com")
+    token = PasswordResetToken.objects.get(usuario=convidado, tipo="convite")
+
+    anon = APIClient()
+    # Define a senha pelo mesmo endpoint do reset
+    resp_def = anon.post(
+        "/api/auth/redefinir-senha/",
+        {"token": token.token, "nova_senha": "NovaSenha@123", "confirmar_senha": "NovaSenha@123"},
+        format="json",
+    )
+    assert resp_def.status_code == 200
+
+    # Agora consegue logar
+    resp_login = anon.post(
+        "/api/auth/login/",
+        {"email": "acesso@empresa.com", "senha": "NovaSenha@123"},
+        format="json",
+    )
+    assert resp_login.status_code == 200
+
+    # Token de uso único
+    token.refresh_from_db()
+    assert token.usado is True
+
+
+@pytest.mark.django_db
+def test_convidado_pertence_a_empresa_certa_e_nao_ve_outra(auth_client_a, empresa_a, empresa_b):
+    """Multi-tenant: convidado fica na empresa do admin, não na outra."""
+    auth_client_a.post(
+        "/api/equipe/convidar/",
+        data={"email": "tenant@empresa.com", "nome": "Tenant Check", "perfil": "colaborador"},
+        content_type="application/json",
+    )
+    convidado = CustomUser.objects.get(email="tenant@empresa.com")
+    assert convidado.empresa_id == empresa_a.id
+    assert convidado.empresa_id != empresa_b.id

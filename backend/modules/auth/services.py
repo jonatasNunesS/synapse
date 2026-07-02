@@ -113,20 +113,29 @@ class AuthService:
             logger.info("Recuperação solicitada para e-mail inexistente", extra={"email": email})
             return
 
-        token_str = PasswordResetToken.gerar_token()
-        PasswordResetToken.objects.create(
-            usuario=usuario,
-            token=token_str,
-        )
+        reset_token = PasswordResetToken.criar_para(usuario, tipo="reset")
 
         # Dispara task Celery (assíncrono)
         enviar_email_recuperacao.delay(
             email=usuario.email,
-            token=token_str,
+            token=reset_token.token,
             nome=usuario.nome,
         )
 
         logger.info("Token de recuperação gerado", extra={"email": email})
+
+    # ── Token de Primeiro Acesso (Convite) ────────────────────
+
+    @staticmethod
+    def gerar_token_convite(usuario) -> str:
+        """
+        Gera um token de primeiro acesso (tipo=convite, validade 48h) para o
+        usuário convidado e retorna a string do token. Reaproveita o mesmo
+        mecanismo/endpoint da redefinição de senha.
+        """
+        token = PasswordResetToken.criar_para(usuario, tipo="convite")
+        logger.info("Token de convite gerado", extra={"email": usuario.email})
+        return token.token
 
     # ── Redefinição de Senha ──────────────────────────────────
 

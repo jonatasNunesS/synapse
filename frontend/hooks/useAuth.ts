@@ -136,9 +136,12 @@ export function useAuth() {
   // ── Redefinir senha ────────────────────────────────────────
 
   const redefinirSenha = useCallback(
-    async (payload: RedefinirSenhaPayload): Promise<void> => {
+    async (payload: RedefinirSenhaPayload, isConvite = false): Promise<void> => {
       await api.post("/auth/redefinir-senha/", payload);
-      router.push("/login?senha_redefinida=1");
+      // Mesmo endpoint para reset e convite; muda só a mensagem no login
+      router.push(
+        isConvite ? "/login?primeiro_acesso=1" : "/login?senha_redefinida=1"
+      );
     },
     [router]
   );

@@ -25,6 +25,7 @@ function LoginContent() {
   const { login } = useAuth();
   const searchParams = useSearchParams();
   const senhaRedefinida = searchParams.get("senha_redefinida") === "1";
+  const primeiroAcesso = searchParams.get("primeiro_acesso") === "1";
 
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -71,6 +72,12 @@ function LoginContent() {
         {senhaRedefinida && (
           <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm">
             Senha redefinida com sucesso! Faça login com a nova senha.
+          </div>
+        )}
+
+        {primeiroAcesso && (
+          <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm">
+            Senha definida com sucesso! Faça login para acessar sua conta.
           </div>
         )}
 

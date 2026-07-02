@@ -37,15 +37,23 @@ class EquipeService:
 
     @staticmethod
     def convidar_membro(empresa_id: str, dados_usuario: dict, dados_membro: dict):
-        """Cria novo usuário e adiciona à equipe. Dispara e-mail de boas-vindas via Celery."""
-        from .tasks import enviar_email_boas_vindas
+        """
+        Cria novo usuário (sem senha utilizável), gera token de primeiro acesso
+        e dispara o e-mail de convite com o LINK de definição de senha.
+        """
+        from .tasks import enviar_email_convite
         from modules.auth.models import Empresa
+        from modules.auth.services import AuthService
 
         empresa = Empresa.objects.get(id=empresa_id)
         usuario, membro = EquipeRepository.criar_membro_convidado(
             empresa_id, dados_usuario, dados_membro
         )
-        enviar_email_boas_vindas.delay(str(usuario.id), empresa.nome)
+
+        # Token de convite (48h, uso único) — mesmo mecanismo do reset de senha
+        token = AuthService.gerar_token_convite(usuario)
+
+        enviar_email_convite.delay(str(usuario.id), empresa.nome, token)
         _invalidar_cache_equipe(empresa_id)
         logger.info(
             "Membro convidado",

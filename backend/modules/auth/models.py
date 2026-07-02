@@ -170,15 +170,29 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 # MODEL: PASSWORD RESET TOKEN
 # ════════════════════════════════════════════════════════════
 
+# Validade padrão por tipo de token (em horas)
+TOKEN_VALIDADE_HORAS = {
+    "reset": 2,       # redefinição comum
+    "convite": 48,    # primeiro acesso (onboarding, janela maior)
+}
+
+TOKEN_TIPO_CHOICES = [
+    ("reset", "Redefinição de senha"),
+    ("convite", "Convite / primeiro acesso"),
+]
+
+
 def _expira_em_default():
-    """Retorna datetime 2 horas a partir de agora."""
-    return timezone.now() + timedelta(hours=2)
+    """Retorna datetime 2 horas a partir de agora (validade do reset comum)."""
+    return timezone.now() + timedelta(hours=TOKEN_VALIDADE_HORAS["reset"])
 
 
 class PasswordResetToken(models.Model):
     """
-    Token de redefinição de senha.
-    Válido por 2 horas, uso único.
+    Token de definição de senha via link por e-mail. Uso único.
+    Dois tipos, mesmo mecanismo (gerar token → link → definir senha):
+      - reset:   redefinição comum, válido 2h
+      - convite: primeiro acesso de membro convidado, válido 48h
     """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -188,18 +202,24 @@ class PasswordResetToken(models.Model):
         related_name="reset_tokens",
     )
     token = models.CharField(max_length=64, unique=True)
+    tipo = models.CharField(
+        max_length=10,
+        choices=TOKEN_TIPO_CHOICES,
+        default="reset",
+        db_index=True,
+    )
     usado = models.BooleanField(default=False)
     expira_em = models.DateTimeField(default=_expira_em_default)
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = "synapse_password_reset_tokens"
-        verbose_name = "Token de Redefinição de Senha"
-        verbose_name_plural = "Tokens de Redefinição de Senha"
+        verbose_name = "Token de Definição de Senha"
+        verbose_name_plural = "Tokens de Definição de Senha"
         ordering = ["-criado_em"]
 
     def __str__(self) -> str:
-        return f"Reset token para {self.usuario.email}"
+        return f"{self.get_tipo_display()} para {self.usuario.email}"
 
     @property
     def expirado(self) -> bool:
@@ -213,3 +233,14 @@ class PasswordResetToken(models.Model):
     def gerar_token(cls) -> str:
         """Gera um token seguro de 48 bytes (64 chars em base64url)."""
         return secrets.token_urlsafe(48)
+
+    @classmethod
+    def criar_para(cls, usuario, tipo: str = "reset") -> "PasswordResetToken":
+        """Cria um token do tipo indicado com a validade correspondente."""
+        horas = TOKEN_VALIDADE_HORAS.get(tipo, TOKEN_VALIDADE_HORAS["reset"])
+        return cls.objects.create(
+            usuario=usuario,
+            token=cls.gerar_token(),
+            tipo=tipo,
+            expira_em=timezone.now() + timedelta(hours=horas),
+        )

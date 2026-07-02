@@ -113,15 +113,17 @@ class EquipeRepository:
 
     @staticmethod
     def criar_membro_convidado(empresa_id: str, dados_usuario: dict, dados_membro: dict):
-        """Cria CustomUser + MembroEquipe em transaction.atomic()."""
+        """
+        Cria CustomUser + MembroEquipe em transaction.atomic().
+        O usuário nasce SEM senha utilizável: o primeiro acesso é feito pelo
+        link de convite (token de definição de senha), nunca por senha pronta.
+        """
         from modules.auth.models import CustomUser
         with transaction.atomic():
-            import secrets
-            senha_temp = dados_usuario.get("password") or secrets.token_urlsafe(16)
             usuario = CustomUser.objects.create_user(
                 email=dados_usuario["email"],
                 nome=dados_usuario["nome"],
-                senha=senha_temp,
+                senha=None,  # set_password(None) → has_usable_password() == False
                 empresa_id=empresa_id,
                 perfil=dados_usuario.get("perfil", "colaborador"),
             )
