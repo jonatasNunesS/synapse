@@ -3,7 +3,6 @@ Synapse — M7: Views do módulo Equipe.
 View → Service → Repository → Model (Clean Architecture).
 """
 import logging
-from django.conf import settings
 from django.core.cache import cache
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -11,6 +10,7 @@ from shared.authentication import CookieJWTAuthentication
 from shared.pagination import StandardPagination
 from shared.permissions import IsEmpresaMember
 from shared.responses import success_response, error_response, no_content_response
+from .exceptions import ConviteEmailError
 from .models import MembroEquipe, MetaMembro
 from .repository import EquipeRepository
 from .serializers import (
@@ -93,7 +93,9 @@ class MembroDetailView(APIView):
         return success_response(MembroEquipeDetailSerializer(membro).data, "Membro atualizado.")
 
     def delete(self, request, pk):
-        deleted = EquipeService.remover_membro(str(pk), str(request.user.empresa_id))
+        deleted = EquipeService.remover_membro(
+            str(pk), str(request.user.empresa_id), solicitante_id=str(request.user.id)
+        )
         if not deleted:
             return error_response("NOT_FOUND", "Membro não encontrado.", status_code=404)
         return no_content_response()
@@ -122,26 +124,25 @@ class ConvidarMembroView(APIView):
             "cargo": dados.get("cargo", ""),
             "departamento": dados.get("departamento", ""),
         }
-        usuario, membro = EquipeService.convidar_membro(
-            str(request.user.empresa_id), dados_usuario, dados_membro
-        )
-
-        # Ser honesto sobre o e-mail: sem RESEND_API_KEY a task de envio
-        # apenas loga um warning e pula — o membro é criado mesmo assim.
-        email_configurado = bool(settings.RESEND_API_KEY)
-        if email_configurado:
-            mensagem = f"Convite enviado para {usuario.email}."
-        else:
-            mensagem = (
-                f"Membro {usuario.nome} adicionado, mas o e-mail de convite "
-                "não foi enviado: RESEND_API_KEY não configurada no servidor."
+        try:
+            usuario, membro = EquipeService.convidar_membro(
+                str(request.user.empresa_id), dados_usuario, dados_membro
             )
+        except ConviteEmailError as exc:
+            # Envio falhou → rollback já ocorreu (nenhum membro criado).
+            return error_response(
+                "CONVITE_EMAIL_FALHOU",
+                exc.message,
+                status_code=502,
+            )
+
+        # Se chegou aqui, o e-mail de convite foi enviado com sucesso.
         return success_response(
             {
                 **MembroEquipeDetailSerializer(membro).data,
-                "email_convite_enviado": email_configurado,
+                "email_convite_enviado": True,
             },
-            mensagem,
+            f"Convite enviado para {usuario.email}.",
             status_code=201,
         )
 

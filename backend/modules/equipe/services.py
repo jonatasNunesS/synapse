@@ -38,22 +38,28 @@ class EquipeService:
     @staticmethod
     def convidar_membro(empresa_id: str, dados_usuario: dict, dados_membro: dict):
         """
-        Cria novo usuário (sem senha utilizável), gera token de primeiro acesso
-        e dispara o e-mail de convite com o LINK de definição de senha.
+        Cria o membro convidado de forma ATÔMICA com o envio do e-mail: usuário
+        (sem senha utilizável) + membro + token de primeiro acesso + envio do
+        convite acontecem numa única transação. Se o e-mail não puder ser
+        enviado, ConviteEmailError sobe e faz rollback de tudo — nada de membro
+        fantasma. O envio é síncrono justamente para permitir esse rollback.
         """
-        from .tasks import enviar_email_convite
+        from django.db import transaction
+        from .tasks import enviar_convite_email
         from modules.auth.models import Empresa
         from modules.auth.services import AuthService
 
         empresa = Empresa.objects.get(id=empresa_id)
-        usuario, membro = EquipeRepository.criar_membro_convidado(
-            empresa_id, dados_usuario, dados_membro
-        )
 
-        # Token de convite (48h, uso único) — mesmo mecanismo do reset de senha
-        token = AuthService.gerar_token_convite(usuario)
+        with transaction.atomic():
+            usuario, membro = EquipeRepository.criar_membro_convidado(
+                empresa_id, dados_usuario, dados_membro
+            )
+            # Token de convite (48h, uso único) — mesmo mecanismo do reset
+            token = AuthService.gerar_token_convite(usuario)
+            # Síncrono e dentro da transação: se falhar, tudo acima é revertido
+            enviar_convite_email(usuario, empresa.nome, token)
 
-        enviar_email_convite.delay(str(usuario.id), empresa.nome, token)
         _invalidar_cache_equipe(empresa_id)
         logger.info(
             "Membro convidado",
@@ -69,8 +75,8 @@ class EquipeService:
         return resultado
 
     @staticmethod
-    def remover_membro(membro_id: str, empresa_id: str) -> bool:
-        resultado = EquipeRepository.deletar(membro_id, empresa_id)
+    def remover_membro(membro_id: str, empresa_id: str, solicitante_id: str = None) -> bool:
+        resultado = EquipeRepository.deletar(membro_id, empresa_id, solicitante_id)
         _invalidar_cache_equipe(empresa_id)
         return resultado
 

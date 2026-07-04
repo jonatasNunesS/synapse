@@ -1,10 +1,17 @@
 """
-Synapse — M7: Tasks Celery do módulo Equipe.
+Synapse — M7: Envio de e-mail de convite do módulo Equipe.
+
+O convite é enviado de forma SÍNCRONA (não via Celery) porque o envio precisa
+ser atômico com a criação do membro: se o e-mail não sai, o convite inteiro
+falha e nada é persistido (ver EquipeService.convidar_membro). Um envio
+assíncrono não permitiria o rollback da criação.
 """
 import logging
 import os
 
-from celery import shared_task
+from django.conf import settings
+
+from .exceptions import ConviteEmailError
 
 logger = logging.getLogger("synapse")
 
@@ -53,27 +60,21 @@ def _html_convite(nome: str, empresa_nome: str, link: str) -> str:
     """
 
 
-@shared_task(name="equipe.enviar_email_convite", bind=True, max_retries=3)
-def enviar_email_convite(self, usuario_id: str, empresa_nome: str, token: str):
+def enviar_convite_email(usuario, empresa_nome: str, token: str) -> None:
     """
-    Envia o e-mail de convite/primeiro acesso via Resend, com o LINK de
-    definição de senha (token de convite, 48h). Sem RESEND_API_KEY, loga o
-    link para permitir o teste em desenvolvimento.
+    Envia o e-mail de convite/primeiro acesso via Resend, SÍNCRONO.
+    Levanta ConviteEmailError em qualquer falha (sem chave, domínio não
+    verificado, erro do Resend) para que o chamador faça rollback da criação.
     """
+    link = f"{FRONTEND_URL}/redefinir-senha?token={token}&convite=1"
+
+    if not settings.RESEND_API_KEY:
+        raise ConviteEmailError(
+            "E-mail de convite não configurado no servidor (RESEND_API_KEY ausente). "
+            "O membro não foi criado."
+        )
+
     try:
-        from modules.auth.models import CustomUser
-        from django.conf import settings
-
-        usuario = CustomUser.objects.get(id=usuario_id)
-        link = f"{FRONTEND_URL}/redefinir-senha?token={token}&convite=1"
-
-        if not settings.RESEND_API_KEY:
-            logger.warning(
-                "RESEND_API_KEY não configurado. E-mail de convite não enviado.",
-                extra={"email": usuario.email, "link": link},
-            )
-            return {"status": "skipped", "reason": "no_api_key", "link": link}
-
         import resend
 
         resend.api_key = settings.RESEND_API_KEY
@@ -83,13 +84,36 @@ def enviar_email_convite(self, usuario_id: str, empresa_nome: str, token: str):
             "subject": f"Convite para a equipe — {empresa_nome} · Synapse",
             "html": _html_convite(usuario.nome, empresa_nome, link),
         }
-        resend.Emails.send(params)
-        logger.info(
-            "E-mail de convite enviado",
-            extra={"usuario_id": usuario_id, "email": usuario.email},
-        )
-        return {"status": "ok", "email": usuario.email}
-
+        resposta = resend.Emails.send(params)
+    except ConviteEmailError:
+        raise
     except Exception as exc:
-        logger.error(f"Erro ao enviar e-mail de convite: {exc}")
-        raise self.retry(exc=exc, countdown=60)
+        logger.error(
+            "Falha ao enviar e-mail de convite",
+            extra={"email": usuario.email, "error": str(exc)},
+        )
+        raise ConviteEmailError(
+            f"Não foi possível enviar o e-mail de convite: {exc}. O membro não foi criado."
+        )
+
+    # O SDK do Resend retorna erro no corpo (dict com 'statusCode'/'message')
+    # em vez de levantar em alguns casos (ex.: domínio não verificado).
+    erro_resend = None
+    if isinstance(resposta, dict):
+        if resposta.get("statusCode") and resposta.get("statusCode") >= 400:
+            erro_resend = resposta.get("message") or resposta.get("error") or str(resposta)
+        elif not resposta.get("id"):
+            erro_resend = resposta.get("message") or str(resposta)
+    if erro_resend:
+        logger.error(
+            "Resend recusou o e-mail de convite",
+            extra={"email": usuario.email, "error": erro_resend},
+        )
+        raise ConviteEmailError(
+            f"O provedor de e-mail recusou o convite: {erro_resend}. O membro não foi criado."
+        )
+
+    logger.info(
+        "E-mail de convite enviado",
+        extra={"email": usuario.email},
+    )

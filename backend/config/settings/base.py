@@ -298,7 +298,9 @@ LOGGING = {
 # EMAIL (Resend)
 # ════════════════════════════════════════════════════════════
 RESEND_API_KEY = config("RESEND_API_KEY", default="")
-DEFAULT_FROM_EMAIL = "Synapse <noreply@synapse.app>"
+# Remetente dos e-mails. Para testar sem verificar domínio próprio, use o
+# domínio de teste do Resend: DEFAULT_FROM_EMAIL="Synapse <onboarding@resend.dev>"
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="Synapse <noreply@synapse.app>")
 
 # ════════════════════════════════════════════════════════════
 # IA (Groq) - Placeholder para M9

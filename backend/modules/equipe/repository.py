@@ -68,14 +68,41 @@ class EquipeRepository:
         return membro
 
     @staticmethod
-    def deletar(membro_id: str, empresa_id: str) -> bool:
-        deleted, _ = MembroEquipe.objects.filter(
-            id=membro_id, empresa_id=empresa_id
-        ).delete()
-        if deleted:
-            cache.delete(CACHE_MEMBROS_KEY.format(empresa_id=empresa_id))
-            cache.delete(CACHE_RESUMO_KEY.format(empresa_id=empresa_id))
-        return deleted > 0
+    def deletar(membro_id: str, empresa_id: str, solicitante_id: str = None) -> bool:
+        """
+        Remove o membro E a conta de usuário associada, liberando o e-mail
+        para um novo convite. Antes, o hard delete só apagava o MembroEquipe e
+        deixava o CustomUser órfão — o que fazia o reconvite falhar com
+        "e-mail já cadastrado". Deletar o usuário é seguro: FKs de dados do
+        próprio usuário são CASCADE e campos de auditoria (criado_por) são
+        SET_NULL.
+
+        Preserva a conta (só remove o vínculo) quando o alvo é um superusuário
+        ou o próprio solicitante — evita alguém apagar a própria conta ao sair
+        da equipe.
+        """
+        try:
+            membro = MembroEquipe.objects.select_related("usuario").get(
+                id=membro_id, empresa_id=empresa_id
+            )
+        except MembroEquipe.DoesNotExist:
+            return False
+
+        usuario = membro.usuario
+        preservar_conta = (
+            usuario is None
+            or usuario.is_superuser
+            or (solicitante_id is not None and str(usuario.id) == str(solicitante_id))
+        )
+
+        with transaction.atomic():
+            membro.delete()
+            if not preservar_conta:
+                usuario.delete()
+
+        cache.delete(CACHE_MEMBROS_KEY.format(empresa_id=empresa_id))
+        cache.delete(CACHE_RESUMO_KEY.format(empresa_id=empresa_id))
+        return True
 
     @staticmethod
     def resumo(empresa_id: str) -> dict:

@@ -40,17 +40,10 @@ export function ConvidarModal({ onFechar, onConvidado }: ConvidarModalProps) {
 
   const onSubmit = async (dados: FormData) => {
     try {
-      const resp = await api.post<{ email_convite_enviado?: boolean }>(
-        "/equipe/convidar/",
-        dados
-      );
-      const mensagem = resp.message || `Convite enviado para ${dados.email}.`;
-      if (resp.data?.email_convite_enviado === false) {
-        // Membro criado, mas o servidor não tem RESEND_API_KEY configurada
-        toast.warning(mensagem, { duration: 8000 });
-      } else {
-        toast.success(mensagem);
-      }
+      // O backend só retorna 201 se o e-mail de convite foi realmente enviado
+      // (criação do membro é atômica com o envio); falha vem como erro no catch.
+      const resp = await api.post("/equipe/convidar/", dados);
+      toast.success(resp.message || `Convite enviado para ${dados.email}.`);
       onConvidado?.();
       onFechar();
     } catch (err: unknown) {
