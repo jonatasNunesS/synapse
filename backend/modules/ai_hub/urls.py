@@ -9,12 +9,14 @@ from .views import (
     FavoritarConteudoView,
     UsoIAView,
     InsightSemanalView,
+    AnaliseFinanceiraView,
 )
 
 app_name = "ai_hub"
 
 urlpatterns = [
     path("gerar/", GerarConteudoView.as_view(), name="gerar"),
+    path("analise-financeira/", AnaliseFinanceiraView.as_view(), name="analise-financeira"),
     path("status/<uuid:task_id>/", StatusTaskView.as_view(), name="status"),
     path("historico/", HistoricoConteudosView.as_view(), name="historico"),
     path("favoritar/<uuid:conteudo_id>/", FavoritarConteudoView.as_view(), name="favoritar"),

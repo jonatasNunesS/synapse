@@ -171,6 +171,22 @@ def gerar_conteudo_ia(self, task_ia_id: str):
 
 
 @shared_task(
+    bind=True,
+    name="ai_hub.analisar_financeiro",
+    max_retries=2,
+    default_retry_delay=30,
+)
+def analisar_financeiro(self, task_ia_id: str):
+    """Task Celery da Análise Financeira. Lógica em AnaliseFinanceiraService."""
+    from modules.ai_hub.analise.service import AnaliseFinanceiraService
+
+    try:
+        AnaliseFinanceiraService.executar(task_ia_id)
+    except Exception as exc:
+        raise self.retry(exc=exc)
+
+
+@shared_task(
     name="ai_hub.gerar_insights_semanais",
     bind=True,
     max_retries=1,
