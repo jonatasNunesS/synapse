@@ -26,6 +26,7 @@ from .serializers import (
     UsoIASerializer,
 )
 from .services import AIHubService, AILimitExceededError
+from .analise.service import AnaliseFinanceiraService
 
 logger = logging.getLogger("synapse")
 
@@ -78,6 +79,46 @@ class GerarConteudoView(APIView):
             message="Geração iniciada. Faça polling em /api/ai/status/{id}/",
             status_code=status.HTTP_202_ACCEPTED,
         )
+
+
+class AnaliseFinanceiraView(APIView):
+    """
+    POST /api/ai/analise-financeira/ — Solicita a análise financeira do mês.
+    Respostas possíveis (campo `status` no data):
+      - sem_dados    → não há movimento suficiente (estado tratado, não erro)
+      - concluido    → análise em cache (retorna `analise` na hora)
+      - processando  → disparou a IA; faça polling em /api/ai/status/{task_id}/
+    """
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    throttle_scope = "ai_gerar"
+
+    def post(self, request):
+        empresa_id = request.user.empresa_id
+        try:
+            resultado = AnaliseFinanceiraService.solicitar(
+                empresa_id=empresa_id, usuario_id=request.user.id
+            )
+        except AILimitExceededError as e:
+            return error_response(
+                code=e.code,
+                message=e.message,
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+        except Exception as e:
+            logger.error(f"AI Hub: erro ao solicitar análise — {e}", exc_info=True)
+            return error_response(
+                code="AI_ERROR",
+                message="Erro ao iniciar a análise financeira.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        status_code = (
+            status.HTTP_202_ACCEPTED
+            if resultado.get("status") == "processando"
+            else status.HTTP_200_OK
+        )
+        return success_response(data=resultado, status_code=status_code)
 
 
 class StatusTaskView(APIView):

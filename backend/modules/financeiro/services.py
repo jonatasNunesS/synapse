@@ -212,3 +212,8 @@ class FinanceiroService:
     @staticmethod
     def obter_vencimentos_proximos(empresa_id, dias: int = 7):
         return FinanceiroRepository.listar_vencimentos_proximos(empresa_id, dias)
+
+    @staticmethod
+    def obter_metricas_analise(empresa_id, mes: int, ano: int) -> dict:
+        """Métricas complementares para a Análise Financeira (IA)."""
+        return FinanceiroRepository.metricas_para_analise(empresa_id, mes, ano)

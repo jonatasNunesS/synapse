@@ -1,124 +1,141 @@
 "use client";
-
-import { useState } from "react";
+/**
+ * AI Hub — porta de entrada por ÁREAS.
+ * v1: Análise Financeira (nova) + Gerar Conteúdo (existente). Estrutura
+ * dirigida por array — adicionar novas áreas (Estoque, CRM, Eventos) é só
+ * incluir um item aqui.
+ */
 import Link from "next/link";
-import { History, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { FormularioConteudo } from "@/components/ai_hub/FormularioConteudo";
-import { ResultadoIA } from "@/components/ai_hub/ResultadoIA";
-import { UsoIACard } from "@/components/ai_hub/UsoIACard";
-import { InsightCard } from "@/components/ai_hub/InsightCard";
-import { useAIHub } from "@/hooks/useAIHub";
-import type { SolicitacaoConteudo } from "@/types/ai_hub";
+import {
+  Sparkles,
+  History,
+  LineChart,
+  PenLine,
+  Package,
+  Users,
+  ArrowRight,
+} from "lucide-react";
+
+interface AreaAI {
+  key: string;
+  titulo: string;
+  descricao: string;
+  icon: React.ElementType;
+  href?: string;
+  destaque?: boolean;
+  badge?: string;
+  emBreve?: boolean;
+}
+
+const AREAS: AreaAI[] = [
+  {
+    key: "analise_financeira",
+    titulo: "Análise Financeira",
+    descricao:
+      "A IA analisa os números reais do seu mês — receita, despesa, atrasados — e devolve diagnóstico e recomendações acionáveis.",
+    icon: LineChart,
+    href: "/ai-hub/analise-financeira",
+    destaque: true,
+    badge: "Novo",
+  },
+  {
+    key: "conteudo",
+    titulo: "Gerar Conteúdo",
+    descricao:
+      "Legendas, títulos, descrições, e-mails e hashtags para o marketing do seu negócio.",
+    icon: PenLine,
+    href: "/ai-hub/conteudo",
+  },
+  {
+    key: "estoque",
+    titulo: "Análise de Estoque",
+    descricao: "Giro, rupturas e sugestões de compra a partir do seu estoque.",
+    icon: Package,
+    emBreve: true,
+  },
+  {
+    key: "crm",
+    titulo: "Análise de CRM",
+    descricao: "Funil, oportunidades e follow-ups com base na sua carteira.",
+    icon: Users,
+    emBreve: true,
+  },
+];
 
 export default function AIHubPage() {
-  const { gerando, taskAtual, erro, setErro, uso, insight, gerarConteudo, toggleFavorito } =
-    useAIHub();
-  const [resultado, setResultado] = useState<string | null>(null);
-  const [ultimoConteudoId, setUltimoConteudoId] = useState<string | null>(null);
-
-  const handleGerar = async (solicitacao: SolicitacaoConteudo) => {
-    setResultado(null);
-    setUltimoConteudoId(null);
-    await gerarConteudo(solicitacao, (res) => {
-      setResultado(res);
-    });
-    // Após concluir, o taskAtual.id é o ID da task — o ConteudoGerado tem ID diferente
-    // Usamos o histórico para obter o ID do conteúdo mais recente
-  };
-
-  const handleGerarInsight = async () => {
-    setResultado(null);
-    await gerarConteudo({ tipo: "insight", parametros: {} }, (res) => {
-      setResultado(res);
-    });
-  };
-
   return (
     <div className="space-y-6">
-      {/* Cabeçalho */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-purple-500" />
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <Sparkles className="h-6 w-6 text-primary" />
             AI Hub
           </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Gere conteúdo de marketing e insights para o seu negócio com inteligência artificial
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Inteligência sobre os dados do seu negócio. Escolha uma área para começar.
           </p>
         </div>
-        <Link href="/ai-hub/historico">
-          <Button variant="outline" size="sm" className="gap-2">
-            <History className="h-4 w-4" />
-            Histórico
-          </Button>
+        <Link
+          href="/ai-hub/historico"
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-sm text-foreground hover:bg-accent transition-colors"
+        >
+          <History className="h-4 w-4" />
+          Histórico
         </Link>
       </div>
 
-      {/* Grid principal */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Coluna esquerda: Formulário + Uso */}
-        <div className="lg:col-span-1 space-y-4">
-          <UsoIACard uso={uso} />
-          <FormularioConteudo
-            onSubmit={handleGerar}
-            gerando={gerando}
-            erro={erro}
-          />
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {AREAS.map((area) => {
+          const Icon = area.icon;
+          const conteudo = (
+            <div
+              className={`h-full rounded-xl border p-5 transition-all ${
+                area.emBreve
+                  ? "border-border bg-card/50 opacity-60 cursor-not-allowed"
+                  : "border-border bg-card hover:border-primary/50 hover:shadow-lg"
+              } ${area.destaque ? "ring-1 ring-primary/30" : ""}`}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div
+                  className={`h-10 w-10 rounded-lg flex items-center justify-center ${
+                    area.destaque
+                      ? "bg-primary/15 text-primary"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                </div>
+                {area.badge && (
+                  <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-primary/15 text-primary">
+                    {area.badge}
+                  </span>
+                )}
+                {area.emBreve && (
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                    em breve
+                  </span>
+                )}
+              </div>
+              <h2 className="text-base font-semibold text-foreground mb-1">
+                {area.titulo}
+              </h2>
+              <p className="text-sm text-muted-foreground">{area.descricao}</p>
+              {!area.emBreve && (
+                <div className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary">
+                  Abrir <ArrowRight className="h-3.5 w-3.5" />
+                </div>
+              )}
+            </div>
+          );
 
-        {/* Coluna direita: Resultado + Insight */}
-        <div className="lg:col-span-2 space-y-4">
-          <ResultadoIA
-            taskAtual={taskAtual}
-            resultado={resultado}
-            gerando={gerando}
-            onFavoritar={
-              ultimoConteudoId
-                ? () => toggleFavorito(ultimoConteudoId)
-                : undefined
-            }
-          />
-          <InsightCard
-            insight={insight}
-            onGerarInsight={handleGerarInsight}
-            gerando={gerando}
-          />
-        </div>
-      </div>
-
-      {/* Dicas de uso */}
-      <div className="rounded-xl border border-purple-100 bg-purple-50/50 p-4">
-        <h3 className="text-sm font-semibold text-purple-800 mb-2 flex items-center gap-2">
-          <Sparkles className="h-4 w-4" />
-          Dicas para melhores resultados
-        </h3>
-        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-purple-700">
-          <li className="flex items-start gap-1.5">
-            <span className="text-purple-400 mt-0.5">→</span>
-            Seja específico no nome do produto ou serviço
-          </li>
-          <li className="flex items-start gap-1.5">
-            <span className="text-purple-400 mt-0.5">→</span>
-            Informe o tom desejado (urgente, descontraído, profissional)
-          </li>
-          <li className="flex items-start gap-1.5">
-            <span className="text-purple-400 mt-0.5">→</span>
-            Use o Relatório do Negócio para análises mensais completas
-          </li>
-          <li className="flex items-start gap-1.5">
-            <span className="text-purple-400 mt-0.5">→</span>
-            Salve os melhores conteúdos como favoritos para reutilizar
-          </li>
-          <li className="flex items-start gap-1.5">
-            <span className="text-purple-400 mt-0.5">→</span>
-            O insight semanal usa dados reais do seu negócio
-          </li>
-          <li className="flex items-start gap-1.5">
-            <span className="text-purple-400 mt-0.5">→</span>
-            Use o Pedido Livre para qualquer conteúdo fora dos tipos prontos
-          </li>
-        </ul>
+          return area.href ? (
+            <Link key={area.key} href={area.href} className="block">
+              {conteudo}
+            </Link>
+          ) : (
+            <div key={area.key}>{conteudo}</div>
+          );
+        })}
       </div>
     </div>
   );

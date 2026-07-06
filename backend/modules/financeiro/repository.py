@@ -346,3 +346,46 @@ class FinanceiroRepository:
             status=novo_status
         )
         return count
+
+    @staticmethod
+    def metricas_para_analise(empresa_id, mes: int, ano: int) -> dict:
+        """
+        Métricas complementares ao resumo, usadas pela Análise Financeira (IA):
+        contagem de atrasados, contas a receber (receitas pendentes) e ticket
+        médio (receita paga no período ÷ nº de recebimentos).
+        """
+        hoje = date.today()
+
+        atrasados = Lancamento.objects.filter(
+            empresa_id=empresa_id, status="pendente", data_vencimento__lt=hoje
+        )
+        qtd_atrasados = atrasados.count()
+        valor_atrasado = atrasados.aggregate(t=Sum("valor"))["t"] or Decimal("0")
+
+        contas_a_receber = (
+            Lancamento.objects.filter(
+                empresa_id=empresa_id, status="pendente", tipo="receita"
+            ).aggregate(t=Sum("valor"))["t"]
+            or Decimal("0")
+        )
+
+        recebimentos = Lancamento.objects.filter(
+            empresa_id=empresa_id,
+            status="pago",
+            tipo="receita",
+            data_pagamento__month=mes,
+            data_pagamento__year=ano,
+        )
+        qtd_recebimentos = recebimentos.count()
+        total_recebido = recebimentos.aggregate(t=Sum("valor"))["t"] or Decimal("0")
+        ticket_medio = (
+            (total_recebido / qtd_recebimentos) if qtd_recebimentos else Decimal("0")
+        )
+
+        return {
+            "qtd_atrasados": qtd_atrasados,
+            "valor_atrasado": valor_atrasado,
+            "contas_a_receber": contas_a_receber,
+            "qtd_recebimentos": qtd_recebimentos,
+            "ticket_medio": ticket_medio,
+        }
