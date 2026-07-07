@@ -1,21 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { History, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FormularioConteudo } from "@/components/ai_hub/FormularioConteudo";
 import { ResultadoIA } from "@/components/ai_hub/ResultadoIA";
-import { UsoIACard } from "@/components/ai_hub/UsoIACard";
 import { InsightCard } from "@/components/ai_hub/InsightCard";
+import { CreditosBadge } from "@/components/ai_hub/CreditosBadge";
 import { useAIHub } from "@/hooks/useAIHub";
 import type { SolicitacaoConteudo } from "@/types/ai_hub";
 
 export default function AIHubPage() {
-  const { gerando, taskAtual, erro, setErro, uso, insight, gerarConteudo, toggleFavorito } =
+  const { gerando, taskAtual, erro, insight, gerarConteudo, toggleFavorito } =
     useAIHub();
   const [resultado, setResultado] = useState<string | null>(null);
   const [ultimoConteudoId, setUltimoConteudoId] = useState<string | null>(null);
+
+  // Toast quando faltam créditos (rejeição na porta)
+  useEffect(() => {
+    if (erro && erro.toLowerCase().includes("crédito")) {
+      toast.error(erro, { duration: 7000 });
+    }
+  }, [erro]);
 
   const handleGerar = async (solicitacao: SolicitacaoConteudo) => {
     setResultado(null);
@@ -47,19 +55,21 @@ export default function AIHubPage() {
             Gere conteúdo de marketing e insights para o seu negócio com inteligência artificial
           </p>
         </div>
-        <Link href="/ai-hub/historico">
-          <Button variant="outline" size="sm" className="gap-2">
-            <History className="h-4 w-4" />
-            Histórico
-          </Button>
-        </Link>
+        <div className="flex items-center gap-3">
+          <CreditosBadge />
+          <Link href="/ai-hub/historico">
+            <Button variant="outline" size="sm" className="gap-2">
+              <History className="h-4 w-4" />
+              Histórico
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Grid principal */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Coluna esquerda: Formulário + Uso */}
+        {/* Coluna esquerda: Formulário */}
         <div className="lg:col-span-1 space-y-4">
-          <UsoIACard uso={uso} />
           <FormularioConteudo
             onSubmit={handleGerar}
             gerando={gerando}

@@ -12,7 +12,6 @@ from datetime import date, datetime, timezone
 from django.core.cache import cache
 
 from modules.ai_hub.models import TaskIA
-from modules.ai_hub.services import AIHubService, AILimitExceededError
 
 from .context import montar_contexto_financeiro
 from .prompts import (
@@ -80,21 +79,25 @@ class AnaliseFinanceiraService:
 
         cached = cache.get(AnaliseFinanceiraService._cache_key(empresa_id, mes, ano))
         if cached:
+            # Cache quente não gasta crédito (não chama a IA)
             return {"status": "concluido", "analise": cached}
 
-        # Conta como uso de IA (respeita o limite do plano)
-        if not AIHubService.verificar_limite(empresa_id):
-            from modules.ai_hub.services import LIMITES_PLANO
-            from modules.auth.models import Empresa
+        # Reserva os créditos ANTES de chamar a IA (rejeição na porta → 402)
+        from modules.ai_hub.creditos import CreditosService
 
-            empresa = Empresa.objects.get(pk=empresa_id)
-            raise AILimitExceededError(empresa.plano, LIMITES_PLANO.get(empresa.plano, 0))
+        operacao = "analise_financeira"
+        CreditosService.reservar(empresa_id, operacao)
 
         task_ia = TaskIA.objects.create(
             empresa_id=empresa_id,
             tipo="analise",
             status="pendente",
-            parametros={"analise": "financeira", "mes": mes, "ano": ano},
+            parametros={
+                "analise": "financeira",
+                "mes": mes,
+                "ano": ano,
+                "_credito_operacao": operacao,
+            },
         )
 
         from modules.ai_hub.tasks import analisar_financeiro
@@ -158,7 +161,11 @@ class AnaliseFinanceiraService:
                 analise,
                 CACHE_TTL,
             )
-            AIHubService.incrementar_uso(empresa_id)
+            # Sucesso: confirma o crédito já reservado
+            from modules.ai_hub.creditos import CreditosService
+            CreditosService.confirmar(
+                empresa_id, task_ia.parametros.get("_credito_operacao", "analise_financeira")
+            )
             logger.info("Análise financeira concluída (task %s)", task_ia_id)
 
         except Exception as exc:

@@ -81,8 +81,7 @@ def _montar_prompt(tipo: str, parametros: dict) -> str:
 @shared_task(
     bind=True,
     name="ai_hub.gerar_conteudo_ia",
-    max_retries=2,
-    default_retry_delay=30,
+    max_retries=0,  # falha é terminal: reembolsa o crédito (sem sucesso, sem cobrança)
 )
 def gerar_conteudo_ia(self, task_ia_id: str):
     """
@@ -147,8 +146,9 @@ def gerar_conteudo_ia(self, task_ia_id: str):
             tokens_usados=tokens,
         )
 
-        # Incrementar uso mensal
-        AIHubService.incrementar_uso(empresa_id)
+        # Sucesso: confirma o crédito já reservado (no-op contável)
+        from modules.ai_hub.creditos import CreditosService
+        CreditosService.confirmar(empresa_id, parametros.get("_credito_operacao", "conteudo"))
 
         # Atualizar TaskIA como concluída
         task_ia.status = "concluido"
@@ -163,27 +163,42 @@ def gerar_conteudo_ia(self, task_ia_id: str):
 
     except Exception as exc:
         logger.error(f"AI Hub: erro na task {task_ia_id} — {exc}", exc_info=True)
+        # Falha reembolsa: devolve o crédito reservado. Não re-levanta — a falha
+        # já fica registrada na TaskIA (o frontend acompanha via polling).
+        from modules.ai_hub.creditos import CreditosService
+        CreditosService.devolver(
+            task_ia.empresa_id, task_ia.parametros.get("_credito_operacao", "conteudo")
+        )
         task_ia.status = "erro"
         task_ia.erro = str(exc)
         task_ia.concluido_em = datetime.now(tz=timezone.utc)
         task_ia.save(update_fields=["status", "erro", "concluido_em"])
-        raise self.retry(exc=exc)
 
 
 @shared_task(
     bind=True,
     name="ai_hub.analisar_financeiro",
-    max_retries=2,
-    default_retry_delay=30,
+    max_retries=0,  # falha é terminal: reembolsa o crédito
 )
 def analisar_financeiro(self, task_ia_id: str):
     """Task Celery da Análise Financeira. Lógica em AnaliseFinanceiraService."""
     from modules.ai_hub.analise.service import AnaliseFinanceiraService
+    from modules.ai_hub.creditos import CreditosService
+    from modules.ai_hub.models import TaskIA
 
     try:
         AnaliseFinanceiraService.executar(task_ia_id)
-    except Exception as exc:
-        raise self.retry(exc=exc)
+    except Exception:
+        # executar() já marcou a TaskIA como erro. Falha reembolsa: devolve o
+        # crédito. Não re-levanta (falha registrada na TaskIA, acompanhada por polling).
+        try:
+            task_ia = TaskIA.objects.get(pk=task_ia_id)
+            CreditosService.devolver(
+                task_ia.empresa_id,
+                task_ia.parametros.get("_credito_operacao", "analise_financeira"),
+            )
+        except TaskIA.DoesNotExist:
+            pass
 
 
 @shared_task(

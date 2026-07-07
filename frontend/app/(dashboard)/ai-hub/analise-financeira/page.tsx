@@ -16,8 +16,12 @@ import {
   AlertCircle,
   FileText,
 } from "lucide-react";
+import { useEffect } from "react";
 import { useAnaliseFinanceira } from "@/hooks/useAnaliseFinanceira";
 import { getErrorMessage } from "@/lib/api";
+import { CreditosBadge } from "@/components/ai_hub/CreditosBadge";
+import { recarregarCreditos } from "@/hooks/useCreditos";
+import { CUSTO_OPERACAO } from "@/types/creditos";
 import type { NumeroChave } from "@/types/analise_financeira";
 
 function corVariacao(v: string | null): string {
@@ -48,11 +52,18 @@ function CardNumero({ n }: { n: NumeroChave }) {
 export default function AnaliseFinanceiraPage() {
   const { estado, analise, mensagem, analisar } = useAnaliseFinanceira();
 
+  // Refresca o saldo de créditos ao concluir ou falhar (reserva/devolução)
+  useEffect(() => {
+    if (estado === "concluido" || estado === "erro") recarregarCreditos();
+  }, [estado]);
+
   const handleAnalisar = async () => {
     try {
       await analisar();
+      recarregarCreditos(); // reserva já debitou → atualiza o badge na hora
     } catch (err) {
-      toast.error(getErrorMessage(err));
+      // 402 SEM_CREDITOS cai aqui com mensagem clara + CTA de upgrade
+      toast.error(getErrorMessage(err), { duration: 7000 });
     }
   };
 
@@ -68,13 +79,18 @@ export default function AnaliseFinanceiraPage() {
           <ArrowLeft className="h-3.5 w-3.5" />
           AI Hub
         </Link>
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <LineChart className="h-6 w-6 text-primary" />
-          Análise Financeira
-        </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          A IA analisa os números reais do seu mês e devolve diagnóstico e recomendações.
-        </p>
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <LineChart className="h-6 w-6 text-primary" />
+              Análise Financeira
+            </h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              A IA analisa os números reais do seu mês e devolve diagnóstico e recomendações.
+            </p>
+          </div>
+          <CreditosBadge />
+        </div>
       </div>
 
       {/* Ação */}
@@ -99,6 +115,7 @@ export default function AnaliseFinanceiraPage() {
             <>
               <LineChart className="h-4 w-4" />
               {analise ? "Analisar novamente" : "Analisar meu financeiro"}
+              <span className="opacity-80">({CUSTO_OPERACAO.analise_financeira} créditos)</span>
             </>
           )}
         </button>

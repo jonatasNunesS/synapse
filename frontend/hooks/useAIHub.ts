@@ -18,7 +18,8 @@ import type {
 
 // ─── SWR Keys ─────────────────────────────────────────────────────────────────
 const KEYS = {
-  uso: "/ai/uso/",
+  // Mesma chave do useCreditos → gerar refresca o badge automaticamente
+  uso: "/ai/creditos/",
   historico: (tipo?: string, favorito?: boolean) => {
     let url = "/ai/historico/";
     const params: string[] = [];
@@ -112,7 +113,13 @@ export function useAIHub() {
         setGerando(false);
         // BAIXO-6: usar padrão ApiError (fetch nativo), não axios
         const apiErr = err as ApiError;
-        if (
+        if (apiErr?.error?.code === "SEM_CREDITOS") {
+          // Sem créditos hoje — mensagem clara com CTA de upgrade
+          setErro(
+            apiErr.error.message ||
+              "Sem créditos hoje. Renova à 00:00 ou faça upgrade do plano."
+          );
+        } else if (
           apiErr?.error?.code === "LIMIT_EXCEEDED" ||
           apiErr?.error?.code === "PLANO_INSUFICIENTE"
         ) {
