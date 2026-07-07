@@ -33,8 +33,12 @@ def _fmt(v) -> str:
         return "R$ 0,00"
 
 
-def montar_prompt_usuario(ctx: dict) -> str:
-    """Monta o prompt do usuário com os números reais do contexto."""
+def montar_bloco_numeros(ctx: dict) -> str:
+    """
+    Bloco de texto com os NÚMEROS REAIS do mês (atual + anterior + variações).
+    Reutilizável: a Análise Financeira e o Chat Financeiro compartilham este
+    mesmo contexto — não duplicam a montagem.
+    """
     a = ctx["atual"]
     ant = ctx["anterior"]
     d = ctx["deltas"]
@@ -63,7 +67,14 @@ def montar_prompt_usuario(ctx: dict) -> str:
         f"({a['qtd_recebimentos']} recebimento(s) no mês)\n"
         f"- Maiores custos por categoria: {top_txt}\n\n"
         f"MÊS ANTERIOR ({per['label_anterior']}): receita {_fmt(ant['receita'])}, "
-        f"despesa {_fmt(ant['despesa'])}, saldo {_fmt(ant['saldo'])}.\n\n"
+        f"despesa {_fmt(ant['despesa'])}, saldo {_fmt(ant['saldo'])}."
+    )
+
+
+def montar_prompt_usuario(ctx: dict) -> str:
+    """Monta o prompt do usuário com os números reais do contexto."""
+    return (
+        f"{montar_bloco_numeros(ctx)}\n\n"
         f"Faça o diagnóstico financeiro e as recomendações no formato JSON pedido."
     )
 

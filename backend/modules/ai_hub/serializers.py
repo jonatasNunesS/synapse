@@ -103,6 +103,23 @@ class SolicitacaoConteudoSerializer(serializers.Serializer):
         return data
 
 
+class MensagemChatSerializer(serializers.Serializer):
+    """Uma mensagem do histórico do Chat Financeiro."""
+    role = serializers.ChoiceField(choices=["user", "assistant"])
+    content = serializers.CharField(allow_blank=False, trim_whitespace=True, max_length=4000)
+
+
+class PerguntaChatSerializer(serializers.Serializer):
+    """
+    Entrada de POST /api/ai/chat-financeiro/pergunta/
+    { pergunta: str, historico: [{role, content}, ...] }
+    """
+    pergunta = serializers.CharField(
+        allow_blank=False, trim_whitespace=True, max_length=2000
+    )
+    historico = MensagemChatSerializer(many=True, required=False, default=list)
+
+
 class UsoIASerializer(serializers.Serializer):
     """Retorno de GET /api/ai/uso/"""
     usado = serializers.IntegerField()

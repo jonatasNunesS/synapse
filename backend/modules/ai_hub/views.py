@@ -23,10 +23,12 @@ from .serializers import (
     ConteudoGeradoSerializer,
     TaskIASerializer,
     SolicitacaoConteudoSerializer,
+    PerguntaChatSerializer,
 )
 from .services import AIHubService
 from .creditos import CreditosService, SemCreditosError
 from .analise.service import AnaliseFinanceiraService
+from .chat.service import ChatFinanceiroService
 
 logger = logging.getLogger("synapse")
 
@@ -121,6 +123,58 @@ class AnaliseFinanceiraView(APIView):
             else status.HTTP_200_OK
         )
         return success_response(data=resultado, status_code=status_code)
+
+
+class ChatFinanceiroPerguntaView(APIView):
+    """
+    POST /api/ai/chat-financeiro/pergunta/ — Uma pergunta ao consultor
+    financeiro conversacional (restrito ao financeiro do próprio negócio).
+    Body: { pergunta: str, historico: [{role, content}, ...] }
+    Reserva 2 créditos (operacao chat_financeiro), dispara a IA e devolve o
+    task_id para polling em /api/ai/status/{id}/. 402 se não houver saldo.
+    """
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    throttle_scope = "ai_gerar"
+
+    def post(self, request):
+        serializer = PerguntaChatSerializer(data=request.data)
+        if not serializer.is_valid():
+            return error_response(
+                code="VALIDATION_ERROR",
+                message="Pergunta inválida.",
+                details=serializer.errors,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        empresa_id = request.user.empresa_id
+        try:
+            resultado = ChatFinanceiroService.solicitar(
+                empresa_id=empresa_id,
+                usuario_id=request.user.id,
+                pergunta=serializer.validated_data["pergunta"],
+                historico=serializer.validated_data.get("historico", []),
+            )
+        except SemCreditosError as e:
+            return error_response(
+                code=e.code,
+                message=e.message,
+                details=e.details,
+                status_code=e.status_code,  # 402
+            )
+        except Exception as e:
+            logger.error(f"AI Hub: erro no chat financeiro — {e}", exc_info=True)
+            return error_response(
+                code="AI_ERROR",
+                message="Erro ao processar a pergunta.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        return success_response(
+            data=resultado,
+            message="Pergunta recebida. Faça polling em /api/ai/status/{id}/",
+            status_code=status.HTTP_202_ACCEPTED,
+        )
 
 
 class StatusTaskView(APIView):

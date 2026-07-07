@@ -43,7 +43,8 @@ CUSTO_OPERACAO = {
     "analise_financeira": 2,   # análise financeira
     "analise_estoque": 2,      # futuras análises
     "analise_crm": 2,
-    "chat": 2,                 # futuro chat da análise (uma pergunta)
+    "chat_financeiro": 2,      # chat da análise (uma pergunta)
+    "chat": 2,                 # alias genérico (futuros chats de outros módulos)
 }
 
 # Custo padrão para operação não catalogada (defensivo)
