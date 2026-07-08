@@ -10,6 +10,7 @@ from .views import (
     CreditosView,
     InsightSemanalView,
     AnaliseFinanceiraView,
+    MesesComDadosView,
     ChatFinanceiroPerguntaView,
 )
 
@@ -18,6 +19,7 @@ app_name = "ai_hub"
 urlpatterns = [
     path("gerar/", GerarConteudoView.as_view(), name="gerar"),
     path("analise-financeira/", AnaliseFinanceiraView.as_view(), name="analise-financeira"),
+    path("analise-financeira/meses/", MesesComDadosView.as_view(), name="analise-financeira-meses"),
     path("chat-financeiro/pergunta/", ChatFinanceiroPerguntaView.as_view(), name="chat-financeiro-pergunta"),
     path("status/<uuid:task_id>/", StatusTaskView.as_view(), name="status"),
     path("historico/", HistoricoConteudosView.as_view(), name="historico"),

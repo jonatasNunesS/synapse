@@ -11,14 +11,17 @@ SYSTEM_PROMPT_FINANCEIRO = (
     "Você é um consultor financeiro para pequenos negócios brasileiros. "
     "Analise APENAS os números fornecidos no contexto — nunca invente números "
     "que não estão lá. Cite os valores reais em reais (R$). "
+    "Você recebe DOIS períodos: um período principal e um período de comparação. "
+    "Compare os dois períodos, aponte as diferenças significativas, identifique "
+    "o que MELHOROU e o que PIOROU entre eles, sempre citando os valores em R$. "
     "Projeções, se fizer alguma, devem ser marcadas explicitamente como "
     "estimativa — nunca como garantia; não prometa resultados. "
     "Se faltar dado para uma conclusão, diga que falta em vez de supor. "
     "Escreva em português claro, tom de consultor direto, sem jargão.\n\n"
     "Responda ESTRITAMENTE em JSON válido, sem texto fora do JSON, no formato:\n"
     '{\n'
-    '  "diagnostico": "2 a 4 frases analisando a saúde financeira do mês '
-    'com base nos números reais.",\n'
+    '  "diagnostico": "2 a 4 frases comparando a saúde financeira dos dois '
+    'períodos com base nos números reais — o que mudou, melhorou ou piorou.",\n'
     '  "recomendacoes": ["1 a 3 recomendações concretas e acionáveis, '
     'específicas para estes números — não conselhos genéricos."]\n'
     "}"
@@ -33,49 +36,71 @@ def _fmt(v) -> str:
         return "R$ 0,00"
 
 
+def _bloco_periodo(titulo: str, label: str, r: dict) -> str:
+    """
+    Bloco com os números REAIS e específicos de um período (baseados nos
+    pagamentos daquele mês: receita, despesa, saldo, lucro, ticket, custos).
+    """
+    top = r.get("top_despesas") or []
+    top_txt = (
+        "; ".join(f"{c['categoria']}: {_fmt(c['total'])}" for c in top)
+        if top else "sem despesas categorizadas"
+    )
+    return (
+        f"{titulo} — {label}:\n"
+        f"- Receita recebida: {_fmt(r['receita'])}\n"
+        f"- Despesa paga: {_fmt(r['despesa'])}\n"
+        f"- Saldo do mês: {_fmt(r['saldo'])}\n"
+        f"- Lucro bruto: {_fmt(r['lucro'])} | Margem: {r['margem']:.1f}%\n"
+        f"- Ticket médio dos recebimentos: {_fmt(r['ticket_medio'])} "
+        f"({r['qtd_recebimentos']} recebimento(s))\n"
+        f"- Maiores custos por categoria: {top_txt}"
+    )
+
+
 def montar_bloco_numeros(ctx: dict) -> str:
     """
-    Bloco de texto com os NÚMEROS REAIS do mês (atual + anterior + variações).
+    Bloco de texto com os NÚMEROS REAIS dos DOIS períodos (principal +
+    comparação) + as variações entre eles + a situação atual de atrasados/a
+    receber (que é um retrato de hoje, não do período).
+
     Reutilizável: a Análise Financeira e o Chat Financeiro compartilham este
-    mesmo contexto — não duplicam a montagem.
+    mesmo contexto — não duplicam a montagem. Retrocompatível: quando não há
+    comparação explícita, o período de comparação é o mês anterior.
     """
     a = ctx["atual"]
     ant = ctx["anterior"]
     d = ctx["deltas"]
     per = ctx["periodo"]
+    label_princ = per["label"]
+    label_comp = per["label_anterior"]
 
     def pct(v):
         return f"{v:+.1f}%" if v is not None else "sem base de comparação"
 
-    top = a.get("top_despesas") or []
-    top_txt = (
-        "; ".join(f"{c['categoria']}: {_fmt(c['total'])}" for c in top)
-        if top else "sem despesas categorizadas"
-    )
-
     return (
         f"Empresa: {ctx['empresa']['nome']} (segmento: {ctx['empresa']['segmento']}).\n"
-        f"Período analisado: {per['label']} (comparado a {per['label_anterior']}).\n\n"
-        f"NÚMEROS REAIS DO MÊS ({per['label']}):\n"
-        f"- Receita recebida: {_fmt(a['receita'])} ({pct(d['receita_pct'])} vs mês anterior)\n"
-        f"- Despesa paga: {_fmt(a['despesa'])} ({pct(d['despesa_pct'])} vs mês anterior)\n"
-        f"- Saldo do mês: {_fmt(a['saldo'])} (variação de {_fmt(d['saldo_abs'])} vs mês anterior)\n"
-        f"- Lucro bruto: {_fmt(a['lucro'])} | Margem: {a['margem']:.1f}%\n"
-        f"- Pagamentos atrasados: {a['atrasado_qtd']} conta(s), totalizando {_fmt(a['atrasado_valor'])}\n"
-        f"- Contas a receber (pendentes): {_fmt(a['a_receber'])}\n"
-        f"- Ticket médio dos recebimentos: {_fmt(a['ticket_medio'])} "
-        f"({a['qtd_recebimentos']} recebimento(s) no mês)\n"
-        f"- Maiores custos por categoria: {top_txt}\n\n"
-        f"MÊS ANTERIOR ({per['label_anterior']}): receita {_fmt(ant['receita'])}, "
-        f"despesa {_fmt(ant['despesa'])}, saldo {_fmt(ant['saldo'])}."
+        f"Comparação de dois períodos: {label_princ} (principal) × "
+        f"{label_comp} (comparação).\n\n"
+        f"{_bloco_periodo('PERÍODO PRINCIPAL', label_princ, a)}\n\n"
+        f"{_bloco_periodo('PERÍODO DE COMPARAÇÃO', label_comp, ant)}\n\n"
+        f"VARIAÇÕES (principal vs comparação):\n"
+        f"- Receita: {pct(d['receita_pct'])}\n"
+        f"- Despesa: {pct(d['despesa_pct'])}\n"
+        f"- Saldo: variação de {_fmt(d['saldo_abs'])}\n\n"
+        f"SITUAÇÃO ATUAL (retrato de hoje, não do período): "
+        f"{a['atrasado_qtd']} pagamento(s) atrasado(s) totalizando "
+        f"{_fmt(a['atrasado_valor'])}; contas a receber pendentes de "
+        f"{_fmt(a['a_receber'])}."
     )
 
 
 def montar_prompt_usuario(ctx: dict) -> str:
-    """Monta o prompt do usuário com os números reais do contexto."""
+    """Monta o prompt do usuário com os números reais dos dois períodos."""
     return (
         f"{montar_bloco_numeros(ctx)}\n\n"
-        f"Faça o diagnóstico financeiro e as recomendações no formato JSON pedido."
+        f"Compare os dois períodos e faça o diagnóstico financeiro e as "
+        f"recomendações no formato JSON pedido."
     )
 
 

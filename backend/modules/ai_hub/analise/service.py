@@ -11,6 +11,7 @@ from datetime import date, datetime, timezone
 
 from django.core.cache import cache
 
+from shared.exceptions import SynapseException
 from modules.ai_hub.models import TaskIA
 
 from .context import montar_contexto_financeiro
@@ -26,17 +27,36 @@ logger = logging.getLogger("synapse")
 CACHE_TTL = 3 * 60 * 60  # 3 horas — os números do mês não mudam a cada minuto
 
 
+class ComparacaoSemDadosError(SynapseException):
+    """O período de comparação escolhido não tem dados (HTTP 400)."""
+
+    def __init__(self, label: str):
+        super().__init__(
+            code="COMPARACAO_SEM_DADOS",
+            message=(
+                f"O período de comparação ({label}) não tem lançamentos "
+                "financeiros. Escolha um mês que tenha movimento."
+            ),
+            details={"periodo": label},
+        )
+        self.status_code = 400
+
+
 class AnaliseFinanceiraService:
     """Orquestra a Análise Financeira via IA."""
 
     # ── Cache ────────────────────────────────────────────────────────────────
     @staticmethod
-    def _cache_key(empresa_id, mes: int, ano: int) -> str:
-        return f"synapse:{empresa_id}:ai:analise_financeira:{ano}-{mes:02d}"
+    def _cache_key(empresa_id, mes: int, ano: int, cmes: int, cano: int) -> str:
+        return (
+            f"synapse:{empresa_id}:ai:analise_financeira:"
+            f"{ano}-{mes:02d}_vs_{cano}-{cmes:02d}"
+        )
 
     # ── Números-chave (computados dos dados reais, não da IA) ────────────────
     @staticmethod
     def _numeros_chave(ctx: dict) -> list[dict]:
+        """Cards do período PRINCIPAL (inclui a situação atual de hoje)."""
         a, d = ctx["atual"], ctx["deltas"]
 
         def var(pct):
@@ -52,21 +72,48 @@ class AnaliseFinanceiraService:
             {"label": "Ticket médio", "valor": _fmt(a["ticket_medio"]), "variacao": f"{a['qtd_recebimentos']} recebimento(s)"},
         ]
 
+    @staticmethod
+    def _numeros_chave_comparacao(ctx: dict) -> list[dict]:
+        """
+        Cards do período de COMPARAÇÃO: só os números específicos do período
+        (baseados nos pagamentos daquele mês). Atrasados/a receber ficam de
+        fora porque são um retrato de hoje, não daquele mês.
+        """
+        c = ctx["anterior"]
+        return [
+            {"label": "Receita", "valor": _fmt(c["receita"]), "variacao": None},
+            {"label": "Despesa", "valor": _fmt(c["despesa"]), "variacao": None},
+            {"label": "Saldo do mês", "valor": _fmt(c["saldo"]), "variacao": None},
+            {"label": "Lucro bruto", "valor": _fmt(c["lucro"]), "variacao": f"{c['margem']:.1f}% margem"},
+            {"label": "Ticket médio", "valor": _fmt(c["ticket_medio"]), "variacao": f"{c['qtd_recebimentos']} recebimento(s)"},
+        ]
+
     # ── Solicitação ──────────────────────────────────────────────────────────
     @staticmethod
-    def solicitar(empresa_id, usuario_id, mes: int = None, ano: int = None) -> dict:
+    def solicitar(
+        empresa_id,
+        usuario_id,
+        mes: int = None,
+        ano: int = None,
+        comparar_mes: int = None,
+        comparar_ano: int = None,
+    ) -> dict:
         """
         Retorna um dos estados:
         - {"status": "sem_dados", "message": ...}          (sem movimento no mês)
         - {"status": "concluido", "analise": {...}}        (cache quente)
         - {"status": "processando", "task_id": "...", ...} (disparou a IA)
-        Levanta AILimitExceededError se o limite do plano foi atingido.
+        Levanta SemCreditosError (402) se não houver créditos, e
+        ComparacaoSemDadosError (400) se o período de comparação escolhido não
+        tiver dados.
         """
         hoje = date.today()
         mes = mes or hoje.month
         ano = ano or hoje.year
 
-        ctx = montar_contexto_financeiro(empresa_id, mes, ano)
+        ctx = montar_contexto_financeiro(
+            empresa_id, mes, ano, comparar_mes, comparar_ano
+        )
         if not ctx["tem_dados"]:
             return {
                 "status": "sem_dados",
@@ -77,7 +124,15 @@ class AnaliseFinanceiraService:
                 ),
             }
 
-        cached = cache.get(AnaliseFinanceiraService._cache_key(empresa_id, mes, ano))
+        # Comparação explícita sem dados → erro claro ANTES de reservar crédito.
+        if ctx["comparativo"] and not ctx["tem_dados_comparacao"]:
+            raise ComparacaoSemDadosError(ctx["comparacao"]["label"])
+
+        cmes = ctx["comparacao"]["mes"]
+        cano = ctx["comparacao"]["ano"]
+        cached = cache.get(
+            AnaliseFinanceiraService._cache_key(empresa_id, mes, ano, cmes, cano)
+        )
         if cached:
             # Cache quente não gasta crédito (não chama a IA)
             return {"status": "concluido", "analise": cached}
@@ -96,6 +151,8 @@ class AnaliseFinanceiraService:
                 "analise": "financeira",
                 "mes": mes,
                 "ano": ano,
+                "comparar_mes": cmes,
+                "comparar_ano": cano,
                 "_credito_operacao": operacao,
             },
         )
@@ -127,8 +184,10 @@ class AnaliseFinanceiraService:
             empresa_id = task_ia.empresa_id
             mes = task_ia.parametros.get("mes")
             ano = task_ia.parametros.get("ano")
+            cmes = task_ia.parametros.get("comparar_mes")
+            cano = task_ia.parametros.get("comparar_ano")
 
-            ctx = montar_contexto_financeiro(empresa_id, mes, ano)
+            ctx = montar_contexto_financeiro(empresa_id, mes, ano, cmes, cano)
             prompt = montar_prompt_usuario(ctx)
 
             groq = GroqClient()
@@ -144,7 +203,10 @@ class AnaliseFinanceiraService:
 
             analise = {
                 "periodo": ctx["periodo"],
+                "comparacao": ctx["comparacao"],
+                "comparativo": ctx["comparativo"],
                 "numeros_chave": AnaliseFinanceiraService._numeros_chave(ctx),
+                "numeros_chave_comparacao": AnaliseFinanceiraService._numeros_chave_comparacao(ctx),
                 "diagnostico": parsed["diagnostico"],
                 "recomendacoes": parsed["recomendacoes"],
                 "modelo": groq.MODELOS["avancado"],
@@ -157,7 +219,7 @@ class AnaliseFinanceiraService:
             task_ia.save(update_fields=["status", "resultado", "concluido_em"])
 
             cache.set(
-                AnaliseFinanceiraService._cache_key(empresa_id, mes, ano),
+                AnaliseFinanceiraService._cache_key(empresa_id, mes, ano, cmes, cano),
                 analise,
                 CACHE_TTL,
             )

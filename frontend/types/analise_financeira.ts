@@ -8,6 +8,12 @@ export interface NumeroChave {
   variacao: string | null; // ex: "+12.5%", "3 conta(s)", ou null
 }
 
+export interface PeriodoRef {
+  mes: number;
+  ano: number;
+  label: string;
+}
+
 export interface AnaliseFinanceira {
   periodo: {
     mes: number;
@@ -15,7 +21,10 @@ export interface AnaliseFinanceira {
     label: string;
     label_anterior: string;
   };
+  comparacao?: PeriodoRef;
+  comparativo?: boolean;
   numeros_chave: NumeroChave[];
+  numeros_chave_comparacao?: NumeroChave[];
   diagnostico: string;
   recomendacoes: string[];
   modelo: string;
@@ -27,3 +36,16 @@ export type SolicitarAnaliseResposta =
   | { status: "sem_dados"; message: string }
   | { status: "concluido"; analise: AnaliseFinanceira }
   | { status: "processando"; task_id: string };
+
+// Item de GET /api/ai/analise-financeira/meses/
+export interface MesComDados {
+  mes: number;
+  ano: number;
+  label: string;
+}
+
+// Seleção de período nos seletores (mes+ano); null = padrão do backend
+export interface PeriodoSelecao {
+  mes: number;
+  ano: number;
+}

@@ -61,17 +61,71 @@ def _variacao_pct(atual: float, anterior: float) -> float | None:
     return round((atual - anterior) / anterior * 100, 1)
 
 
-def montar_contexto_financeiro(empresa_id, mes: int = None, ano: int = None) -> dict:
+def listar_meses_com_dados(empresa_id) -> list[dict]:
     """
-    Monta o contexto financeiro real da empresa (mês atual + comparação com o
-    anterior). `tem_dados` indica se há movimento suficiente para analisar.
+    Meses que têm lançamentos (por pagamento ou vencimento), do mais recente
+    para o mais antigo. Alimenta os seletores da Análise — o usuário só escolhe
+    períodos que existem no banco. Cada item: {mes, ano, label}.
+    """
+    from django.db.models.functions import TruncMonth
+    from modules.financeiro.models import Lancamento
+
+    qs = Lancamento.objects.filter(empresa_id=empresa_id)
+    meses: set[tuple[int, int]] = set()
+    for campo in ("data_pagamento", "data_vencimento"):
+        datas = (
+            qs.exclude(**{f"{campo}__isnull": True})
+            .annotate(m=TruncMonth(campo))
+            .values_list("m", flat=True)
+            .distinct()
+        )
+        for d in datas:
+            if d:
+                meses.add((d.year, d.month))
+
+    ordenados = sorted(meses, reverse=True)
+    return [
+        {"mes": m, "ano": a, "label": f"{MESES_PT[m]}/{a}"}
+        for (a, m) in ordenados
+    ]
+
+
+def _tem_movimento(resumo: dict) -> bool:
+    """Há movimento suficiente no período para analisar?"""
+    return any([
+        resumo["receita"], resumo["despesa"], resumo["a_receber"], resumo["atrasado_valor"],
+    ])
+
+
+def montar_contexto_financeiro(
+    empresa_id,
+    mes: int = None,
+    ano: int = None,
+    comparar_mes: int = None,
+    comparar_ano: int = None,
+) -> dict:
+    """
+    Monta o contexto financeiro real da empresa para DOIS períodos: o período
+    principal (mes/ano) e um período de comparação.
+
+    - Sem comparar_mes/comparar_ano → comparação é o mês anterior
+      (comportamento retrocompatível).
+    - Com comparar_mes/comparar_ano → compara com o período escolhido.
+
+    `tem_dados` indica movimento no período principal; `tem_dados_comparacao`,
+    no período de comparação. `comparativo` diz se a comparação foi explícita.
     """
     from modules.auth.models import Empresa
 
     hoje = date.today()
     mes = mes or hoje.month
     ano = ano or hoje.year
-    pmes, pano = _mes_anterior(mes, ano)
+
+    comparativo = comparar_mes is not None and comparar_ano is not None
+    if comparativo:
+        pmes, pano = comparar_mes, comparar_ano
+    else:
+        pmes, pano = _mes_anterior(mes, ano)
 
     try:
         empresa = Empresa.objects.get(pk=empresa_id)
@@ -88,10 +142,6 @@ def montar_contexto_financeiro(empresa_id, mes: int = None, ano: int = None) -> 
         "saldo_abs": round(atual["saldo"] - anterior["saldo"], 2),
     }
 
-    tem_dados = any([
-        atual["receita"], atual["despesa"], atual["a_receber"], atual["atrasado_valor"],
-    ])
-
     return {
         "empresa": {"nome": nome, "segmento": segmento},
         "periodo": {
@@ -100,8 +150,15 @@ def montar_contexto_financeiro(empresa_id, mes: int = None, ano: int = None) -> 
             "label": f"{MESES_PT[mes]}/{ano}",
             "label_anterior": f"{MESES_PT[pmes]}/{pano}",
         },
+        "comparacao": {
+            "mes": pmes,
+            "ano": pano,
+            "label": f"{MESES_PT[pmes]}/{pano}",
+        },
         "atual": atual,
         "anterior": anterior,
         "deltas": deltas,
-        "tem_dados": tem_dados,
+        "comparativo": comparativo,
+        "tem_dados": _tem_movimento(atual),
+        "tem_dados_comparacao": _tem_movimento(anterior),
     }

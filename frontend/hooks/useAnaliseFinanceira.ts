@@ -7,14 +7,26 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import useSWR from "swr";
 import { api } from "@/lib/api";
 import type { TaskIA } from "@/types/ai_hub";
 import type {
   AnaliseFinanceira,
+  MesComDados,
+  PeriodoSelecao,
   SolicitarAnaliseResposta,
 } from "@/types/analise_financeira";
 
 type Estado = "idle" | "processando" | "sem_dados" | "concluido" | "erro";
+
+/** Meses que têm dados — alimenta os seletores de período. */
+export function useMesesComDados() {
+  const { data, isLoading } = useSWR<MesComDados[]>(
+    "/ai/analise-financeira/meses/",
+    (url: string) => api.get<MesComDados[]>(url).then((r) => r.data as MesComDados[])
+  );
+  return { meses: data ?? [], carregando: isLoading };
+}
 
 export function useAnaliseFinanceira() {
   const [estado, setEstado] = useState<Estado>("idle");
@@ -57,15 +69,32 @@ export function useAnaliseFinanceira() {
     [pararPolling]
   );
 
-  /** Dispara a análise. Propaga erro (ex.: 429 limite) para o caller. */
+  /**
+   * Dispara a análise. Aceita período principal e de comparação (opcionais);
+   * sem eles, o backend usa mês corrente vs mês anterior (retrocompat).
+   * Propaga erro (402 sem créditos, 400 comparação sem dados) para o caller.
+   */
   const analisar = useCallback(
-    async (): Promise<void> => {
+    async (
+      principal?: PeriodoSelecao | null,
+      comparacao?: PeriodoSelecao | null
+    ): Promise<void> => {
       setEstado("processando");
       setAnalise(null);
       setMensagem(null);
       try {
+        const params = new URLSearchParams();
+        if (principal) {
+          params.set("mes", String(principal.mes));
+          params.set("ano", String(principal.ano));
+        }
+        if (comparacao) {
+          params.set("comparar_mes", String(comparacao.mes));
+          params.set("comparar_ano", String(comparacao.ano));
+        }
+        const qs = params.toString();
         const resp = await api.post<SolicitarAnaliseResposta>(
-          "/ai/analise-financeira/"
+          `/ai/analise-financeira/${qs ? `?${qs}` : ""}`
         );
         const data = resp.data as SolicitarAnaliseResposta;
         if (data.status === "sem_dados") {

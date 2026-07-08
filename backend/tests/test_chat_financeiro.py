@@ -86,7 +86,7 @@ class _GroqComNumeros:
 
     def gerar(self, prompt="", sistema="", **kw):
         # O consultor "responde" citando a receita que veio no contexto.
-        assert "NÚMEROS REAIS DO MÊS" in prompt
+        assert "PERÍODO PRINCIPAL" in prompt
         return "Seu saldo caiu porque a despesa subiu. Receita recebida: R$ 10.000,00."
 
 

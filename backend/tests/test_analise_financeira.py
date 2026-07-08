@@ -16,6 +16,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from modules.auth.models import CustomUser, Empresa
 from modules.financeiro.models import Categoria, Lancamento
 from modules.ai_hub.analise.context import montar_contexto_financeiro
+from modules.ai_hub.analise.prompts import montar_prompt_usuario
 from modules.ai_hub.analise.service import AnaliseFinanceiraService
 
 
@@ -204,3 +205,122 @@ def test_cache_evita_segunda_chamada_groq(user_a, empresa_a):
 @pytest.mark.django_db
 def test_nao_autenticado_401():
     assert APIClient().post("/api/ai/analise-financeira/", {}, format="json").status_code == 401
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Multi-mês: comparação seletiva de dois períodos
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _lanc_em(empresa, tipo, valor, ano, mes, *, dia=15):
+    """Lançamento pago numa data específica (define o período por data_pagamento)."""
+    d = date(ano, mes, dia)
+    return Lancamento.objects.create(
+        empresa=empresa,
+        tipo=tipo,
+        descricao=f"{tipo} {valor} {ano}-{mes}",
+        valor=Decimal(str(valor)),
+        data_vencimento=d,
+        data_pagamento=d,
+        status="pago",
+    )
+
+
+# ── Contexto com dois períodos explícitos ───────────────────────────────────
+
+@pytest.mark.django_db
+def test_contexto_comparativo_dois_periodos(empresa_a):
+    _lanc_em(empresa_a, "receita", 10000, 2026, 7)
+    _lanc_em(empresa_a, "despesa", 6000, 2026, 7)
+    _lanc_em(empresa_a, "receita", 4000, 2025, 7)  # julho do ano passado
+    _lanc_em(empresa_a, "despesa", 3000, 2025, 7)
+
+    ctx = montar_contexto_financeiro(
+        empresa_a.id, mes=7, ano=2026, comparar_mes=7, comparar_ano=2025
+    )
+    assert ctx["comparativo"] is True
+    assert ctx["atual"]["receita"] == 10000.0
+    assert ctx["anterior"]["receita"] == 4000.0  # período de comparação escolhido
+    assert ctx["periodo"]["label"] == "Julho/2026"
+    assert ctx["comparacao"]["label"] == "Julho/2025"
+    assert ctx["tem_dados"] and ctx["tem_dados_comparacao"]
+
+    # O prompt cita os dois períodos com números completos
+    prompt = montar_prompt_usuario(ctx)
+    assert "PERÍODO PRINCIPAL — Julho/2026" in prompt
+    assert "PERÍODO DE COMPARAÇÃO — Julho/2025" in prompt
+    assert "R$ 10.000,00" in prompt and "R$ 4.000,00" in prompt
+
+
+# ── Sem params de comparação → comportamento antigo (retrocompat) ───────────
+
+@pytest.mark.django_db
+def test_retrocompat_sem_comparacao_usa_mes_anterior(empresa_a):
+    ctx = montar_contexto_financeiro(empresa_a.id, mes=7, ano=2026)
+    assert ctx["comparativo"] is False
+    assert ctx["comparacao"]["label"] == "Junho/2026"  # mês anterior automático
+
+
+@pytest.mark.django_db
+def test_solicitar_sem_comparacao_mantem_fluxo(user_a, empresa_a):
+    _lanc(empresa_a, "receita", 10000)
+    _lanc(empresa_a, "despesa", 4000)
+    with patch("infrastructure.ia.groq_client.GroqClient", _FakeGroq):
+        resp = _client(user_a).post("/api/ai/analise-financeira/", {}, format="json")
+    assert resp.status_code in (200, 202)
+    assert resp.json()["data"]["status"] in ("processando", "concluido")
+
+
+# ── Comparação com mês sem dados → 400 claro (antes de reservar crédito) ─────
+
+@pytest.mark.django_db
+def test_comparacao_sem_dados_400(user_a, empresa_a):
+    _lanc_em(empresa_a, "receita", 10000, 2026, 7)  # só julho/2026 tem dados
+    resp = _client(user_a).post(
+        "/api/ai/analise-financeira/?mes=7&ano=2026&comparar_mes=1&comparar_ano=2020",
+        {},
+        format="json",
+    )
+    assert resp.status_code == 400
+    assert resp.json()["error"]["code"] == "COMPARACAO_SEM_DADOS"
+    # Não cobrou crédito (rejeição antes da reserva)
+    from modules.ai_hub.creditos import CreditosService
+    assert CreditosService.saldo(empresa_a.id)["usado"] == 0
+
+
+# ── Endpoint de meses com dados ─────────────────────────────────────────────
+
+@pytest.mark.django_db
+def test_endpoint_meses_com_dados(user_a, empresa_a):
+    _lanc_em(empresa_a, "receita", 100, 2026, 7)
+    _lanc_em(empresa_a, "receita", 200, 2026, 5)
+    _lanc_em(empresa_a, "despesa", 50, 2025, 12)
+    resp = _client(user_a).get("/api/ai/analise-financeira/meses/")
+    assert resp.status_code == 200
+    meses = resp.json()["data"]
+    pares = [(m["ano"], m["mes"]) for m in meses]
+    assert (2026, 7) in pares and (2026, 5) in pares and (2025, 12) in pares
+    # Ordenado do mais recente para o mais antigo
+    assert pares == sorted(pares, reverse=True)
+
+
+# ── Multi-tenant: comparação não vaza dados de outra empresa ────────────────
+
+@pytest.mark.django_db
+def test_comparacao_multitenant_nao_vaza(empresa_a, empresa_b):
+    _lanc_em(empresa_a, "receita", 10000, 2026, 7)
+    _lanc_em(empresa_b, "receita", 55555, 2025, 7)
+    ctx = montar_contexto_financeiro(
+        empresa_a.id, mes=7, ano=2026, comparar_mes=7, comparar_ano=2025
+    )
+    # A comparação de A com julho/2025 não enxerga a receita de B
+    assert ctx["anterior"]["receita"] == 0.0
+
+
+@pytest.mark.django_db
+def test_meses_com_dados_multitenant(user_a, empresa_a, empresa_b):
+    _lanc_em(empresa_a, "receita", 100, 2026, 7)
+    _lanc_em(empresa_b, "receita", 200, 2024, 3)
+    meses = _client(user_a).get("/api/ai/analise-financeira/meses/").json()["data"]
+    pares = [(m["ano"], m["mes"]) for m in meses]
+    assert (2026, 7) in pares
+    assert (2024, 3) not in pares  # mês da empresa B não aparece para A
