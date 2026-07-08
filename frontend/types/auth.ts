@@ -21,6 +21,7 @@ export interface Usuario {
   perfil: "admin" | "gerente" | "colaborador";
   avatar_url: string;
   ativo: boolean;
+  is_staff_synapse: boolean;
   empresa: Empresa | null;
   criado_em: string;
 }

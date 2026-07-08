@@ -94,6 +94,7 @@ urlpatterns = [
     path("api/ai/", include("modules.ai_hub.urls")),
     path("api/agenda/", include("modules.agenda.urls")),
     path("api/search/", include("modules.search.urls")),
+    path("api/painel-admin/", include("modules.painel_admin.urls")),
 ]
 
 # ── Debug Toolbar (apenas em dev) ──────────────────────────
