@@ -26,6 +26,7 @@ TIPO_TASK_CHOICES = [
     ("insight", "Insight"),
     ("relatorio", "Relatório"),
     ("analise", "Análise"),
+    ("chat", "Chat"),
 ]
 
 STATUS_TASK_CHOICES = [

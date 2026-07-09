@@ -15,4 +15,5 @@ export interface Creditos {
 export const CUSTO_OPERACAO = {
   conteudo: 1,
   analise_financeira: 2,
+  chat_financeiro: 2,
 } as const;

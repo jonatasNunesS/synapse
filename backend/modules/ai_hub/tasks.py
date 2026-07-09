@@ -202,6 +202,32 @@ def analisar_financeiro(self, task_ia_id: str):
 
 
 @shared_task(
+    bind=True,
+    name="ai_hub.responder_chat_financeiro",
+    max_retries=0,  # falha é terminal: reembolsa o crédito
+)
+def responder_chat_financeiro(self, task_ia_id: str):
+    """Task Celery do Chat Financeiro. Lógica em ChatFinanceiroService."""
+    from modules.ai_hub.chat.service import ChatFinanceiroService
+    from modules.ai_hub.creditos import CreditosService
+    from modules.ai_hub.models import TaskIA
+
+    try:
+        ChatFinanceiroService.executar(task_ia_id)
+    except Exception:
+        # executar() já marcou a TaskIA como erro. Falha reembolsa: devolve o
+        # crédito. Não re-levanta (falha registrada na TaskIA, vista por polling).
+        try:
+            task_ia = TaskIA.objects.get(pk=task_ia_id)
+            CreditosService.devolver(
+                task_ia.empresa_id,
+                task_ia.parametros.get("_credito_operacao", "chat_financeiro"),
+            )
+        except TaskIA.DoesNotExist:
+            pass
+
+
+@shared_task(
     name="ai_hub.gerar_insights_semanais",
     bind=True,
     max_retries=1,
