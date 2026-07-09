@@ -143,6 +143,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
+    # Staff da PLATAFORMA Synapse (painel administrativo) — não confundir com
+    # is_staff (Django admin) nem com perfil (papel dentro da empresa cliente).
+    is_staff_synapse = models.BooleanField(default=False)
+
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
 

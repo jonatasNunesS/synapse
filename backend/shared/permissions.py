@@ -53,6 +53,23 @@ class IsAdminOrGerente(BasePermission):
         )
 
 
+class IsStaffSynapse(BasePermission):
+    """
+    Acesso restrito ao STAFF da plataforma Synapse (painel administrativo).
+    Exige usuário autenticado E is_staff_synapse=True. É uma visão de
+    plataforma (cross-tenant) — não usa EmpresaQuerySetMixin de propósito.
+    """
+
+    message = "Acesso restrito ao staff da plataforma Synapse."
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and getattr(request.user, "is_staff_synapse", False)
+        )
+
+
 class EmpresaQuerySetMixin:
     """
     Mixin multi-tenant obrigatório.

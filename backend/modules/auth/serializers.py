@@ -46,6 +46,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "perfil",
             "avatar_url",
             "ativo",
+            "is_staff_synapse",
             "empresa",
             "criado_em",
         ]

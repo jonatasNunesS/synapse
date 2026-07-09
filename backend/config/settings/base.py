@@ -56,6 +56,7 @@ LOCAL_APPS = [
     "modules.dashboard",
     "modules.ai_hub",
     "modules.agenda",
+    "modules.painel_admin",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -176,6 +177,8 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "login": "5/minute",
         "ai_gerar": "10/minute",
+        # painel_trocar_plano: 10 trocas de plano/minuto por staff da plataforma
+        "painel_trocar_plano": "10/minute",
     },
 }
 
