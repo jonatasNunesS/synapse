@@ -27,7 +27,8 @@ from .serializers import (
 )
 from .services import AIHubService
 from .creditos import CreditosService, SemCreditosError
-from .analise.service import AnaliseFinanceiraService
+from .analise.service import AnaliseFinanceiraService, ComparacaoSemDadosError
+from .analise.context import listar_meses_com_dados
 from .chat.service import ChatFinanceiroService
 
 logger = logging.getLogger("synapse")
@@ -86,7 +87,10 @@ class GerarConteudoView(APIView):
 
 class AnaliseFinanceiraView(APIView):
     """
-    POST /api/ai/analise-financeira/ — Solicita a análise financeira do mês.
+    POST /api/ai/analise-financeira/ — Solicita a análise financeira.
+    Aceita comparação seletiva de dois períodos por query params:
+      ?mes=7&ano=2026&comparar_mes=6&comparar_ano=2026
+    Sem os params de comparação: compara com o mês anterior (retrocompatível).
     Respostas possíveis (campo `status` no data):
       - sem_dados    → não há movimento suficiente (estado tratado, não erro)
       - concluido    → análise em cache (retorna `analise` na hora)
@@ -96,11 +100,30 @@ class AnaliseFinanceiraView(APIView):
     permission_classes = [IsAuthenticated, IsEmpresaMember]
     throttle_scope = "ai_gerar"
 
+    @staticmethod
+    def _int_param(request, nome):
+        valor = request.query_params.get(nome)
+        if valor in (None, ""):
+            return None
+        try:
+            return int(valor)
+        except (TypeError, ValueError):
+            return None
+
     def post(self, request):
         empresa_id = request.user.empresa_id
+        mes = self._int_param(request, "mes")
+        ano = self._int_param(request, "ano")
+        comparar_mes = self._int_param(request, "comparar_mes")
+        comparar_ano = self._int_param(request, "comparar_ano")
         try:
             resultado = AnaliseFinanceiraService.solicitar(
-                empresa_id=empresa_id, usuario_id=request.user.id
+                empresa_id=empresa_id,
+                usuario_id=request.user.id,
+                mes=mes,
+                ano=ano,
+                comparar_mes=comparar_mes,
+                comparar_ano=comparar_ano,
             )
         except SemCreditosError as e:
             return error_response(
@@ -108,6 +131,13 @@ class AnaliseFinanceiraView(APIView):
                 message=e.message,
                 details=e.details,
                 status_code=e.status_code,  # 402
+            )
+        except ComparacaoSemDadosError as e:
+            return error_response(
+                code=e.code,
+                message=e.message,
+                details=e.details,
+                status_code=e.status_code,  # 400
             )
         except Exception as e:
             logger.error(f"AI Hub: erro ao solicitar análise — {e}", exc_info=True)
@@ -123,6 +153,19 @@ class AnaliseFinanceiraView(APIView):
             else status.HTTP_200_OK
         )
         return success_response(data=resultado, status_code=status_code)
+
+
+class MesesComDadosView(APIView):
+    """
+    GET /api/ai/analise-financeira/meses/ — Meses que têm lançamentos, do mais
+    recente ao mais antigo. Alimenta os seletores de período da Análise.
+    """
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def get(self, request):
+        meses = listar_meses_com_dados(request.user.empresa_id)
+        return success_response(data=meses)
 
 
 class ChatFinanceiroPerguntaView(APIView):

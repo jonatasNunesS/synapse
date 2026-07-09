@@ -115,5 +115,15 @@ export function useChatFinanceiro() {
     setEnviando(false);
   }, [pararPolling]);
 
-  return { mensagens, enviando, perguntar, limpar };
+  /** Carrega uma conversa salva (histórico local) para continuar de onde parou. */
+  const carregar = useCallback(
+    (msgs: ChatMensagem[]) => {
+      pararPolling();
+      setEnviando(false);
+      setMensagens(msgs);
+    },
+    [pararPolling]
+  );
+
+  return { mensagens, enviando, perguntar, limpar, carregar };
 }

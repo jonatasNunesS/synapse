@@ -1,8 +1,9 @@
 "use client";
 /**
- * AI Hub 2.0 — Análise Financeira.
- * Botão → Celery + polling → resultado estruturado (diagnóstico / números-chave
- * / recomendações). Estado claro quando não há dados. Tema dark via tokens.
+ * AI Hub 2.0 — Análise Financeira (comparação seletiva de dois meses).
+ * O usuário escolhe o mês principal e um mês de comparação (ambos entre os
+ * meses que têm dados). A IA compara os dois períodos. Celery + polling.
+ * Tema dark via tokens.
  */
 import Link from "next/link";
 import { toast } from "sonner";
@@ -16,13 +17,16 @@ import {
   AlertCircle,
   FileText,
 } from "lucide-react";
-import { useEffect } from "react";
-import { useAnaliseFinanceira } from "@/hooks/useAnaliseFinanceira";
+import { useEffect, useMemo, useState } from "react";
+import {
+  useAnaliseFinanceira,
+  useMesesComDados,
+} from "@/hooks/useAnaliseFinanceira";
 import { getErrorMessage } from "@/lib/api";
 import { CreditosBadge } from "@/components/ai_hub/CreditosBadge";
 import { recarregarCreditos } from "@/hooks/useCreditos";
 import { CUSTO_OPERACAO } from "@/types/creditos";
-import type { NumeroChave } from "@/types/analise_financeira";
+import type { NumeroChave, PeriodoSelecao } from "@/types/analise_financeira";
 
 function corVariacao(v: string | null): string {
   if (!v) return "text-muted-foreground";
@@ -49,25 +53,67 @@ function CardNumero({ n }: { n: NumeroChave }) {
   );
 }
 
+const chave = (p: PeriodoSelecao) => `${p.ano}-${p.mes}`;
+
 export default function AnaliseFinanceiraPage() {
   const { estado, analise, mensagem, analisar } = useAnaliseFinanceira();
+  const { meses } = useMesesComDados();
+
+  const [principal, setPrincipal] = useState<PeriodoSelecao | null>(null);
+  const [comparacao, setComparacao] = useState<PeriodoSelecao | null>(null);
+
+  // Ao carregar os meses: principal = mais recente; comparação = o seguinte.
+  useEffect(() => {
+    if (meses.length === 0) return;
+    setPrincipal((p) => p ?? { mes: meses[0].mes, ano: meses[0].ano });
+    setComparacao((c) =>
+      c ?? (meses[1] ? { mes: meses[1].mes, ano: meses[1].ano } : null)
+    );
+  }, [meses]);
 
   // Refresca o saldo de créditos ao concluir ou falhar (reserva/devolução)
   useEffect(() => {
     if (estado === "concluido" || estado === "erro") recarregarCreditos();
   }, [estado]);
 
+  const mesmoPeriodo = Boolean(
+    principal && comparacao && chave(principal) === chave(comparacao)
+  );
+
   const handleAnalisar = async () => {
+    if (mesmoPeriodo) {
+      toast.error("Escolha dois meses diferentes para comparar.");
+      return;
+    }
     try {
-      await analisar();
+      await analisar(principal, comparacao);
       recarregarCreditos(); // reserva já debitou → atualiza o badge na hora
     } catch (err) {
-      // 402 SEM_CREDITOS cai aqui com mensagem clara + CTA de upgrade
+      // 402 SEM_CREDITOS / 400 COMPARACAO_SEM_DADOS caem aqui com msg clara
       toast.error(getErrorMessage(err), { duration: 7000 });
     }
   };
 
   const processando = estado === "processando";
+
+  const opcoes = useMemo(
+    () =>
+      meses.map((m) => ({
+        value: `${m.ano}-${m.mes}`,
+        label: m.label,
+        mes: m.mes,
+        ano: m.ano,
+      })),
+    [meses]
+  );
+
+  const onSelect = (
+    valor: string,
+    setter: (p: PeriodoSelecao | null) => void
+  ) => {
+    const o = opcoes.find((x) => x.value === valor);
+    setter(o ? { mes: o.mes, ano: o.ano } : null);
+  };
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -86,24 +132,66 @@ export default function AnaliseFinanceiraPage() {
               Análise Financeira
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              A IA analisa os números reais do seu mês e devolve diagnóstico e recomendações.
+              Escolha dois meses e a IA compara os números reais — o que
+              melhorou e o que piorou entre eles.
             </p>
           </div>
           <CreditosBadge />
         </div>
       </div>
 
-      {/* Ação */}
-      <div className="rounded-xl border border-border bg-card p-6 flex flex-col items-center text-center gap-3">
-        <div className="h-12 w-12 rounded-xl bg-primary/15 text-primary flex items-center justify-center">
-          <LineChart className="h-6 w-6" />
-        </div>
+      {/* Ação + seletores de período */}
+      <div className="rounded-xl border border-border bg-card p-6 flex flex-col items-center text-center gap-4">
+        {meses.length === 0 ? (
+          <p className="text-sm text-muted-foreground max-w-md">
+            Ainda não há meses com lançamentos. Cadastre receitas e despesas no
+            Financeiro para poder analisar.
+          </p>
+        ) : (
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full justify-center">
+            <div className="flex flex-col items-start gap-1">
+              <label className="text-xs text-muted-foreground">Mês principal</label>
+              <select
+                value={principal ? chave(principal) : ""}
+                onChange={(e) => onSelect(e.target.value, setPrincipal)}
+                disabled={processando}
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60"
+              >
+                {opcoes.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <span className="text-muted-foreground text-sm mt-5 hidden sm:block">
+              comparado com
+            </span>
+            <div className="flex flex-col items-start gap-1">
+              <label className="text-xs text-muted-foreground">Mês de comparação</label>
+              <select
+                value={comparacao ? chave(comparacao) : ""}
+                onChange={(e) => onSelect(e.target.value, setComparacao)}
+                disabled={processando}
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60"
+              >
+                {opcoes.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+
         <p className="text-sm text-muted-foreground max-w-md">
-          Usamos apenas os seus dados financeiros reais do período. Nenhum número é inventado.
+          Usamos apenas os seus dados financeiros reais dos períodos. Nenhum
+          número é inventado.
         </p>
         <button
           onClick={handleAnalisar}
-          disabled={processando}
+          disabled={processando || meses.length === 0 || mesmoPeriodo}
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-60"
         >
           {processando ? (
@@ -114,11 +202,16 @@ export default function AnaliseFinanceiraPage() {
           ) : (
             <>
               <LineChart className="h-4 w-4" />
-              {analise ? "Analisar novamente" : "Analisar meu financeiro"}
+              {analise ? "Analisar novamente" : "Comparar períodos"}
               <span className="opacity-80">({CUSTO_OPERACAO.analise_financeira} créditos)</span>
             </>
           )}
         </button>
+        {mesmoPeriodo && (
+          <p className="text-xs text-red-400">
+            Escolha dois meses diferentes para comparar.
+          </p>
+        )}
         {processando && (
           <p className="text-xs text-muted-foreground">
             Isso leva alguns segundos — a IA está processando os números.
@@ -145,25 +238,47 @@ export default function AnaliseFinanceiraPage() {
       {estado === "concluido" && analise && (
         <div className="space-y-5">
           <p className="text-xs text-muted-foreground">
-            Período: <span className="text-foreground">{analise.periodo.label}</span>{" "}
-            (comparado a {analise.periodo.label_anterior})
+            Comparando{" "}
+            <span className="text-foreground">{analise.periodo.label}</span> com{" "}
+            <span className="text-foreground">
+              {analise.comparacao?.label ?? analise.periodo.label_anterior}
+            </span>
           </p>
 
-          {/* Números-chave */}
-          <div>
-            <h2 className="text-sm font-semibold text-foreground mb-2">Números-chave</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {analise.numeros_chave.map((n) => (
-                <CardNumero key={n.label} n={n} />
-              ))}
+          {/* Números-chave dos dois períodos, lado a lado */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <h2 className="text-sm font-semibold text-foreground mb-2">
+                {analise.periodo.label}{" "}
+                <span className="text-xs font-normal text-muted-foreground">(principal)</span>
+              </h2>
+              <div className="grid grid-cols-2 gap-3">
+                {analise.numeros_chave.map((n) => (
+                  <CardNumero key={n.label} n={n} />
+                ))}
+              </div>
             </div>
+            {analise.numeros_chave_comparacao &&
+              analise.numeros_chave_comparacao.length > 0 && (
+                <div>
+                  <h2 className="text-sm font-semibold text-foreground mb-2">
+                    {analise.comparacao?.label ?? analise.periodo.label_anterior}{" "}
+                    <span className="text-xs font-normal text-muted-foreground">(comparação)</span>
+                  </h2>
+                  <div className="grid grid-cols-2 gap-3">
+                    {analise.numeros_chave_comparacao.map((n) => (
+                      <CardNumero key={n.label} n={n} />
+                    ))}
+                  </div>
+                </div>
+              )}
           </div>
 
           {/* Diagnóstico */}
           <div className="rounded-xl border border-border bg-card p-5">
             <h2 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
               <FileText className="h-4 w-4 text-primary" />
-              Diagnóstico
+              Diagnóstico comparativo
             </h2>
             <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
               {analise.diagnostico}
