@@ -23,9 +23,9 @@ from .serializers import (
     ConteudoGeradoSerializer,
     TaskIASerializer,
     SolicitacaoConteudoSerializer,
-    UsoIASerializer,
 )
-from .services import AIHubService, AILimitExceededError
+from .services import AIHubService
+from .creditos import CreditosService, SemCreditosError
 from .analise.service import AnaliseFinanceiraService
 
 logger = logging.getLogger("synapse")
@@ -60,11 +60,12 @@ class GerarConteudoView(APIView):
                 tipo=tipo,
                 parametros=parametros,
             )
-        except AILimitExceededError as e:
+        except SemCreditosError as e:
             return error_response(
                 code=e.code,
                 message=e.message,
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                details=e.details,
+                status_code=e.status_code,  # 402
             )
         except Exception as e:
             logger.error(f"AI Hub: erro ao solicitar geração — {e}", exc_info=True)
@@ -99,11 +100,12 @@ class AnaliseFinanceiraView(APIView):
             resultado = AnaliseFinanceiraService.solicitar(
                 empresa_id=empresa_id, usuario_id=request.user.id
             )
-        except AILimitExceededError as e:
+        except SemCreditosError as e:
             return error_response(
                 code=e.code,
                 message=e.message,
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                details=e.details,
+                status_code=e.status_code,  # 402
             )
         except Exception as e:
             logger.error(f"AI Hub: erro ao solicitar análise — {e}", exc_info=True)
@@ -181,16 +183,17 @@ class FavoritarConteudoView(APIView):
         )
 
 
-class UsoIAView(APIView):
-    """GET /api/ai/uso/ — Uso mensal e limite do plano."""
+class CreditosView(APIView):
+    """
+    GET /api/ai/creditos/ — Saldo de créditos DIÁRIOS de IA da empresa.
+    Retorna: usado, limite, restante, plano, ilimitado, renova_em.
+    (/api/ai/uso/ é um alias legado que retorna o mesmo payload.)
+    """
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def get(self, request):
-        empresa_id = request.user.empresa_id
-        uso = AIHubService.obter_uso(empresa_id)
-        serializer = UsoIASerializer(uso)
-        return success_response(data=serializer.data)
+        return success_response(data=CreditosService.saldo(request.user.empresa_id))
 
 
 class InsightSemanalView(APIView):

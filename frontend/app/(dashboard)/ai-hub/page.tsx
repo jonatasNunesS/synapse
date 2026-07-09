@@ -15,6 +15,7 @@ import {
   Users,
   ArrowRight,
 } from "lucide-react";
+import { CreditosBadge } from "@/components/ai_hub/CreditosBadge";
 
 interface AreaAI {
   key: string;
@@ -75,13 +76,16 @@ export default function AIHubPage() {
             Inteligência sobre os dados do seu negócio. Escolha uma área para começar.
           </p>
         </div>
-        <Link
-          href="/ai-hub/historico"
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-sm text-foreground hover:bg-accent transition-colors"
-        >
-          <History className="h-4 w-4" />
-          Histórico
-        </Link>
+        <div className="flex items-center gap-3">
+          <CreditosBadge />
+          <Link
+            href="/ai-hub/historico"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-sm text-foreground hover:bg-accent transition-colors"
+          >
+            <History className="h-4 w-4" />
+            Histórico
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -7,7 +7,7 @@ from .views import (
     StatusTaskView,
     HistoricoConteudosView,
     FavoritarConteudoView,
-    UsoIAView,
+    CreditosView,
     InsightSemanalView,
     AnaliseFinanceiraView,
 )
@@ -20,6 +20,7 @@ urlpatterns = [
     path("status/<uuid:task_id>/", StatusTaskView.as_view(), name="status"),
     path("historico/", HistoricoConteudosView.as_view(), name="historico"),
     path("favoritar/<uuid:conteudo_id>/", FavoritarConteudoView.as_view(), name="favoritar"),
-    path("uso/", UsoIAView.as_view(), name="uso"),
+    path("creditos/", CreditosView.as_view(), name="creditos"),
+    path("uso/", CreditosView.as_view(), name="uso"),  # alias legado
     path("insight/", InsightSemanalView.as_view(), name="insight"),
 ]

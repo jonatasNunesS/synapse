@@ -1,105 +1,24 @@
 """
 Synapse - AI Hub Service
 Responsável por:
-- Verificar e controlar limites de uso por plano
 - Montar contexto do negócio para a IA
 - Orquestrar criação de TaskIA e disparo de Celery
 - Obter status de tasks
+
+O controle de limite foi extraído para o sistema unificado de créditos
+(modules.ai_hub.creditos.CreditosService), que cobre TODAS as operações de IA.
 """
 import logging
-from datetime import date, timedelta
-from calendar import monthrange
+from datetime import date
 
 from django.core.cache import cache
 
-from shared.exceptions import SynapseException
 from .models import ConteudoGerado, TaskIA
 
 logger = logging.getLogger("synapse")
 
-# ─── Limites por plano ────────────────────────────────────────────────────────
-
-LIMITES_PLANO = {
-    "starter": 20,
-    "pro": 100,
-    "business": None,      # ilimitado
-    "enterprise": None,    # ilimitado
-}
-
-
-class AILimitExceededError(SynapseException):
-    """Lançado quando a empresa atingiu o limite de gerações do mês."""
-    def __init__(self, plano: str, limite: int):
-        super().__init__(
-            code="AI_LIMIT_EXCEEDED",
-            message=(
-                f"Limite de {limite} gerações/mês do plano {plano} atingido. "
-                f"Faça upgrade para continuar usando o AI Hub."
-            ),
-        )
-        self.status_code = 429
-
 
 class AIHubService:
-
-    # ─── Controle de uso ──────────────────────────────────────────────────────
-
-    @staticmethod
-    def _uso_key(empresa_id) -> str:
-        mes = date.today().strftime("%Y-%m")
-        return f"synapse:ai:uso:{empresa_id}:{mes}"
-
-    @staticmethod
-    def obter_uso(empresa_id) -> dict:
-        """Retorna uso atual do mês e limite do plano."""
-        from modules.auth.models import Empresa
-        empresa = Empresa.objects.get(pk=empresa_id)
-        plano = empresa.plano
-        limite = LIMITES_PLANO.get(plano)
-        usado = int(cache.get(AIHubService._uso_key(empresa_id)) or 0)
-        hoje = date.today()
-        ultimo_dia = monthrange(hoje.year, hoje.month)[1]
-        resetar_em = date(hoje.year, hoje.month, 1)
-        if hoje.month == 12:
-            resetar_em = date(hoje.year + 1, 1, 1)
-        else:
-            resetar_em = date(hoje.year, hoje.month + 1, 1)
-        return {
-            "usado": usado,
-            "limite": limite if limite is not None else 9999,
-            "percentual": round((usado / limite * 100), 1) if limite else 0.0,
-            "plano": plano,
-            "resetar_em": str(resetar_em),
-            "ilimitado": limite is None,
-        }
-
-    @staticmethod
-    def verificar_limite(empresa_id) -> bool:
-        """Retorna True se dentro do limite, False se excedeu."""
-        from modules.auth.models import Empresa
-        empresa = Empresa.objects.get(pk=empresa_id)
-        limite = LIMITES_PLANO.get(empresa.plano)
-        if limite is None:
-            return True  # ilimitado
-        usado = int(cache.get(AIHubService._uso_key(empresa_id)) or 0)
-        return usado < limite
-
-    @staticmethod
-    def incrementar_uso(empresa_id):
-        """Incrementa o contador mensal de uso no Redis."""
-        key = AIHubService._uso_key(empresa_id)
-        # TTL até o fim do mês + 2 dias de margem
-        hoje = date.today()
-        ultimo_dia = monthrange(hoje.year, hoje.month)[1]
-        ttl = (ultimo_dia - hoje.day + 2) * 86400
-        # cache.incr lança ValueError se a chave não existe (django-redis e
-        # locmem) — a 1ª geração do mês de cada empresa marcava a task como
-        # "erro" depois de já ter gasto a chamada na IA. add cria a chave
-        # com TTL apenas se ausente; touch renova o TTL (API padrão do
-        # Django, ao contrário de cache.expire, que é só do django-redis).
-        cache.add(key, 0, ttl)
-        cache.incr(key)
-        cache.touch(key, ttl)
 
     # ─── Contexto do negócio ──────────────────────────────────────────────────
 
@@ -184,23 +103,25 @@ class AIHubService:
     @staticmethod
     def solicitar_geracao(empresa_id, usuario_id, tipo: str, parametros: dict) -> "TaskIA":
         """
-        Verifica limite, cria TaskIA e dispara task Celery.
-        Retorna a TaskIA criada (status=pendente).
+        Reserva 1 crédito (rejeita na porta se não houver), cria TaskIA e
+        dispara a task Celery. Retorna a TaskIA criada (status=pendente).
+        Levanta SemCreditosError (402) ANTES de qualquer chamada à IA.
         """
         from modules.auth.models import Empresa
+        from modules.ai_hub.creditos import CreditosService
+
         empresa = Empresa.objects.get(pk=empresa_id)
 
-        # Verificar limite
-        if not AIHubService.verificar_limite(empresa_id):
-            limite = LIMITES_PLANO.get(empresa.plano, 0)
-            raise AILimitExceededError(empresa.plano, limite)
+        # Reserva o crédito ANTES de chamar a IA (rejeição na porta)
+        operacao = "conteudo"
+        CreditosService.reservar(empresa_id, operacao)
 
-        # Criar TaskIA
+        # Criar TaskIA (guarda a operação para devolução em caso de falha)
         task_ia = TaskIA.objects.create(
             empresa=empresa,
             tipo="conteudo",
             status="pendente",
-            parametros={"tipo_conteudo": tipo, **parametros},
+            parametros={"tipo_conteudo": tipo, "_credito_operacao": operacao, **parametros},
         )
 
         # Disparar Celery (importação lazy para evitar circular)

@@ -8,7 +8,8 @@ import pytest
 from rest_framework_simplejwt.tokens import RefreshToken
 from modules.auth.models import CustomUser, Empresa
 from modules.ai_hub.models import ConteudoGerado, TaskIA
-from modules.ai_hub.services import AIHubService, AILimitExceededError, LIMITES_PLANO
+from modules.ai_hub.services import AIHubService
+from modules.ai_hub.creditos import CreditosService, SemCreditosError
 from modules.ai_hub.serializers import SolicitacaoConteudoSerializer
 
 
@@ -213,52 +214,8 @@ class TestSolicitacaoConteudoSerializer:
         assert s.is_valid(), s.errors
 
 
-# ════════════════════════════════════════════════════════════
-# TESTES: SERVICE — Limites
-# ════════════════════════════════════════════════════════════
-
-@pytest.mark.django_db
-class TestAIHubServiceLimites:
-    def test_limites_por_plano(self):
-        assert LIMITES_PLANO["starter"] == 20
-        assert LIMITES_PLANO["pro"] == 100
-        assert LIMITES_PLANO["business"] is None
-        assert LIMITES_PLANO["enterprise"] is None
-
-    def test_verificar_limite_dentro_do_limite(self, empresa_starter):
-        with patch("modules.ai_hub.services.cache") as mock_cache:
-            mock_cache.get.return_value = "5"
-            resultado = AIHubService.verificar_limite(empresa_starter.id)
-            assert resultado is True
-
-    def test_verificar_limite_excedido(self, empresa_starter):
-        with patch("modules.ai_hub.services.cache") as mock_cache:
-            mock_cache.get.return_value = "20"  # starter limit = 20
-            resultado = AIHubService.verificar_limite(empresa_starter.id)
-            assert resultado is False
-
-    def test_verificar_limite_business_ilimitado(self, empresa_business):
-        with patch("modules.ai_hub.services.cache") as mock_cache:
-            mock_cache.get.return_value = "9999"
-            resultado = AIHubService.verificar_limite(empresa_business.id)
-            assert resultado is True  # ilimitado
-
-    def test_obter_uso_starter(self, empresa_starter):
-        with patch("modules.ai_hub.services.cache") as mock_cache:
-            mock_cache.get.return_value = "10"
-            uso = AIHubService.obter_uso(empresa_starter.id)
-            assert uso["usado"] == 10
-            assert uso["limite"] == 20
-            assert uso["percentual"] == 50.0
-            assert uso["plano"] == "starter"
-            assert uso["ilimitado"] is False
-
-    def test_obter_uso_business_ilimitado(self, empresa_business):
-        with patch("modules.ai_hub.services.cache") as mock_cache:
-            mock_cache.get.return_value = "50"
-            uso = AIHubService.obter_uso(empresa_business.id)
-            assert uso["ilimitado"] is True
-            assert uso["percentual"] == 0.0
+# NOTA: os testes de limites/créditos foram migrados para test_creditos.py
+# (sistema unificado de créditos diários).
 
 
 # ════════════════════════════════════════════════════════════
@@ -302,7 +259,7 @@ class TestAIHubServiceHistorico:
 @pytest.mark.django_db
 class TestAIHubServiceGeracao:
     def test_solicitar_geracao_cria_task(self, empresa_starter, usuario_starter):
-        with patch("modules.ai_hub.services.AIHubService.verificar_limite", return_value=True):
+        with patch("modules.ai_hub.creditos.CreditosService.reservar", return_value=1):
             with patch("modules.ai_hub.tasks.gerar_conteudo_ia.delay") as mock_delay:
                 mock_delay.return_value = MagicMock(id="celery-task-123")
                 task = AIHubService.solicitar_geracao(
@@ -316,9 +273,11 @@ class TestAIHubServiceGeracao:
                 assert task.task_id == "celery-task-123"
                 mock_delay.assert_called_once()
 
-    def test_solicitar_geracao_limite_excedido(self, empresa_starter, usuario_starter):
-        with patch("modules.ai_hub.services.AIHubService.verificar_limite", return_value=False):
-            with pytest.raises(AILimitExceededError):
+    def test_solicitar_geracao_sem_creditos(self, empresa_starter, usuario_starter):
+        def _sem(*a, **k):
+            raise SemCreditosError("starter", 4, 1, 0)
+        with patch("modules.ai_hub.creditos.CreditosService.reservar", side_effect=_sem):
+            with pytest.raises(SemCreditosError):
                 AIHubService.solicitar_geracao(
                     empresa_id=empresa_starter.id,
                     usuario_id=usuario_starter.id,
@@ -328,24 +287,28 @@ class TestAIHubServiceGeracao:
 
 
 # ════════════════════════════════════════════════════════════
-# TESTES: ENDPOINTS — GET /api/ai/uso/
+# TESTES: ENDPOINTS — GET /api/ai/creditos/ (e alias /uso/)
 # ════════════════════════════════════════════════════════════
 
 @pytest.mark.django_db
-class TestUsoIAEndpoint:
-    def test_uso_autenticado(self, client, usuario_starter):
+class TestCreditosEndpoint:
+    def test_creditos_autenticado(self, client, usuario_starter):
         c = auth_client(client, usuario_starter)
-        with patch("modules.ai_hub.services.cache") as mock_cache:
-            mock_cache.get.return_value = "5"
-            resp = c.get("/api/ai/uso/")
+        resp = c.get("/api/ai/creditos/")
         assert resp.status_code == 200
         data = resp.json()
         assert data["success"] is True
         assert data["data"]["plano"] == "starter"
-        assert data["data"]["limite"] == 20
+        assert data["data"]["limite"] == 4  # créditos diários do starter
 
-    def test_uso_nao_autenticado(self, client):
-        resp = client.get("/api/ai/uso/")
+    def test_uso_alias_legado(self, client, usuario_starter):
+        c = auth_client(client, usuario_starter)
+        resp = c.get("/api/ai/uso/")
+        assert resp.status_code == 200
+        assert resp.json()["data"]["limite"] == 4
+
+    def test_creditos_nao_autenticado(self, client):
+        resp = client.get("/api/ai/creditos/")
         assert resp.status_code == 401
 
 
@@ -357,7 +320,7 @@ class TestUsoIAEndpoint:
 class TestGerarConteudoEndpoint:
     def test_gerar_happy_path(self, client, usuario_starter):
         c = auth_client(client, usuario_starter)
-        with patch("modules.ai_hub.services.AIHubService.verificar_limite", return_value=True):
+        with patch("modules.ai_hub.creditos.CreditosService.reservar", return_value=1):
             with patch("modules.ai_hub.tasks.gerar_conteudo_ia.delay") as mock_delay:
                 mock_delay.return_value = MagicMock(id="celery-abc")
                 resp = c.post(
@@ -386,9 +349,13 @@ class TestGerarConteudoEndpoint:
         )
         assert resp.status_code == 400
 
-    def test_gerar_limite_excedido(self, client, usuario_starter):
+    def test_gerar_sem_creditos_402(self, client, usuario_starter):
         c = auth_client(client, usuario_starter)
-        with patch("modules.ai_hub.services.AIHubService.verificar_limite", return_value=False):
+
+        def _sem(*a, **k):
+            raise SemCreditosError("starter", 4, 1, 0)
+
+        with patch("modules.ai_hub.creditos.CreditosService.reservar", side_effect=_sem):
             resp = c.post(
                 "/api/ai/gerar/",
                 data={
@@ -401,7 +368,8 @@ class TestGerarConteudoEndpoint:
                 },
                 content_type="application/json",
             )
-        assert resp.status_code == 429
+        assert resp.status_code == 402
+        assert resp.json()["error"]["code"] == "SEM_CREDITOS"
 
     def test_gerar_nao_autenticado(self, client):
         resp = client.post(
@@ -566,8 +534,7 @@ class TestGeradorCeleryTask:
             with patch("infrastructure.ia.groq_client.GroqClient.gerar", return_value=mock_response):
                 with patch("infrastructure.ia.groq_client.GroqClient.MODELOS", {"simples": "mock", "avancado": "mock"}):
                     with patch("modules.ai_hub.services.AIHubService.montar_contexto_negocio", return_value="Contexto mock"):
-                        with patch("modules.ai_hub.services.AIHubService.incrementar_uso"):
-                            gerar_conteudo_ia(str(task_ia_pendente.id))
+                        gerar_conteudo_ia(str(task_ia_pendente.id))
 
         task_ia_pendente.refresh_from_db()
         assert task_ia_pendente.status == "concluido"
