@@ -17,12 +17,15 @@ import {
   MessageCircle,
   Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useFornecedorDetail } from "@/hooks/useFornecedores";
+import { getErrorMessage } from "@/lib/api";
 import { ScoreSynapseCard } from "@/components/fornecedores/ScoreSynapse";
 import { AvaliacaoTripla } from "@/components/fornecedores/AvaliacaoStars";
 import { AvaliacaoModal } from "@/components/fornecedores/AvaliacaoModal";
 import { HistoricoCompras } from "@/components/fornecedores/HistoricoCompras";
 import { FornecedorForm } from "@/components/fornecedores/FornecedorForm";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { FornecedorDetail } from "@/types/fornecedores";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -60,6 +63,7 @@ export default function FornecedorDetailPage() {
   const [showEdit, setShowEdit] = useState(false);
   const [showAvaliacao, setShowAvaliacao] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmarExclusao, setConfirmarExclusao] = useState(false);
   const [localData, setLocalData] = useState<FornecedorDetail | null>(null);
 
   useEffect(() => {
@@ -71,14 +75,17 @@ export default function FornecedorDetailPage() {
   }, [data]);
 
   const handleDelete = async () => {
-    if (!confirm(`Deseja remover o fornecedor "${localData?.nome}"? Esta ação não pode ser desfeita.`)) return;
+    if (deleting) return; // evita duplo clique
     setDeleting(true);
     try {
       await remover(id);
+      toast.success("Fornecedor removido.");
       router.push("/fornecedores");
-    } catch {
+    } catch (err) {
+      // Erro NUNCA calado: mostra a mensagem real do backend
+      toast.error(getErrorMessage(err), { duration: 7000 });
       setDeleting(false);
-      alert("Erro ao remover fornecedor.");
+      setConfirmarExclusao(false);
     }
   };
 
@@ -148,7 +155,7 @@ export default function FornecedorDetailPage() {
             Editar
           </button>
           <button
-            onClick={handleDelete}
+            onClick={() => setConfirmarExclusao(true)}
             disabled={deleting}
             className="flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-sm text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-60"
           >
@@ -286,6 +293,22 @@ export default function FornecedorDetailPage() {
           onClose={() => setShowAvaliacao(false)}
         />
       )}
+
+      <ConfirmDialog
+        open={confirmarExclusao}
+        titulo="Remover fornecedor"
+        mensagem={
+          <>
+            Deseja remover o fornecedor{" "}
+            <span className="text-white font-medium">{localData?.nome}</span>? Esta
+            ação não pode ser desfeita.
+          </>
+        }
+        confirmLabel="Remover"
+        processando={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmarExclusao(false)}
+      />
     </div>
   );
 }

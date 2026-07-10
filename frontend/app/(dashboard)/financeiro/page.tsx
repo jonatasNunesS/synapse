@@ -4,12 +4,15 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Plus, Tag } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { CategoriaFinanceiroModal } from "@/components/financeiro/CategoriaFinanceiroModal";
 import { FluxoCaixaChart } from "@/components/financeiro/FluxoCaixaChart";
 import { LancamentoForm } from "@/components/financeiro/LancamentoForm";
 import { LancamentoTable } from "@/components/financeiro/LancamentoTable";
 import { PagarModal } from "@/components/financeiro/PagarModal";
 import { ResumoCards } from "@/components/financeiro/ResumoCards";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { getErrorMessage } from "@/lib/api";
 import {
   useCategorias,
   useFluxoCaixa,
@@ -26,6 +29,9 @@ export default function FinanceiroPage() {
   const [mostrarCategorias, setMostrarCategorias] = useState(false);
   const [lancamentoParaPagar, setLancamentoParaPagar] =
     useState<Lancamento | null>(null);
+  const [lancamentoParaExcluir, setLancamentoParaExcluir] =
+    useState<Lancamento | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
 
   // Primeiro e último dia do mês selecionado
   const dataInicio = `${ano}-${String(mes).padStart(2, "0")}-01`;
@@ -68,10 +74,20 @@ export default function FinanceiroPage() {
     recarregarResumo();
   };
 
-  const handleDeletar = async (lancamento: Lancamento) => {
-    if (!confirm(`Excluir "${lancamento.descricao}"?`)) return;
-    await deletar(lancamento.id);
-    recarregarResumo();
+  const handleConfirmarExclusao = async () => {
+    if (!lancamentoParaExcluir || excluindo) return; // evita duplo clique
+    setExcluindo(true);
+    try {
+      await deletar(lancamentoParaExcluir.id);
+      toast.success("Lançamento excluído.");
+      setLancamentoParaExcluir(null);
+      recarregarResumo();
+    } catch (err) {
+      // Erro NUNCA calado: mostra a mensagem real do backend
+      toast.error(getErrorMessage(err), { duration: 7000 });
+    } finally {
+      setExcluindo(false);
+    }
   };
 
   return (
@@ -154,7 +170,7 @@ export default function FinanceiroPage() {
           lancamentos={lancamentos}
           loading={loadingLancamentos}
           onPagar={setLancamentoParaPagar}
-          onDeletar={handleDeletar}
+          onDeletar={setLancamentoParaExcluir}
         />
       </div>
 
@@ -178,6 +194,24 @@ export default function FinanceiroPage() {
       {mostrarCategorias && (
         <CategoriaFinanceiroModal onClose={() => setMostrarCategorias(false)} />
       )}
+
+      <ConfirmDialog
+        open={!!lancamentoParaExcluir}
+        titulo="Excluir lançamento"
+        mensagem={
+          <>
+            Excluir{" "}
+            <span className="text-white font-medium">
+              {lancamentoParaExcluir?.descricao}
+            </span>
+            ? Esta ação não pode ser desfeita.
+          </>
+        }
+        confirmLabel="Excluir"
+        processando={excluindo}
+        onConfirm={handleConfirmarExclusao}
+        onCancel={() => setLancamentoParaExcluir(null)}
+      />
     </div>
   );
 }

@@ -2,9 +2,12 @@
 
 import { ChevronLeft, ChevronRight, Plus, Search, X } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { LancamentoForm } from "@/components/financeiro/LancamentoForm";
 import { LancamentoTable } from "@/components/financeiro/LancamentoTable";
 import { PagarModal } from "@/components/financeiro/PagarModal";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { getErrorMessage } from "@/lib/api";
 import {
   useCategorias,
   useLancamentos,
@@ -25,6 +28,9 @@ export default function LancamentosPage() {
   const [mostrarForm, setMostrarForm] = useState(false);
   const [lancamentoParaPagar, setLancamentoParaPagar] =
     useState<Lancamento | null>(null);
+  const [lancamentoParaExcluir, setLancamentoParaExcluir] =
+    useState<Lancamento | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
 
   const { categorias } = useCategorias();
   const {
@@ -70,9 +76,19 @@ export default function LancamentosPage() {
     setLancamentoParaPagar(null);
   };
 
-  const handleDeletar = async (lancamento: Lancamento) => {
-    if (!confirm(`Excluir "${lancamento.descricao}"?`)) return;
-    await deletar(lancamento.id);
+  const handleConfirmarExclusao = async () => {
+    if (!lancamentoParaExcluir || excluindo) return; // evita duplo clique
+    setExcluindo(true);
+    try {
+      await deletar(lancamentoParaExcluir.id);
+      toast.success("Lançamento excluído.");
+      setLancamentoParaExcluir(null);
+    } catch (err) {
+      // Erro NUNCA calado: mostra a mensagem real do backend
+      toast.error(getErrorMessage(err), { duration: 7000 });
+    } finally {
+      setExcluindo(false);
+    }
   };
 
   return (
@@ -195,7 +211,7 @@ export default function LancamentosPage() {
           lancamentos={lancamentos}
           loading={loading}
           onPagar={setLancamentoParaPagar}
-          onDeletar={handleDeletar}
+          onDeletar={setLancamentoParaExcluir}
         />
 
         {/* Paginação */}
@@ -247,6 +263,24 @@ export default function LancamentosPage() {
           onClose={() => setLancamentoParaPagar(null)}
         />
       )}
+
+      <ConfirmDialog
+        open={!!lancamentoParaExcluir}
+        titulo="Excluir lançamento"
+        mensagem={
+          <>
+            Excluir{" "}
+            <span className="text-white font-medium">
+              {lancamentoParaExcluir?.descricao}
+            </span>
+            ? Esta ação não pode ser desfeita.
+          </>
+        }
+        confirmLabel="Excluir"
+        processando={excluindo}
+        onConfirm={handleConfirmarExclusao}
+        onCancel={() => setLancamentoParaExcluir(null)}
+      />
     </div>
   );
 }

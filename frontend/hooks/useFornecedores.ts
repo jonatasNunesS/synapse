@@ -245,9 +245,9 @@ export function useComprasFornecedor() {
   );
 
   const atualizar = useCallback(
-    async (compraId: string, payload: Partial<CompraFormData>) => {
+    async (fornecedorId: string, compraId: string, payload: Partial<CompraFormData>) => {
       const res = await api.patch<CompraFornecedor>(
-        `/fornecedores/compras/${compraId}/`,
+        `/fornecedores/${fornecedorId}/compras/${compraId}/`,
         payload
       );
       return res.data;
@@ -255,8 +255,8 @@ export function useComprasFornecedor() {
     []
   );
 
-  const deletar = useCallback(async (compraId: string) => {
-    await api.delete(`/fornecedores/compras/${compraId}/`);
+  const deletar = useCallback(async (fornecedorId: string, compraId: string) => {
+    await api.delete(`/fornecedores/${fornecedorId}/compras/${compraId}/`);
   }, []);
 
   return { data, total, loading, error, fetch, criar, atualizar, deletar };

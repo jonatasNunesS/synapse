@@ -5,7 +5,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Plus, X, Loader2, ShoppingCart, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { useComprasFornecedor } from "@/hooks/useFornecedores";
+import { getErrorMessage } from "@/lib/api";
 import type { CompraFornecedor } from "@/types/fornecedores";
 import type { ApiError } from "@/types/api";
 
@@ -69,7 +71,7 @@ function NovaCompraForm({ fornecedorId, onSuccess, onClose, compraId, initialDat
         Object.entries(values).filter(([, v]) => v !== "" && v !== undefined)
       ) as CompraFormValues;
       if (isEdit && compraId) {
-        await atualizar(compraId, payload);
+        await atualizar(fornecedorId, compraId, payload);
       } else {
         await criar(fornecedorId, payload);
       }
@@ -159,7 +161,7 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
   const [showForm, setShowForm] = useState(false);
   const [editando, setEditando] = useState<CompraFornecedor | null>(null);
   const [confirmandoDelete, setConfirmandoDelete] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
   const pageSize = 25;
 
   useEffect(() => {
@@ -175,25 +177,24 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
   };
 
   const handleDeletar = async (id: string) => {
-    setActionError(null);
+    if (excluindo) return; // evita duplo clique / requisição duplicada
+    setExcluindo(true);
     try {
-      await deletar(id);
+      await deletar(fornecedorId, id);
+      toast.success("Compra excluída.");
+      setConfirmandoDelete(null);
       fetch(fornecedorId, page);
     } catch (err: unknown) {
-      const e = err as ApiError;
-      setActionError(e?.error?.message ?? "Erro ao excluir compra.");
+      // Erro NUNCA calado: mostra a mensagem real do backend
+      toast.error(getErrorMessage(err), { duration: 7000 });
     } finally {
-      setConfirmandoDelete(null);
+      setExcluindo(false);
     }
   };
 
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm">
-      {actionError && (
-        <div className="mx-4 mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
-          {actionError}
-        </div>
-      )}
+
 
       {/* Header */}
       <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
@@ -272,13 +273,16 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleDeletar(c.id)}
-                        className="px-1.5 py-0.5 rounded text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                        disabled={excluindo}
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                       >
+                        {excluindo && <Loader2 className="h-3 w-3 animate-spin" />}
                         Sim
                       </button>
                       <button
                         onClick={() => setConfirmandoDelete(null)}
-                        className="px-1.5 py-0.5 rounded text-xs text-zinc-400 hover:text-white transition-colors"
+                        disabled={excluindo}
+                        className="px-1.5 py-0.5 rounded text-xs text-zinc-400 hover:text-white transition-colors disabled:opacity-50"
                       >
                         Não
                       </button>
