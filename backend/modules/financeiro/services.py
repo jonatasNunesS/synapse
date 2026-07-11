@@ -19,6 +19,16 @@ TTL_RESUMO = 300        # 5 minutos
 TTL_FLUXO = 300         # 5 minutos
 TTL_DRE = 600           # 10 minutos
 TTL_CATEGORIAS = 1800   # 30 minutos
+TTL_SALDO = 60          # 1 minuto — saldo muda a cada operação
+
+
+def _f(v) -> float:
+    """Decimal/None → float (JSON-safe para o cache)."""
+    return float(v) if isinstance(v, Decimal) else (v or 0.0)
+
+
+def _bucket_float(b: dict) -> dict:
+    return {"total": _f(b["total"]), "count": b["count"]}
 
 
 class FinanceiroService:
@@ -150,6 +160,43 @@ class FinanceiroService:
         }
         set_cached(cache_key, resumo_serializable, TTL_RESUMO)
         return resumo
+
+    @staticmethod
+    def obter_saldo(empresa_id, mes: int, ano: int) -> dict:
+        """
+        Saldo acumulado (histórico, ignora o filtro) + saldo do mês + as 4
+        métricas do período. Cache Redis TTL 60s por empresa+mês+ano; é
+        invalidado por invalidate_cache(empresa, "financeiro") em qualquer
+        criação/edição/exclusão/pagamento de lançamento.
+        """
+        cache_key = build_cache_key(
+            empresa_id, "financeiro", "saldo", {"mes": mes, "ano": ano}
+        )
+        cached = get_cached(cache_key)
+        if cached is not None:
+            return cached
+
+        dados = FinanceiroRepository.calcular_saldo(empresa_id, mes, ano)
+        ac = dados["acumulado"]
+        m = dados["mes_atual"]
+        resultado = {
+            "acumulado": {
+                "total_recebido": _f(ac["total_recebido"]),
+                "total_pago": _f(ac["total_pago"]),
+                "saldo": _f(ac["saldo"]),
+            },
+            "mes_atual": {
+                "mes": m["mes"],
+                "ano": m["ano"],
+                "recebido": _bucket_float(m["recebido"]),
+                "a_receber": _bucket_float(m["a_receber"]),
+                "pago": _bucket_float(m["pago"]),
+                "a_pagar": _bucket_float(m["a_pagar"]),
+                "saldo": _f(m["saldo"]),
+            },
+        }
+        set_cached(cache_key, resultado, TTL_SALDO)
+        return resultado
 
     @staticmethod
     def obter_fluxo_caixa(empresa_id, data_inicio: date, data_fim: date) -> list:

@@ -7,7 +7,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 from typing import Any
 
-from django.db.models import Case, DecimalField, Q, Sum, Value, When
+from django.db.models import Case, Count, DecimalField, Q, Sum, Value, When
 from django.db.models.functions import TruncDate
 from django.db import connection
 
@@ -185,6 +185,71 @@ class FinanceiroRepository:
             "total_pendente": total_pendente,
             "total_atrasado": total_atrasado,
             "lancamentos_count": lancamentos_count,
+        }
+
+    @staticmethod
+    def calcular_saldo(empresa_id, mes: int, ano: int) -> dict:
+        """
+        Saldo acumulado (histórico, IGNORA o filtro de mês) + saldo do mês
+        (realizado) + as 4 métricas do período.
+
+        - Acumulado: dinheiro real hoje = recebido histórico − pago histórico
+          (apenas status=pago; independe de mês).
+        - Do mês (o filtro é LENTE, não corta o acumulado):
+          recebido  = receita paga,   por data_pagamento no mês
+          a_receber = receita pendente, por data_vencimento no mês
+          pago      = despesa paga,    por data_pagamento no mês
+          a_pagar   = despesa pendente, por data_vencimento no mês
+          saldo do mês = recebido − pago (só o realizado).
+        """
+        base = Lancamento.objects.filter(empresa_id=empresa_id)
+
+        # ── Acumulado (sem filtro de mês) ────────────────────────────────────
+        pagos = base.filter(status="pago")
+        total_recebido = (
+            pagos.filter(tipo="receita").aggregate(t=Sum("valor"))["t"] or Decimal("0")
+        )
+        total_pago = (
+            pagos.filter(tipo="despesa").aggregate(t=Sum("valor"))["t"] or Decimal("0")
+        )
+
+        # ── Métricas do mês ──────────────────────────────────────────────────
+        def _bucket(qs) -> dict:
+            agg = qs.aggregate(total=Sum("valor"), count=Count("id"))
+            return {"total": agg["total"] or Decimal("0"), "count": agg["count"] or 0}
+
+        recebido = _bucket(base.filter(
+            tipo="receita", status="pago",
+            data_pagamento__month=mes, data_pagamento__year=ano,
+        ))
+        a_receber = _bucket(base.filter(
+            tipo="receita", status="pendente",
+            data_vencimento__month=mes, data_vencimento__year=ano,
+        ))
+        pago = _bucket(base.filter(
+            tipo="despesa", status="pago",
+            data_pagamento__month=mes, data_pagamento__year=ano,
+        ))
+        a_pagar = _bucket(base.filter(
+            tipo="despesa", status="pendente",
+            data_vencimento__month=mes, data_vencimento__year=ano,
+        ))
+
+        return {
+            "acumulado": {
+                "total_recebido": total_recebido,
+                "total_pago": total_pago,
+                "saldo": total_recebido - total_pago,
+            },
+            "mes_atual": {
+                "mes": mes,
+                "ano": ano,
+                "recebido": recebido,
+                "a_receber": a_receber,
+                "pago": pago,
+                "a_pagar": a_pagar,
+                "saldo": recebido["total"] - pago["total"],
+            },
         }
 
     @staticmethod

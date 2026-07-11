@@ -88,6 +88,30 @@ export interface ResumoFinanceiro {
   lancamentos_count: number;
 }
 
+// ── Saldo (acumulado + do mês + 4 métricas) ───────────────
+
+export interface SaldoMetrica {
+  total: number;
+  count: number;
+}
+
+export interface SaldoFinanceiro {
+  acumulado: {
+    total_recebido: number;
+    total_pago: number;
+    saldo: number;
+  };
+  mes_atual: {
+    mes: number;
+    ano: number;
+    saldo: number;
+    recebido: SaldoMetrica;
+    a_receber: SaldoMetrica;
+    pago: SaldoMetrica;
+    a_pagar: SaldoMetrica;
+  };
+}
+
 // ── Fluxo de Caixa ────────────────────────────────────────
 
 export interface FluxoCaixaDia {
