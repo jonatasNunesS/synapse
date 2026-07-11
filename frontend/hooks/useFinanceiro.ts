@@ -18,6 +18,7 @@ import type {
   LancamentoCreate,
   LancamentoPagar,
   ResumoFinanceiro,
+  SaldoFinanceiro,
 } from "@/types/financeiro";
 
 // ── Resumo ────────────────────────────────────────────────
@@ -52,6 +53,40 @@ export function useResumoFinanceiro(mes?: number, ano?: number) {
   }, [carregar]);
 
   return { resumo, loading, error, recarregar: carregar };
+}
+
+// ── Saldo (acumulado + do mês) ────────────────────────────
+
+export function useSaldoFinanceiro(mes?: number, ano?: number) {
+  const hoje = new Date();
+  const m = mes ?? hoje.getMonth() + 1;
+  const a = ano ?? hoje.getFullYear();
+
+  const [saldo, setSaldo] = useState<SaldoFinanceiro | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const carregar = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const resp = await api.get<SaldoFinanceiro>(
+        `/financeiro/saldo/?mes=${m}&ano=${a}`
+      );
+      setSaldo(resp.data);
+    } catch (err: unknown) {
+      const e = err as ApiError;
+      setError(e?.error?.message ?? "Erro ao carregar saldo.");
+    } finally {
+      setLoading(false);
+    }
+  }, [m, a]);
+
+  useEffect(() => {
+    carregar();
+  }, [carregar]);
+
+  return { saldo, loading, error, recarregar: carregar };
 }
 
 // ── Fluxo de Caixa ────────────────────────────────────────
