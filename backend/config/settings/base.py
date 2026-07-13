@@ -57,6 +57,7 @@ LOCAL_APPS = [
     "modules.ai_hub",
     "modules.agenda",
     "modules.painel_admin",
+    "modules.recorrencias",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

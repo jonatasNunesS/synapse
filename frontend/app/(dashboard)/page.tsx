@@ -8,6 +8,7 @@
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/store/useAppStore";
+import { AvisoMigracaoRecorrencias } from "@/components/recorrencias/AvisoMigracao";
 
 // Hooks M8
 import {
@@ -50,6 +51,8 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
+      {/* Aviso único da migração das recorrências (some após dispensar) */}
+      <AvisoMigracaoRecorrencias />
       {/* ── Cabeçalho ──────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div>

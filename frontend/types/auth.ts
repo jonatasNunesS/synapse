@@ -22,6 +22,7 @@ export interface Usuario {
   avatar_url: string;
   ativo: boolean;
   is_staff_synapse: boolean;
+  viu_aviso_recorrencias: boolean;
   empresa: Empresa | null;
   criado_em: string;
 }

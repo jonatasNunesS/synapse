@@ -34,9 +34,12 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=8, minute=0),        # Diariamente às 8h (BRT)
         "options": {"expires": 3600},
     },
-    "criar-recorrencias": {
-        "task": "financeiro.criar_recorrencias",      # modules/financeiro/tasks.py
-        "schedule": crontab(hour=0, minute=30),       # Diariamente à meia-noite e meia
+    # Recorrências Inteligentes — gera "perguntas" (ocorrências), NÃO lançamentos.
+    # Substitui a antiga financeiro.criar_recorrencias (que criava pendências
+    # automáticas e as marcava como atrasadas antes do dia — o bug do piloto).
+    "gerar-ocorrencias-recorrencias": {
+        "task": "recorrencias.gerar_ocorrencias",     # modules/recorrencias/tasks.py
+        "schedule": crontab(hour=0, minute=5),        # Diariamente às 00:05 (BRT)
         "options": {"expires": 3600},
     },
     # ── M3: Estoque ──────────────────────────────────────────
