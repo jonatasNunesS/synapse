@@ -65,6 +65,38 @@ export interface LancamentoPagar {
   data_pagamento: string;
 }
 
+// ── Auditoria de lançamentos pagos ────────────────────────
+// Lançamentos pagos são editáveis/excluíveis só por admin, com motivo
+// obrigatório; cada operação gera um LogEdicaoLancamento no backend.
+
+export interface SnapshotLancamento {
+  id: string;
+  tipo: TipoFinanceiro;
+  descricao: string;
+  valor: string;
+  categoria_id: string | null;
+  categoria_nome: string | null;
+  data_vencimento: string;
+  data_pagamento: string | null;
+  status: StatusLancamento;
+  recorrente: boolean;
+  recorrencia: string;
+  observacoes: string;
+}
+
+export interface LogEdicaoLancamento {
+  id: string;
+  lancamento: string | null;
+  acao: "editado" | "excluido";
+  acao_display: string;
+  motivo: string;
+  editado_por: string | null;
+  editado_por_nome: string | null;
+  editado_em: string;
+  snapshot_antes: SnapshotLancamento;
+  snapshot_depois: SnapshotLancamento | null;
+}
+
 // ── Filtros ───────────────────────────────────────────────
 
 export interface FiltrosLancamento {

@@ -9,6 +9,8 @@ from .views import (
     DREView,
     FluxoCaixaView,
     LancamentoDetailView,
+    LancamentoExcluirView,
+    LancamentoHistoricoView,
     LancamentoListCreateView,
     LancamentoPagarView,
     ResumoFinanceiroView,
@@ -27,6 +29,8 @@ urlpatterns = [
     path("lancamentos/", LancamentoListCreateView.as_view(), name="lancamento-list"),
     path("lancamentos/<uuid:pk>/", LancamentoDetailView.as_view(), name="lancamento-detail"),
     path("lancamentos/<uuid:pk>/pagar/", LancamentoPagarView.as_view(), name="lancamento-pagar"),
+    path("lancamentos/<uuid:pk>/excluir/", LancamentoExcluirView.as_view(), name="lancamento-excluir"),
+    path("lancamentos/<uuid:pk>/historico/", LancamentoHistoricoView.as_view(), name="lancamento-historico"),
 
     # ── Relatórios ──────────────────────────────────────────
     path("resumo/", ResumoFinanceiroView.as_view(), name="resumo"),

@@ -6,6 +6,8 @@ import {
   AlertCircle,
   CheckCircle2,
   Clock,
+  History,
+  Pencil,
   Trash2,
   XCircle,
 } from "lucide-react";
@@ -14,8 +16,12 @@ import type { Lancamento, StatusLancamento } from "@/types/financeiro";
 interface LancamentoTableProps {
   lancamentos: Lancamento[];
   loading?: boolean;
+  /** Perfil admin habilita editar/excluir lançamentos PAGOS (fluxo auditado). */
+  isAdmin?: boolean;
   onPagar?: (lancamento: Lancamento) => void;
+  onEditar?: (lancamento: Lancamento) => void;
   onDeletar?: (lancamento: Lancamento) => void;
+  onHistorico?: (lancamento: Lancamento) => void;
 }
 
 function formatarMoeda(valor: number): string {
@@ -86,8 +92,11 @@ function SkeletonRow() {
 export function LancamentoTable({
   lancamentos,
   loading,
+  isAdmin = false,
   onPagar,
+  onEditar,
   onDeletar,
+  onHistorico,
 }: LancamentoTableProps) {
   if (loading) {
     return (
@@ -224,13 +233,62 @@ export function LancamentoTable({
                         <CheckCircle2 className="w-4 h-4" />
                       </button>
                     )}
-                  {onDeletar && (
+
+                  {/* Editar pago: fluxo auditado, restrito a admin.
+                      Pendentes seguem o fluxo atual (sem edição na tabela). */}
+                  {onEditar &&
+                    lancamento.status === "pago" &&
+                    (isAdmin ? (
+                      <button
+                        onClick={() => onEditar(lancamento)}
+                        className="p-1.5 rounded text-violet-400 hover:bg-violet-400/10 transition-colors"
+                        title="Editar pagamento (com auditoria)"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <button
+                        disabled
+                        aria-disabled="true"
+                        className="p-1.5 rounded text-slate-600 cursor-not-allowed"
+                        title="Só administradores podem editar pagamentos"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    ))}
+
+                  {/* Excluir: pago é fluxo auditado, restrito a admin */}
+                  {onDeletar &&
+                    (lancamento.status !== "pago" || isAdmin ? (
+                      <button
+                        onClick={() => onDeletar(lancamento)}
+                        className="p-1.5 rounded text-red-400 hover:bg-red-400/10 transition-colors"
+                        title={
+                          lancamento.status === "pago"
+                            ? "Excluir pagamento (com auditoria)"
+                            : "Excluir lançamento"
+                        }
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <button
+                        disabled
+                        aria-disabled="true"
+                        className="p-1.5 rounded text-slate-600 cursor-not-allowed"
+                        title="Só administradores podem excluir pagamentos"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    ))}
+
+                  {onHistorico && (
                     <button
-                      onClick={() => onDeletar(lancamento)}
-                      className="p-1.5 rounded text-red-400 hover:bg-red-400/10 transition-colors"
-                      title="Excluir lançamento"
+                      onClick={() => onHistorico(lancamento)}
+                      className="p-1.5 rounded text-slate-400 hover:bg-white/10 transition-colors"
+                      title="Histórico de alterações"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <History className="w-4 h-4" />
                     </button>
                   )}
                 </div>

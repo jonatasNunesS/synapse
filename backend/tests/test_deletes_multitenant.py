@@ -88,18 +88,20 @@ def test_delete_fornecedor_204_soft_delete(user_a, empresa_a):
 
 
 @pytest.mark.django_db
-def test_delete_lancamento_pago_bloqueado_com_mensagem(user_a, empresa_a):
+def test_delete_lancamento_pago_direciona_para_fluxo_auditado(user_a, empresa_a):
     """
-    Deletar lançamento PAGO retorna erro COM mensagem real (não silêncio).
-    Era exatamente o "clica e nada acontece": o front engolia esse retorno.
+    DELETE simples de lançamento PAGO é bloqueado COM mensagem real (não
+    silêncio), direcionando ao fluxo auditado (POST /excluir/ com motivo).
+    A regra antiga "pago é imutável" foi substituída por edição/exclusão
+    controlada com auditoria — ver docstring do model Lancamento.
     """
     l = Lancamento.objects.create(
         empresa=empresa_a, tipo="receita", descricao="pago", valor=Decimal("100"),
         data_vencimento=date.today(), data_pagamento=date.today(), status="pago",
     )
     r = _cli(user_a).delete(f"/api/financeiro/lancamentos/{l.id}/")
-    assert r.status_code == 404
-    assert "imutáveis" in r.json()["error"]["message"]
+    assert r.status_code == 400  # user_a é admin; sem motivo → orienta o fluxo certo
+    assert "motivo" in r.json()["error"]["message"]
     assert Lancamento.objects.filter(id=l.id).exists()  # não foi excluído
 
 

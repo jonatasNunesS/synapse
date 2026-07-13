@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from rest_framework import serializers
 
-from .models import Categoria, Lancamento
+from .models import Categoria, Lancamento, LogEdicaoLancamento
 
 
 # ════════════════════════════════════════════════════════════
@@ -107,6 +107,56 @@ class LancamentoCreateSerializer(LancamentoSerializer):
     class Meta(LancamentoSerializer.Meta):
         exclude = ["empresa", "criado_por"]
         read_only_fields = ["id", "criado_em", "atualizado_em"]
+
+
+# ════════════════════════════════════════════════════════════
+# LOG DE EDIÇÃO (AUDITORIA)
+# ════════════════════════════════════════════════════════════
+
+class MotivoSerializer(serializers.Serializer):
+    """Valida o motivo obrigatório das operações auditadas em lançamentos pagos."""
+
+    motivo = serializers.CharField(
+        min_length=5,
+        max_length=500,
+        trim_whitespace=True,
+        error_messages={
+            "required": "O motivo é obrigatório para esta operação.",
+            "blank": "O motivo é obrigatório para esta operação.",
+            "min_length": "O motivo deve ter no mínimo 5 caracteres.",
+            "max_length": "O motivo deve ter no máximo 500 caracteres.",
+        },
+    )
+
+
+class LogEdicaoLancamentoSerializer(serializers.ModelSerializer):
+    """Serializer de leitura do log de auditoria de lançamentos."""
+
+    editado_por_nome = serializers.SerializerMethodField()
+    acao_display = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LogEdicaoLancamento
+        fields = [
+            "id",
+            "lancamento",
+            "acao",
+            "acao_display",
+            "motivo",
+            "editado_por",
+            "editado_por_nome",
+            "editado_em",
+            "snapshot_antes",
+            "snapshot_depois",
+        ]
+
+    def get_editado_por_nome(self, obj):
+        if obj.editado_por:
+            return obj.editado_por.nome or obj.editado_por.email
+        return None
+
+    def get_acao_display(self, obj):
+        return obj.get_acao_display()
 
 
 # ════════════════════════════════════════════════════════════

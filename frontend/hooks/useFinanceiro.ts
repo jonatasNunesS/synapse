@@ -17,6 +17,7 @@ import type {
   Lancamento,
   LancamentoCreate,
   LancamentoPagar,
+  LogEdicaoLancamento,
   ResumoFinanceiro,
   SaldoFinanceiro,
 } from "@/types/financeiro";
@@ -216,13 +217,15 @@ export function useLancamentos(filtros?: FiltrosLancamento) {
     return resp.data;
   };
 
+  // motivo: obrigatório quando o lançamento está PAGO (auditoria).
   const atualizar = async (
     id: string,
-    dados: Partial<LancamentoCreate>
+    dados: Partial<LancamentoCreate>,
+    motivo?: string
   ): Promise<Lancamento> => {
     const resp = await api.patch<Lancamento>(
       `/financeiro/lancamentos/${id}/`,
-      dados
+      motivo ? { ...dados, motivo } : dados
     );
     await carregar();
     return resp.data;
@@ -230,6 +233,12 @@ export function useLancamentos(filtros?: FiltrosLancamento) {
 
   const deletar = async (id: string): Promise<void> => {
     await api.delete(`/financeiro/lancamentos/${id}/`);
+    await carregar();
+  };
+
+  // Exclusão auditada (lançamentos pagos): POST /excluir/ com motivo.
+  const excluirAuditado = async (id: string, motivo: string): Promise<void> => {
+    await api.post(`/financeiro/lancamentos/${id}/excluir/`, { motivo });
     await carregar();
   };
 
@@ -251,8 +260,35 @@ export function useLancamentos(filtros?: FiltrosLancamento) {
     criar,
     atualizar,
     deletar,
+    excluirAuditado,
     pagar,
   };
+}
+
+// ── Histórico de auditoria de um lançamento ───────────────
+
+export function useHistoricoLancamento() {
+  const [logs, setLogs] = useState<LogEdicaoLancamento[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const carregar = useCallback(async (lancamentoId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const resp = await api.get<LogEdicaoLancamento[]>(
+        `/financeiro/lancamentos/${lancamentoId}/historico/`
+      );
+      setLogs(resp.data ?? []);
+    } catch (err: unknown) {
+      const e = err as ApiError;
+      setError(e?.error?.message ?? "Erro ao carregar histórico.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { logs, loading, error, carregar };
 }
 
 // ── Categorias ────────────────────────────────────────────

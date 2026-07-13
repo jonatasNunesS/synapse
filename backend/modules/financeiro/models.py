@@ -41,7 +41,18 @@ class Categoria(models.Model):
 
 
 class Lancamento(models.Model):
-    """Lançamentos financeiros (receitas e despesas) por empresa."""
+    """
+    Lançamentos financeiros (receitas e despesas) por empresa.
+
+    DECISÃO DE PRODUTO (feedback do piloto, jul/2026):
+    Lançamentos pagos são editáveis/excluíveis apenas por admin da empresa,
+    com motivo obrigatório e log de auditoria completo (LogEdicaoLancamento).
+    Esta decisão prioriza flexibilidade operacional com rastreabilidade sobre
+    imutabilidade estrita. NÃO remover essa permissão achando que é bug —
+    a regra antiga ("pago é imutável") foi descontinuada de propósito.
+    Lançamentos pendentes continuam livremente editáveis por qualquer usuário
+    da empresa, sem exigência de motivo.
+    """
 
     TIPO_CHOICES = [
         ("receita", "Receita"),
@@ -114,3 +125,60 @@ class Lancamento(models.Model):
     def esta_atrasado(self) -> bool:
         """True se o lançamento está pendente e o vencimento já passou."""
         return self.status == "pendente" and self.data_vencimento < date.today()
+
+
+class LogEdicaoLancamento(models.Model):
+    """
+    Log de auditoria de edições/exclusões de lançamentos pagos.
+
+    Cada operação controlada sobre um lançamento pago gera um registro aqui,
+    com snapshot completo do antes/depois. O log é imutável (nunca editado
+    nem apagado pela aplicação) e visível a qualquer usuário da empresa,
+    garantindo transparência sobre alterações que afetam saldos históricos.
+    """
+
+    ACAO_CHOICES = [
+        ("editado", "Editado"),
+        ("excluido", "Excluído"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # SET_NULL: se o lançamento for excluído, o log sobrevive como registro
+    # histórico da exclusão (o snapshot_antes preserva todos os dados).
+    lancamento = models.ForeignKey(
+        Lancamento,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="logs_edicao",
+    )
+    empresa = models.ForeignKey(
+        "synapse_auth.Empresa",
+        on_delete=models.CASCADE,
+        related_name="logs_edicao_lancamentos",
+    )
+    editado_por = models.ForeignKey(
+        "synapse_auth.CustomUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="edicoes_lancamentos",
+    )
+    editado_em = models.DateTimeField(auto_now_add=True)
+    acao = models.CharField(max_length=10, choices=ACAO_CHOICES)
+    motivo = models.TextField()
+    snapshot_antes = models.JSONField()
+    snapshot_depois = models.JSONField(null=True, blank=True)
+
+    class Meta:
+        app_label = "synapse_financeiro"
+        verbose_name = "Log de Edição de Lançamento"
+        verbose_name_plural = "Logs de Edição de Lançamentos"
+        ordering = ["-editado_em"]
+        indexes = [
+            models.Index(fields=["empresa", "lancamento"], name="fin_log_emp_lanc_idx"),
+            models.Index(fields=["empresa", "editado_em"], name="fin_log_emp_data_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.get_acao_display()} por {self.editado_por} em {self.editado_em:%d/%m/%Y %H:%M}"

@@ -26,6 +26,8 @@ from .serializers import (
     FluxoCaixaDiaSerializer,
     LancamentoCreateSerializer,
     LancamentoSerializer,
+    LogEdicaoLancamentoSerializer,
+    MotivoSerializer,
     ResumoFinanceiroSerializer,
 )
 from .services import FinanceiroService
@@ -206,6 +208,26 @@ class LancamentoDetailView(EmpresaQuerySetMixin, APIView):
     def _update(self, request, pk, partial: bool):
         empresa_id = self.get_empresa_id()
         lancamento = self._get_lancamento(empresa_id, pk)
+
+        motivo = None
+        if lancamento.status == "pago":
+            # Edição controlada de pago: só admin da empresa, com motivo.
+            # Ver decisão de produto na docstring do model Lancamento.
+            if getattr(request.user, "perfil", None) != "admin":
+                return error_response(
+                    "PERMISSAO_NEGADA",
+                    "Apenas administradores da empresa podem editar lançamentos pagos.",
+                    status_code=403,
+                )
+            motivo_serializer = MotivoSerializer(data=request.data)
+            if not motivo_serializer.is_valid():
+                return error_response(
+                    "MOTIVO_OBRIGATORIO",
+                    "Editar um lançamento pago exige um motivo (5 a 500 caracteres).",
+                    details=motivo_serializer.errors,
+                )
+            motivo = motivo_serializer.validated_data["motivo"]
+
         serializer = LancamentoCreateSerializer(
             lancamento,
             data=request.data,
@@ -215,7 +237,11 @@ class LancamentoDetailView(EmpresaQuerySetMixin, APIView):
         serializer.is_valid(raise_exception=True)
         try:
             lancamento = FinanceiroService.atualizar_lancamento(
-                empresa_id, pk, serializer.validated_data
+                empresa_id,
+                pk,
+                serializer.validated_data,
+                usuario=request.user,
+                motivo=motivo,
             )
         except ValueError as e:
             return error_response("LANCAMENTO_INVALIDO", str(e))
@@ -226,11 +252,83 @@ class LancamentoDetailView(EmpresaQuerySetMixin, APIView):
 
     def delete(self, request, pk):
         empresa_id = self.get_empresa_id()
+        lancamento = self._get_lancamento(empresa_id, pk)
+        if lancamento.status == "pago":
+            # DELETE sem body não carrega motivo — direciona ao fluxo auditado.
+            return error_response(
+                "EXCLUSAO_EXIGE_AUDITORIA",
+                "Excluir um lançamento pago exige motivo e perfil de administrador. "
+                "Use POST /api/financeiro/lancamentos/{id}/excluir/ com o campo 'motivo'.",
+                status_code=403 if getattr(request.user, "perfil", None) != "admin" else 400,
+            )
         try:
             FinanceiroService.deletar_lancamento(empresa_id, pk)
         except ValueError as e:
             return error_response("LANCAMENTO_NAO_ENCONTRADO", str(e), status_code=404)
         return no_content_response()
+
+
+class LancamentoExcluirView(EmpresaQuerySetMixin, APIView):
+    """
+    POST /api/financeiro/lancamentos/{id}/excluir/ — exclusão auditada.
+
+    Usa POST com body {"motivo": ...} porque DELETE com body é anti-padrão.
+    Regras: motivo obrigatório (5-500 chars) sempre; se o lançamento estiver
+    pago, exige perfil admin. Gera LogEdicaoLancamento com snapshot completo.
+    """
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def post(self, request, pk):
+        empresa_id = self.get_empresa_id()
+        from .repository import FinanceiroRepository
+        lancamento = FinanceiroRepository.get_lancamento(empresa_id, pk)
+        if not lancamento:
+            return error_response(
+                "LANCAMENTO_NAO_ENCONTRADO", "Lançamento não encontrado.", status_code=404
+            )
+
+        if lancamento.status == "pago" and getattr(request.user, "perfil", None) != "admin":
+            return error_response(
+                "PERMISSAO_NEGADA",
+                "Apenas administradores da empresa podem excluir lançamentos pagos.",
+                status_code=403,
+            )
+
+        motivo_serializer = MotivoSerializer(data=request.data)
+        if not motivo_serializer.is_valid():
+            return error_response(
+                "MOTIVO_OBRIGATORIO",
+                "A exclusão exige um motivo (5 a 500 caracteres).",
+                details=motivo_serializer.errors,
+            )
+
+        try:
+            FinanceiroService.excluir_lancamento_auditado(
+                empresa_id, pk, request.user,
+                motivo_serializer.validated_data["motivo"],
+            )
+        except ValueError as e:
+            return error_response("LANCAMENTO_NAO_ENCONTRADO", str(e), status_code=404)
+        return no_content_response()
+
+
+class LancamentoHistoricoView(EmpresaQuerySetMixin, APIView):
+    """
+    GET /api/financeiro/lancamentos/{id}/historico/ — logs de auditoria.
+    Qualquer usuário da empresa pode consultar (transparência).
+    """
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def get(self, request, pk):
+        empresa_id = self.get_empresa_id()
+        logs = FinanceiroService.historico_lancamento(empresa_id, pk)
+        return success_response(
+            data=LogEdicaoLancamentoSerializer(logs, many=True).data
+        )
 
 
 class LancamentoPagarView(EmpresaQuerySetMixin, APIView):
