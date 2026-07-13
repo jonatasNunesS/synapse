@@ -12,6 +12,7 @@ from .views import (
     LancamentoListCreateView,
     LancamentoPagarView,
     ResumoFinanceiroView,
+    SaldoFinanceiroView,
     VencimentosView,
 )
 
@@ -29,6 +30,7 @@ urlpatterns = [
 
     # ── Relatórios ──────────────────────────────────────────
     path("resumo/", ResumoFinanceiroView.as_view(), name="resumo"),
+    path("saldo/", SaldoFinanceiroView.as_view(), name="saldo"),
     path("fluxo-caixa/", FluxoCaixaView.as_view(), name="fluxo-caixa"),
     path("dre/", DREView.as_view(), name="dre"),
     path("vencimentos/", VencimentosView.as_view(), name="vencimentos"),

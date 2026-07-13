@@ -4,20 +4,17 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Plus, Tag } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import { CategoriaFinanceiroModal } from "@/components/financeiro/CategoriaFinanceiroModal";
 import { FluxoCaixaChart } from "@/components/financeiro/FluxoCaixaChart";
 import { LancamentoForm } from "@/components/financeiro/LancamentoForm";
 import { LancamentoTable } from "@/components/financeiro/LancamentoTable";
 import { PagarModal } from "@/components/financeiro/PagarModal";
-import { ResumoCards } from "@/components/financeiro/ResumoCards";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { getErrorMessage } from "@/lib/api";
+import { SaldoResumo, type FiltroMetrica } from "@/components/financeiro/SaldoResumo";
 import {
   useCategorias,
   useFluxoCaixa,
   useLancamentos,
-  useResumoFinanceiro,
+  useSaldoFinanceiro,
 } from "@/hooks/useFinanceiro";
 import type { Lancamento, LancamentoCreate } from "@/types/financeiro";
 
@@ -29,17 +26,16 @@ export default function FinanceiroPage() {
   const [mostrarCategorias, setMostrarCategorias] = useState(false);
   const [lancamentoParaPagar, setLancamentoParaPagar] =
     useState<Lancamento | null>(null);
-  const [lancamentoParaExcluir, setLancamentoParaExcluir] =
-    useState<Lancamento | null>(null);
-  const [excluindo, setExcluindo] = useState(false);
+  // Filtro por card de métrica (clicar em "A receber" mostra só esses).
+  const [filtroMetrica, setFiltroMetrica] = useState<FiltroMetrica | null>(null);
 
   // Primeiro e último dia do mês selecionado
   const dataInicio = `${ano}-${String(mes).padStart(2, "0")}-01`;
   const ultimoDia = new Date(ano, mes, 0).getDate();
   const dataFim = `${ano}-${String(mes).padStart(2, "0")}-${ultimoDia}`;
 
-  const { resumo, loading: loadingResumo, recarregar: recarregarResumo } =
-    useResumoFinanceiro(mes, ano);
+  const { saldo, loading: loadingSaldo, recarregar: recarregarSaldo } =
+    useSaldoFinanceiro(mes, ano);
   const { fluxo, loading: loadingFluxo } = useFluxoCaixa(dataInicio, dataFim);
   const { categorias } = useCategorias();
   const {
@@ -49,7 +45,12 @@ export default function FinanceiroPage() {
     criar,
     deletar,
     pagar,
-  } = useLancamentos({ data_inicio: dataInicio, data_fim: dataFim });
+  } = useLancamentos({
+    data_inicio: dataInicio,
+    data_fim: dataFim,
+    tipo: filtroMetrica?.tipo,
+    status: filtroMetrica?.status,
+  });
 
   const mesPorExtenso = format(new Date(ano, mes - 1, 1), "MMMM yyyy", {
     locale: ptBR,
@@ -64,30 +65,20 @@ export default function FinanceiroPage() {
   const handleCriarLancamento = async (dados: LancamentoCreate) => {
     await criar(dados);
     setMostrarForm(false);
-    recarregarResumo();
+    recarregarSaldo();
   };
 
   const handlePagar = async (dataPagamento: string) => {
     if (!lancamentoParaPagar) return;
     await pagar(lancamentoParaPagar.id, { data_pagamento: dataPagamento });
     setLancamentoParaPagar(null);
-    recarregarResumo();
+    recarregarSaldo();
   };
 
-  const handleConfirmarExclusao = async () => {
-    if (!lancamentoParaExcluir || excluindo) return; // evita duplo clique
-    setExcluindo(true);
-    try {
-      await deletar(lancamentoParaExcluir.id);
-      toast.success("Lançamento excluído.");
-      setLancamentoParaExcluir(null);
-      recarregarResumo();
-    } catch (err) {
-      // Erro NUNCA calado: mostra a mensagem real do backend
-      toast.error(getErrorMessage(err), { duration: 7000 });
-    } finally {
-      setExcluindo(false);
-    }
+  const handleDeletar = async (lancamento: Lancamento) => {
+    if (!confirm(`Excluir "${lancamento.descricao}"?`)) return;
+    await deletar(lancamento.id);
+    recarregarSaldo();
   };
 
   return (
@@ -139,8 +130,13 @@ export default function FinanceiroPage() {
         </div>
       </div>
 
-      {/* Cards de resumo */}
-      <ResumoCards resumo={resumo} loading={loadingResumo} />
+      {/* Saldos (acumulado + do mês) e as 4 métricas do período */}
+      <SaldoResumo
+        saldo={saldo}
+        loading={loadingSaldo}
+        filtroAtivo={filtroMetrica}
+        onFiltrar={setFiltroMetrica}
+      />
 
       {/* Fluxo de caixa */}
       <div className="bg-white/[0.03] border border-white/10 rounded-xl p-5">
@@ -157,6 +153,17 @@ export default function FinanceiroPage() {
             <h2 className="text-base font-semibold text-white">Lançamentos</h2>
             <p className="text-xs text-slate-500 mt-0.5">
               {total} lançamento{total !== 1 ? "s" : ""} no período
+              {filtroMetrica && (
+                <>
+                  {" · "}
+                  <button
+                    onClick={() => setFiltroMetrica(null)}
+                    className="text-violet-400 hover:text-violet-300 transition-colors"
+                  >
+                    filtrado ({filtroMetrica.tipo}/{filtroMetrica.status}) — limpar
+                  </button>
+                </>
+              )}
             </p>
           </div>
           <a
@@ -170,7 +177,7 @@ export default function FinanceiroPage() {
           lancamentos={lancamentos}
           loading={loadingLancamentos}
           onPagar={setLancamentoParaPagar}
-          onDeletar={setLancamentoParaExcluir}
+          onDeletar={handleDeletar}
         />
       </div>
 
@@ -194,24 +201,6 @@ export default function FinanceiroPage() {
       {mostrarCategorias && (
         <CategoriaFinanceiroModal onClose={() => setMostrarCategorias(false)} />
       )}
-
-      <ConfirmDialog
-        open={!!lancamentoParaExcluir}
-        titulo="Excluir lançamento"
-        mensagem={
-          <>
-            Excluir{" "}
-            <span className="text-white font-medium">
-              {lancamentoParaExcluir?.descricao}
-            </span>
-            ? Esta ação não pode ser desfeita.
-          </>
-        }
-        confirmLabel="Excluir"
-        processando={excluindo}
-        onConfirm={handleConfirmarExclusao}
-        onCancel={() => setLancamentoParaExcluir(null)}
-      />
     </div>
   );
 }

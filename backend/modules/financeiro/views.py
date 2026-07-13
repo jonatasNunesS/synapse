@@ -303,6 +303,37 @@ class ResumoFinanceiroView(EmpresaQuerySetMixin, APIView):
         )
 
 
+class SaldoFinanceiroView(EmpresaQuerySetMixin, APIView):
+    """
+    GET /api/financeiro/saldo/?mes=7&ano=2026
+
+    Dois saldos: acumulado (dinheiro real hoje — IGNORA o filtro de mês) e do
+    mês (resultado realizado do período) + as 4 métricas do mês
+    (recebido / a_receber / pago / a_pagar).
+    """
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def get(self, request):
+        empresa_id = self.get_empresa_id()
+        hoje = date.today()
+
+        try:
+            mes = int(request.query_params.get("mes", hoje.month))
+            ano = int(request.query_params.get("ano", hoje.year))
+        except (ValueError, TypeError):
+            return error_response("PARAMETROS_INVALIDOS", "Mês e ano devem ser números inteiros.")
+
+        if not (1 <= mes <= 12):
+            return error_response("MES_INVALIDO", "O mês deve estar entre 1 e 12.")
+
+        saldo = FinanceiroService.obter_saldo(empresa_id, mes, ano)
+        return success_response(
+            data=saldo,
+            message=f"Saldo financeiro de {mes:02d}/{ano}.",
+        )
+
+
 class FluxoCaixaView(EmpresaQuerySetMixin, APIView):
     """GET /api/financeiro/fluxo-caixa/?data_inicio=&data_fim="""
 
