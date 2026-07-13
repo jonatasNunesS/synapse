@@ -147,6 +147,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     # is_staff (Django admin) nem com perfil (papel dentro da empresa cliente).
     is_staff_synapse = models.BooleanField(default=False)
 
+    # Já viu o aviso único da migração das recorrências pro novo modelo?
+    viu_aviso_recorrencias = models.BooleanField(default=False)
+
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
 

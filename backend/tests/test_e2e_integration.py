@@ -540,7 +540,9 @@ class TestCeleryTasksRegistradas:
         schedule = app.conf.beat_schedule
         tarefas_esperadas = [
             "verificar-vencimentos",
-            "criar-recorrencias",
+            # "criar-recorrencias" foi substituída por "gerar-ocorrencias-recorrencias"
+            # (Recorrências Inteligentes: gera perguntas, não lançamentos automáticos).
+            "gerar-ocorrencias-recorrencias",
             "verificar-estoque-minimo",
             "verificar-followups",
             "relatorio-semanal-fornecedores",
