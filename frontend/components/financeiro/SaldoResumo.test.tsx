@@ -10,6 +10,10 @@ import type { SaldoFinanceiro } from "@/types/financeiro";
 
 const saldo: SaldoFinanceiro = {
   acumulado: { total_recebido: 45000, total_pago: 24500, saldo: 20500 },
+  // Sem caixinhas: disponível = acumulado (retrocompatível)
+  caixinhas: { total: 0, quantidade: 0 },
+  saldo_disponivel: 20500,
+  patrimonio_total: 20500,
   mes_atual: {
     mes: 7,
     ano: 2026,
@@ -77,5 +81,29 @@ describe("SaldoResumo", () => {
   it("estado loading não quebra (sem dados ainda)", () => {
     render(<SaldoResumo saldo={null} loading />);
     expect(screen.getByText("Saldo acumulado")).toBeInTheDocument();
+  });
+
+  it("com caixinhas: mostra saldo disponível, link e patrimônio total", () => {
+    // Exemplo da spec: acumulado 10.000, caixinha 2.000 → disponível 8.000
+    const comCaixinhas: SaldoFinanceiro = {
+      ...saldo,
+      acumulado: { ...saldo.acumulado, saldo: 10000 },
+      caixinhas: { total: 2000, quantidade: 1 },
+      saldo_disponivel: 8000,
+      patrimonio_total: 10000,
+    };
+    render(<SaldoResumo saldo={comCaixinhas} />);
+    expect(screen.getByText("Saldo disponível")).toBeInTheDocument();
+    expect(screen.queryByText("Saldo acumulado")).not.toBeInTheDocument();
+    // Valor escopado no card do saldo (R$ 8.000,00 também é a métrica "Recebido")
+    const box = screen.getByText("Saldo disponível").parentElement!.parentElement!;
+    expect(within(box).getByText(/R\$\s*8\.000,00/)).toBeInTheDocument();
+    // Rótulos (currency usa nbsp — casamos só o texto do rótulo)
+    expect(screen.getByText(/Em caixinhas:/)).toBeInTheDocument();
+    expect(screen.getByText(/Patrimônio total:/)).toBeInTheDocument();
+    // O link leva para a página de caixinhas
+    expect(
+      screen.getByText(/Em caixinhas/).closest("a")
+    ).toHaveAttribute("href", "/financeiro/caixinhas");
   });
 });

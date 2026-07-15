@@ -133,6 +133,15 @@ export interface SaldoFinanceiro {
     total_pago: number;
     saldo: number;
   };
+  /** Dinheiro guardado em caixinhas (sai do saldo disponível). */
+  caixinhas: {
+    total: number;
+    quantidade: number;
+  };
+  /** acumulado.saldo − caixinhas.total */
+  saldo_disponivel: number;
+  /** = acumulado.saldo (caixinhas não mudam o patrimônio) */
+  patrimonio_total: number;
   mes_atual: {
     mes: number;
     ano: number;

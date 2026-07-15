@@ -3,7 +3,7 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Plus, Repeat, Tag } from "lucide-react";
+import { ChevronLeft, ChevronRight, PiggyBank, Plus, Repeat, Tag } from "lucide-react";
 import { useState } from "react";
 import { CategoriaFinanceiroModal } from "@/components/financeiro/CategoriaFinanceiroModal";
 import { FluxoCaixaChart } from "@/components/financeiro/FluxoCaixaChart";
@@ -134,6 +134,13 @@ export default function FinanceiroPage() {
           >
             <Repeat className="w-4 h-4" />
             <span className="hidden sm:inline">Recorrências</span>
+          </Link>
+          <Link
+            href="/financeiro/caixinhas"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-medium text-slate-300 transition-colors"
+          >
+            <PiggyBank className="w-4 h-4" />
+            <span className="hidden sm:inline">Caixinhas</span>
           </Link>
         </div>
       </div>

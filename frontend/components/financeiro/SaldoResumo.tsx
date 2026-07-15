@@ -8,10 +8,12 @@
  * - Cards coloridos por tipo (receita = verde suave, despesa = vermelho suave)
  *   e clicáveis: filtram a lista abaixo por aquele tipo+status.
  */
+import Link from "next/link";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
   Clock,
+  PiggyBank,
   Wallet,
   CalendarDays,
 } from "lucide-react";
@@ -113,22 +115,48 @@ export function SaldoResumo({ saldo, loading, filtroAtivo, onFiltrar }: SaldoRes
     <div className="space-y-4">
       {/* Dois saldos em destaque */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
-          <div className="flex items-center gap-2 mb-1">
-            <Wallet className="h-4 w-4 text-slate-400" />
-            <p className="text-sm text-slate-400">Saldo acumulado</p>
-          </div>
-          {loading ? (
-            <SkeletonLinha />
-          ) : (
-            <p className={`text-3xl font-bold tabular-nums ${corSaldo(ac?.saldo ?? 0)}`}>
-              {moeda(ac?.saldo ?? 0)}
-            </p>
-          )}
-          <p className="text-xs text-slate-500 mt-1">
-            Dinheiro real disponível hoje (todo o histórico)
-          </p>
-        </div>
+        {(() => {
+          // Com caixinhas: mostra o saldo DISPONÍVEL (acumulado − guardado),
+          // link "Em caixinhas" e o patrimônio total. Sem caixinhas:
+          // comportamento idêntico ao anterior (saldo acumulado puro).
+          const temCaixinhas = (saldo?.caixinhas?.quantidade ?? 0) > 0;
+          const disponivel = saldo?.saldo_disponivel ?? ac?.saldo ?? 0;
+          return (
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
+              <div className="flex items-center gap-2 mb-1">
+                <Wallet className="h-4 w-4 text-slate-400" />
+                <p className="text-sm text-slate-400">
+                  {temCaixinhas ? "Saldo disponível" : "Saldo acumulado"}
+                </p>
+              </div>
+              {loading ? (
+                <SkeletonLinha />
+              ) : (
+                <p className={`text-3xl font-bold tabular-nums ${corSaldo(temCaixinhas ? disponivel : ac?.saldo ?? 0)}`}>
+                  {moeda(temCaixinhas ? disponivel : ac?.saldo ?? 0)}
+                </p>
+              )}
+              {temCaixinhas ? (
+                <div className="text-xs mt-1 space-y-0.5">
+                  <Link
+                    href="/financeiro/caixinhas"
+                    className="inline-flex items-center gap-1 text-violet-400 hover:text-violet-300 transition-colors"
+                  >
+                    <PiggyBank className="h-3.5 w-3.5" />
+                    Em caixinhas: {moeda(saldo?.caixinhas?.total ?? 0)}
+                  </Link>
+                  <p className="text-slate-500">
+                    Patrimônio total: {moeda(saldo?.patrimonio_total ?? 0)}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500 mt-1">
+                  Dinheiro real disponível hoje (todo o histórico)
+                </p>
+              )}
+            </div>
+          );
+        })()}
 
         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
           <div className="flex items-center gap-2 mb-1">

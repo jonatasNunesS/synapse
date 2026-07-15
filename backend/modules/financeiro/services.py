@@ -310,12 +310,27 @@ class FinanceiroService:
         dados = FinanceiroRepository.calcular_saldo(empresa_id, mes, ano)
         ac = dados["acumulado"]
         m = dados["mes_atual"]
+
+        # Caixinhas: dinheiro guardado sai do saldo DISPONÍVEL, mas o
+        # patrimônio total (= saldo acumulado) não muda. Sem caixinhas,
+        # saldo_disponivel == acumulado.saldo (retrocompatível).
+        # Import local: evita acoplamento de import entre módulos no boot.
+        from modules.caixinhas.services import CaixinhaService
+        caixinhas = CaixinhaService.obter_resumo(empresa_id)
+        saldo_acumulado = _f(ac["saldo"])
+
         resultado = {
             "acumulado": {
                 "total_recebido": _f(ac["total_recebido"]),
                 "total_pago": _f(ac["total_pago"]),
-                "saldo": _f(ac["saldo"]),
+                "saldo": saldo_acumulado,
             },
+            "caixinhas": {
+                "total": caixinhas["total"],
+                "quantidade": caixinhas["quantidade"],
+            },
+            "saldo_disponivel": saldo_acumulado - caixinhas["total"],
+            "patrimonio_total": saldo_acumulado,
             "mes_atual": {
                 "mes": m["mes"],
                 "ano": m["ano"],
