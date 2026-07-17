@@ -106,4 +106,49 @@ describe("SaldoResumo", () => {
       screen.getByText(/Em caixinhas/).closest("a")
     ).toHaveAttribute("href", "/financeiro/caixinhas");
   });
+
+  it("linha discreta de empréstimos NÃO aparece sem empréstimos", () => {
+    render(<SaldoResumo saldo={saldo} />);
+    expect(screen.queryByText(/Emprestado:/)).not.toBeInTheDocument();
+    // mantém a legenda padrão do saldo acumulado
+    expect(
+      screen.getByText(/Dinheiro real disponível hoje/)
+    ).toBeInTheDocument();
+  });
+
+  it("linha discreta aparece com empréstimos e leva pra /financeiro/emprestimos", () => {
+    const comEmprestimo: SaldoFinanceiro = {
+      ...saldo,
+      emprestimos: { a_receber: 500, a_devolver: 0, quantidade: 1 },
+    };
+    render(<SaldoResumo saldo={comEmprestimo} />);
+    const link = screen.getByText(/Emprestado:/).closest("a");
+    expect(link).toHaveAttribute("href", "/financeiro/emprestimos");
+    // "a devolver" oculto quando é zero
+    expect(screen.queryByText(/A devolver:/)).not.toBeInTheDocument();
+  });
+
+  it("caixinhas E empréstimos convivem sob o saldo disponível", () => {
+    // Resultado esperado do rebase: as duas informações juntas.
+    const comAmbos: SaldoFinanceiro = {
+      ...saldo,
+      acumulado: { ...saldo.acumulado, saldo: 12000 },
+      caixinhas: { total: 2000, quantidade: 1 },
+      saldo_disponivel: 9500,
+      patrimonio_total: 12000,
+      emprestimos: { a_receber: 500, a_devolver: 0, quantidade: 1 },
+    };
+    render(<SaldoResumo saldo={comAmbos} />);
+    expect(screen.getByText("Saldo disponível")).toBeInTheDocument();
+    // ambas as informações discretas presentes, cada uma com seu link
+    expect(screen.getByText(/Em caixinhas/).closest("a")).toHaveAttribute(
+      "href",
+      "/financeiro/caixinhas"
+    );
+    expect(screen.getByText(/Emprestado:/).closest("a")).toHaveAttribute(
+      "href",
+      "/financeiro/emprestimos"
+    );
+    expect(screen.getByText(/Patrimônio total:/)).toBeInTheDocument();
+  });
 });

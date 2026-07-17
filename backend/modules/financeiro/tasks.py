@@ -102,6 +102,88 @@ def _criar_notificacao_vencimento(lancamento, hoje: date) -> None:
         logger.warning(f"Erro ao criar notificação de vencimento: {e}")
 
 
+@shared_task(name="financeiro.verificar_emprestimos", bind=True, max_retries=3)
+def verificar_emprestimos(self):
+    """
+    Roda todo dia às 00:10 (beat_schedule). Para cada empréstimo aberto cujo
+    retorno já chegou (data_retorno_esperado <= hoje), cria UMA notificação no
+    sino se ainda não houver uma pendente para o dia. Idempotente e multi-tenant.
+    """
+    from .repository import FinanceiroRepository
+
+    hoje = date.today()
+    criadas = 0
+    try:
+        for emp in FinanceiroRepository.listar_emprestimos_a_notificar():
+            try:
+                if _criar_notificacao_emprestimo(emp, hoje):
+                    criadas += 1
+            except Exception as e:
+                logger.warning(f"Falha ao notificar empréstimo {emp.id}: {e}")
+
+        logger.info(
+            "Task verificar_emprestimos concluída",
+            extra={"data": str(hoje), "notificacoes_criadas": criadas},
+        )
+        return {"status": "ok", "data": str(hoje), "notificacoes_criadas": criadas}
+    except Exception as exc:
+        logger.error(f"Erro na task verificar_emprestimos: {exc}")
+        raise self.retry(exc=exc, countdown=300)
+
+
+def _criar_notificacao_emprestimo(emp, hoje: date) -> bool:
+    """
+    Cria notificação de retorno de empréstimo (idempotente por dia via marcador
+    na acao_url). Retorna True se criou, False se já existia.
+    """
+    from modules.notificacoes.models import Notificacao
+
+    # Marcador único por empréstimo — permite navegar e serve de chave de idempotência
+    marcador = f"/financeiro/emprestimos?destaque={emp.id}"
+
+    # Idempotência: não duplica notificação pendente (não lida) do mesmo empréstimo
+    ja_existe = Notificacao.objects.filter(
+        empresa_id=emp.empresa_id,
+        acao_url=marcador,
+        lida=False,
+    ).exists()
+    if ja_existe:
+        return False
+
+    valor_fmt = f"R$ {emp.valor:.2f}"
+    pessoa = emp.pessoa_emprestimo or "alguém"
+    if emp.direcao_emprestimo == "emprestei":
+        titulo = "Empréstimo a receber"
+        mensagem = f"{pessoa} ficou de devolver {valor_fmt} hoje. Recebeu?"
+    else:
+        titulo = "Empréstimo a devolver"
+        mensagem = f"Você ficou de devolver {valor_fmt} pro/pra {pessoa} hoje."
+
+    # Notifica o dono do empréstimo (quem registrou); se não houver, os admins.
+    if emp.criado_por_id:
+        Notificacao.objects.create(
+            usuario_id=emp.criado_por_id,
+            empresa_id=emp.empresa_id,
+            tipo="financeiro",
+            titulo=titulo,
+            mensagem=mensagem,
+            acao_url=marcador,
+            prioridade="alta",
+        )
+        return True
+
+    from modules.notificacoes.services import NotificacaoService
+    NotificacaoService.criar_para_empresa(
+        empresa_id=str(emp.empresa_id),
+        tipo="financeiro",
+        titulo=titulo,
+        mensagem=mensagem,
+        acao_url=marcador,
+        prioridade="alta",
+    )
+    return True
+
+
 @shared_task(name="financeiro.criar_recorrencias", bind=True, max_retries=3)
 def criar_recorrencias(self, lancamento_id: str):
     """

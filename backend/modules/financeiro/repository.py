@@ -213,6 +213,23 @@ class FinanceiroRepository:
             pagos.filter(tipo="despesa").aggregate(t=Sum("valor"))["t"] or Decimal("0")
         )
 
+        # Efeito de caixa dos empréstimos por natureza:
+        #  - "peguei_emprestado": dinheiro entrou (+)
+        #  - "emprestei": dinheiro saiu (−)
+        # O retorno (quitação normal) é registrado como receita/despesa e já
+        # entra em total_recebido/total_pago; perdão/cancelamento não geram
+        # retorno, então o efeito do empréstimo permanece. Cancelados não contam.
+        emprestimos = base.filter(tipo="emprestimo").exclude(status="cancelado")
+        cash_peguei = (
+            emprestimos.filter(direcao_emprestimo="peguei_emprestado")
+            .aggregate(t=Sum("valor"))["t"] or Decimal("0")
+        )
+        cash_emprestei = (
+            emprestimos.filter(direcao_emprestimo="emprestei")
+            .aggregate(t=Sum("valor"))["t"] or Decimal("0")
+        )
+        saldo_emprestimos = cash_peguei - cash_emprestei
+
         # ── Métricas do mês ──────────────────────────────────────────────────
         def _bucket(qs) -> dict:
             agg = qs.aggregate(total=Sum("valor"), count=Count("id"))
@@ -239,7 +256,8 @@ class FinanceiroRepository:
             "acumulado": {
                 "total_recebido": total_recebido,
                 "total_pago": total_pago,
-                "saldo": total_recebido - total_pago,
+                # Saldo real inclui o efeito de caixa dos empréstimos.
+                "saldo": total_recebido - total_pago + saldo_emprestimos,
             },
             "mes_atual": {
                 "mes": mes,
@@ -390,6 +408,63 @@ class FinanceiroRepository:
         if empresa_id:
             qs = qs.filter(empresa_id=empresa_id)
         return qs
+
+    # ── Empréstimos ──────────────────────────────────────────────────────────
+
+    @staticmethod
+    def listar_emprestimos(empresa_id, filtro: str = "todos"):
+        """
+        Lista lançamentos tipo=emprestimo. filtro: aberto | quitado | atrasado | todos.
+        """
+        qs = Lancamento.objects.filter(
+            empresa_id=empresa_id, tipo="emprestimo"
+        ).select_related("categoria", "criado_por")
+
+        if filtro == "aberto":
+            qs = qs.filter(emprestimo_quitado=False)
+        elif filtro == "quitado":
+            qs = qs.filter(emprestimo_quitado=True)
+        elif filtro == "atrasado":
+            qs = qs.filter(
+                emprestimo_quitado=False,
+                data_retorno_esperado__lt=date.today(),
+            )
+        return qs.order_by("data_retorno_esperado")
+
+    @staticmethod
+    def resumo_emprestimos(empresa_id) -> dict:
+        """Totais de empréstimos abertos: a receber, a devolver e quantidade."""
+        abertos = Lancamento.objects.filter(
+            empresa_id=empresa_id, tipo="emprestimo", emprestimo_quitado=False
+        )
+        a_receber = (
+            abertos.filter(direcao_emprestimo="emprestei")
+            .aggregate(t=Sum("valor"))["t"] or Decimal("0")
+        )
+        a_devolver = (
+            abertos.filter(direcao_emprestimo="peguei_emprestado")
+            .aggregate(t=Sum("valor"))["t"] or Decimal("0")
+        )
+        return {
+            "a_receber": a_receber,
+            "a_devolver": a_devolver,
+            "quantidade": abertos.count(),
+        }
+
+    @staticmethod
+    def listar_emprestimos_a_notificar():
+        """
+        Empréstimos abertos cujo retorno já chegou (data_retorno_esperado <= hoje),
+        para a task diária de notificação. Multi-empresa.
+        """
+        return (
+            Lancamento.objects.filter(
+                tipo="emprestimo",
+                emprestimo_quitado=False,
+                data_retorno_esperado__lte=date.today(),
+            )
+            .select_related("empresa", "criado_por")
+        )
 
     @staticmethod
     def listar_vencendo_hoje_amanha():

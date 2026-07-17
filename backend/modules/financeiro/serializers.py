@@ -57,6 +57,8 @@ class LancamentoSerializer(serializers.ModelSerializer):
         source="categoria.cor", read_only=True, default=None
     )
     esta_atrasado = serializers.SerializerMethodField()
+    direcao_emprestimo_display = serializers.SerializerMethodField()
+    status_emprestimo = serializers.SerializerMethodField()
 
     class Meta:
         model = Lancamento
@@ -68,10 +70,21 @@ class LancamentoSerializer(serializers.ModelSerializer):
             "categoria_nome",
             "categoria_cor",
             "esta_atrasado",
+            "emprestimo_quitado",
+            "emprestimo_perdoado",
+            "data_quitacao",
+            "direcao_emprestimo_display",
+            "status_emprestimo",
         ]
 
     def get_esta_atrasado(self, obj) -> bool:
         return obj.esta_atrasado
+
+    def get_direcao_emprestimo_display(self, obj):
+        return obj.get_direcao_emprestimo_display() if obj.direcao_emprestimo else None
+
+    def get_status_emprestimo(self, obj) -> str:
+        return obj.status_emprestimo
 
     def validate_valor(self, value):
         if value <= Decimal("0"):
@@ -102,11 +115,87 @@ class LancamentoSerializer(serializers.ModelSerializer):
 
 
 class LancamentoCreateSerializer(LancamentoSerializer):
-    """Serializer para criação/edição de Lançamento."""
+    """Serializer para criação/edição de Lançamento (inclui empréstimos)."""
+
+    # Empréstimos não têm vencimento próprio — usamos a data de retorno.
+    data_vencimento = serializers.DateField(required=False, allow_null=True)
 
     class Meta(LancamentoSerializer.Meta):
         exclude = ["empresa", "criado_por"]
-        read_only_fields = ["id", "criado_em", "atualizado_em"]
+        read_only_fields = [
+            "id", "criado_em", "atualizado_em",
+            "emprestimo_quitado", "emprestimo_perdoado", "data_quitacao",
+            "direcao_emprestimo_display", "status_emprestimo",
+        ]
+
+    def validate(self, attrs):
+        from datetime import date as _date
+
+        tipo = attrs.get("tipo", getattr(self.instance, "tipo", None))
+
+        if tipo == "emprestimo":
+            # Campos obrigatórios do empréstimo (fallback na instância p/ PATCH).
+            obrigatorios = {
+                "direcao_emprestimo": "Informe a direção do empréstimo (emprestei ou peguei emprestado).",
+                "pessoa_emprestimo": "Informe para quem / de quem é o empréstimo.",
+                "data_retorno_esperado": "Informe a data de retorno esperado.",
+            }
+            for campo, msg in obrigatorios.items():
+                valor = attrs.get(campo, getattr(self.instance, campo, None))
+                if not valor:
+                    raise serializers.ValidationError({campo: msg})
+
+            data_retorno = attrs.get(
+                "data_retorno_esperado",
+                getattr(self.instance, "data_retorno_esperado", None),
+            )
+            # O caixa já se moveu ao registrar: marcamos como realizado (pago)
+            # para não cair na verificação de vencimentos e usamos o retorno
+            # como vencimento (o model exige data_vencimento).
+            attrs["data_vencimento"] = data_retorno
+            attrs["status"] = "pago"
+            attrs.setdefault("data_pagamento", _date.today())
+        else:
+            # tipo != emprestimo → campos de empréstimo são ignorados.
+            for campo in ("direcao_emprestimo", "pessoa_emprestimo", "data_retorno_esperado"):
+                attrs.pop(campo, None)
+            if not attrs.get("data_vencimento", getattr(self.instance, "data_vencimento", None)):
+                raise serializers.ValidationError(
+                    {"data_vencimento": "A data de vencimento é obrigatória."}
+                )
+
+        return super().validate(attrs)
+
+
+# ════════════════════════════════════════════════════════════
+# EMPRÉSTIMOS (operações)
+# ════════════════════════════════════════════════════════════
+
+class QuitarEmprestimoSerializer(serializers.Serializer):
+    """Body opcional de quitar-emprestimo. perdoar=True quita sem retorno ao caixa."""
+
+    perdoar = serializers.BooleanField(required=False, default=False)
+
+
+class AdiarEmprestimoSerializer(serializers.Serializer):
+    """Body de adiar-emprestimo: dias a partir de hoje (mín 1)."""
+
+    dias = serializers.IntegerField(
+        min_value=1,
+        error_messages={
+            "required": "Informe quantos dias adiar.",
+            "min_value": "O número de dias deve ser maior que zero.",
+            "invalid": "Número de dias inválido.",
+        },
+    )
+
+
+class ResumoEmprestimosSerializer(serializers.Serializer):
+    """Totais de empréstimos abertos."""
+
+    a_receber = serializers.DecimalField(max_digits=14, decimal_places=2)
+    a_devolver = serializers.DecimalField(max_digits=14, decimal_places=2)
+    quantidade = serializers.IntegerField()
 
 
 # ════════════════════════════════════════════════════════════

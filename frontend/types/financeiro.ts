@@ -4,7 +4,14 @@
 
 // ── Categoria ─────────────────────────────────────────────
 
-export type TipoFinanceiro = "receita" | "despesa";
+export type TipoFinanceiro = "receita" | "despesa" | "emprestimo";
+
+// Categorias existem só para receita/despesa (empréstimo não usa categoria).
+export type TipoCategoria = "receita" | "despesa";
+
+export type DirecaoEmprestimo = "emprestei" | "peguei_emprestado";
+
+export type StatusEmprestimo = "aberto" | "atrasado" | "quitado" | "perdoado" | "";
 
 export type StatusLancamento = "pendente" | "pago" | "atrasado" | "cancelado";
 
@@ -13,7 +20,7 @@ export type TipoRecorrencia = "semanal" | "mensal" | "anual";
 export interface Categoria {
   id: string;
   nome: string;
-  tipo: TipoFinanceiro;
+  tipo: TipoCategoria;
   cor: string;
   icone: string;
   ativo: boolean;
@@ -22,7 +29,7 @@ export interface Categoria {
 
 export interface CategoriaCreate {
   nome: string;
-  tipo: TipoFinanceiro;
+  tipo: TipoCategoria;
   cor?: string;
   icone?: string;
 }
@@ -44,6 +51,15 @@ export interface Lancamento {
   recorrencia: TipoRecorrencia | "";
   observacoes: string;
   esta_atrasado: boolean;
+  // Campos de empréstimo (preenchidos só quando tipo="emprestimo")
+  direcao_emprestimo: DirecaoEmprestimo | null;
+  direcao_emprestimo_display: string | null;
+  pessoa_emprestimo: string | null;
+  data_retorno_esperado: string | null;
+  emprestimo_quitado: boolean;
+  emprestimo_perdoado: boolean;
+  data_quitacao: string | null;
+  status_emprestimo: StatusEmprestimo;
   criado_em: string;
   atualizado_em: string;
 }
@@ -53,12 +69,22 @@ export interface LancamentoCreate {
   descricao: string;
   valor: number | string;
   categoria?: string | null;
-  data_vencimento: string | null;
+  data_vencimento?: string | null;
   data_pagamento?: string | null;
   status?: StatusLancamento;
   recorrente?: boolean;
   recorrencia?: TipoRecorrencia | "";
   observacoes?: string;
+  // Empréstimo
+  direcao_emprestimo?: DirecaoEmprestimo | null;
+  pessoa_emprestimo?: string | null;
+  data_retorno_esperado?: string | null;
+}
+
+export interface ResumoEmprestimos {
+  a_receber: number;
+  a_devolver: number;
+  quantidade: number;
 }
 
 export interface LancamentoPagar {
@@ -142,6 +168,12 @@ export interface SaldoFinanceiro {
   saldo_disponivel: number;
   /** = acumulado.saldo (caixinhas não mudam o patrimônio) */
   patrimonio_total: number;
+  // Contexto de empréstimos abertos (o saldo já reflete o efeito de caixa).
+  emprestimos?: {
+    a_receber: number;
+    a_devolver: number;
+    quantidade: number;
+  };
   mes_atual: {
     mes: number;
     ano: number;

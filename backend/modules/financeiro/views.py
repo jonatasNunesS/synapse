@@ -21,6 +21,7 @@ from shared.responses import (
 )
 
 from .serializers import (
+    AdiarEmprestimoSerializer,
     CategoriaSerializer,
     DRESerializer,
     FluxoCaixaDiaSerializer,
@@ -28,6 +29,8 @@ from .serializers import (
     LancamentoSerializer,
     LogEdicaoLancamentoSerializer,
     MotivoSerializer,
+    QuitarEmprestimoSerializer,
+    ResumoEmprestimosSerializer,
     ResumoFinanceiroSerializer,
 )
 from .services import FinanceiroService
@@ -328,6 +331,83 @@ class LancamentoHistoricoView(EmpresaQuerySetMixin, APIView):
         logs = FinanceiroService.historico_lancamento(empresa_id, pk)
         return success_response(
             data=LogEdicaoLancamentoSerializer(logs, many=True).data
+        )
+
+
+class EmprestimosListView(EmpresaQuerySetMixin, APIView):
+    """
+    GET /api/financeiro/emprestimos/?filtro=aberto|quitado|atrasado|todos
+    Lista paginada de lançamentos tipo=emprestimo.
+    """
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def get(self, request):
+        empresa_id = self.get_empresa_id()
+        filtro = request.query_params.get("filtro", "todos")
+        qs = FinanceiroService.listar_emprestimos(empresa_id, filtro)
+        paginator = StandardPagination()
+        page = paginator.paginate_queryset(qs, request)
+        return paginator.get_paginated_response(
+            LancamentoSerializer(page, many=True).data
+        )
+
+
+class EmprestimosResumoView(EmpresaQuerySetMixin, APIView):
+    """GET /api/financeiro/emprestimos/resumo/ — a_receber, a_devolver, quantidade."""
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def get(self, request):
+        empresa_id = self.get_empresa_id()
+        resumo = FinanceiroService.resumo_emprestimos(empresa_id)
+        return success_response(data=ResumoEmprestimosSerializer(resumo).data)
+
+
+class QuitarEmprestimoView(EmpresaQuerySetMixin, APIView):
+    """POST /api/financeiro/lancamentos/{id}/quitar-emprestimo/ — body: {perdoar?}"""
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def post(self, request, pk):
+        empresa_id = self.get_empresa_id()
+        serializer = QuitarEmprestimoSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            lancamento = FinanceiroService.quitar_emprestimo(
+                empresa_id, pk, request.user.id,
+                perdoar=serializer.validated_data["perdoar"],
+            )
+        except ValueError as e:
+            return error_response("EMPRESTIMO_INVALIDO", str(e))
+        return success_response(
+            data=LancamentoSerializer(lancamento).data,
+            message="Empréstimo quitado.",
+        )
+
+
+class AdiarEmprestimoView(EmpresaQuerySetMixin, APIView):
+    """POST /api/financeiro/lancamentos/{id}/adiar-emprestimo/ — body: {dias}"""
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def post(self, request, pk):
+        empresa_id = self.get_empresa_id()
+        serializer = AdiarEmprestimoSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            lancamento = FinanceiroService.adiar_emprestimo(
+                empresa_id, pk, serializer.validated_data["dias"]
+            )
+        except ValueError as e:
+            return error_response("EMPRESTIMO_INVALIDO", str(e))
+        return success_response(
+            data=LancamentoSerializer(lancamento).data,
+            message="Prazo do empréstimo adiado.",
         )
 
 

@@ -170,13 +170,27 @@ export function LancamentoTable({
                     />
                   )}
                   <div>
-                    <p className="font-medium text-slate-200 truncate max-w-[200px]">
+                    <p className="font-medium text-slate-200 truncate max-w-[200px] flex items-center gap-1.5">
                       {lancamento.descricao}
+                      {lancamento.tipo === "emprestimo" && (
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/25 flex-shrink-0">
+                          Empréstimo
+                        </span>
+                      )}
                     </p>
-                    {lancamento.categoria_nome && (
+                    {lancamento.tipo === "emprestimo" && lancamento.pessoa_emprestimo ? (
                       <p className="text-xs text-slate-500">
-                        {lancamento.categoria_nome}
+                        {lancamento.direcao_emprestimo === "peguei_emprestado"
+                          ? "de "
+                          : "para "}
+                        {lancamento.pessoa_emprestimo}
                       </p>
+                    ) : (
+                      lancamento.categoria_nome && (
+                        <p className="text-xs text-slate-500">
+                          {lancamento.categoria_nome}
+                        </p>
+                      )
                     )}
                   </div>
                 </div>
@@ -188,10 +202,16 @@ export function LancamentoTable({
                   className={`text-xs font-medium ${
                     lancamento.tipo === "receita"
                       ? "text-emerald-400"
-                      : "text-red-400"
+                      : lancamento.tipo === "emprestimo"
+                        ? "text-amber-400"
+                        : "text-red-400"
                   }`}
                 >
-                  {lancamento.tipo === "receita" ? "Receita" : "Despesa"}
+                  {lancamento.tipo === "receita"
+                    ? "Receita"
+                    : lancamento.tipo === "emprestimo"
+                      ? "Empréstimo"
+                      : "Despesa"}
                 </span>
               </td>
 
@@ -201,10 +221,16 @@ export function LancamentoTable({
                   className={`font-semibold tabular-nums ${
                     lancamento.tipo === "receita"
                       ? "text-emerald-400"
-                      : "text-red-400"
+                      : lancamento.tipo === "emprestimo"
+                        ? "text-amber-400"
+                        : "text-red-400"
                   }`}
                 >
-                  {lancamento.tipo === "receita" ? "+" : "-"}
+                  {lancamento.tipo === "receita"
+                    ? "+"
+                    : lancamento.tipo === "emprestimo"
+                      ? ""
+                      : "-"}
                   {formatarMoeda(Number(lancamento.valor))}
                 </span>
               </td>

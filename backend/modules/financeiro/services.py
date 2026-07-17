@@ -271,6 +271,102 @@ class FinanceiroService:
         invalidate_cache(empresa_id, "financeiro")
         return lancamento
 
+    # ── Empréstimos ───────────────────────────────────────────
+    #
+    # Empréstimo é um tipo de lançamento (não entidade separada). Contabilidade:
+    # o efeito de caixa inicial ("emprestei" = saiu, "peguei" = entrou) já entra
+    # no saldo acumulado (ver repository.calcular_saldo). Na quitação NORMAL,
+    # cria-se um lançamento de retorno (receita/despesa) que zera o net. No
+    # PERDÃO/CANCELAMENTO não há retorno — o efeito permanece (dinheiro não volta).
+
+    @staticmethod
+    def listar_emprestimos(empresa_id, filtro: str = "todos"):
+        return FinanceiroRepository.listar_emprestimos(empresa_id, filtro)
+
+    @staticmethod
+    def resumo_emprestimos(empresa_id) -> dict:
+        return FinanceiroRepository.resumo_emprestimos(empresa_id)
+
+    @staticmethod
+    def _get_emprestimo(empresa_id, lancamento_id) -> Lancamento:
+        lancamento = FinanceiroRepository.get_lancamento(empresa_id, lancamento_id)
+        if not lancamento:
+            raise ValueError("Lançamento não encontrado.")
+        if lancamento.tipo != "emprestimo":
+            raise ValueError("Este lançamento não é um empréstimo.")
+        return lancamento
+
+    @staticmethod
+    def quitar_emprestimo(empresa_id, lancamento_id, usuario_id, perdoar: bool = False) -> Lancamento:
+        """
+        Quita um empréstimo. perdoar=False: cria lançamento de retorno
+        (receita se 'emprestei', despesa se 'peguei'). perdoar=True: quita sem
+        retornar valor ao caixa (perdão/dívida cancelada).
+        """
+        lancamento = FinanceiroService._get_emprestimo(empresa_id, lancamento_id)
+        if lancamento.emprestimo_quitado:
+            raise ValueError("Este empréstimo já está quitado.")
+
+        hoje = date.today()
+        with transaction.atomic():
+            if not perdoar:
+                if lancamento.direcao_emprestimo == "emprestei":
+                    # Recebi de volta → entra como receita realizada
+                    FinanceiroRepository.criar_lancamento(
+                        empresa_id, usuario_id, {
+                            "tipo": "receita",
+                            "descricao": f"Retorno de empréstimo — {lancamento.pessoa_emprestimo or 'terceiro'}",
+                            "valor": lancamento.valor,
+                            "data_vencimento": hoje,
+                            "data_pagamento": hoje,
+                            "status": "pago",
+                            "observacoes": f"[Retorno do empréstimo {lancamento.id}]",
+                        }
+                    )
+                else:  # peguei_emprestado → devolvi → sai como despesa
+                    FinanceiroRepository.criar_lancamento(
+                        empresa_id, usuario_id, {
+                            "tipo": "despesa",
+                            "descricao": f"Devolução de empréstimo — {lancamento.pessoa_emprestimo or 'terceiro'}",
+                            "valor": lancamento.valor,
+                            "data_vencimento": hoje,
+                            "data_pagamento": hoje,
+                            "status": "pago",
+                            "observacoes": f"[Devolução do empréstimo {lancamento.id}]",
+                        }
+                    )
+            lancamento = FinanceiroRepository.atualizar_lancamento(lancamento, {
+                "emprestimo_quitado": True,
+                "emprestimo_perdoado": perdoar,
+                "data_quitacao": hoje,
+            })
+
+        invalidate_cache(empresa_id, "financeiro")
+        logger.info(
+            "Empréstimo quitado",
+            extra={
+                "empresa_id": str(empresa_id),
+                "lancamento_id": str(lancamento_id),
+                "perdoado": perdoar,
+            },
+        )
+        return lancamento
+
+    @staticmethod
+    def adiar_emprestimo(empresa_id, lancamento_id, dias: int) -> Lancamento:
+        """Adia a data de retorno esperado em N dias a partir de hoje."""
+        lancamento = FinanceiroService._get_emprestimo(empresa_id, lancamento_id)
+        if lancamento.emprestimo_quitado:
+            raise ValueError("Este empréstimo já está quitado.")
+        if dias < 1:
+            raise ValueError("O número de dias deve ser maior que zero.")
+        nova_data = date.today() + timedelta(days=dias)
+        lancamento = FinanceiroRepository.atualizar_lancamento(
+            lancamento, {"data_retorno_esperado": nova_data}
+        )
+        invalidate_cache(empresa_id, "financeiro")
+        return lancamento
+
     # ── Relatórios com Cache ──────────────────────────────────
 
     @staticmethod
@@ -319,6 +415,11 @@ class FinanceiroService:
         caixinhas = CaixinhaService.obter_resumo(empresa_id)
         saldo_acumulado = _f(ac["saldo"])
 
+        # Empréstimos: o saldo acumulado JÁ reflete o efeito de caixa (dinheiro
+        # que saiu/entrou via calcular_saldo). a_receber/a_devolver são apenas
+        # contexto — não se subtrai de novo. Convivem com as caixinhas.
+        emp = FinanceiroRepository.resumo_emprestimos(empresa_id)
+
         resultado = {
             "acumulado": {
                 "total_recebido": _f(ac["total_recebido"]),
@@ -331,6 +432,11 @@ class FinanceiroService:
             },
             "saldo_disponivel": saldo_acumulado - caixinhas["total"],
             "patrimonio_total": saldo_acumulado,
+            "emprestimos": {
+                "a_receber": _f(emp["a_receber"]),
+                "a_devolver": _f(emp["a_devolver"]),
+                "quantidade": emp["quantidade"],
+            },
             "mes_atual": {
                 "mes": m["mes"],
                 "ano": m["ano"],

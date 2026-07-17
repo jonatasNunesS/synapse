@@ -9,7 +9,7 @@ import type { Categoria, LancamentoCreate } from "@/types/financeiro";
 
 const lancamentoSchema = z
   .object({
-    tipo: z.enum(["receita", "despesa"]),
+    tipo: z.enum(["receita", "despesa", "emprestimo"]),
     descricao: z
       .string()
       .min(3, "Mínimo 3 caracteres.")
@@ -28,6 +28,10 @@ const lancamentoSchema = z
     recorrente: z.boolean(),
     recorrencia: z.enum(["semanal", "mensal", "anual", ""]),
     observacoes: z.string().optional(),
+    // Empréstimo (condicional)
+    direcao_emprestimo: z.enum(["emprestei", "peguei_emprestado", ""]).optional(),
+    pessoa_emprestimo: z.string().optional(),
+    data_retorno_esperado: z.string().optional().nullable(),
   })
   .refine(
     (data) => {
@@ -39,6 +43,18 @@ const lancamentoSchema = z
       path: ["data_vencimento"],
     }
   )
+  .refine((d) => d.tipo !== "emprestimo" || !!d.direcao_emprestimo, {
+    message: "Escolha a direção do empréstimo.",
+    path: ["direcao_emprestimo"],
+  })
+  .refine((d) => d.tipo !== "emprestimo" || !!d.pessoa_emprestimo?.trim(), {
+    message: "Informe para quem / de quem.",
+    path: ["pessoa_emprestimo"],
+  })
+  .refine((d) => d.tipo !== "emprestimo" || !!d.data_retorno_esperado, {
+    message: "Informe a data de retorno esperado.",
+    path: ["data_retorno_esperado"],
+  })
   .refine(
     (data) => {
       if (data.status === "pago" && !data.data_pagamento) return false;
@@ -100,7 +116,26 @@ export function LancamentoForm({
   // Filtra categorias pelo tipo selecionado
   const categoriasFiltradas = categorias.filter((c) => c.tipo === tipo);
 
+  const isEmprestimo = tipo === "emprestimo";
+
   const handleFormSubmit = async (data: LancamentoFormData) => {
+    if (data.tipo === "emprestimo") {
+      // Empréstimo: o backend cuida de status/vencimento (caixa realizado).
+      await onSubmit({
+        tipo: "emprestimo",
+        descricao: data.descricao,
+        valor: parseFloat(data.valor.replace(",", ".")),
+        categoria: data.categoria || null,
+        observacoes: data.observacoes || "",
+        direcao_emprestimo: (data.direcao_emprestimo || null) as
+          | "emprestei"
+          | "peguei_emprestado"
+          | null,
+        pessoa_emprestimo: data.pessoa_emprestimo?.trim() || null,
+        data_retorno_esperado: data.data_retorno_esperado || null,
+      });
+      return;
+    }
     const payload: LancamentoCreate = {
       tipo: data.tipo,
       descricao: data.descricao,
@@ -147,23 +182,31 @@ export function LancamentoForm({
             <label className="block text-sm font-medium text-slate-300 mb-2">
               Tipo *
             </label>
-            <div className="grid grid-cols-2 gap-2">
-              {(["receita", "despesa"] as const).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setValue("tipo", t)}
-                  className={`py-2.5 rounded-lg text-sm font-medium transition-all ${
-                    tipo === t
-                      ? t === "receita"
-                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50"
-                        : "bg-red-500/20 text-red-400 border border-red-500/50"
-                      : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
-                  }`}
-                >
-                  {t === "receita" ? "Receita" : "Despesa"}
-                </button>
-              ))}
+            <div className="grid grid-cols-3 gap-2">
+              {(["receita", "despesa", "emprestimo"] as const).map((t) => {
+                const ativoCls =
+                  t === "receita"
+                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50"
+                    : t === "despesa"
+                      ? "bg-red-500/20 text-red-400 border border-red-500/50"
+                      : "bg-amber-500/20 text-amber-400 border border-amber-500/50";
+                const label =
+                  t === "receita" ? "Receita" : t === "despesa" ? "Despesa" : "Empréstimo";
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setValue("tipo", t)}
+                    className={`py-2.5 rounded-lg text-sm font-medium transition-all ${
+                      tipo === t
+                        ? ativoCls
+                        : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
             </div>
             {errors.tipo && (
               <p className="mt-1 text-xs text-red-400">{errors.tipo.message}</p>
@@ -218,7 +261,77 @@ export function LancamentoForm({
             </div>
           </div>
 
-          {/* Data de Vencimento e Status */}
+          {/* ── Campos condicionais de EMPRÉSTIMO ── */}
+          {isEmprestimo && (
+            <div className="space-y-4 rounded-lg border border-amber-500/25 bg-amber-500/[0.04] p-3">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Direção *
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(
+                    [
+                      ["emprestei", "Eu emprestei"],
+                      ["peguei_emprestado", "Peguei emprestado"],
+                    ] as const
+                  ).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setValue("direcao_emprestimo", value)}
+                      className={`py-2 rounded-lg text-xs font-medium transition-all ${
+                        watch("direcao_emprestimo") === value
+                          ? "bg-amber-500/20 text-amber-300 border border-amber-500/50"
+                          : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {errors.direcao_emprestimo && (
+                  <p className="mt-1 text-xs text-red-400">
+                    {errors.direcao_emprestimo.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  {watch("direcao_emprestimo") === "peguei_emprestado"
+                    ? "De quem? *"
+                    : "Pra quem? *"}
+                </label>
+                <input
+                  {...register("pessoa_emprestimo")}
+                  placeholder="Ex: João da padaria"
+                  className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-colors"
+                />
+                {errors.pessoa_emprestimo && (
+                  <p className="mt-1 text-xs text-red-400">
+                    {errors.pessoa_emprestimo.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  Data de retorno esperado *
+                </label>
+                <input
+                  type="date"
+                  {...register("data_retorno_esperado")}
+                  className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-amber-500 transition-colors"
+                />
+                {errors.data_retorno_esperado && (
+                  <p className="mt-1 text-xs text-red-400">
+                    {errors.data_retorno_esperado.message}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Data de Vencimento e Status (não se aplica a empréstimo) */}
+          {!isEmprestimo && (
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1.5">
@@ -249,9 +362,10 @@ export function LancamentoForm({
               </select>
             </div>
           </div>
+          )}
 
           {/* Data de Pagamento (condicional) */}
-          {status === "pago" && (
+          {!isEmprestimo && status === "pago" && (
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1.5">
                 Data de Pagamento *
@@ -269,7 +383,8 @@ export function LancamentoForm({
             </div>
           )}
 
-          {/* Recorrência */}
+          {/* Recorrência (não se aplica a empréstimo) */}
+          {!isEmprestimo && (
           <div className="flex items-center gap-3">
             <input
               type="checkbox"
@@ -281,8 +396,9 @@ export function LancamentoForm({
               Lançamento recorrente
             </label>
           </div>
+          )}
 
-          {recorrente && (
+          {!isEmprestimo && recorrente && (
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1.5">
                 Periodicidade *

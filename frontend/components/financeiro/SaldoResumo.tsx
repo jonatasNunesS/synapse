@@ -13,6 +13,7 @@ import {
   ArrowDownCircle,
   ArrowUpCircle,
   Clock,
+  HandCoins,
   PiggyBank,
   Wallet,
   CalendarDays,
@@ -116,38 +117,69 @@ export function SaldoResumo({ saldo, loading, filtroAtivo, onFiltrar }: SaldoRes
       {/* Dois saldos em destaque */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {(() => {
-          // Com caixinhas: mostra o saldo DISPONÍVEL (acumulado − guardado),
-          // link "Em caixinhas" e o patrimônio total. Sem caixinhas:
-          // comportamento idêntico ao anterior (saldo acumulado puro).
+          // Caixinhas e empréstimos convivem sob o saldo disponível:
+          //   Saldo disponível: R$ X
+          //     └ Em caixinhas: R$ Y · Emprestado: R$ Z · A devolver: R$ W
+          //   Patrimônio total: R$ (só quando há caixinhas — é o que difere)
+          // Sem caixinhas nem empréstimos: comportamento original (acumulado).
+          const emp = saldo?.emprestimos;
           const temCaixinhas = (saldo?.caixinhas?.quantidade ?? 0) > 0;
+          const temEmprestimos = (emp?.quantidade ?? 0) > 0;
+          const temExtra = temCaixinhas || temEmprestimos;
           const disponivel = saldo?.saldo_disponivel ?? ac?.saldo ?? 0;
           return (
             <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
               <div className="flex items-center gap-2 mb-1">
                 <Wallet className="h-4 w-4 text-slate-400" />
                 <p className="text-sm text-slate-400">
-                  {temCaixinhas ? "Saldo disponível" : "Saldo acumulado"}
+                  {temExtra ? "Saldo disponível" : "Saldo acumulado"}
                 </p>
               </div>
               {loading ? (
                 <SkeletonLinha />
               ) : (
-                <p className={`text-3xl font-bold tabular-nums ${corSaldo(temCaixinhas ? disponivel : ac?.saldo ?? 0)}`}>
-                  {moeda(temCaixinhas ? disponivel : ac?.saldo ?? 0)}
+                <p className={`text-3xl font-bold tabular-nums ${corSaldo(temExtra ? disponivel : ac?.saldo ?? 0)}`}>
+                  {moeda(temExtra ? disponivel : ac?.saldo ?? 0)}
                 </p>
               )}
-              {temCaixinhas ? (
+              {temExtra ? (
                 <div className="text-xs mt-1 space-y-0.5">
-                  <Link
-                    href="/financeiro/caixinhas"
-                    className="inline-flex items-center gap-1 text-violet-400 hover:text-violet-300 transition-colors"
-                  >
-                    <PiggyBank className="h-3.5 w-3.5" />
-                    Em caixinhas: {moeda(saldo?.caixinhas?.total ?? 0)}
-                  </Link>
-                  <p className="text-slate-500">
-                    Patrimônio total: {moeda(saldo?.patrimonio_total ?? 0)}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    {temCaixinhas && (
+                      <Link
+                        href="/financeiro/caixinhas"
+                        className="inline-flex items-center gap-1 text-violet-400 hover:text-violet-300 transition-colors"
+                      >
+                        <PiggyBank className="h-3.5 w-3.5" />
+                        Em caixinhas: {moeda(saldo?.caixinhas?.total ?? 0)}
+                      </Link>
+                    )}
+                    {temCaixinhas && temEmprestimos && (
+                      <span aria-hidden className="text-slate-600">·</span>
+                    )}
+                    {temEmprestimos && (
+                      <Link
+                        href="/financeiro/emprestimos"
+                        className="inline-flex flex-wrap items-center gap-x-1.5 text-amber-400/90 hover:text-amber-300 transition-colors"
+                      >
+                        <HandCoins className="h-3.5 w-3.5" />
+                        {(emp?.a_receber ?? 0) > 0 && (
+                          <span>Emprestado: {moeda(emp!.a_receber)}</span>
+                        )}
+                        {(emp?.a_receber ?? 0) > 0 && (emp?.a_devolver ?? 0) > 0 && (
+                          <span aria-hidden>·</span>
+                        )}
+                        {(emp?.a_devolver ?? 0) > 0 && (
+                          <span>A devolver: {moeda(emp!.a_devolver)}</span>
+                        )}
+                      </Link>
+                    )}
+                  </div>
+                  {temCaixinhas && (
+                    <p className="text-slate-500">
+                      Patrimônio total: {moeda(saldo?.patrimonio_total ?? 0)}
+                    </p>
+                  )}
                 </div>
               ) : (
                 <p className="text-xs text-slate-500 mt-1">

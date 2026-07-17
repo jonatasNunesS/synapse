@@ -42,6 +42,12 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=0, minute=5),        # Diariamente às 00:05 (BRT)
         "options": {"expires": 3600},
     },
+    # Empréstimos — notifica no sino quando o retorno chega. Uma vez (idempotente).
+    "verificar-emprestimos": {
+        "task": "financeiro.verificar_emprestimos",   # modules/financeiro/tasks.py
+        "schedule": crontab(hour=0, minute=10),       # Diariamente às 00:10 (BRT)
+        "options": {"expires": 3600},
+    },
     # ── M3: Estoque ──────────────────────────────────────────
     "verificar-estoque-minimo": {
         "task": "estoque.verificar_estoque_minimo",   # modules/estoque/tasks.py

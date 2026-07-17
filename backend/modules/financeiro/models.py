@@ -57,6 +57,7 @@ class Lancamento(models.Model):
     TIPO_CHOICES = [
         ("receita", "Receita"),
         ("despesa", "Despesa"),
+        ("emprestimo", "Empréstimo"),
     ]
 
     STATUS_CHOICES = [
@@ -70,6 +71,14 @@ class Lancamento(models.Model):
         ("semanal", "Semanal"),
         ("mensal", "Mensal"),
         ("anual", "Anual"),
+    ]
+
+    # Empréstimo é um TIPO de lançamento (não entidade separada). A direção
+    # define o efeito no caixa: "emprestei" = dinheiro saiu (a receber);
+    # "peguei_emprestado" = dinheiro entrou (a devolver).
+    DIRECAO_EMPRESTIMO_CHOICES = [
+        ("emprestei", "Eu emprestei"),
+        ("peguei_emprestado", "Peguei emprestado"),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -96,6 +105,19 @@ class Lancamento(models.Model):
         max_length=10, choices=RECORRENCIA_CHOICES, blank=True
     )
     observacoes = models.TextField(blank=True)
+
+    # ── Campos de empréstimo (só usados quando tipo="emprestimo") ──
+    direcao_emprestimo = models.CharField(
+        max_length=20, choices=DIRECAO_EMPRESTIMO_CHOICES, null=True, blank=True
+    )
+    pessoa_emprestimo = models.CharField(max_length=255, null=True, blank=True)
+    data_retorno_esperado = models.DateField(null=True, blank=True)
+    emprestimo_quitado = models.BooleanField(default=False)
+    # True quando quitado SEM retorno ao caixa (perdão/dívida cancelada):
+    # o valor não volta ao saldo. Distingue "quitado" de "perdoado".
+    emprestimo_perdoado = models.BooleanField(default=False)
+    data_quitacao = models.DateField(null=True, blank=True)
+
     criado_por = models.ForeignKey(
         "synapse_auth.CustomUser",
         on_delete=models.SET_NULL,
@@ -125,6 +147,23 @@ class Lancamento(models.Model):
     def esta_atrasado(self) -> bool:
         """True se o lançamento está pendente e o vencimento já passou."""
         return self.status == "pendente" and self.data_vencimento < date.today()
+
+    @property
+    def status_emprestimo(self) -> str:
+        """
+        Status derivado do empréstimo (só faz sentido p/ tipo=emprestimo):
+        aberto | atrasado | quitado | perdoado.
+        'perdoado' = quitado sem retorno ao caixa (data_quitacao definida mas
+        sem lançamento de retorno) — distinguido pela flag observacoes marker
+        não é confiável; usamos o campo dedicado abaixo quando quitado.
+        """
+        if self.tipo != "emprestimo":
+            return ""
+        if self.emprestimo_quitado:
+            return "perdoado" if self.emprestimo_perdoado else "quitado"
+        if self.data_retorno_esperado and self.data_retorno_esperado < date.today():
+            return "atrasado"
+        return "aberto"
 
 
 class LogEdicaoLancamento(models.Model):
