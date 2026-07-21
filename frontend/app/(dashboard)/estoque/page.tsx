@@ -16,6 +16,7 @@ import {
 } from "@/hooks/useEstoque";
 import type { ProdutoList, ProdutoCreate, FiltrosProduto, StatusEstoque } from "@/types/estoque";
 import { CategoriaEstoqueModal } from "@/components/estoque/CategoriaEstoqueModal";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 export default function EstoquePage() {
   const { resumo, loading: loadingResumo, carregar: carregarResumo } = useResumoEstoque();
@@ -31,6 +32,8 @@ export default function EstoquePage() {
   const [produtoEditando, setProdutoEditando] = useState<ProdutoList | null>(null);
   const [erroForm, setErroForm] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
+  const [produtoParaExcluir, setProdutoParaExcluir] = useState<ProdutoList | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
 
   const carregarTudo = useCallback(async (f: FiltrosProduto = filtros) => {
     await Promise.all([
@@ -90,14 +93,23 @@ export default function EstoquePage() {
     setMostrarForm(true);
   };
 
-  const handleExcluir = async (produto: ProdutoList) => {
-    if (!confirm(`Deseja excluir o produto "${produto.nome}"?`)) return;
+  const handleExcluir = (produto: ProdutoList) => {
+    setProdutoParaExcluir(produto);
+  };
+
+  const handleConfirmarExclusao = async () => {
+    if (!produtoParaExcluir || excluindo) return; // evita duplo clique
+    setExcluindo(true);
     try {
-      await excluir(produto.id);
+      await excluir(produtoParaExcluir.id);
       toast.success("Produto excluído.");
+      setProdutoParaExcluir(null);
       await carregarTudo();
     } catch (err) {
-      toast.error(getErrorMessage(err));
+      // Erro NUNCA calado: mostra a mensagem real do backend
+      toast.error(getErrorMessage(err), { duration: 7000 });
+    } finally {
+      setExcluindo(false);
     }
   };
 
@@ -223,6 +235,24 @@ export default function EstoquePage() {
           erro={erroForm}
         />
       )}
+
+      <ConfirmDialog
+        open={!!produtoParaExcluir}
+        titulo="Excluir produto"
+        mensagem={
+          <>
+            Deseja excluir o produto{" "}
+            <span className="text-white font-medium">
+              {produtoParaExcluir?.nome}
+            </span>
+            ? Esta ação não pode ser desfeita.
+          </>
+        }
+        confirmLabel="Excluir"
+        processando={excluindo}
+        onConfirm={handleConfirmarExclusao}
+        onCancel={() => setProdutoParaExcluir(null)}
+      />
     </div>
   );
 }

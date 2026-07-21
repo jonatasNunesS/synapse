@@ -19,6 +19,7 @@ import { CalendarDays, Plus } from "lucide-react";
 import { AgendaCalendario } from "@/components/agenda/AgendaCalendario";
 import { EventoForm } from "@/components/agenda/EventoForm";
 import { EventoDetalhe } from "@/components/agenda/EventoDetalhe";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useAgenda } from "@/hooks/useAgenda";
 import { getErrorMessage } from "@/lib/api";
 import type { Evento, EventoPayload } from "@/types/agenda";
@@ -48,6 +49,7 @@ export default function AgendaPage() {
   const [slotInicial, setSlotInicial] = useState<{ inicio: Date; fim: Date } | null>(null);
 
   const [detalhe, setDetalhe] = useState<Evento | null>(null);
+  const [confirmarExclusao, setConfirmarExclusao] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
 
   // Recarrega os eventos do intervalo visível
@@ -97,17 +99,23 @@ export default function AgendaPage() {
     setFormAberto(true);
   };
 
-  const handleExcluir = async () => {
+  const handleExcluir = () => {
     if (!detalhe) return;
-    if (!confirm(`Excluir o evento "${detalhe.titulo}"?`)) return;
+    setConfirmarExclusao(true);
+  };
+
+  const handleConfirmarExclusao = async () => {
+    if (!detalhe || excluindo) return; // evita duplo clique
     setExcluindo(true);
     try {
       await deletar(detalhe.id);
       toast.success("Evento excluído.");
+      setConfirmarExclusao(false);
       setDetalhe(null);
       await recarregar();
     } catch (err) {
-      toast.error(getErrorMessage(err));
+      // Erro NUNCA calado: mostra a mensagem real do backend
+      toast.error(getErrorMessage(err), { duration: 7000 });
     } finally {
       setExcluindo(false);
     }
@@ -166,6 +174,21 @@ export default function AgendaPage() {
           excluindo={excluindo}
         />
       )}
+
+      <ConfirmDialog
+        open={confirmarExclusao}
+        titulo="Excluir evento"
+        mensagem={
+          <>
+            Excluir o evento{" "}
+            <span className="text-white font-medium">{detalhe?.titulo}</span>?
+          </>
+        }
+        confirmLabel="Excluir"
+        processando={excluindo}
+        onConfirm={handleConfirmarExclusao}
+        onCancel={() => setConfirmarExclusao(false)}
+      />
     </div>
   );
 }

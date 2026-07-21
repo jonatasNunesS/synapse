@@ -8,6 +8,7 @@ import { ResumoCards } from "@/components/clientes/ResumoCards";
 import { ClienteTable } from "@/components/clientes/ClienteTable";
 import { FunilKanban } from "@/components/clientes/FunilKanban";
 import { ClienteForm } from "@/components/clientes/ClienteForm";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useClientes, useFunilKanban, useResumoClientes } from "@/hooks/useClientes";
 import type { ClienteList } from "@/types/clientes";
 
@@ -19,6 +20,8 @@ export default function ClientesPage() {
   const [clienteEditando, setClienteEditando] = useState<ClienteList | null>(null);
   const [formLoading, setFormLoading] = useState(false);
   const [page, setPage] = useState(1);
+  const [clienteParaExcluir, setClienteParaExcluir] = useState<string | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
 
   const { clientes, pagination, loading, carregar, criar, atualizar, deletar } = useClientes();
   const { funil, loading: funilLoading, carregar: carregarFunil, moverCard } = useFunilKanban();
@@ -57,14 +60,23 @@ export default function ClientesPage() {
     }
   };
 
-  const handleDeletar = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este cliente?")) return;
+  const handleDeletar = (id: string) => {
+    setClienteParaExcluir(id);
+  };
+
+  const handleConfirmarExclusao = async () => {
+    if (!clienteParaExcluir || excluindo) return; // evita duplo clique
+    setExcluindo(true);
     try {
-      await deletar(id);
+      await deletar(clienteParaExcluir);
       toast.success("Cliente excluído.");
+      setClienteParaExcluir(null);
       carregarTudo();
     } catch (err) {
-      toast.error(getErrorMessage(err));
+      // Erro NUNCA calado: mostra a mensagem real do backend
+      toast.error(getErrorMessage(err), { duration: 7000 });
+    } finally {
+      setExcluindo(false);
     }
   };
 
@@ -177,6 +189,16 @@ export default function ClientesPage() {
           loading={formLoading}
         />
       )}
+
+      <ConfirmDialog
+        open={!!clienteParaExcluir}
+        titulo="Excluir cliente"
+        mensagem="Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        processando={excluindo}
+        onConfirm={handleConfirmarExclusao}
+        onCancel={() => setClienteParaExcluir(null)}
+      />
     </div>
   );
 }

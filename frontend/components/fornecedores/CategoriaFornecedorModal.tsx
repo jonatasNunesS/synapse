@@ -5,9 +5,11 @@
  */
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { X, Plus, Pencil, Trash2, Tag, Loader2 } from "lucide-react";
 import { useCategoriasFornecedor } from "@/hooks/useFornecedores";
 import { getErrorMessage } from "@/lib/api";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { CategoriaFornecedor } from "@/types/fornecedores";
 
 const CORES_PRESET = [
@@ -33,6 +35,9 @@ export function CategoriaFornecedorModal({ onFechar }: Props) {
   const [corSelecionada, setCorSelecionada] = useState("#6366f1");
   const [erroGlobal, setErroGlobal] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
+  const [categoriaParaExcluir, setCategoriaParaExcluir] =
+    useState<CategoriaFornecedor | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     defaultValues: { nome: "", cor: "#6366f1" },
@@ -70,13 +75,19 @@ export function CategoriaFornecedorModal({ onFechar }: Props) {
     }
   };
 
-  const handleExcluir = async (id: string, nome: string) => {
-    if (!confirm(`Excluir a categoria "${nome}"? Fornecedores vinculados perderão a categoria.`)) return;
+  const handleConfirmarExclusao = async () => {
+    if (!categoriaParaExcluir || excluindo) return; // evita duplo clique
     setErroGlobal(null);
+    setExcluindo(true);
     try {
-      await excluir(id);
+      await excluir(categoriaParaExcluir.id);
+      toast.success("Categoria excluída.");
+      setCategoriaParaExcluir(null);
     } catch (err: unknown) {
-      setErroGlobal(getErrorMessage(err));
+      // Erro NUNCA calado: mostra a mensagem real do backend
+      toast.error(getErrorMessage(err), { duration: 7000 });
+    } finally {
+      setExcluindo(false);
     }
   };
 
@@ -148,7 +159,7 @@ export function CategoriaFornecedorModal({ onFechar }: Props) {
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
-                      onClick={() => handleExcluir(cat.id, cat.nome)}
+                      onClick={() => setCategoriaParaExcluir(cat)}
                       className="rounded-md p-1.5 text-slate-500 hover:bg-red-500/10 hover:text-red-400 transition-colors"
                       title="Excluir"
                     >
@@ -233,6 +244,24 @@ export function CategoriaFornecedorModal({ onFechar }: Props) {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!categoriaParaExcluir}
+        titulo="Excluir categoria"
+        mensagem={
+          <>
+            Excluir a categoria{" "}
+            <span className="text-white font-medium">
+              {categoriaParaExcluir?.nome}
+            </span>
+            ? Fornecedores vinculados perderão a categoria.
+          </>
+        }
+        confirmLabel="Excluir"
+        processando={excluindo}
+        onConfirm={handleConfirmarExclusao}
+        onCancel={() => setCategoriaParaExcluir(null)}
+      />
     </div>
   );
 }

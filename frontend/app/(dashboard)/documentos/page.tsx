@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { FileText, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { getErrorMessage } from "@/lib/api";
 import {
   Select,
   SelectContent,
@@ -24,6 +27,8 @@ export default function DocumentosPage() {
   const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [docEditando, setDocEditando] = useState<Documento | null>(null);
+  const [docParaExcluir, setDocParaExcluir] = useState<string | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
 
   const { documentos, pagination, isLoading, criarDocumento, atualizarDocumento, deletarDocumento } =
     useDocumentos({
@@ -41,9 +46,22 @@ export default function DocumentosPage() {
     }
   };
 
-  const handleDeletar = async (id: string) => {
-    if (confirm("Tem certeza que deseja excluir este documento?")) {
-      await deletarDocumento(id);
+  const handleDeletar = (id: string) => {
+    setDocParaExcluir(id);
+  };
+
+  const handleConfirmarExclusao = async () => {
+    if (!docParaExcluir || excluindo) return; // evita duplo clique
+    setExcluindo(true);
+    try {
+      await deletarDocumento(docParaExcluir);
+      toast.success("Documento excluído.");
+      setDocParaExcluir(null);
+    } catch (err) {
+      // Erro NUNCA calado: mostra a mensagem real do backend
+      toast.error(getErrorMessage(err), { duration: 7000 });
+    } finally {
+      setExcluindo(false);
     }
   };
 
@@ -153,6 +171,16 @@ export default function DocumentosPage() {
           onFechar={() => { setShowForm(false); setDocEditando(null); }}
         />
       )}
+
+      <ConfirmDialog
+        open={!!docParaExcluir}
+        titulo="Excluir documento"
+        mensagem="Tem certeza que deseja excluir este documento? Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        processando={excluindo}
+        onConfirm={handleConfirmarExclusao}
+        onCancel={() => setDocParaExcluir(null)}
+      />
     </div>
   );
 }

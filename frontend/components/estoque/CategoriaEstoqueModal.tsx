@@ -8,8 +8,11 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { toast } from "sonner";
 import { X, Plus, Pencil, Trash2, Loader2, Tag } from "lucide-react";
 import { useCategoriasEstoque } from "@/hooks/useEstoque";
+import { getErrorMessage } from "@/lib/api";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { CategoriaEstoque } from "@/types/estoque";
 
 // ── Schema ───────────────────────────────────────────────────────────────────
@@ -42,6 +45,9 @@ export function CategoriaEstoqueModal({ onFechar }: CategoriaEstoqueModalProps) 
   const [showForm, setShowForm] = useState(false);
   const [corSelecionada, setCorSelecionada] = useState("#6366f1");
   const [erroGlobal, setErroGlobal] = useState<string | null>(null);
+  const [categoriaParaExcluir, setCategoriaParaExcluir] =
+    useState<CategoriaEstoque | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
 
   const {
     register,
@@ -78,13 +84,19 @@ export function CategoriaEstoqueModal({ onFechar }: CategoriaEstoqueModalProps) 
     }
   };
 
-  const handleExcluir = async (id: string, nome: string) => {
-    if (!confirm(`Excluir a categoria "${nome}"? Produtos vinculados perderão a categoria.`)) return;
+  const handleConfirmarExclusao = async () => {
+    if (!categoriaParaExcluir || excluindo) return; // evita duplo clique
     setErroGlobal(null);
+    setExcluindo(true);
     try {
-      await excluir(id);
-    } catch {
-      setErroGlobal("Não foi possível excluir a categoria.");
+      await excluir(categoriaParaExcluir.id);
+      toast.success("Categoria excluída.");
+      setCategoriaParaExcluir(null);
+    } catch (err) {
+      // Erro NUNCA calado: mostra a mensagem real do backend
+      toast.error(getErrorMessage(err), { duration: 7000 });
+    } finally {
+      setExcluindo(false);
     }
   };
 
@@ -158,7 +170,7 @@ export function CategoriaEstoqueModal({ onFechar }: CategoriaEstoqueModalProps) 
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      onClick={() => handleExcluir(cat.id, cat.nome)}
+                      onClick={() => setCategoriaParaExcluir(cat)}
                       className="p-1.5 rounded-md text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                       title="Excluir"
                     >
@@ -260,6 +272,24 @@ export function CategoriaEstoqueModal({ onFechar }: CategoriaEstoqueModalProps) 
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!categoriaParaExcluir}
+        titulo="Excluir categoria"
+        mensagem={
+          <>
+            Excluir a categoria{" "}
+            <span className="text-white font-medium">
+              {categoriaParaExcluir?.nome}
+            </span>
+            ? Produtos vinculados perderão a categoria.
+          </>
+        }
+        confirmLabel="Excluir"
+        processando={excluindo}
+        onConfirm={handleConfirmarExclusao}
+        onCancel={() => setCategoriaParaExcluir(null)}
+      />
     </div>
   );
 }
