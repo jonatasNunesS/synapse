@@ -5,6 +5,7 @@
  */
 import { Coins, Sparkles } from "lucide-react";
 import { useCreditos } from "@/hooks/useCreditos";
+import { UpgradeWhatsappButton } from "@/components/ui/UpgradeWhatsappButton";
 
 export function CreditosBadge() {
   const { creditos } = useCreditos();
@@ -43,6 +44,7 @@ export function CreditosBadge() {
       <span className={zerado ? "" : "text-muted-foreground"}>
         · renova {creditos.renova_em}
       </span>
+      {zerado && <UpgradeWhatsappButton label="Upgrade" size="sm" className="ml-1" />}
     </div>
   );
 }

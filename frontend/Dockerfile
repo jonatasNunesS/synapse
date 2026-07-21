@@ -11,8 +11,12 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ARG GIT_SHA=dev
+# Número do fundador para o botão de upgrade via WhatsApp (só dígitos, com
+# código do país). Vazio = botões de upgrade não aparecem (degradação graciosa).
+ARG WHATSAPP_UPGRADE=
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_PUBLIC_GIT_SHA=$GIT_SHA
+ENV NEXT_PUBLIC_WHATSAPP_UPGRADE=$WHATSAPP_UPGRADE
 ENV NEXT_PUBLIC_API_URL=http://backend:8000/api
 ENV NEXT_PUBLIC_APP_URL=http://localhost:3000
 ENV NEXT_PUBLIC_APP_NAME=Synapse
