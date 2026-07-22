@@ -229,7 +229,7 @@ export function InteracaoForm({ onSubmit, onClose, loading, interacao }: Interac
               className="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 rounded-lg text-sm text-white font-medium transition-colors flex items-center justify-center gap-2"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              {modoEdicao ? "Salvar" : "Registrar"}
+              {modoEdicao ? "Salvar alterações" : "Registrar"}
             </button>
           </div>
         </form>

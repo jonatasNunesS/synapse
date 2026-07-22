@@ -16,13 +16,15 @@ import {
   Phone,
   Mail,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useClienteDetalhe, useInteracoes } from "@/hooks/useClientes";
 import { TimelineInteracoes } from "@/components/clientes/TimelineInteracoes";
 import { InteracaoForm } from "@/components/clientes/InteracaoForm";
 import { ClienteForm } from "@/components/clientes/ClienteForm";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { STATUS_FUNIL_LABELS, STATUS_FUNIL_COLORS } from "@/types/clientes";
 import type { StatusFunil, InteracaoCliente } from "@/types/clientes";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
 
 function formatCurrency(value: string | number): string {
   const num = typeof value === "string" ? parseFloat(value) : value;
@@ -56,6 +58,9 @@ export default function ClienteDetalhePage() {
 
   const [showInteracaoForm, setShowInteracaoForm] = useState(false);
   const [editingInteracao, setEditingInteracao] = useState<InteracaoCliente | null>(null);
+  const [interacaoParaApagar, setInteracaoParaApagar] =
+    useState<InteracaoCliente | null>(null);
+  const [apagandoInteracao, setApagandoInteracao] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [interacaoLoading, setInteracaoLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
@@ -81,18 +86,34 @@ export default function ClienteDetalhePage() {
     setInteracaoLoading(true);
     try {
       await editar(editingInteracao.id, dados); // lança → form mostra o erro
+      toast.success("Interação atualizada.");
       setEditingInteracao(null);
       carregar(); // agregados (valor_total_compras) podem ter mudado
     } finally {
+      // Erro é exibido no banner do próprio form (mantém aberto); não engolimos.
       setInteracaoLoading(false);
     }
   };
 
-  const handleApagarInteracao = async (interacao: InteracaoCliente) => {
-    if (!confirm(`Excluir a interação "${interacao.titulo}"? Esta ação não pode ser desfeita.`))
-      return;
-    await apagar(interacao.id);
-    carregar(); // recalcula agregados do cliente
+  // Abre o ConfirmDialog (padrão do sistema) — sem window.confirm() nativo.
+  const handleApagarInteracao = (interacao: InteracaoCliente) => {
+    setInteracaoParaApagar(interacao);
+  };
+
+  const handleConfirmarApagar = async () => {
+    if (!interacaoParaApagar || apagandoInteracao) return; // evita duplo clique
+    setApagandoInteracao(true);
+    try {
+      await apagar(interacaoParaApagar.id);
+      toast.success("Interação apagada.");
+      setInteracaoParaApagar(null);
+      carregar(); // recalcula agregados do cliente
+    } catch (err) {
+      // Erro NUNCA calado: mostra a mensagem real do backend
+      toast.error(getErrorMessage(err), { duration: 7000 });
+    } finally {
+      setApagandoInteracao(false);
+    }
   };
 
   const handleEditar = async (dados: Parameters<typeof api.patch>[1]) => {
@@ -368,6 +389,17 @@ export default function ClienteDetalhePage() {
           loading={editLoading}
         />
       )}
+
+      {/* Confirmação — apagar interação (padrão ConfirmDialog, não confirm()) */}
+      <ConfirmDialog
+        open={!!interacaoParaApagar}
+        titulo="Apagar interação"
+        mensagem="Apagar esta interação? Esta ação não pode ser desfeita."
+        confirmLabel="Apagar"
+        processando={apagandoInteracao}
+        onConfirm={handleConfirmarApagar}
+        onCancel={() => setInteracaoParaApagar(null)}
+      />
     </div>
   );
 }
