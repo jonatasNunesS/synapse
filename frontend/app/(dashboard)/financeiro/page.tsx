@@ -13,7 +13,10 @@ import {
   Tag,
 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { CategoriaFinanceiroModal } from "@/components/financeiro/CategoriaFinanceiroModal";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { getErrorMessage } from "@/lib/api";
 import { FluxoCaixaChart } from "@/components/financeiro/FluxoCaixaChart";
 import { LancamentoForm } from "@/components/financeiro/LancamentoForm";
 import { LancamentoTable } from "@/components/financeiro/LancamentoTable";
@@ -35,6 +38,9 @@ export default function FinanceiroPage() {
   const [mostrarCategorias, setMostrarCategorias] = useState(false);
   const [lancamentoParaPagar, setLancamentoParaPagar] =
     useState<Lancamento | null>(null);
+  const [lancamentoParaExcluir, setLancamentoParaExcluir] =
+    useState<Lancamento | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
   // Filtro por card de métrica (clicar em "A receber" mostra só esses).
   const [filtroMetrica, setFiltroMetrica] = useState<FiltroMetrica | null>(null);
 
@@ -84,10 +90,24 @@ export default function FinanceiroPage() {
     recarregarSaldo();
   };
 
-  const handleDeletar = async (lancamento: Lancamento) => {
-    if (!confirm(`Excluir "${lancamento.descricao}"?`)) return;
-    await deletar(lancamento.id);
-    recarregarSaldo();
+  const handleDeletar = (lancamento: Lancamento) => {
+    setLancamentoParaExcluir(lancamento);
+  };
+
+  const handleConfirmarExclusao = async () => {
+    if (!lancamentoParaExcluir || excluindo) return; // evita duplo clique
+    setExcluindo(true);
+    try {
+      await deletar(lancamentoParaExcluir.id);
+      toast.success("Lançamento excluído.");
+      setLancamentoParaExcluir(null);
+      recarregarSaldo();
+    } catch (err) {
+      // Erro NUNCA calado: mostra a mensagem real do backend
+      toast.error(getErrorMessage(err), { duration: 7000 });
+    } finally {
+      setExcluindo(false);
+    }
   };
 
   return (
@@ -231,6 +251,24 @@ export default function FinanceiroPage() {
       {mostrarCategorias && (
         <CategoriaFinanceiroModal onClose={() => setMostrarCategorias(false)} />
       )}
+
+      <ConfirmDialog
+        open={!!lancamentoParaExcluir}
+        titulo="Excluir lançamento"
+        mensagem={
+          <>
+            Excluir{" "}
+            <span className="text-white font-medium">
+              {lancamentoParaExcluir?.descricao}
+            </span>
+            ? Esta ação não pode ser desfeita.
+          </>
+        }
+        confirmLabel="Excluir"
+        processando={excluindo}
+        onConfirm={handleConfirmarExclusao}
+        onCancel={() => setLancamentoParaExcluir(null)}
+      />
     </div>
   );
 }

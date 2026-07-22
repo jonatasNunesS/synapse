@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   ArrowLeft, UserCog, Mail, Briefcase, Building2,
   Calendar, Target, Plus, Pencil, Trash2, Trophy, CheckCircle2
@@ -9,6 +10,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { getErrorMessage } from "@/lib/api";
 import { useMembro, useMetasMembro } from "@/hooks/useEquipe";
 import { MetaForm } from "@/components/equipe/MetaForm";
 import type { MetaMembro, MetaFormData } from "@/types/equipe";
@@ -107,6 +110,8 @@ export default function MembroDetailPage() {
 
   const [showMetaForm, setShowMetaForm] = useState(false);
   const [metaEditando, setMetaEditando] = useState<MetaMembro | null>(null);
+  const [metaParaExcluir, setMetaParaExcluir] = useState<string | null>(null);
+  const [excluindoMeta, setExcluindoMeta] = useState(false);
 
   const handleSalvarMeta = async (dados: MetaFormData) => {
     if (metaEditando) {
@@ -116,9 +121,22 @@ export default function MembroDetailPage() {
     }
   };
 
-  const handleDeletarMeta = async (metaId: string) => {
-    if (confirm("Excluir esta meta?")) {
-      await deletarMeta(metaId);
+  const handleDeletarMeta = (metaId: string) => {
+    setMetaParaExcluir(metaId);
+  };
+
+  const handleConfirmarExclusaoMeta = async () => {
+    if (!metaParaExcluir || excluindoMeta) return; // evita duplo clique
+    setExcluindoMeta(true);
+    try {
+      await deletarMeta(metaParaExcluir);
+      toast.success("Meta excluída.");
+      setMetaParaExcluir(null);
+    } catch (err) {
+      // Erro NUNCA calado: mostra a mensagem real do backend
+      toast.error(getErrorMessage(err), { duration: 7000 });
+    } finally {
+      setExcluindoMeta(false);
     }
   };
 
@@ -271,6 +289,16 @@ export default function MembroDetailPage() {
           onFechar={() => { setShowMetaForm(false); setMetaEditando(null); }}
         />
       )}
+
+      <ConfirmDialog
+        open={!!metaParaExcluir}
+        titulo="Excluir meta"
+        mensagem="Tem certeza que deseja excluir esta meta?"
+        confirmLabel="Excluir"
+        processando={excluindoMeta}
+        onConfirm={handleConfirmarExclusaoMeta}
+        onCancel={() => setMetaParaExcluir(null)}
+      />
     </div>
   );
 }

@@ -1,11 +1,11 @@
 /**
  * Fluxo de editar/apagar interações na página do cliente:
  * - apagar passa pelo ConfirmDialog (padrão do sistema), nunca window.confirm();
- * - após apagar com sucesso → toast "Interação apagada.";
+ * - após apagar com sucesso → toast "Interação excluída.";
  * - após salvar a edição → toast "Interação atualizada.".
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import type { InteracaoCliente } from "@/types/clientes";
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
@@ -94,23 +94,24 @@ describe("Cliente — editar/apagar interações", () => {
   it("apagar abre o ConfirmDialog (não window.confirm) e só apaga ao confirmar", async () => {
     render(<ClienteDetalhePage />);
 
-    // O ConfirmDialog ainda não está na tela
-    expect(
-      screen.queryByText("Apagar esta interação? Esta ação não pode ser desfeita.")
-    ).not.toBeInTheDocument();
+    // O ConfirmDialog de interação ainda não está na tela
+    expect(screen.queryByText("Excluir interação")).not.toBeInTheDocument();
 
+    // Ícone de lixeira na timeline (título "Excluir interação")
     fireEvent.click(screen.getByRole("button", { name: "Excluir interação" }));
 
     // ConfirmDialog apareceu; apagar ainda NÃO foi chamado
-    expect(
-      screen.getByText("Apagar esta interação? Esta ação não pode ser desfeita.")
-    ).toBeInTheDocument();
+    const titulo = screen.getByText("Excluir interação");
+    expect(titulo).toBeInTheDocument();
     expect(apagar).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("button", { name: "Apagar" }));
+    // Confirma dentro do próprio diálogo (evita ambiguidade com o botão
+    // "Excluir" do cabeçalho, que apaga o cliente)
+    const dialog = titulo.closest("div.fixed") as HTMLElement;
+    fireEvent.click(within(dialog).getByRole("button", { name: "Excluir" }));
 
     await waitFor(() => expect(apagar).toHaveBeenCalledWith("int-1"));
-    await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith("Interação apagada."));
+    await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith("Interação excluída."));
   });
 
   it("salvar a edição chama editar e dispara toast de sucesso", async () => {

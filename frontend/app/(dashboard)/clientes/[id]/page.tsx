@@ -58,12 +58,14 @@ export default function ClienteDetalhePage() {
 
   const [showInteracaoForm, setShowInteracaoForm] = useState(false);
   const [editingInteracao, setEditingInteracao] = useState<InteracaoCliente | null>(null);
-  const [interacaoParaApagar, setInteracaoParaApagar] =
-    useState<InteracaoCliente | null>(null);
-  const [apagandoInteracao, setApagandoInteracao] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [interacaoLoading, setInteracaoLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
+  const [interacaoParaExcluir, setInteracaoParaExcluir] =
+    useState<InteracaoCliente | null>(null);
+  const [excluindoInteracao, setExcluindoInteracao] = useState(false);
+  const [confirmarExclusaoCliente, setConfirmarExclusaoCliente] = useState(false);
+  const [excluindoCliente, setExcluindoCliente] = useState(false);
 
   useEffect(() => {
     carregar();
@@ -95,24 +97,23 @@ export default function ClienteDetalhePage() {
     }
   };
 
-  // Abre o ConfirmDialog (padrão do sistema) — sem window.confirm() nativo.
   const handleApagarInteracao = (interacao: InteracaoCliente) => {
-    setInteracaoParaApagar(interacao);
+    setInteracaoParaExcluir(interacao);
   };
 
-  const handleConfirmarApagar = async () => {
-    if (!interacaoParaApagar || apagandoInteracao) return; // evita duplo clique
-    setApagandoInteracao(true);
+  const handleConfirmarExclusaoInteracao = async () => {
+    if (!interacaoParaExcluir || excluindoInteracao) return; // evita duplo clique
+    setExcluindoInteracao(true);
     try {
-      await apagar(interacaoParaApagar.id);
-      toast.success("Interação apagada.");
-      setInteracaoParaApagar(null);
+      await apagar(interacaoParaExcluir.id);
+      toast.success("Interação excluída.");
+      setInteracaoParaExcluir(null);
       carregar(); // recalcula agregados do cliente
     } catch (err) {
       // Erro NUNCA calado: mostra a mensagem real do backend
       toast.error(getErrorMessage(err), { duration: 7000 });
     } finally {
-      setApagandoInteracao(false);
+      setExcluindoInteracao(false);
     }
   };
 
@@ -129,11 +130,18 @@ export default function ClienteDetalhePage() {
     }
   };
 
-  const handleDeletar = async () => {
-    if (!confirm("Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita."))
-      return;
-    await api.delete(`/clientes/${id}/`);
-    router.push("/clientes");
+  const handleConfirmarExclusaoCliente = async () => {
+    if (excluindoCliente) return; // evita duplo clique
+    setExcluindoCliente(true);
+    try {
+      await api.delete(`/clientes/${id}/`);
+      toast.success("Cliente excluído.");
+      router.push("/clientes");
+    } catch (err) {
+      // Erro NUNCA calado: mostra a mensagem real do backend
+      toast.error(getErrorMessage(err), { duration: 7000 });
+      setExcluindoCliente(false);
+    }
   };
 
   if (loading && !cliente) {
@@ -194,7 +202,7 @@ export default function ClienteDetalhePage() {
             Editar
           </button>
           <button
-            onClick={handleDeletar}
+            onClick={() => setConfirmarExclusaoCliente(true)}
             className="flex items-center gap-1.5 px-3 py-2 bg-red-600/10 hover:bg-red-600/20 border border-red-600/20 rounded-lg text-xs text-red-400 transition-colors"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -390,15 +398,40 @@ export default function ClienteDetalhePage() {
         />
       )}
 
-      {/* Confirmação — apagar interação (padrão ConfirmDialog, não confirm()) */}
+      {/* Confirmação — excluir interação */}
       <ConfirmDialog
-        open={!!interacaoParaApagar}
-        titulo="Apagar interação"
-        mensagem="Apagar esta interação? Esta ação não pode ser desfeita."
-        confirmLabel="Apagar"
-        processando={apagandoInteracao}
-        onConfirm={handleConfirmarApagar}
-        onCancel={() => setInteracaoParaApagar(null)}
+        open={!!interacaoParaExcluir}
+        titulo="Excluir interação"
+        mensagem={
+          <>
+            Excluir a interação{" "}
+            <span className="text-white font-medium">
+              {interacaoParaExcluir?.titulo}
+            </span>
+            ? Esta ação não pode ser desfeita.
+          </>
+        }
+        confirmLabel="Excluir"
+        processando={excluindoInteracao}
+        onConfirm={handleConfirmarExclusaoInteracao}
+        onCancel={() => setInteracaoParaExcluir(null)}
+      />
+
+      {/* Confirmação — excluir cliente */}
+      <ConfirmDialog
+        open={confirmarExclusaoCliente}
+        titulo="Excluir cliente"
+        mensagem={
+          <>
+            Excluir o cliente{" "}
+            <span className="text-white font-medium">{cliente?.nome}</span>? Esta
+            ação não pode ser desfeita.
+          </>
+        }
+        confirmLabel="Excluir"
+        processando={excluindoCliente}
+        onConfirm={handleConfirmarExclusaoCliente}
+        onCancel={() => setConfirmarExclusaoCliente(false)}
       />
     </div>
   );

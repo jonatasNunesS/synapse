@@ -17,6 +17,7 @@ import { useAppStore } from "@/store/useAppStore";
 import { api } from "@/lib/api";
 import { PLANO_LABELS, PLANO_CORES, SEGMENTOS } from "@/types/auth";
 import type { ApiError } from "@/types/api";
+import { UpgradeWhatsappButton } from "@/components/ui/UpgradeWhatsappButton";
 
 // ── Schema de empresa ────────────────────────────────────────────────────────
 
@@ -102,6 +103,8 @@ export default function ConfiguracoesPage() {
               {new Date(empresa.plano_validade).toLocaleDateString("pt-BR")}
             </p>
           )}
+          {/* Sempre visível quando o WhatsApp está configurado */}
+          <UpgradeWhatsappButton label="Quero fazer upgrade" />
         </div>
       )}
 

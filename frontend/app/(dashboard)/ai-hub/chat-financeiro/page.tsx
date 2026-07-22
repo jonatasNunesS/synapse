@@ -29,6 +29,8 @@ import { useChatHistory } from "@/hooks/useChatHistory";
 import { useCreditos } from "@/hooks/useCreditos";
 import { useAuth } from "@/hooks/useAuth";
 import { CreditosBadge } from "@/components/ai_hub/CreditosBadge";
+import { UpgradeWhatsappButton } from "@/components/ui/UpgradeWhatsappButton";
+import { useUpgradeWhatsappUrl } from "@/hooks/useUpgradeWhatsapp";
 import { CUSTO_OPERACAO } from "@/types/creditos";
 
 const CUSTO = CUSTO_OPERACAO.chat_financeiro;
@@ -44,6 +46,7 @@ export default function ChatFinanceiroPage() {
   const { mensagens, enviando, perguntar, limpar, carregar } = useChatFinanceiro();
   const { creditos } = useCreditos();
   const { usuario, empresa } = useAuth();
+  const upgradeUrl = useUpgradeWhatsappUrl();
   const { conversas, salvar, excluir, renomear } = useChatHistory(
     usuario?.id,
     empresa?.id ?? usuario?.empresa?.id ?? null
@@ -93,7 +96,16 @@ export default function ChatFinanceiroPage() {
     if (semCreditos) {
       toast.error(
         `Sem créditos suficientes hoje (cada pergunta custa ${CUSTO}). Renova à 00:00 ou faça upgrade.`,
-        { duration: 7000 }
+        {
+          duration: 7000,
+          // Botão de upgrade só aparece se o WhatsApp estiver configurado
+          ...(upgradeUrl && {
+            action: {
+              label: "Fazer upgrade",
+              onClick: () => window.open(upgradeUrl, "_blank", "noopener"),
+            },
+          }),
+        }
       );
       return;
     }
@@ -296,10 +308,13 @@ export default function ChatFinanceiroPage() {
 
           {/* Estado: sem créditos */}
           {semCreditos && (
-            <div className="border-t border-border px-4 py-2.5 text-xs text-destructive bg-destructive/5 flex items-center gap-2">
+            <div className="border-t border-border px-4 py-2.5 text-xs text-destructive bg-destructive/5 flex items-center gap-2 flex-wrap">
               <Info className="h-3.5 w-3.5 flex-shrink-0" />
-              Sem créditos suficientes hoje (cada pergunta custa {CUSTO}). Renova
-              à 00:00 ou faça upgrade do plano.
+              <span className="flex-1 min-w-0">
+                Sem créditos suficientes hoje (cada pergunta custa {CUSTO}).
+                Renova à 00:00 ou faça upgrade do plano.
+              </span>
+              <UpgradeWhatsappButton label="Fazer upgrade" size="sm" />
             </div>
           )}
 

@@ -21,6 +21,7 @@ import { KanbanBoard } from "@/components/projetos/KanbanBoard";
 import { TarefaForm } from "@/components/projetos/TarefaForm";
 import { TarefaModal } from "@/components/projetos/TarefaModal";
 import { ProjetoForm } from "@/components/projetos/ProjetoForm";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import {
   useProjetoDetalhe,
   useKanban,
@@ -40,7 +41,7 @@ import {
   PROJETO_STATUS_COLORS,
   PROJETO_STATUS_LABELS,
 } from "@/types/projetos";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
 import type { ApiError } from "@/types/api";
 
 export default function ProjetoDetalhePage() {
@@ -55,6 +56,9 @@ export default function ProjetoDetalhePage() {
   const [tarefaDetalheId, setTarefaDetalheId] = useState<string | null>(null);
   const [tarefaEditando, setTarefaEditando] = useState<TarefaDetail | null>(null);
   const [deletando, setDeletando] = useState(false);
+  const [confirmarExclusaoProjeto, setConfirmarExclusaoProjeto] = useState(false);
+  const [tarefaParaExcluir, setTarefaParaExcluir] = useState<TarefaList | null>(null);
+  const [excluindoTarefa, setExcluindoTarefa] = useState(false);
 
   const { projeto, loading: loadingProjeto, recarregar: recarregarProjeto } =
     useProjetoDetalhe(projetoId);
@@ -100,16 +104,33 @@ export default function ProjetoDetalhePage() {
     setModalProjetoAberto(false);
   };
 
-  const handleDeletarProjeto = async () => {
-    if (!confirm("Tem certeza que deseja excluir este projeto?")) return;
+  const handleConfirmarExclusaoProjeto = async () => {
+    if (deletando) return; // evita duplo clique
     setDeletando(true);
     try {
       await api.delete(`/projetos/${projetoId}/`);
+      toast.success("Projeto excluído.");
       router.push("/projetos");
     } catch (err: unknown) {
       const e = err as ApiError;
       toast.error(e?.error?.message ?? "Não foi possível excluir o projeto.");
       setDeletando(false);
+    }
+  };
+
+  const handleConfirmarExclusaoTarefa = async () => {
+    if (!tarefaParaExcluir || excluindoTarefa) return; // evita duplo clique
+    setExcluindoTarefa(true);
+    try {
+      await deletarTarefa(tarefaParaExcluir.id);
+      toast.success("Tarefa excluída.");
+      setTarefaParaExcluir(null);
+      await recarregarKanban();
+    } catch (err) {
+      // Erro NUNCA calado: mostra a mensagem real do backend
+      toast.error(getErrorMessage(err), { duration: 7000 });
+    } finally {
+      setExcluindoTarefa(false);
     }
   };
 
@@ -197,7 +218,7 @@ export default function ProjetoDetalhePage() {
               Editar
             </button>
             <button
-              onClick={handleDeletarProjeto}
+              onClick={() => setConfirmarExclusaoProjeto(true)}
               disabled={deletando}
               className="flex items-center gap-1.5 text-sm text-red-600 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
             >
@@ -394,7 +415,7 @@ export default function ProjetoDetalhePage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          deletarTarefa(tarefa.id);
+                          setTarefaParaExcluir(tarefa);
                         }}
                         className="text-gray-300 hover:text-red-500 transition-colors"
                         title="Excluir tarefa"
@@ -445,6 +466,42 @@ export default function ProjetoDetalhePage() {
         projeto={projeto}
         onFechar={() => setModalProjetoAberto(false)}
         onSalvar={handleSalvarProjeto}
+      />
+
+      {/* Confirmação — excluir projeto */}
+      <ConfirmDialog
+        open={confirmarExclusaoProjeto}
+        titulo="Excluir projeto"
+        mensagem={
+          <>
+            Excluir o projeto{" "}
+            <span className="text-white font-medium">{projeto.nome}</span>? Todas
+            as tarefas vinculadas serão removidas. Esta ação não pode ser desfeita.
+          </>
+        }
+        confirmLabel="Excluir"
+        processando={deletando}
+        onConfirm={handleConfirmarExclusaoProjeto}
+        onCancel={() => setConfirmarExclusaoProjeto(false)}
+      />
+
+      {/* Confirmação — excluir tarefa */}
+      <ConfirmDialog
+        open={!!tarefaParaExcluir}
+        titulo="Excluir tarefa"
+        mensagem={
+          <>
+            Excluir a tarefa{" "}
+            <span className="text-white font-medium">
+              {tarefaParaExcluir?.titulo}
+            </span>
+            ? Esta ação não pode ser desfeita.
+          </>
+        }
+        confirmLabel="Excluir"
+        processando={excluindoTarefa}
+        onConfirm={handleConfirmarExclusaoTarefa}
+        onCancel={() => setTarefaParaExcluir(null)}
       />
     </div>
   );

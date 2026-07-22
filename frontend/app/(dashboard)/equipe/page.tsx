@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { UserCog, Plus, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { getErrorMessage } from "@/lib/api";
 import {
   Select,
   SelectContent,
@@ -26,6 +29,8 @@ export default function EquipePage() {
   const [showForm, setShowForm] = useState(false);
   const [showConvidar, setShowConvidar] = useState(false);
   const [membroEditando, setMembroEditando] = useState<MembroEquipe | null>(null);
+  const [membroParaRemover, setMembroParaRemover] = useState<string | null>(null);
+  const [removendo, setRemovendo] = useState(false);
 
   const { membros, pagination, isLoading, adicionarMembro, atualizarMembro, removerMembro, mutate } =
     useMembros({
@@ -48,9 +53,22 @@ export default function EquipePage() {
     }
   };
 
-  const handleRemover = async (id: string) => {
-    if (confirm("Tem certeza que deseja remover este membro?")) {
-      await removerMembro(id);
+  const handleRemover = (id: string) => {
+    setMembroParaRemover(id);
+  };
+
+  const handleConfirmarRemocao = async () => {
+    if (!membroParaRemover || removendo) return; // evita duplo clique
+    setRemovendo(true);
+    try {
+      await removerMembro(membroParaRemover);
+      toast.success("Membro removido.");
+      setMembroParaRemover(null);
+    } catch (err) {
+      // Erro NUNCA calado: mostra a mensagem real do backend
+      toast.error(getErrorMessage(err), { duration: 7000 });
+    } finally {
+      setRemovendo(false);
     }
   };
 
@@ -178,6 +196,16 @@ export default function EquipePage() {
           onConvidado={() => mutate()}
         />
       )}
+
+      <ConfirmDialog
+        open={!!membroParaRemover}
+        titulo="Remover membro"
+        mensagem="Tem certeza que deseja remover este membro da equipe?"
+        confirmLabel="Remover"
+        processando={removendo}
+        onConfirm={handleConfirmarRemocao}
+        onCancel={() => setMembroParaRemover(null)}
+      />
     </div>
   );
 }

@@ -241,7 +241,7 @@ export function Sidebar() {
           )}
           {sidebarOpen && (
             <p className="mt-1 px-3 pb-0.5 text-[10px] tabular-nums text-slate-600 select-none">
-              {VERSION_LABEL}
+              Synapse {VERSION_LABEL}
             </p>
           )}
         </div>
