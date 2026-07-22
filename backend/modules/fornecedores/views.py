@@ -330,3 +330,48 @@ class CompraFornecedorDetailView(APIView):
             return no_content_response()
         except ResourceNotFound as exc:
             return error_response("NOT_FOUND", str(exc), status_code=404)
+
+
+class CompraAdicionarEstoqueView(APIView):
+    """
+    POST /api/fornecedores/compras/{pk}/adicionar-ao-estoque/
+    Body: { produto_id: uuid, quantidade: Decimal }
+
+    Cria uma entrada de estoque a partir da compra. Não duplica: compra já
+    vinculada a uma movimentação é recusada (COMPRA_JA_NO_ESTOQUE).
+    """
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsEmpresaMember]
+
+    def post(self, request, pk):
+        from decimal import Decimal, InvalidOperation
+        from modules.estoque.serializers import MovimentacaoSerializer
+
+        produto_id = request.data.get("produto_id")
+        quantidade = request.data.get("quantidade")
+        if not produto_id or quantidade in (None, ""):
+            return error_response(
+                "VALIDATION_ERROR", "produto_id e quantidade são obrigatórios."
+            )
+        try:
+            qtd = Decimal(str(quantidade))
+        except (InvalidOperation, ValueError):
+            return error_response("VALIDATION_ERROR", "Quantidade inválida.")
+
+        try:
+            movimentacao = FornecedorService.adicionar_compra_ao_estoque(
+                empresa_id=request.user.empresa_id,
+                usuario_id=request.user.id,
+                compra_id=pk,
+                produto_id=produto_id,
+                quantidade=qtd,
+            )
+        except ResourceNotFound as exc:
+            return error_response("NOT_FOUND", str(exc), status_code=404)
+        except BusinessRuleViolation as exc:
+            return error_response(exc.code, exc.message, details=exc.details, status_code=400)
+
+        return created_response(
+            data=MovimentacaoSerializer(movimentacao).data,
+            message="Entrada registrada no estoque.",
+        )

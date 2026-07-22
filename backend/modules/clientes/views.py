@@ -344,3 +344,63 @@ class InteracaoDetailView(EmpresaQuerySetMixin, APIView):
                 status_code=404,
             )
         return no_content_response()
+
+
+class InteracaoBaixarEstoqueView(EmpresaQuerySetMixin, APIView):
+    """
+    POST /api/clientes/interacoes/{interacao_id}/baixar-estoque/
+    Body: { produto_id: uuid, quantidade: Decimal }
+
+    Cria uma saída de estoque a partir de uma interação de venda. Soft block:
+    se o estoque for insuficiente, retorna 400 ESTOQUE_INSUFICIENTE com o
+    saldo_atual nos details para o front oferecer baixar o que há.
+    """
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def post(self, request, interacao_id):
+        from decimal import Decimal, InvalidOperation
+        from shared.exceptions import BusinessRuleViolation
+        from modules.estoque.serializers import MovimentacaoSerializer
+
+        produto_id = request.data.get("produto_id")
+        quantidade = request.data.get("quantidade")
+        if not produto_id or quantidade in (None, ""):
+            return error_response(
+                code="VALIDATION_ERROR",
+                message="produto_id e quantidade são obrigatórios.",
+            )
+        try:
+            qtd = Decimal(str(quantidade))
+        except (InvalidOperation, ValueError):
+            return error_response(
+                code="VALIDATION_ERROR", message="Quantidade inválida."
+            )
+
+        try:
+            movimentacao = ClienteService.baixar_interacao_estoque(
+                empresa_id=self.get_empresa_id(),
+                usuario_id=request.user.id,
+                interacao_id=interacao_id,
+                produto_id=produto_id,
+                quantidade=qtd,
+            )
+        except ResourceNotFound:
+            return error_response(
+                code="NOT_FOUND",
+                message="Interação não encontrada.",
+                status_code=404,
+            )
+        except BusinessRuleViolation as exc:
+            return error_response(
+                code=exc.code,
+                message=exc.message,
+                details=exc.details,
+                status_code=400,
+            )
+
+        return created_response(
+            data=MovimentacaoSerializer(movimentacao).data,
+            message="Saída registrada no estoque.",
+        )

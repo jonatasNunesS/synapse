@@ -259,5 +259,18 @@ export function useComprasFornecedor() {
     await api.delete(`/fornecedores/${fornecedorId}/compras/${compraId}/`);
   }, []);
 
-  return { data, total, loading, error, fetch, criar, atualizar, deletar };
+  // Cria uma entrada de estoque a partir da compra. Propaga o erro (ApiError)
+  // para a UI mostrar toast — inclusive COMPRA_JA_NO_ESTOQUE.
+  const adicionarAoEstoque = useCallback(
+    async (compraId: string, produtoId: string, quantidade: number) => {
+      const res = await api.post(
+        `/fornecedores/compras/${compraId}/adicionar-ao-estoque/`,
+        { produto_id: produtoId, quantidade }
+      );
+      return res.data;
+    },
+    []
+  );
+
+  return { data, total, loading, error, fetch, criar, atualizar, deletar, adicionarAoEstoque };
 }

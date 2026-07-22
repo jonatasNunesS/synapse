@@ -8,6 +8,7 @@ from .views import (
     ClienteFollowupsView,
     InteracaoListCreateView,
     InteracaoDetailView,
+    InteracaoBaixarEstoqueView,
 )
 
 app_name = "clientes"
@@ -18,6 +19,13 @@ urlpatterns = [
     path("funil/", ClienteFunilView.as_view(), name="cliente-funil"),
     path("resumo/", ClienteResumoView.as_view(), name="cliente-resumo"),
     path("followups/", ClienteFollowupsView.as_view(), name="cliente-followups"),
+
+    # Venda (interação) → baixa de estoque (rota flat)
+    path(
+        "interacoes/<uuid:interacao_id>/baixar-estoque/",
+        InteracaoBaixarEstoqueView.as_view(),
+        name="interacao-baixar-estoque",
+    ),
 
     # Rotas de detalhe por {pk}
     path("<uuid:pk>/", ClienteDetailView.as_view(), name="cliente-detail"),

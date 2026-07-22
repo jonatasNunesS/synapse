@@ -8,6 +8,7 @@ import { Plus, X, Loader2, ShoppingCart, ChevronLeft, ChevronRight, Pencil, Tras
 import { toast } from "sonner";
 import { useComprasFornecedor } from "@/hooks/useFornecedores";
 import { getErrorMessage } from "@/lib/api";
+import { AdicionarEstoqueModal } from "@/components/fornecedores/AdicionarEstoqueModal";
 import type { CompraFornecedor } from "@/types/fornecedores";
 import type { ApiError } from "@/types/api";
 
@@ -37,7 +38,7 @@ type CompraFormValues = z.infer<typeof compraSchema>;
 
 interface NovaCompraFormProps {
   fornecedorId: string;
-  onSuccess: () => void;
+  onSuccess: (compraCriada?: CompraFornecedor) => void;
   onClose: () => void;
   compraId?: string;
   initialData?: Partial<CompraFormValues>;
@@ -72,10 +73,11 @@ function NovaCompraForm({ fornecedorId, onSuccess, onClose, compraId, initialDat
       ) as CompraFormValues;
       if (isEdit && compraId) {
         await atualizar(fornecedorId, compraId, payload);
+        onSuccess();
       } else {
-        await criar(fornecedorId, payload);
+        const compraCriada = await criar(fornecedorId, payload);
+        onSuccess(compraCriada);
       }
-      onSuccess();
     } catch (err: unknown) {
       const e = err as ApiError;
       setServerError(e?.error?.message ?? (isEdit ? "Erro ao editar compra" : "Erro ao registrar compra"));
@@ -162,6 +164,8 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
   const [editando, setEditando] = useState<CompraFornecedor | null>(null);
   const [confirmandoDelete, setConfirmandoDelete] = useState<string | null>(null);
   const [excluindo, setExcluindo] = useState(false);
+  // Compra recém-criada que pode ir para o estoque
+  const [compraParaEstoque, setCompraParaEstoque] = useState<CompraFornecedor | null>(null);
   const pageSize = 25;
 
   useEffect(() => {
@@ -170,10 +174,14 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
 
   const totalPages = Math.ceil(total / pageSize);
 
-  const handleSuccess = () => {
+  const handleSuccess = (compraCriada?: CompraFornecedor) => {
     setShowForm(false);
     setEditando(null);
     fetch(fornecedorId, page);
+    // Só oferece adicionar ao estoque após CRIAR (não ao editar)
+    if (compraCriada) {
+      setCompraParaEstoque(compraCriada);
+    }
   };
 
   const handleDeletar = async (id: string) => {
@@ -342,6 +350,14 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
           }}
           onSuccess={handleSuccess}
           onClose={() => setEditando(null)}
+        />
+      )}
+
+      {compraParaEstoque && (
+        <AdicionarEstoqueModal
+          compra={compraParaEstoque}
+          onClose={() => setCompraParaEstoque(null)}
+          onSuccess={() => fetch(fornecedorId, page)}
         />
       )}
     </div>

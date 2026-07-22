@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { useClienteDetalhe, useInteracoes } from "@/hooks/useClientes";
 import { TimelineInteracoes } from "@/components/clientes/TimelineInteracoes";
 import { InteracaoForm } from "@/components/clientes/InteracaoForm";
+import { BaixarEstoqueModal } from "@/components/clientes/BaixarEstoqueModal";
 import { ClienteForm } from "@/components/clientes/ClienteForm";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { STATUS_FUNIL_LABELS, STATUS_FUNIL_COLORS } from "@/types/clientes";
@@ -58,6 +59,7 @@ export default function ClienteDetalhePage() {
 
   const [showInteracaoForm, setShowInteracaoForm] = useState(false);
   const [editingInteracao, setEditingInteracao] = useState<InteracaoCliente | null>(null);
+  const [vendaParaEstoque, setVendaParaEstoque] = useState<InteracaoCliente | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [interacaoLoading, setInteracaoLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
@@ -75,9 +77,13 @@ export default function ClienteDetalhePage() {
   const handleRegistrarInteracao = async (dados: Parameters<typeof registrar>[0]) => {
     setInteracaoLoading(true);
     try {
-      await registrar(dados); // lança em caso de erro → o form exibe o banner
+      const nova = await registrar(dados); // lança em caso de erro → o form exibe o banner
       setShowInteracaoForm(false);
       carregar(); // Recarrega para atualizar valor_total_compras etc.
+      // Venda? Oferece baixar do estoque logo após registrar.
+      if (nova?.tipo === "venda") {
+        setVendaParaEstoque(nova);
+      }
     } finally {
       setInteracaoLoading(false);
     }
@@ -385,6 +391,17 @@ export default function ClienteDetalhePage() {
           onSubmit={handleEditarInteracao}
           onClose={() => setEditingInteracao(null)}
           loading={interacaoLoading}
+        />
+      )}
+
+      {/* Venda registrada → oferece baixar do estoque */}
+      {vendaParaEstoque && cliente && (
+        <BaixarEstoqueModal
+          clienteId={id}
+          clienteNome={cliente.nome}
+          interacao={vendaParaEstoque}
+          onClose={() => setVendaParaEstoque(null)}
+          onSuccess={() => carregar()}
         />
       )}
 

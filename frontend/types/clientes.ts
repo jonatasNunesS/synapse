@@ -95,6 +95,8 @@ export interface InteracaoCliente {
   proximo_followup: string | null;
   criado_por_nome: string | null;
   criado_em: string;
+  /** Venda já baixou estoque? */
+  ja_baixado_estoque?: boolean;
 }
 
 export interface InteracaoCreate {

@@ -8,6 +8,8 @@ from .models import Cliente, InteracaoCliente
 class InteracaoClienteSerializer(serializers.ModelSerializer):
     criado_por_nome = serializers.SerializerMethodField()
     tipo_display = serializers.SerializerMethodField()
+    # Venda já baixou estoque? (evita oferecer/duplicar a baixa)
+    ja_baixado_estoque = serializers.SerializerMethodField()
 
     class Meta:
         model = InteracaoCliente
@@ -23,12 +25,16 @@ class InteracaoClienteSerializer(serializers.ModelSerializer):
             "criado_por",
             "criado_por_nome",
             "criado_em",
+            "ja_baixado_estoque",
         ]
 
     def get_criado_por_nome(self, obj):
         if obj.criado_por:
             return obj.criado_por.nome or obj.criado_por.email
         return None
+
+    def get_ja_baixado_estoque(self, obj):
+        return bool(obj.movimentacao_estoque_id)
 
     def get_tipo_display(self, obj):
         return obj.get_tipo_display()

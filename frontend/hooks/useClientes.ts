@@ -257,7 +257,21 @@ export function useInteracoes(clienteId: string) {
     [clienteId]
   );
 
-  return { interacoes, loading, error, carregar, registrar, editar, apagar };
+  // Baixa de estoque a partir de uma venda. Propaga o erro (ApiError) para a UI
+  // — inclusive ESTOQUE_INSUFICIENTE (com saldo_atual nos details) e
+  // VENDA_JA_BAIXADA.
+  const baixarEstoque = useCallback(
+    async (interacaoId: string, produtoId: string, quantidade: number) => {
+      const res = await api.post(
+        `/clientes/interacoes/${interacaoId}/baixar-estoque/`,
+        { produto_id: produtoId, quantidade }
+      );
+      return res.data;
+    },
+    []
+  );
+
+  return { interacoes, loading, error, carregar, registrar, editar, apagar, baixarEstoque };
 }
 
 // ─── Hook de follow-ups ───────────────────────────────────────────────────────

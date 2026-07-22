@@ -158,6 +158,15 @@ class InteracaoCliente(models.Model):
     )
     data_interacao = models.DateTimeField(default=timezone.now)
     proximo_followup = models.DateField(null=True, blank=True)
+    # Saída de estoque gerada a partir desta venda. Evita baixar o mesmo item
+    # duas vezes: se já houver movimentação vinculada, a venda já baixou estoque.
+    movimentacao_estoque = models.ForeignKey(
+        "synapse_estoque.Movimentacao",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="interacao_origem",
+    )
     criado_por = models.ForeignKey(
         CustomUser,
         on_delete=models.SET_NULL,

@@ -55,7 +55,17 @@ class FornecedorRepository:
         Filtros: categoria_id, status, ativo, busca, tem_avaliacao
         Ordenação padrão: -score_synapse
         """
+        filtros = filtros or {}
         qs = Fornecedor.objects.filter(empresa_id=empresa_id).select_related("categoria")
+
+        # Soft delete: fornecedores removidos (ativo=False) ficam ocultos por
+        # padrão. Só aparecem se o filtro "ativo" vier explícito (ex.: ?ativo=false).
+        # Sem isto, um fornecedor "excluído" continuava na lista — parecia que o
+        # delete não fazia nada.
+        if filtros.get("ativo") is not None:
+            qs = qs.filter(ativo=filtros["ativo"])
+        else:
+            qs = qs.filter(ativo=True)
 
         if filtros:
             if filtros.get("categoria_id"):
@@ -63,9 +73,6 @@ class FornecedorRepository:
 
             if filtros.get("status"):
                 qs = qs.filter(status=filtros["status"])
-
-            if filtros.get("ativo") is not None:
-                qs = qs.filter(ativo=filtros["ativo"])
 
             if filtros.get("busca"):
                 busca = filtros["busca"]

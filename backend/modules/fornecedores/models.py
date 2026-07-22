@@ -203,6 +203,15 @@ class CompraFornecedor(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pendente")
     data_pagamento = models.DateField(null=True, blank=True)
     observacoes = models.TextField(blank=True)
+    # Entrada de estoque gerada a partir desta compra. Serve para não duplicar a
+    # entrada: se já houver movimentação vinculada, a compra já foi ao estoque.
+    movimentacao_estoque = models.ForeignKey(
+        "synapse_estoque.Movimentacao",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="compra_origem",
+    )
     criado_por = models.ForeignKey(
         CustomUser,
         on_delete=models.SET_NULL,

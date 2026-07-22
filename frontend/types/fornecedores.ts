@@ -44,6 +44,8 @@ export interface CompraFornecedor {
   observacoes: string | null;
   criado_por_nome: string | null;
   criado_em: string;
+  /** Já foi lançada como entrada no estoque? */
+  ja_no_estoque?: boolean;
 }
 
 export interface FornecedorDetail extends FornecedorList {

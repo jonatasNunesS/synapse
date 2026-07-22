@@ -1,5 +1,5 @@
 from shared.cache import build_cache_key, get_cached, set_cached, invalidate_cache
-from shared.exceptions import ResourceNotFound, TenantAccessDenied
+from shared.exceptions import ResourceNotFound, TenantAccessDenied, BusinessRuleViolation
 from .repository import ClienteRepository
 from .models import Cliente, InteracaoCliente
 
@@ -160,3 +160,76 @@ class ClienteService:
         interacao = ClienteService.obter_interacao(empresa_id, cliente_id, interacao_id)
         ClienteRepository.deletar_interacao(interacao)
         ClienteService._invalidar_todos(empresa_id)
+
+    @staticmethod
+    def baixar_interacao_estoque(empresa_id, usuario_id, interacao_id, produto_id, quantidade):
+        """
+        Cria uma saída de estoque a partir de uma interação de VENDA.
+
+        - Multi-tenant: interação e produto precisam ser da mesma empresa.
+        - Só vale para interação tipo=venda.
+        - Idempotente: se a venda já baixou estoque, recusa (não duplica).
+        - Soft block: se o estoque for insuficiente, levanta ESTOQUE_INSUFICIENTE
+          com o saldo atual nos details, para o front oferecer baixar o que há.
+        """
+        from decimal import Decimal
+        from modules.estoque.services import EstoqueService
+        from modules.estoque.models import Produto
+
+        # Busca a interação só por empresa (rota é flat, sem cliente_id)
+        interacao = ClienteRepository.obter_interacao(
+            interacao_id=interacao_id, empresa_id=empresa_id
+        )
+        if not interacao:
+            raise ResourceNotFound("Interação", str(interacao_id))
+
+        if interacao.tipo != "venda":
+            raise BusinessRuleViolation(
+                "INTERACAO_NAO_VENDA",
+                "Só é possível baixar estoque a partir de uma interação de venda.",
+            )
+
+        if interacao.movimentacao_estoque_id:
+            raise BusinessRuleViolation(
+                "VENDA_JA_BAIXADA",
+                "Esta venda já baixou o estoque.",
+            )
+
+        produto = Produto.objects.filter(id=produto_id, empresa_id=empresa_id).first()
+        if not produto:
+            raise BusinessRuleViolation(
+                "PRODUTO_INVALIDO",
+                "Produto não encontrado nesta empresa.",
+            )
+
+        qtd = Decimal(str(quantidade))
+        if qtd <= 0:
+            raise BusinessRuleViolation(
+                "QUANTIDADE_INVALIDA", "Quantidade deve ser maior que zero."
+            )
+
+        # Soft block: informa o saldo para o front decidir baixar tudo que tem
+        if produto.estoque_atual < qtd:
+            raise BusinessRuleViolation(
+                "ESTOQUE_INSUFICIENTE",
+                f"Estoque insuficiente. Disponível: {produto.estoque_atual}.",
+                details={"saldo_atual": str(produto.estoque_atual)},
+            )
+
+        movimentacao, _ = EstoqueService.registrar_movimentacao(
+            empresa_id=empresa_id,
+            usuario_id=usuario_id,
+            dados={
+                "produto": produto_id,
+                "tipo": "saida",
+                "quantidade": qtd,
+                "motivo": "venda",
+                "referencia": f"Venda para {interacao.cliente.nome}",
+                "observacoes": f"Interação #{interacao.id}",
+            },
+        )
+
+        interacao.movimentacao_estoque = movimentacao
+        interacao.save(update_fields=["movimentacao_estoque"])
+        ClienteService._invalidar_todos(empresa_id)
+        return movimentacao

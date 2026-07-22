@@ -195,3 +195,54 @@ class FornecedorService:
     def excluir_compra(empresa_id: int, compra_id):
         FornecedorRepository.excluir_compra(empresa_id, compra_id)
         invalidate_cache(empresa_id, "fornecedores")
+
+    @staticmethod
+    def adicionar_compra_ao_estoque(empresa_id, usuario_id, compra_id, produto_id, quantidade):
+        """
+        Cria uma entrada de estoque a partir de uma compra de fornecedor.
+
+        Idempotente por compra: se a compra já tem uma movimentação vinculada,
+        recusa (evita duplicar a entrada). O produto precisa pertencer à mesma
+        empresa (multi-tenant).
+        """
+        # Importa aqui para evitar acoplamento circular entre módulos
+        from modules.estoque.services import EstoqueService
+        from modules.estoque.models import Produto
+
+        compra = FornecedorRepository.obter_compra(empresa_id, compra_id)  # 404 multi-tenant
+
+        if compra.movimentacao_estoque_id:
+            raise BusinessRuleViolation(
+                "COMPRA_JA_NO_ESTOQUE",
+                "Esta compra já foi adicionada ao estoque.",
+            )
+
+        if not Produto.objects.filter(id=produto_id, empresa_id=empresa_id).exists():
+            raise BusinessRuleViolation(
+                "PRODUTO_INVALIDO",
+                "Produto não encontrado nesta empresa.",
+            )
+
+        qtd = Decimal(str(quantidade))
+        if qtd <= 0:
+            raise BusinessRuleViolation(
+                "QUANTIDADE_INVALIDA", "Quantidade deve ser maior que zero."
+            )
+
+        movimentacao, _ = EstoqueService.registrar_movimentacao(
+            empresa_id=empresa_id,
+            usuario_id=usuario_id,
+            dados={
+                "produto": produto_id,
+                "tipo": "entrada",
+                "quantidade": qtd,
+                "motivo": "compra",
+                "referencia": f"Compra #{compra.id}",
+                "observacoes": f"Fornecedor: {compra.fornecedor.nome}",
+            },
+        )
+
+        compra.movimentacao_estoque = movimentacao
+        compra.save(update_fields=["movimentacao_estoque"])
+        invalidate_cache(empresa_id, "fornecedores")
+        return movimentacao

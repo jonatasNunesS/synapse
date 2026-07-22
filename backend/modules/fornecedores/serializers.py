@@ -35,6 +35,8 @@ class CompraFornecedorSerializer(serializers.ModelSerializer):
     fornecedor_nome = serializers.CharField(source="fornecedor.nome", read_only=True)
     criado_por_nome = serializers.SerializerMethodField()
     status_display = serializers.CharField(source="get_status_display", read_only=True)
+    # Já foi lançada como entrada no estoque? (evita oferecer/duplicar)
+    ja_no_estoque = serializers.SerializerMethodField()
 
     class Meta:
         model = CompraFornecedor
@@ -42,8 +44,12 @@ class CompraFornecedorSerializer(serializers.ModelSerializer):
             "id", "fornecedor", "fornecedor_nome", "descricao", "valor",
             "data_compra", "numero_nf", "status", "status_display",
             "data_pagamento", "observacoes", "criado_por_nome", "criado_em",
+            "ja_no_estoque",
         ]
         read_only_fields = ["id", "criado_em", "fornecedor_nome", "criado_por_nome", "status_display"]
+
+    def get_ja_no_estoque(self, obj):
+        return bool(obj.movimentacao_estoque_id)
 
     def get_criado_por_nome(self, obj):
         if obj.criado_por:

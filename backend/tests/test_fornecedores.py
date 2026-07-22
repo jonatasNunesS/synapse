@@ -627,3 +627,114 @@ class TestCompraDetail:
         import uuid
         r = client_a.get(f"/api/fornecedores/{fornecedor_tecido.id}/compras/{uuid.uuid4()}/")
         assert r.status_code == 404
+
+
+# ─── Testes: Compra → Entrada no Estoque ──────────────────────────────────────
+
+class TestCompraAdicionarEstoque:
+    """POST /api/fornecedores/compras/{id}/adicionar-ao-estoque/"""
+
+    def _criar_compra(self, fornecedor, empresa, usuario):
+        return CompraFornecedor.objects.create(
+            fornecedor=fornecedor,
+            empresa=empresa,
+            descricao="50 camisas brancas",
+            valor=Decimal("500.00"),
+            data_compra=date.today(),
+            criado_por=usuario,
+        )
+
+    def _criar_produto(self, empresa, nome="Camisa Branca", estoque="10"):
+        from modules.estoque.models import Produto
+        return Produto.objects.create(
+            empresa=empresa, nome=nome, estoque_atual=Decimal(estoque)
+        )
+
+    def test_adicionar_ao_estoque_sucesso(self, client_a, empresa_a, usuario_a, fornecedor_tecido):
+        from modules.estoque.models import Movimentacao
+        compra = self._criar_compra(fornecedor_tecido, empresa_a, usuario_a)
+        produto = self._criar_produto(empresa_a, estoque="10")
+
+        resp = client_a.post(
+            f"/api/fornecedores/compras/{compra.id}/adicionar-ao-estoque/",
+            {"produto_id": str(produto.id), "quantidade": "50"},
+            format="json",
+        )
+        assert resp.status_code == 201
+        # Movimentação de entrada criada com referência correta
+        mov_id = resp.data["data"]["id"]
+        mov = Movimentacao.objects.get(id=mov_id)
+        assert mov.tipo == "entrada"
+        assert mov.motivo == "compra"
+        assert mov.referencia == f"Compra #{compra.id}"
+        assert f"Fornecedor: {fornecedor_tecido.nome}" in mov.observacoes
+        # Estoque do produto aumentou
+        produto.refresh_from_db()
+        assert produto.estoque_atual == Decimal("60.000")
+        # Compra ficou vinculada à movimentação
+        compra.refresh_from_db()
+        assert compra.movimentacao_estoque_id == mov.id
+
+    def test_produto_de_outra_empresa_400(self, client_a, empresa_a, empresa_b, usuario_a, fornecedor_tecido):
+        compra = self._criar_compra(fornecedor_tecido, empresa_a, usuario_a)
+        produto_b = self._criar_produto(empresa_b)  # produto da empresa B
+
+        resp = client_a.post(
+            f"/api/fornecedores/compras/{compra.id}/adicionar-ao-estoque/",
+            {"produto_id": str(produto_b.id), "quantidade": "5"},
+            format="json",
+        )
+        assert resp.status_code == 400
+        assert resp.data["error"]["code"] == "PRODUTO_INVALIDO"
+
+    def test_compra_ja_vinculada_nao_duplica_400(self, client_a, empresa_a, usuario_a, fornecedor_tecido):
+        compra = self._criar_compra(fornecedor_tecido, empresa_a, usuario_a)
+        produto = self._criar_produto(empresa_a, estoque="0")
+
+        url = f"/api/fornecedores/compras/{compra.id}/adicionar-ao-estoque/"
+        payload = {"produto_id": str(produto.id), "quantidade": "5"}
+        r1 = client_a.post(url, payload, format="json")
+        assert r1.status_code == 201
+        # Segunda tentativa é bloqueada (não duplica a entrada)
+        r2 = client_a.post(url, payload, format="json")
+        assert r2.status_code == 400
+        assert r2.data["error"]["code"] == "COMPRA_JA_NO_ESTOQUE"
+        produto.refresh_from_db()
+        assert produto.estoque_atual == Decimal("5.000")  # só a primeira entrada
+
+    def test_multitenant_empresa_b_nao_adiciona_compra_de_a(
+        self, client_b, empresa_a, usuario_a, fornecedor_tecido
+    ):
+        compra = self._criar_compra(fornecedor_tecido, empresa_a, usuario_a)
+        produto = self._criar_produto(empresa_a)
+        resp = client_b.post(
+            f"/api/fornecedores/compras/{compra.id}/adicionar-ao-estoque/",
+            {"produto_id": str(produto.id), "quantidade": "5"},
+            format="json",
+        )
+        assert resp.status_code == 404
+
+
+# ─── Testes: soft delete some da lista (bug fix Parte 0) ──────────────────────
+
+class TestSoftDeleteListagem:
+
+    def test_fornecedor_removido_some_da_lista(self, client_a, fornecedor_tecido):
+        """Após soft delete, o fornecedor não aparece mais na listagem padrão."""
+        r_antes = client_a.get("/api/fornecedores/")
+        ids_antes = [f["id"] for f in r_antes.data["data"]]
+        assert str(fornecedor_tecido.id) in ids_antes
+
+        del_resp = client_a.delete(f"/api/fornecedores/{fornecedor_tecido.id}/")
+        assert del_resp.status_code == 204
+
+        r_depois = client_a.get("/api/fornecedores/")
+        ids_depois = [f["id"] for f in r_depois.data["data"]]
+        assert str(fornecedor_tecido.id) not in ids_depois
+
+    def test_filtro_ativo_false_mostra_removidos(self, client_a, fornecedor_tecido):
+        """Com ?ativo=false ainda dá para ver os removidos (histórico)."""
+        client_a.delete(f"/api/fornecedores/{fornecedor_tecido.id}/")
+        r = client_a.get("/api/fornecedores/?ativo=false")
+        ids = [f["id"] for f in r.data["data"]]
+        assert str(fornecedor_tecido.id) in ids

@@ -929,3 +929,114 @@ class TestInteracaoEditarApagar:
         )
         assert resp.status_code == 404
         assert InteracaoCliente.objects.filter(id=iid).exists()
+
+
+# ─── Testes: Venda (interação) → Saída do Estoque ─────────────────────────────
+
+class TestInteracaoBaixarEstoque:
+    """POST /api/clientes/interacoes/{id}/baixar-estoque/"""
+
+    def _criar_venda(self, cliente, empresa, usuario, valor="500.00"):
+        return InteracaoCliente.objects.create(
+            cliente=cliente,
+            empresa=empresa,
+            tipo="venda",
+            titulo="Venda de camisas",
+            valor=Decimal(valor),
+            criado_por=usuario,
+        )
+
+    def _criar_produto(self, empresa, nome="Camisa Branca", estoque="30"):
+        from modules.estoque.models import Produto
+        return Produto.objects.create(
+            empresa=empresa, nome=nome, estoque_atual=Decimal(estoque)
+        )
+
+    def test_baixar_estoque_sucesso(self, client_a, empresa_a, usuario_a, cliente_maria):
+        from modules.estoque.models import Movimentacao
+        venda = self._criar_venda(cliente_maria, empresa_a, usuario_a)
+        produto = self._criar_produto(empresa_a, estoque="30")
+
+        resp = client_a.post(
+            f"/api/clientes/interacoes/{venda.id}/baixar-estoque/",
+            {"produto_id": str(produto.id), "quantidade": "5"},
+            format="json",
+        )
+        assert resp.status_code == 201
+        mov = Movimentacao.objects.get(id=resp.data["data"]["id"])
+        assert mov.tipo == "saida"
+        assert mov.motivo == "venda"
+        assert mov.referencia == f"Venda para {cliente_maria.nome}"
+        assert f"Interação #{venda.id}" in mov.observacoes
+        produto.refresh_from_db()
+        assert produto.estoque_atual == Decimal("25.000")
+        venda.refresh_from_db()
+        assert venda.movimentacao_estoque_id == mov.id
+
+    def test_interacao_nao_venda_400(self, client_a, empresa_a, usuario_a, cliente_maria):
+        ligacao = InteracaoCliente.objects.create(
+            cliente=cliente_maria, empresa=empresa_a, tipo="ligacao",
+            titulo="Ligação de follow-up", criado_por=usuario_a,
+        )
+        produto = self._criar_produto(empresa_a)
+        resp = client_a.post(
+            f"/api/clientes/interacoes/{ligacao.id}/baixar-estoque/",
+            {"produto_id": str(produto.id), "quantidade": "1"},
+            format="json",
+        )
+        assert resp.status_code == 400
+        assert resp.data["error"]["code"] == "INTERACAO_NAO_VENDA"
+
+    def test_estoque_insuficiente_soft_block_400_com_saldo(
+        self, client_a, empresa_a, usuario_a, cliente_maria
+    ):
+        venda = self._criar_venda(cliente_maria, empresa_a, usuario_a)
+        produto = self._criar_produto(empresa_a, estoque="3")
+        resp = client_a.post(
+            f"/api/clientes/interacoes/{venda.id}/baixar-estoque/",
+            {"produto_id": str(produto.id), "quantidade": "10"},
+            format="json",
+        )
+        assert resp.status_code == 400
+        assert resp.data["error"]["code"] == "ESTOQUE_INSUFICIENTE"
+        # saldo_atual informado para o front oferecer baixar o que há
+        assert resp.data["error"]["details"]["saldo_atual"] == "3.000"
+        produto.refresh_from_db()
+        assert produto.estoque_atual == Decimal("3.000")  # nada baixado
+
+    def test_produto_de_outra_empresa_400(
+        self, client_a, empresa_a, empresa_b, usuario_a, cliente_maria
+    ):
+        venda = self._criar_venda(cliente_maria, empresa_a, usuario_a)
+        produto_b = self._criar_produto(empresa_b)
+        resp = client_a.post(
+            f"/api/clientes/interacoes/{venda.id}/baixar-estoque/",
+            {"produto_id": str(produto_b.id), "quantidade": "1"},
+            format="json",
+        )
+        assert resp.status_code == 400
+        assert resp.data["error"]["code"] == "PRODUTO_INVALIDO"
+
+    def test_venda_ja_baixada_nao_duplica_400(self, client_a, empresa_a, usuario_a, cliente_maria):
+        venda = self._criar_venda(cliente_maria, empresa_a, usuario_a)
+        produto = self._criar_produto(empresa_a, estoque="30")
+        url = f"/api/clientes/interacoes/{venda.id}/baixar-estoque/"
+        payload = {"produto_id": str(produto.id), "quantidade": "5"}
+        assert client_a.post(url, payload, format="json").status_code == 201
+        r2 = client_a.post(url, payload, format="json")
+        assert r2.status_code == 400
+        assert r2.data["error"]["code"] == "VENDA_JA_BAIXADA"
+        produto.refresh_from_db()
+        assert produto.estoque_atual == Decimal("25.000")  # só a primeira saída
+
+    def test_multitenant_empresa_b_nao_baixa_interacao_de_a(
+        self, client_b, empresa_a, usuario_a, cliente_maria
+    ):
+        venda = self._criar_venda(cliente_maria, empresa_a, usuario_a)
+        produto = self._criar_produto(empresa_a)
+        resp = client_b.post(
+            f"/api/clientes/interacoes/{venda.id}/baixar-estoque/",
+            {"produto_id": str(produto.id), "quantidade": "1"},
+            format="json",
+        )
+        assert resp.status_code == 404
