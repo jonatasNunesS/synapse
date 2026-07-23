@@ -107,3 +107,21 @@ def alertar_followups_atrasados(self):
     except Exception as exc:
         logger.error("Erro em alertar_followups_atrasados: %s", exc)
         raise self.retry(exc=exc, countdown=60)
+
+
+@shared_task(name="clientes.notificar_vendas_fiado", bind=True, max_retries=3)
+def notificar_vendas_fiado(self):
+    """
+    Roda todo dia (00:15 BRT). Notifica no sino as vendas fiadas cuja previsão
+    de pagamento chegou (status_pagamento=pendente, data_prevista <= hoje) e que
+    ainda não foram avisadas. Idempotente via notificacao_enviada.
+    """
+    try:
+        from modules.clientes.services import ClienteService
+
+        total = ClienteService.notificar_vendas_fiado()
+        logger.info("notificar_vendas_fiado: %d notificação(ões) criada(s).", total)
+        return {"notificacoes": total}
+    except Exception as exc:
+        logger.error("Erro em notificar_vendas_fiado: %s", exc)
+        raise self.retry(exc=exc, countdown=60)

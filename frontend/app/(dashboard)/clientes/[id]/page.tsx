@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -21,6 +21,7 @@ import { useClienteDetalhe, useInteracoes } from "@/hooks/useClientes";
 import { TimelineInteracoes } from "@/components/clientes/TimelineInteracoes";
 import { InteracaoForm } from "@/components/clientes/InteracaoForm";
 import { BaixarEstoqueModal } from "@/components/clientes/BaixarEstoqueModal";
+import { FiadoDecisaoModal } from "@/components/clientes/FiadoDecisaoModal";
 import { ClienteForm } from "@/components/clientes/ClienteForm";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { STATUS_FUNIL_LABELS, STATUS_FUNIL_COLORS } from "@/types/clientes";
@@ -45,7 +46,11 @@ function InfoRow({ label, value }: { label: string; value: string | null | undef
 export default function ClienteDetalhePage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const id = params.id as string;
+  // Chegou pelo sino? (?fiado=<id>) → abre o modal de cobrança da venda fiada.
+  const fiadoId = searchParams.get("fiado");
+  const [fiadoFechado, setFiadoFechado] = useState<string | null>(null);
 
   const { cliente, loading, carregar, setCliente } = useClienteDetalhe(id);
   const {
@@ -404,6 +409,29 @@ export default function ClienteDetalhePage() {
           onSuccess={() => carregar()}
         />
       )}
+
+      {/* Fiado: cobrança pelo sino (?fiado=<id>) */}
+      {(() => {
+        if (!cliente || !fiadoId || fiadoId === fiadoFechado) return null;
+        const fiadoInteracao = interacoes.find((i) => i.id === fiadoId);
+        if (!fiadoInteracao) return null;
+        const fechar = () => {
+          setFiadoFechado(fiadoId);
+          router.replace(`/clientes/${id}`);
+        };
+        return (
+          <FiadoDecisaoModal
+            clienteId={id}
+            clienteNome={cliente.nome}
+            interacao={fiadoInteracao}
+            onClose={fechar}
+            onResolved={() => {
+              carregar();
+              carregarInteracoes();
+            }}
+          />
+        );
+      })()}
 
       {/* Modal de edição */}
       {showEditForm && (

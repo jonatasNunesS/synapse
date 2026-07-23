@@ -18,6 +18,10 @@ const schema = z
     valor: z.string().optional().or(z.literal("")),
     data_interacao: z.string().optional().or(z.literal("")),
     proximo_followup: z.string().optional().or(z.literal("")),
+    status_pagamento: z
+      .enum(["pago", "pendente", "cancelado", "nao_se_aplica"])
+      .optional(),
+    data_prevista_pagamento: z.string().optional().or(z.literal("")),
   })
   .refine(
     (data) => {
@@ -27,6 +31,16 @@ const schema = z
       return true;
     },
     { message: "Informe o valor da venda", path: ["valor"] }
+  )
+  .refine(
+    (data) => {
+      // Pendente numa interação com valor exige a previsão de pagamento.
+      if (data.status_pagamento === "pendente") {
+        return !!data.data_prevista_pagamento;
+      }
+      return true;
+    },
+    { message: "Informe a previsão de pagamento", path: ["data_prevista_pagamento"] }
   );
 
 type FormData = z.infer<typeof schema>;
@@ -80,6 +94,8 @@ export function InteracaoForm({ onSubmit, onClose, loading, interacao }: Interac
           // ISO → "YYYY-MM-DDTHH:mm" exigido pelo input datetime-local
           data_interacao: interacao.data_interacao?.slice(0, 16) ?? "",
           proximo_followup: interacao.proximo_followup ?? "",
+          status_pagamento: interacao.status_pagamento ?? undefined,
+          data_prevista_pagamento: interacao.data_prevista_pagamento ?? "",
         }
       : {
           tipo: "ligacao",
@@ -95,6 +111,8 @@ export function InteracaoForm({ onSubmit, onClose, loading, interacao }: Interac
     if (!payload.proximo_followup) delete payload.proximo_followup;
     if (!payload.data_interacao) delete payload.data_interacao;
     if (!payload.valor) delete payload.valor;
+    if (!payload.data_prevista_pagamento) delete payload.data_prevista_pagamento;
+    if (!payload.status_pagamento) delete payload.status_pagamento;
     try {
       await onSubmit(payload);
     } catch (err) {
@@ -103,6 +121,7 @@ export function InteracaoForm({ onSubmit, onClose, loading, interacao }: Interac
   };
 
   const tipoSelecionado = watch("tipo");
+  const statusPagamento = watch("status_pagamento");
 
   const inputClass =
     "w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors";
@@ -180,6 +199,51 @@ export function InteracaoForm({ onSubmit, onClose, loading, interacao }: Interac
                 className={inputClass}
               />
               {errors.valor && <p className={errorClass}>{errors.valor.message}</p>}
+            </div>
+          )}
+
+          {/* Status de pagamento (interações que envolvem dinheiro) */}
+          {tipoSelecionado === "venda" && (
+            <div>
+              <label className={labelClass}>Status do pagamento</label>
+              <div className="grid grid-cols-3 gap-2" role="group" aria-label="Status do pagamento">
+                {([
+                  ["pago", "Pago"],
+                  ["pendente", "Pendente"],
+                  ["nao_se_aplica", "N/A"],
+                ] as const).map(([value, label]) => {
+                  const ativo = statusPagamento === value;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setValue("status_pagamento", value)}
+                      className={`px-3 py-2 rounded-lg border text-sm transition-colors ${
+                        ativo
+                          ? "border-purple-500 bg-purple-500/10 text-white"
+                          : "border-white/10 bg-white/3 text-gray-400 hover:border-white/20"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {statusPagamento === "pendente" && (
+                <div className="mt-3">
+                  <label className={labelClass}>Previsão de pagamento *</label>
+                  <input
+                    {...register("data_prevista_pagamento")}
+                    type="date"
+                    aria-label="Previsão de pagamento"
+                    className={inputClass}
+                  />
+                  {errors.data_prevista_pagamento && (
+                    <p className={errorClass}>{errors.data_prevista_pagamento.message}</p>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

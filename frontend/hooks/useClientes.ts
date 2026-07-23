@@ -271,7 +271,57 @@ export function useInteracoes(clienteId: string) {
     []
   );
 
-  return { interacoes, loading, error, carregar, registrar, editar, apagar, baixarEstoque };
+  // ── Fiado: ações da cobrança no vencimento ──────────────────────────────
+  const confirmarPagamento = useCallback(
+    async (
+      interacaoId: string,
+      opts: {
+        valor_confirmado?: string;
+        criar_restante?: boolean;
+        data_prevista_restante?: string;
+      } = {}
+    ) => {
+      const res = await api.post(
+        `/clientes/interacoes/${interacaoId}/confirmar-pagamento/`,
+        opts
+      );
+      return res.data;
+    },
+    []
+  );
+
+  const adiarPagamento = useCallback(
+    async (interacaoId: string, dias: number) => {
+      const res = await api.post(
+        `/clientes/interacoes/${interacaoId}/adiar-pagamento/`,
+        { dias }
+      );
+      return res.data;
+    },
+    []
+  );
+
+  const cancelarPagamento = useCallback(async (interacaoId: string) => {
+    const res = await api.post(
+      `/clientes/interacoes/${interacaoId}/cancelar-pagamento/`,
+      {}
+    );
+    return res.data;
+  }, []);
+
+  return {
+    interacoes,
+    loading,
+    error,
+    carregar,
+    registrar,
+    editar,
+    apagar,
+    baixarEstoque,
+    confirmarPagamento,
+    adiarPagamento,
+    cancelarPagamento,
+  };
 }
 
 // ─── Hook de follow-ups ───────────────────────────────────────────────────────

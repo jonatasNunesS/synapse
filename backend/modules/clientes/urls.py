@@ -9,6 +9,9 @@ from .views import (
     InteracaoListCreateView,
     InteracaoDetailView,
     InteracaoBaixarEstoqueView,
+    InteracaoConfirmarPagamentoView,
+    InteracaoAdiarPagamentoView,
+    InteracaoCancelarPagamentoView,
 )
 
 app_name = "clientes"
@@ -25,6 +28,23 @@ urlpatterns = [
         "interacoes/<uuid:interacao_id>/baixar-estoque/",
         InteracaoBaixarEstoqueView.as_view(),
         name="interacao-baixar-estoque",
+    ),
+
+    # Fiado: cobrança no vencimento (confirmar / adiar / cancelar)
+    path(
+        "interacoes/<uuid:interacao_id>/confirmar-pagamento/",
+        InteracaoConfirmarPagamentoView.as_view(),
+        name="interacao-confirmar-pagamento",
+    ),
+    path(
+        "interacoes/<uuid:interacao_id>/adiar-pagamento/",
+        InteracaoAdiarPagamentoView.as_view(),
+        name="interacao-adiar-pagamento",
+    ),
+    path(
+        "interacoes/<uuid:interacao_id>/cancelar-pagamento/",
+        InteracaoCancelarPagamentoView.as_view(),
+        name="interacao-cancelar-pagamento",
     ),
 
     # Rotas de detalhe por {pk}

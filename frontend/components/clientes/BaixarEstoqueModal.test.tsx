@@ -33,7 +33,10 @@ vi.mock("@/hooks/useEstoque", () => ({
 const venda: InteracaoCliente = {
   id: "v1", tipo: "venda", tipo_display: "Venda", titulo: "Venda de camisas",
   descricao: null, valor: "500.00", data_interacao: "2026-07-22T10:00:00Z",
-  proximo_followup: null, criado_por_nome: "Ana", criado_em: "2026-07-22T10:00:00Z",
+  proximo_followup: null, status_pagamento: "nao_se_aplica",
+  status_pagamento_display: "Não se aplica", data_prevista_pagamento: null,
+  pagamento_atrasado: false, dias_para_vencer: null,
+  criado_por_nome: "Ana", criado_em: "2026-07-22T10:00:00Z",
 };
 
 function abrirSelecao() {

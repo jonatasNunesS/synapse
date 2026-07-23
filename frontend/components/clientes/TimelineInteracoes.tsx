@@ -29,6 +29,33 @@ function formatCurrency(value: string | null): string | null {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(num);
 }
 
+/** Badge de status de pagamento. Retorna null quando não se aplica. */
+function badgePagamento(
+  interacao: InteracaoCliente
+): { label: string; className: string } | null {
+  const { status_pagamento, pagamento_atrasado, dias_para_vencer } = interacao;
+  if (status_pagamento === "pago") {
+    return { label: "Pago", className: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" };
+  }
+  if (status_pagamento === "cancelado") {
+    return { label: "Cancelado", className: "bg-zinc-500/15 text-zinc-400 border-zinc-500/30" };
+  }
+  if (status_pagamento === "pendente") {
+    if (pagamento_atrasado) {
+      return { label: "Atrasado", className: "bg-red-500/15 text-red-400 border-red-500/30" };
+    }
+    if (typeof dias_para_vencer === "number") {
+      const label =
+        dias_para_vencer === 0
+          ? "Vence hoje"
+          : `Vence em ${dias_para_vencer} dia${dias_para_vencer === 1 ? "" : "s"}`;
+      return { label, className: "bg-amber-500/15 text-amber-400 border-amber-500/30" };
+    }
+    return { label: "Pendente", className: "bg-amber-500/15 text-amber-400 border-amber-500/30" };
+  }
+  return null; // nao_se_aplica
+}
+
 export function TimelineInteracoes({
   interacoes,
   loading,
@@ -91,9 +118,21 @@ export function TimelineInteracoes({
                   <div className="flex-1 bg-white/3 border border-white/8 rounded-xl p-3 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <div>
-                        <span className="text-xs font-medium text-purple-400 uppercase tracking-wide">
-                          {TIPO_INTERACAO_LABELS[interacao.tipo]}
-                        </span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-medium text-purple-400 uppercase tracking-wide">
+                            {TIPO_INTERACAO_LABELS[interacao.tipo]}
+                          </span>
+                          {(() => {
+                            const badge = badgePagamento(interacao);
+                            return badge ? (
+                              <span
+                                className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${badge.className}`}
+                              >
+                                {badge.label}
+                              </span>
+                            ) : null;
+                          })()}
+                        </div>
                         <h4 className="text-sm font-medium text-white mt-0.5">
                           {interacao.titulo}
                         </h4>

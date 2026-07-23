@@ -84,6 +84,8 @@ export interface ClienteCreate {
 
 // ─── Interação ───────────────────────────────────────────────────────────────
 
+export type StatusPagamento = "pago" | "pendente" | "cancelado" | "nao_se_aplica";
+
 export interface InteracaoCliente {
   id: string;
   tipo: TipoInteracao;
@@ -93,6 +95,13 @@ export interface InteracaoCliente {
   valor: string | null;
   data_interacao: string;
   proximo_followup: string | null;
+  status_pagamento: StatusPagamento;
+  status_pagamento_display: string;
+  data_prevista_pagamento: string | null;
+  /** Pendente com data vencida? */
+  pagamento_atrasado: boolean;
+  /** Dias até a previsão (negativo se venceu; null se não aplicável). */
+  dias_para_vencer: number | null;
   criado_por_nome: string | null;
   criado_em: string;
   /** Venda já baixou estoque? */
@@ -106,6 +115,8 @@ export interface InteracaoCreate {
   valor?: string;
   data_interacao?: string;
   proximo_followup?: string;
+  status_pagamento?: StatusPagamento;
+  data_prevista_pagamento?: string;
 }
 
 // ─── Funil Kanban ─────────────────────────────────────────────────────────────

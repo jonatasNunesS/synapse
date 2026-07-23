@@ -511,6 +511,28 @@ class TestSignalTotais:
         assert fornecedor_tecido.valor_total_compras == Decimal("0.00")
         assert fornecedor_tecido.quantidade_pedidos == 0
 
+    @pytest.mark.django_db(transaction=True)
+    def test_bug_a_criar_compra_paga_via_api_nao_da_500(self, client_a, fornecedor_tecido):
+        """Bug A: criar a compra já como 'pago' pela API roda o callback
+        pós-commit do signal. Antes, o select_for_update fora de transação
+        derrubava com 500 (no PostgreSQL). Deve retornar 201 e atualizar os
+        totais — igual a salvar pendente e depois marcar como pago.
+        (transaction=True executa os callbacks de on_commit.)"""
+        resp = client_a.post(
+            f"/api/fornecedores/{fornecedor_tecido.id}/compras/",
+            {
+                "descricao": "Tecido pago direto",
+                "valor": "2500.00",
+                "data_compra": "2025-02-01",
+                "status": "pago",
+                "data_pagamento": "2025-02-01",
+            },
+        )
+        assert resp.status_code == 201
+        fornecedor_tecido.refresh_from_db()
+        assert fornecedor_tecido.valor_total_compras == Decimal("2500.00")
+        assert fornecedor_tecido.quantidade_pedidos == 1
+
 
 # ─── Teste de Cenário Completo ────────────────────────────────────────────────
 

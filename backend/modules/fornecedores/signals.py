@@ -15,37 +15,49 @@ def atualizar_totais_fornecedor(sender, instance, created, **kwargs):
     - fornecedor.valor_total_compras
     - fornecedor.quantidade_pedidos
     - fornecedor.ultima_compra
+
+    O recálculo roda em transaction.on_commit — ou seja, DEPOIS do commit, já
+    fora de qualquer transação. Por isso o próprio _atualizar abre a sua atomic:
+    sem ela, o select_for_update levantava TransactionManagementError no
+    PostgreSQL (autocommit) e devolvia 500 ao salvar a compra já como "pago"
+    — embora a compra tivesse sido gravada. No SQLite o bug não aparecia porque
+    lá o select_for_update é no-op.
     """
     if instance.status != "pago":
         return
 
-    # Evitar recursão: usar update() direto no banco
-    from django.db.models import F
-    from modules.fornecedores.models import Fornecedor
+    fornecedor_id = instance.fornecedor_id
 
     def _atualizar():
-        fornecedor = Fornecedor.objects.select_for_update().get(pk=instance.fornecedor_id)
-
-        # Recalcular totais a partir de todas as compras pagas
         from django.db.models import Sum, Max, Count
-        from modules.fornecedores.models import CompraFornecedor
+        from modules.fornecedores.models import Fornecedor, CompraFornecedor
 
-        agregado = CompraFornecedor.objects.filter(
-            fornecedor_id=instance.fornecedor_id,
-            status="pago",
-        ).aggregate(
-            total=Sum("valor"),
-            quantidade=Count("id"),
-            ultima=Max("data_compra"),
-        )
+        # Abre a própria transação: o callback roda pós-commit, em autocommit,
+        # e o select_for_update precisa de uma transação ativa.
+        with transaction.atomic():
+            fornecedor = Fornecedor.objects.select_for_update().get(pk=fornecedor_id)
 
-        fornecedor.valor_total_compras = agregado["total"] or 0
-        fornecedor.quantidade_pedidos = agregado["quantidade"] or 0
-        fornecedor.ultima_compra = agregado["ultima"]
-        fornecedor.save(update_fields=["valor_total_compras", "quantidade_pedidos", "ultima_compra"])
+            agregado = CompraFornecedor.objects.filter(
+                fornecedor_id=fornecedor_id,
+                status="pago",
+            ).aggregate(
+                total=Sum("valor"),
+                quantidade=Count("id"),
+                ultima=Max("data_compra"),
+            )
 
-    try:
-        transaction.on_commit(_atualizar)
-    except Exception:
-        # Se não estiver em transação, executar diretamente
-        _atualizar()
+            fornecedor.valor_total_compras = agregado["total"] or 0
+            fornecedor.quantidade_pedidos = agregado["quantidade"] or 0
+            fornecedor.ultima_compra = agregado["ultima"]
+            fornecedor.save(
+                update_fields=[
+                    "valor_total_compras",
+                    "quantidade_pedidos",
+                    "ultima_compra",
+                ]
+            )
+
+    # on_commit registra para rodar após o commit; se não houver transação
+    # ativa, o Django executa na hora. Em ambos os casos _atualizar cuida da
+    # sua própria atomicidade.
+    transaction.on_commit(_atualizar)

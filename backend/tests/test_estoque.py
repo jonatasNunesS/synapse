@@ -654,6 +654,36 @@ class TestEstornoMovimentacao:
         assert float(estorno["quantidade"]) == 3.0
         assert float(r2.data["data"]["produto"]["estoque_atual"]) == estoque_apos_saida + 3.0
 
+    def test_estornar_um_estorno_volta_ao_original(self, client_a, produto_a):
+        """Bug B: estornar um estorno (feito por engano) deve funcionar e
+        devolver o estoque ao estado anterior ao estorno equivocado."""
+        # Entrada de 10
+        r1 = client_a.post("/api/estoque/movimentacoes/", {
+            "produto": str(produto_a.id), "tipo": "entrada",
+            "quantidade": "10", "motivo": "compra",
+        })
+        assert r1.status_code == 201
+        entrada_id = r1.data["data"]["movimentacao"]["id"]
+        estoque_com_entrada = float(r1.data["data"]["produto"]["estoque_atual"])
+
+        # Estorno da entrada → saída de 10 (estoque volta ao de antes)
+        r2 = client_a.post(f"/api/estoque/movimentacoes/{entrada_id}/estornar/", {
+            "motivo": "estorno por engano",
+        })
+        assert r2.status_code == 201
+        estorno_id = r2.data["data"]["estorno"]["id"]
+        assert float(r2.data["data"]["produto"]["estoque_atual"]) == estoque_com_entrada - 10.0
+
+        # Estornar o estorno → entrada de 10 de novo (desfaz o engano)
+        r3 = client_a.post(f"/api/estoque/movimentacoes/{estorno_id}/estornar/", {
+            "motivo": "desfazendo o estorno equivocado",
+        })
+        assert r3.status_code == 201
+        assert r3.data["data"]["estorno"]["tipo"] == "entrada"
+        assert float(r3.data["data"]["estorno"]["quantidade"]) == 10.0
+        # Estoque volta ao valor que tinha após a entrada original
+        assert float(r3.data["data"]["produto"]["estoque_atual"]) == estoque_com_entrada
+
     def test_estorno_movimentacao_inexistente(self, client_a):
         """Estornar movimentação inexistente retorna 404."""
         import uuid

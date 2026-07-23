@@ -60,6 +60,12 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=9, minute=0),        # Diariamente às 9h
         "options": {"expires": 3600},
     },
+    # Vendas fiadas — notifica no sino quando a previsão de pagamento chega.
+    "notificar-vendas-fiado": {
+        "task": "clientes.notificar_vendas_fiado",    # modules/clientes/tasks.py
+        "schedule": crontab(hour=0, minute=15),       # Diariamente às 00:15 (BRT)
+        "options": {"expires": 3600},
+    },
     # ── M6: Projetos ──────────────────────────────────────────
     "verificar-prazos-tarefas": {
         "task": "projetos.verificar_prazos_tarefas",  # modules/projetos/tasks.py

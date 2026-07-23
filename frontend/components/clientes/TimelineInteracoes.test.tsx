@@ -17,6 +17,11 @@ const interacao: InteracaoCliente = {
   valor: null,
   data_interacao: "2026-07-20T14:30:00Z",
   proximo_followup: null,
+  status_pagamento: "nao_se_aplica",
+  status_pagamento_display: "Não se aplica",
+  data_prevista_pagamento: null,
+  pagamento_atrasado: false,
+  dias_para_vencer: null,
   criado_por_nome: "Maria",
   criado_em: "2026-07-20T14:30:00Z",
 };
@@ -69,5 +74,38 @@ describe("TimelineInteracoes", () => {
         name: "Editar interação",
       })
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("TimelineInteracoes — badge de pagamento", () => {
+  function venda(over: Partial<InteracaoCliente>): InteracaoCliente {
+    return { ...interacao, id: "v", tipo: "venda", tipo_display: "Venda",
+      titulo: "Venda", valor: "500.00", ...over };
+  }
+
+  it('badge verde "Pago"', () => {
+    render(<TimelineInteracoes interacoes={[venda({ status_pagamento: "pago", status_pagamento_display: "Pago" })]} />);
+    expect(screen.getByText("Pago")).toBeInTheDocument();
+  });
+
+  it('badge vermelho "Atrasado" para pendente vencida', () => {
+    render(<TimelineInteracoes interacoes={[venda({
+      status_pagamento: "pendente", pagamento_atrasado: true, dias_para_vencer: -2,
+    })]} />);
+    expect(screen.getByText("Atrasado")).toBeInTheDocument();
+  });
+
+  it('badge "Vence em N dias" para pendente futura', () => {
+    render(<TimelineInteracoes interacoes={[venda({
+      status_pagamento: "pendente", pagamento_atrasado: false, dias_para_vencer: 3,
+    })]} />);
+    expect(screen.getByText("Vence em 3 dias")).toBeInTheDocument();
+  });
+
+  it("sem badge quando nao_se_aplica", () => {
+    render(<TimelineInteracoes interacoes={[venda({ status_pagamento: "nao_se_aplica" })]} />);
+    expect(screen.queryByText("Pago")).not.toBeInTheDocument();
+    expect(screen.queryByText("Pendente")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Vence/)).not.toBeInTheDocument();
   });
 });

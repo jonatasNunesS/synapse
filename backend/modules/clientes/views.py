@@ -404,3 +404,101 @@ class InteracaoBaixarEstoqueView(EmpresaQuerySetMixin, APIView):
             data=MovimentacaoSerializer(movimentacao).data,
             message="Saída registrada no estoque.",
         )
+
+
+class InteracaoConfirmarPagamentoView(EmpresaQuerySetMixin, APIView):
+    """
+    POST /api/clientes/interacoes/{interacao_id}/confirmar-pagamento/
+    Body: { valor_confirmado?, criar_restante?, data_prevista_restante? }
+    """
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def post(self, request, interacao_id):
+        from decimal import Decimal, InvalidOperation
+        from shared.exceptions import BusinessRuleViolation
+
+        valor_raw = request.data.get("valor_confirmado")
+        valor_confirmado = None
+        if valor_raw not in (None, ""):
+            try:
+                valor_confirmado = Decimal(str(valor_raw))
+            except (InvalidOperation, ValueError):
+                return error_response("VALIDATION_ERROR", "Valor inválido.")
+            if valor_confirmado < 0:
+                return error_response("VALIDATION_ERROR", "Valor não pode ser negativo.")
+
+        criar_restante = bool(request.data.get("criar_restante", False))
+        data_prevista_restante = request.data.get("data_prevista_restante") or None
+
+        try:
+            interacao, nova = ClienteService.confirmar_pagamento(
+                empresa_id=self.get_empresa_id(),
+                interacao_id=interacao_id,
+                valor_confirmado=valor_confirmado,
+                criar_restante=criar_restante,
+                data_prevista_restante=data_prevista_restante,
+            )
+        except ResourceNotFound:
+            return error_response("NOT_FOUND", "Interação não encontrada.", status_code=404)
+        except BusinessRuleViolation as exc:
+            return error_response(exc.code, exc.message, details=exc.details, status_code=400)
+
+        return success_response(
+            data={
+                "interacao": InteracaoClienteSerializer(interacao).data,
+                "restante": InteracaoClienteSerializer(nova).data if nova else None,
+            },
+            message="Pagamento confirmado.",
+        )
+
+
+class InteracaoAdiarPagamentoView(EmpresaQuerySetMixin, APIView):
+    """POST /api/clientes/interacoes/{interacao_id}/adiar-pagamento/ — Body: { dias }"""
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def post(self, request, interacao_id):
+        try:
+            dias = int(request.data.get("dias", 3))
+        except (ValueError, TypeError):
+            return error_response("VALIDATION_ERROR", "Número de dias inválido.")
+        if dias < 1:
+            return error_response("VALIDATION_ERROR", "Informe ao menos 1 dia.")
+
+        try:
+            interacao = ClienteService.adiar_pagamento(
+                empresa_id=self.get_empresa_id(),
+                interacao_id=interacao_id,
+                dias=dias,
+            )
+        except ResourceNotFound:
+            return error_response("NOT_FOUND", "Interação não encontrada.", status_code=404)
+
+        return success_response(
+            data=InteracaoClienteSerializer(interacao).data,
+            message=f"Pagamento adiado por {dias} dia(s).",
+        )
+
+
+class InteracaoCancelarPagamentoView(EmpresaQuerySetMixin, APIView):
+    """POST /api/clientes/interacoes/{interacao_id}/cancelar-pagamento/"""
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def post(self, request, interacao_id):
+        try:
+            interacao = ClienteService.cancelar_pagamento(
+                empresa_id=self.get_empresa_id(),
+                interacao_id=interacao_id,
+            )
+        except ResourceNotFound:
+            return error_response("NOT_FOUND", "Interação não encontrada.", status_code=404)
+
+        return success_response(
+            data=InteracaoClienteSerializer(interacao).data,
+            message="Essa venda não será cobrada.",
+        )

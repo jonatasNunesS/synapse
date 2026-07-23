@@ -19,6 +19,7 @@ export type TipoMovimentacao = "entrada" | "saida" | "ajuste";
 export type MotivoMovimentacao =
   | "compra"
   | "venda"
+  | "devolucao"
   | "devolucao_compra"
   | "devolucao_venda"
   | "ajuste_manual"

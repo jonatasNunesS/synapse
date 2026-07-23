@@ -1040,3 +1040,168 @@ class TestInteracaoBaixarEstoque:
             format="json",
         )
         assert resp.status_code == 404
+
+
+# ─── Testes: Status de pagamento nas interações (Parte 1) ─────────────────────
+
+class TestStatusPagamentoInteracao:
+
+    def test_venda_pendente_com_data_salva(self, client_a, cliente_maria):
+        resp = client_a.post(
+            f"/api/clientes/{cliente_maria.id}/interacoes/",
+            {
+                "tipo": "venda", "titulo": "Casamento - sinal", "valor": "500.00",
+                "status_pagamento": "pendente",
+                "data_prevista_pagamento": "2026-08-01",
+            },
+            format="json",
+        )
+        assert resp.status_code == 201
+        assert resp.data["data"]["status_pagamento"] == "pendente"
+        assert resp.data["data"]["data_prevista_pagamento"] == "2026-08-01"
+
+    def test_venda_default_pendente(self, client_a, cliente_maria):
+        """Venda sem status informado → default pendente (envolve dinheiro).
+        Como fica pendente e tem valor, a previsão é obrigatória."""
+        resp = client_a.post(
+            f"/api/clientes/{cliente_maria.id}/interacoes/",
+            {"tipo": "venda", "titulo": "Venda", "valor": "100.00",
+             "data_prevista_pagamento": "2026-08-01"},
+            format="json",
+        )
+        assert resp.status_code == 201
+        assert resp.data["data"]["status_pagamento"] == "pendente"
+
+    def test_ligacao_default_nao_se_aplica(self, client_a, cliente_maria):
+        resp = client_a.post(
+            f"/api/clientes/{cliente_maria.id}/interacoes/",
+            {"tipo": "ligacao", "titulo": "Ligação de follow-up"},
+            format="json",
+        )
+        assert resp.status_code == 201
+        assert resp.data["data"]["status_pagamento"] == "nao_se_aplica"
+
+    def test_venda_pendente_sem_data_falha(self, client_a, cliente_maria):
+        resp = client_a.post(
+            f"/api/clientes/{cliente_maria.id}/interacoes/",
+            {"tipo": "venda", "titulo": "Venda", "valor": "500.00",
+             "status_pagamento": "pendente"},
+            format="json",
+        )
+        assert resp.status_code == 400
+        assert "data_prevista_pagamento" in resp.data["error"]["details"]
+
+    def test_pagamento_atrasado_no_serializer(self, client_a, empresa_a, usuario_a, cliente_maria):
+        from datetime import date, timedelta
+        InteracaoCliente.objects.create(
+            cliente=cliente_maria, empresa=empresa_a, tipo="venda",
+            titulo="Venda vencida", valor=Decimal("500.00"),
+            status_pagamento="pendente",
+            data_prevista_pagamento=date.today() - timedelta(days=2),
+            criado_por=usuario_a,
+        )
+        resp = client_a.get(f"/api/clientes/{cliente_maria.id}/interacoes/")
+        assert resp.status_code == 200
+        venc = [i for i in resp.data["data"] if i["titulo"] == "Venda vencida"][0]
+        assert venc["pagamento_atrasado"] is True
+        assert venc["dias_para_vencer"] == -2
+
+
+# ─── Testes: Fiado — notificação e ações no vencimento (Parte 2) ──────────────
+
+class TestFiadoNotificacao:
+
+    def _venda_pendente(self, cliente, empresa, usuario, valor="500.00", dias=0):
+        from datetime import date, timedelta
+        return InteracaoCliente.objects.create(
+            cliente=cliente, empresa=empresa, tipo="venda",
+            titulo="Casamento - sinal", valor=Decimal(valor),
+            status_pagamento="pendente",
+            data_prevista_pagamento=date.today() + timedelta(days=dias),
+            criado_por=usuario,
+        )
+
+    def test_task_cria_notificacao_no_vencimento(self, empresa_a, usuario_a, cliente_maria):
+        from modules.clientes.services import ClienteService
+        from modules.notificacoes.models import Notificacao
+        self._venda_pendente(cliente_maria, empresa_a, usuario_a, dias=0)
+
+        total = ClienteService.notificar_vendas_fiado()
+        assert total == 1
+        notif = Notificacao.objects.filter(usuario=usuario_a, tipo="cliente").first()
+        assert notif is not None
+        assert cliente_maria.nome in notif.mensagem
+        assert f"fiado=" in notif.acao_url
+
+    def test_task_idempotente(self, empresa_a, usuario_a, cliente_maria):
+        from modules.clientes.services import ClienteService
+        from modules.notificacoes.models import Notificacao
+        self._venda_pendente(cliente_maria, empresa_a, usuario_a, dias=0)
+
+        assert ClienteService.notificar_vendas_fiado() == 1
+        # Segunda rodada não cria de novo
+        assert ClienteService.notificar_vendas_fiado() == 0
+        assert Notificacao.objects.filter(tipo="cliente").count() == 1
+
+    def test_nao_notifica_antes_do_vencimento(self, empresa_a, usuario_a, cliente_maria):
+        from modules.clientes.services import ClienteService
+        self._venda_pendente(cliente_maria, empresa_a, usuario_a, dias=5)
+        assert ClienteService.notificar_vendas_fiado() == 0
+
+    def test_confirmar_pagamento(self, client_a, empresa_a, usuario_a, cliente_maria):
+        venda = self._venda_pendente(cliente_maria, empresa_a, usuario_a, dias=0)
+        resp = client_a.post(
+            f"/api/clientes/interacoes/{venda.id}/confirmar-pagamento/", {}, format="json"
+        )
+        assert resp.status_code == 200
+        assert resp.data["data"]["interacao"]["status_pagamento"] == "pago"
+        assert resp.data["data"]["restante"] is None
+
+    def test_confirmar_valor_parcial_cria_restante(self, client_a, empresa_a, usuario_a, cliente_maria):
+        venda = self._venda_pendente(cliente_maria, empresa_a, usuario_a, valor="500.00", dias=0)
+        resp = client_a.post(
+            f"/api/clientes/interacoes/{venda.id}/confirmar-pagamento/",
+            {"valor_confirmado": "300.00", "criar_restante": True,
+             "data_prevista_restante": "2026-09-01"},
+            format="json",
+        )
+        assert resp.status_code == 200
+        assert resp.data["data"]["interacao"]["status_pagamento"] == "pago"
+        assert Decimal(resp.data["data"]["interacao"]["valor"]) == Decimal("300.00")
+        restante = resp.data["data"]["restante"]
+        assert restante is not None
+        assert Decimal(restante["valor"]) == Decimal("200.00")
+        assert restante["status_pagamento"] == "pendente"
+
+    def test_adiar_pagamento(self, client_a, empresa_a, usuario_a, cliente_maria):
+        from datetime import date
+        venda = self._venda_pendente(cliente_maria, empresa_a, usuario_a, dias=0)
+        # marca como já notificada para provar que adiar rearma
+        venda.notificacao_enviada = True
+        venda.save(update_fields=["notificacao_enviada"])
+
+        resp = client_a.post(
+            f"/api/clientes/interacoes/{venda.id}/adiar-pagamento/",
+            {"dias": 7}, format="json",
+        )
+        assert resp.status_code == 200
+        venda.refresh_from_db()
+        assert venda.data_prevista_pagamento == date.today() + __import__("datetime").timedelta(days=7)
+        assert venda.notificacao_enviada is False
+
+    def test_cancelar_pagamento(self, client_a, empresa_a, usuario_a, cliente_maria):
+        venda = self._venda_pendente(cliente_maria, empresa_a, usuario_a, dias=0)
+        resp = client_a.post(
+            f"/api/clientes/interacoes/{venda.id}/cancelar-pagamento/", {}, format="json"
+        )
+        assert resp.status_code == 200
+        assert resp.data["data"]["status_pagamento"] == "cancelado"
+
+    def test_multitenant_nao_confirma_pagamento_de_outra_empresa(
+        self, client_b, empresa_a, usuario_a, cliente_maria
+    ):
+        venda = self._venda_pendente(cliente_maria, empresa_a, usuario_a, dias=0)
+        resp = client_b.post(
+            f"/api/clientes/interacoes/{venda.id}/confirmar-pagamento/", {}, format="json"
+        )
+        assert resp.status_code == 404

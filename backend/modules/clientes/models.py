@@ -139,6 +139,16 @@ class InteracaoCliente(models.Model):
         ("outro", "Outro"),
     ]
 
+    STATUS_PAGAMENTO_CHOICES = [
+        ("pago", "Pago"),
+        ("pendente", "Pendente"),
+        ("cancelado", "Cancelado"),
+        ("nao_se_aplica", "Não se aplica"),
+    ]
+
+    # Tipos que envolvem dinheiro → default de pagamento "pendente"
+    TIPOS_COM_VALOR = ("venda", "proposta")
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     cliente = models.ForeignKey(
         Cliente,
@@ -158,6 +168,16 @@ class InteracaoCliente(models.Model):
     )
     data_interacao = models.DateTimeField(default=timezone.now)
     proximo_followup = models.DateField(null=True, blank=True)
+    # Status de pagamento (fiado). "nao_se_aplica" para interações sem dinheiro.
+    status_pagamento = models.CharField(
+        max_length=20,
+        choices=STATUS_PAGAMENTO_CHOICES,
+        default="nao_se_aplica",
+    )
+    # Previsão de pagamento — obrigatória quando pendente e a interação tem valor.
+    data_prevista_pagamento = models.DateField(null=True, blank=True)
+    # Controle de idempotência da notificação de vencimento (venda fiada).
+    notificacao_enviada = models.BooleanField(default=False)
     # Saída de estoque gerada a partir desta venda. Evita baixar o mesmo item
     # duas vezes: se já houver movimentação vinculada, a venda já baixou estoque.
     movimentacao_estoque = models.ForeignKey(

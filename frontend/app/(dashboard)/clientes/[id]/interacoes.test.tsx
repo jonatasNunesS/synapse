@@ -17,7 +17,8 @@ vi.mock("sonner", () => ({
 
 vi.mock("next/navigation", () => ({
   useParams: () => ({ id: "cli-1" }),
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 const interacao: InteracaoCliente = {
@@ -29,6 +30,11 @@ const interacao: InteracaoCliente = {
   valor: "500.00",
   data_interacao: "2026-07-20T14:30:00Z",
   proximo_followup: null,
+  status_pagamento: "nao_se_aplica",
+  status_pagamento_display: "Não se aplica",
+  data_prevista_pagamento: null,
+  pagamento_atrasado: false,
+  dias_para_vencer: null,
   criado_por_nome: "Maria",
   criado_em: "2026-07-20T14:30:00Z",
 };

@@ -1,4 +1,5 @@
 import re
+from datetime import date
 from rest_framework import serializers
 from .models import Cliente, InteracaoCliente
 
@@ -8,8 +9,13 @@ from .models import Cliente, InteracaoCliente
 class InteracaoClienteSerializer(serializers.ModelSerializer):
     criado_por_nome = serializers.SerializerMethodField()
     tipo_display = serializers.SerializerMethodField()
+    status_pagamento_display = serializers.SerializerMethodField()
     # Venda já baixou estoque? (evita oferecer/duplicar a baixa)
     ja_baixado_estoque = serializers.SerializerMethodField()
+    # Pendente com data vencida?
+    pagamento_atrasado = serializers.SerializerMethodField()
+    # Dias até a previsão (negativo se já venceu; null se não aplicável)
+    dias_para_vencer = serializers.SerializerMethodField()
 
     class Meta:
         model = InteracaoCliente
@@ -22,6 +28,11 @@ class InteracaoClienteSerializer(serializers.ModelSerializer):
             "valor",
             "data_interacao",
             "proximo_followup",
+            "status_pagamento",
+            "status_pagamento_display",
+            "data_prevista_pagamento",
+            "pagamento_atrasado",
+            "dias_para_vencer",
             "criado_por",
             "criado_por_nome",
             "criado_em",
@@ -39,10 +50,30 @@ class InteracaoClienteSerializer(serializers.ModelSerializer):
     def get_tipo_display(self, obj):
         return obj.get_tipo_display()
 
+    def get_status_pagamento_display(self, obj):
+        return obj.get_status_pagamento_display()
+
+    def get_pagamento_atrasado(self, obj):
+        return bool(
+            obj.status_pagamento == "pendente"
+            and obj.data_prevista_pagamento is not None
+            and obj.data_prevista_pagamento < date.today()
+        )
+
+    def get_dias_para_vencer(self, obj):
+        if obj.status_pagamento != "pendente" or obj.data_prevista_pagamento is None:
+            return None
+        return (obj.data_prevista_pagamento - date.today()).days
+
 
 # ─── Interação (criação) ──────────────────────────────────────────────────────
 
 class InteracaoClienteCreateSerializer(serializers.ModelSerializer):
+    # status_pagamento é opcional: se não vier, aplicamos o default por tipo.
+    status_pagamento = serializers.ChoiceField(
+        choices=InteracaoCliente.STATUS_PAGAMENTO_CHOICES, required=False
+    )
+
     class Meta:
         model = InteracaoCliente
         fields = [
@@ -53,10 +84,13 @@ class InteracaoClienteCreateSerializer(serializers.ModelSerializer):
             "valor",
             "data_interacao",
             "proximo_followup",
+            "status_pagamento",
+            "data_prevista_pagamento",
         ]
         extra_kwargs = {
             "cliente": {"required": False},
             "data_interacao": {"required": False},
+            "data_prevista_pagamento": {"required": False},
         }
 
     def to_internal_value(self, data):
@@ -71,10 +105,20 @@ class InteracaoClienteCreateSerializer(serializers.ModelSerializer):
             data["proximo_followup"] = None
         if data.get("valor") == "":
             data["valor"] = None
+        if data.get("data_prevista_pagamento") == "":
+            data["data_prevista_pagamento"] = None
+        if data.get("status_pagamento") == "":
+            data.pop("status_pagamento", None)
         if data.get("data_interacao") == "":
             # Sem data informada: deixa o default do model (timezone.now) agir.
             data.pop("data_interacao", None)
         return super().to_internal_value(data)
+
+    def _default_status_por_tipo(self, tipo):
+        """venda/proposta envolvem dinheiro → 'pendente'; senão 'nao_se_aplica'."""
+        if tipo in InteracaoCliente.TIPOS_COM_VALOR:
+            return "pendente"
+        return "nao_se_aplica"
 
     def validate(self, attrs):
         tipo = attrs.get("tipo")
@@ -83,6 +127,37 @@ class InteracaoClienteCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"valor": "O valor deve ser maior que 0 para interações do tipo venda."}
             )
+
+        # O usuário escolheu o status explicitamente? (vs. default por tipo)
+        status_explicito = "status_pagamento" in attrs
+
+        # Default por tipo quando o cliente não informa o status (só na criação).
+        if not self.instance and not status_explicito:
+            attrs["status_pagamento"] = self._default_status_por_tipo(tipo)
+
+        # Previsão obrigatória APENAS quando o usuário escolhe "pendente"
+        # explicitamente para algo com valor. Vendas criadas sem informar o
+        # status (default pendente) não travam — só não notificam sem uma data.
+        status_pag = attrs.get(
+            "status_pagamento",
+            getattr(self.instance, "status_pagamento", None),
+        )
+        tem_valor = (tipo in InteracaoCliente.TIPOS_COM_VALOR) or (
+            valor is not None and valor > 0
+        )
+        if status_explicito and status_pag == "pendente" and tem_valor:
+            data_prev = attrs.get(
+                "data_prevista_pagamento",
+                getattr(self.instance, "data_prevista_pagamento", None),
+            )
+            if data_prev is None:
+                raise serializers.ValidationError(
+                    {
+                        "data_prevista_pagamento": (
+                            "Informe a previsão de pagamento para uma venda pendente."
+                        )
+                    }
+                )
         return attrs
 
 

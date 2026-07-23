@@ -45,6 +45,7 @@ const TIPO_CONFIG: Record<TipoMovimentacao, {
 const MOTIVO_LABELS: Record<string, string> = {
   compra: "Compra",
   venda: "Venda",
+  devolucao: "Devolução / Estorno",
   devolucao_compra: "Devolução de Compra",
   devolucao_venda: "Devolução de Venda",
   ajuste_manual: "Ajuste Manual",

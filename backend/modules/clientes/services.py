@@ -233,3 +233,137 @@ class ClienteService:
         interacao.save(update_fields=["movimentacao_estoque"])
         ClienteService._invalidar_todos(empresa_id)
         return movimentacao
+
+    # ── Fiado: cobrança no vencimento (mesma mecânica das recorrências) ──────
+
+    @staticmethod
+    def _obter_interacao_por_empresa(empresa_id, interacao_id) -> InteracaoCliente:
+        """Busca por empresa (rota flat, sem cliente_id) ou levanta 404."""
+        interacao = ClienteRepository.obter_interacao(
+            interacao_id=interacao_id, empresa_id=empresa_id
+        )
+        if not interacao:
+            raise ResourceNotFound("Interação", str(interacao_id))
+        return interacao
+
+    @staticmethod
+    def notificar_vendas_fiado(hoje=None) -> int:
+        """
+        Cria notificação no sino para cada venda fiada vencida ainda não avisada.
+        Idempotente via notificacao_enviada. Retorna quantas notificações criou.
+        """
+        from datetime import date as _date
+        from modules.notificacoes.services import NotificacaoService
+
+        hoje = hoje or _date.today()
+        pendentes = InteracaoCliente.objects.select_related("cliente").filter(
+            status_pagamento="pendente",
+            data_prevista_pagamento__isnull=False,
+            data_prevista_pagamento__lte=hoje,
+            notificacao_enviada=False,
+        )
+
+        total = 0
+        for interacao in pendentes:
+            if not interacao.criado_por_id:
+                # Sem dono para receber no sino; marca para não reprocessar sempre.
+                interacao.notificacao_enviada = True
+                interacao.save(update_fields=["notificacao_enviada"])
+                continue
+
+            valor_fmt = interacao.valor if interacao.valor is not None else 0
+            NotificacaoService.criar_notificacao(
+                usuario_id=interacao.criado_por_id,
+                empresa_id=interacao.empresa_id,
+                tipo="cliente",
+                titulo=f"{interacao.cliente.nome} ficou de pagar hoje",
+                mensagem=(
+                    f"{interacao.cliente.nome} ficou de pagar R$ {valor_fmt} hoje. "
+                    f"Referente a: {interacao.titulo}"
+                ),
+                acao_url=f"/clientes/{interacao.cliente_id}?fiado={interacao.id}",
+                prioridade="alta",
+            )
+            interacao.notificacao_enviada = True
+            interacao.save(update_fields=["notificacao_enviada"])
+            total += 1
+
+        return total
+
+    @staticmethod
+    def confirmar_pagamento(
+        empresa_id, interacao_id, valor_confirmado=None,
+        criar_restante=False, data_prevista_restante=None,
+    ):
+        """
+        Confirma o pagamento de uma venda fiada.
+        - status_pagamento → pago; valor atualizado se o recebido foi diferente.
+        - Se o recebido < valor original e criar_restante, cria nova interação
+          pendente com o saldo devedor (fica devendo o resto).
+        Retorna (interacao, nova_interacao_restante | None).
+        """
+        from decimal import Decimal
+
+        interacao = ClienteService._obter_interacao_por_empresa(empresa_id, interacao_id)
+        if interacao.status_pagamento not in ("pendente",):
+            raise BusinessRuleViolation(
+                "PAGAMENTO_JA_RESOLVIDO",
+                "Este pagamento já foi resolvido.",
+            )
+
+        valor_original = interacao.valor or Decimal("0")
+        recebido = (
+            Decimal(str(valor_confirmado)) if valor_confirmado is not None else valor_original
+        )
+
+        interacao.status_pagamento = "pago"
+        if valor_confirmado is not None:
+            interacao.valor = recebido
+        interacao.save(update_fields=["status_pagamento", "valor"])
+
+        nova = None
+        restante = valor_original - recebido
+        if criar_restante and restante > 0:
+            # A data pode chegar como string ("YYYY-MM-DD"): converte para date
+            # real, senão a serialização (dias_para_vencer) quebra.
+            if isinstance(data_prevista_restante, str):
+                from django.utils.dateparse import parse_date
+                data_prevista_restante = parse_date(data_prevista_restante)
+            nova = InteracaoCliente.objects.create(
+                cliente_id=interacao.cliente_id,
+                empresa_id=interacao.empresa_id,
+                tipo=interacao.tipo,
+                titulo=f"Saldo devedor — {interacao.titulo}",
+                descricao=f"Restante de R$ {restante} referente a {interacao.titulo}.",
+                valor=restante,
+                status_pagamento="pendente",
+                data_prevista_pagamento=data_prevista_restante,
+                criado_por_id=interacao.criado_por_id,
+            )
+
+        ClienteService._invalidar_todos(empresa_id)
+        return interacao, nova
+
+    @staticmethod
+    def adiar_pagamento(empresa_id, interacao_id, dias: int):
+        """Adia a previsão de pagamento em N dias e rearma a notificação."""
+        from datetime import date as _date, timedelta
+
+        interacao = ClienteService._obter_interacao_por_empresa(empresa_id, interacao_id)
+        base = interacao.data_prevista_pagamento or _date.today()
+        # Nunca adia para o passado: parte de hoje se a previsão já venceu.
+        base = max(base, _date.today())
+        interacao.data_prevista_pagamento = base + timedelta(days=max(1, int(dias)))
+        interacao.notificacao_enviada = False  # volta a notificar no novo vencimento
+        interacao.save(update_fields=["data_prevista_pagamento", "notificacao_enviada"])
+        ClienteService._invalidar_todos(empresa_id)
+        return interacao
+
+    @staticmethod
+    def cancelar_pagamento(empresa_id, interacao_id):
+        """Marca a venda como não cobrada (status_pagamento=cancelado)."""
+        interacao = ClienteService._obter_interacao_por_empresa(empresa_id, interacao_id)
+        interacao.status_pagamento = "cancelado"
+        interacao.save(update_fields=["status_pagamento"])
+        ClienteService._invalidar_todos(empresa_id)
+        return interacao
