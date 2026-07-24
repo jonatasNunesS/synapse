@@ -760,3 +760,59 @@ class TestSoftDeleteListagem:
         r = client_a.get("/api/fornecedores/?ativo=false")
         ids = [f["id"] for f in r.data["data"]]
         assert str(fornecedor_tecido.id) in ids
+
+
+# ─── Testes: Compra → Lançamento financeiro (Parte 2) ─────────────────────────
+
+class TestCompraRegistrarFinanceiro:
+    """POST /api/fornecedores/compras/{id}/registrar-financeiro/"""
+
+    def _compra(self, fornecedor, empresa, usuario, status="pendente"):
+        return CompraFornecedor.objects.create(
+            fornecedor=fornecedor, empresa=empresa,
+            descricao="50 camisas", valor=Decimal("500.00"),
+            data_compra=date(2026, 8, 1), status=status,
+            data_pagamento=date(2026, 8, 1) if status == "pago" else None,
+            criado_por=usuario,
+        )
+
+    def test_registrar_financeiro_cria_lancamento(self, client_a, empresa_a, usuario_a, fornecedor_tecido):
+        from modules.financeiro.models import Lancamento
+        compra = self._compra(fornecedor_tecido, empresa_a, usuario_a, status="pendente")
+        resp = client_a.post(
+            f"/api/fornecedores/compras/{compra.id}/registrar-financeiro/", {}, format="json"
+        )
+        assert resp.status_code == 201
+        lanc = Lancamento.objects.get(id=resp.data["data"]["id"])
+        assert lanc.tipo == "despesa"
+        assert lanc.valor == Decimal("500.00")
+        assert lanc.status == "pendente"
+        assert fornecedor_tecido.nome in lanc.descricao
+        compra.refresh_from_db()
+        assert compra.lancamento_financeiro_id == lanc.id
+
+    def test_status_herda_pago(self, client_a, empresa_a, usuario_a, fornecedor_tecido):
+        from modules.financeiro.models import Lancamento
+        compra = self._compra(fornecedor_tecido, empresa_a, usuario_a, status="pago")
+        resp = client_a.post(
+            f"/api/fornecedores/compras/{compra.id}/registrar-financeiro/", {}, format="json"
+        )
+        assert resp.status_code == 201
+        lanc = Lancamento.objects.get(id=resp.data["data"]["id"])
+        assert lanc.status == "pago"
+        assert lanc.data_pagamento == date(2026, 8, 1)
+
+    def test_nao_duplica_lancamento(self, client_a, empresa_a, usuario_a, fornecedor_tecido):
+        compra = self._compra(fornecedor_tecido, empresa_a, usuario_a)
+        url = f"/api/fornecedores/compras/{compra.id}/registrar-financeiro/"
+        assert client_a.post(url, {}, format="json").status_code == 201
+        r2 = client_a.post(url, {}, format="json")
+        assert r2.status_code == 400
+        assert r2.data["error"]["code"] == "COMPRA_JA_COM_LANCAMENTO"
+
+    def test_multitenant(self, client_b, empresa_a, usuario_a, fornecedor_tecido):
+        compra = self._compra(fornecedor_tecido, empresa_a, usuario_a)
+        resp = client_b.post(
+            f"/api/fornecedores/compras/{compra.id}/registrar-financeiro/", {}, format="json"
+        )
+        assert resp.status_code == 404

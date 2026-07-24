@@ -6,44 +6,22 @@ from django.dispatch import receiver
 def atualizar_cliente_apos_interacao(sender, instance, created, **kwargs):
     """
     Após salvar uma interação:
-    - Se tipo == venda e valor: atualiza valor_total_compras, quantidade_compras e ultima_compra
-    - Se proximo_followup definido: atualiza proximo_followup do cliente
+    - Se tipo == venda: recalcula os agregados de venda do cliente
+      (valor_total_compras, valor_recebido, valor_a_receber, quantidade,
+      última compra) a partir da verdade. Rodar em qualquer save (não só na
+      criação) garante que mudanças de status_pagamento — confirmar (pago),
+      cancelar (cancelado) — reflitam no split recebido/a-receber na hora.
+    - Se proximo_followup definido (na criação): atualiza o do cliente.
     """
-    if not created:
-        return  # Só processa na criação
-
-    # Força o carregamento do cliente do banco (evita cache de instância desatualizada)
     from .models import Cliente
-    try:
-        cliente = Cliente.objects.get(pk=instance.cliente_id)
-    except Cliente.DoesNotExist:
-        return
+    from .repository import ClienteRepository
 
-    atualizado = False
+    # Vendas: recalcula sempre (criação, edição de valor, mudança de status).
+    if instance.tipo == "venda":
+        ClienteRepository._recalcular_agregados_venda(instance.cliente_id)
 
-    if instance.tipo == "venda" and instance.valor:
-        cliente.valor_total_compras = (
-            (cliente.valor_total_compras or 0) + instance.valor
+    # Follow-up: só faz sentido "puxar" para o cliente ao criar a interação.
+    if created and instance.proximo_followup:
+        Cliente.objects.filter(pk=instance.cliente_id).update(
+            proximo_followup=instance.proximo_followup
         )
-        cliente.quantidade_compras = (cliente.quantidade_compras or 0) + 1
-        cliente.ultima_compra = instance.data_interacao.date()
-        atualizado = True
-
-    if instance.proximo_followup:
-        cliente.proximo_followup = instance.proximo_followup
-        atualizado = True
-
-    if atualizado:
-        # Usar update_fields para evitar recursão de signals
-        update_fields = []
-        if instance.tipo == "venda" and instance.valor:
-            update_fields.extend(
-                ["valor_total_compras", "quantidade_compras", "ultima_compra"]
-            )
-        if instance.proximo_followup:
-            update_fields.append("proximo_followup")
-
-        if update_fields:
-            type(cliente).objects.filter(pk=cliente.pk).update(
-                **{field: getattr(cliente, field) for field in update_fields}
-            )

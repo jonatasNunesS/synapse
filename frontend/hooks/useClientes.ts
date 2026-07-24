@@ -309,6 +309,16 @@ export function useInteracoes(clienteId: string) {
     return res.data;
   }, []);
 
+  // Cria o lançamento de receita a partir da venda. Propaga o erro (ApiError)
+  // — inclusive VENDA_JA_COM_LANCAMENTO e INTERACAO_SEM_VALOR.
+  const registrarFinanceiro = useCallback(async (interacaoId: string) => {
+    const res = await api.post(
+      `/clientes/interacoes/${interacaoId}/registrar-financeiro/`,
+      {}
+    );
+    return res.data;
+  }, []);
+
   return {
     interacoes,
     loading,
@@ -321,6 +331,7 @@ export function useInteracoes(clienteId: string) {
     confirmarPagamento,
     adiarPagamento,
     cancelarPagamento,
+    registrarFinanceiro,
   };
 }
 

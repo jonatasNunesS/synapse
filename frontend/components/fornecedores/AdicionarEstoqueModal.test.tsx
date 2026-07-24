@@ -25,8 +25,11 @@ const produto: ProdutoList = {
   categoria_cor: null, preco_venda: 50, estoque_atual: 10, estoque_minimo: 5,
   status_estoque: "ok", unidade: "unidade", imagem_url: "", ativo: true,
 };
+const criarProduto = vi.fn();
 vi.mock("@/hooks/useEstoque", () => ({
-  useProdutos: () => ({ produtos: [produto], loading: false, listar: vi.fn() }),
+  useProdutos: () => ({
+    produtos: [produto], loading: false, listar: vi.fn(), criar: criarProduto,
+  }),
 }));
 
 function compra(overrides: Partial<CompraFornecedor> = {}): CompraFornecedor {
@@ -43,6 +46,7 @@ beforeEach(() => {
   toastSuccess.mockClear();
   toastError.mockClear();
   adicionarAoEstoque.mockReset();
+  criarProduto.mockReset();
 });
 
 describe("AdicionarEstoqueModal", () => {
@@ -73,6 +77,30 @@ describe("AdicionarEstoqueModal", () => {
     await waitFor(() => expect(adicionarAoEstoque).toHaveBeenCalledWith("co1", "p1", 50));
     await waitFor(() =>
       expect(toastSuccess).toHaveBeenCalledWith(expect.stringContaining("Entrada de 50"))
+    );
+  });
+});
+
+describe("AdicionarEstoqueModal — criar produto inline", () => {
+  it("abre o form pré-preenchido e ao salvar seleciona o novo produto", async () => {
+    const novo = { ...produto, id: "p2", nome: "50 camisas brancas" };
+    criarProduto.mockResolvedValue(novo);
+    render(<AdicionarEstoqueModal compra={compra()} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Sim, adicionar ao estoque" }));
+
+    // Opção de criar novo produto
+    fireEvent.click(
+      screen.getByRole("button", { name: /Criar novo produto com base nessa compra/ })
+    );
+    // Form inline pré-preenchido com a descrição da compra
+    const nomeInput = screen.getByLabelText("Nome do produto") as HTMLInputElement;
+    expect(nomeInput.value).toBe("50 camisas brancas");
+
+    fireEvent.click(screen.getByRole("button", { name: /Salvar produto/ }));
+    await waitFor(() => expect(criarProduto).toHaveBeenCalled());
+    // Produto criado vira o selecionado → aparece a quantidade e o botão confirmar
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /Confirmar entrada/ })).toBeInTheDocument()
     );
   });
 });

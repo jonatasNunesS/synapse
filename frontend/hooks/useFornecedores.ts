@@ -272,5 +272,18 @@ export function useComprasFornecedor() {
     []
   );
 
-  return { data, total, loading, error, fetch, criar, atualizar, deletar, adicionarAoEstoque };
+  // Cria o lançamento de despesa a partir da compra. Propaga o erro (ApiError)
+  // — inclusive COMPRA_JA_COM_LANCAMENTO.
+  const registrarFinanceiro = useCallback(async (compraId: string) => {
+    const res = await api.post(
+      `/fornecedores/compras/${compraId}/registrar-financeiro/`,
+      {}
+    );
+    return res.data;
+  }, []);
+
+  return {
+    data, total, loading, error, fetch, criar, atualizar, deletar,
+    adicionarAoEstoque, registrarFinanceiro,
+  };
 }

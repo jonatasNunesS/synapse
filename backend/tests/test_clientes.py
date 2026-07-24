@@ -1205,3 +1205,143 @@ class TestFiadoNotificacao:
             f"/api/clientes/interacoes/{venda.id}/confirmar-pagamento/", {}, format="json"
         )
         assert resp.status_code == 404
+
+
+# ─── Testes: agregados de venda (recebido / a receber) — Parte 0 ──────────────
+
+class TestAgregadosVendaCliente:
+
+    def _venda(self, client, cliente_id, valor, status, data=None):
+        payload = {"tipo": "venda", "titulo": "V", "valor": valor,
+                   "status_pagamento": status}
+        if status == "pendente":
+            payload["data_prevista_pagamento"] = data or "2026-09-01"
+        r = client.post(f"/api/clientes/{cliente_id}/interacoes/", payload, format="json")
+        assert r.status_code == 201, r.data
+        return r.data["data"]["id"]
+
+    def test_venda_paga_conta_em_recebido(self, client_a, cliente_maria):
+        self._venda(client_a, cliente_maria.id, "300.00", "pago")
+        cliente_maria.refresh_from_db()
+        assert cliente_maria.valor_total_compras == Decimal("300.00")
+        assert cliente_maria.valor_recebido == Decimal("300.00")
+        assert cliente_maria.valor_a_receber == Decimal("0")
+
+    def test_venda_pendente_conta_em_a_receber(self, client_a, cliente_maria):
+        self._venda(client_a, cliente_maria.id, "200.00", "pendente")
+        cliente_maria.refresh_from_db()
+        assert cliente_maria.valor_total_compras == Decimal("200.00")
+        assert cliente_maria.valor_recebido == Decimal("0")
+        assert cliente_maria.valor_a_receber == Decimal("200.00")
+
+    def test_confirmar_pagamento_move_de_a_receber_para_recebido(self, client_a, cliente_maria):
+        iid = self._venda(client_a, cliente_maria.id, "500.00", "pendente")
+        client_a.post(f"/api/clientes/interacoes/{iid}/confirmar-pagamento/", {}, format="json")
+        cliente_maria.refresh_from_db()
+        assert cliente_maria.valor_recebido == Decimal("500.00")
+        assert cliente_maria.valor_a_receber == Decimal("0")
+        assert cliente_maria.valor_total_compras == Decimal("500.00")
+
+    def test_cancelar_pagamento_exclui_do_total(self, client_a, cliente_maria):
+        iid = self._venda(client_a, cliente_maria.id, "500.00", "pendente")
+        self._venda(client_a, cliente_maria.id, "100.00", "pago")
+        client_a.post(f"/api/clientes/interacoes/{iid}/cancelar-pagamento/", {}, format="json")
+        cliente_maria.refresh_from_db()
+        # A cancelada (500) sai do total; sobra a paga (100)
+        assert cliente_maria.valor_total_compras == Decimal("100.00")
+        assert cliente_maria.valor_recebido == Decimal("100.00")
+        assert cliente_maria.valor_a_receber == Decimal("0")
+
+    def test_editar_valor_reflete_no_total(self, client_a, cliente_maria):
+        iid = self._venda(client_a, cliente_maria.id, "300.00", "pago")
+        client_a.patch(
+            f"/api/clientes/{cliente_maria.id}/interacoes/{iid}/",
+            {"valor": "450.00"}, format="json",
+        )
+        cliente_maria.refresh_from_db()
+        assert cliente_maria.valor_total_compras == Decimal("450.00")
+        assert cliente_maria.valor_recebido == Decimal("450.00")
+
+    def test_apagar_venda_reduz_total(self, client_a, cliente_maria):
+        i1 = self._venda(client_a, cliente_maria.id, "300.00", "pago")
+        self._venda(client_a, cliente_maria.id, "200.00", "pago")
+        client_a.delete(f"/api/clientes/{cliente_maria.id}/interacoes/{i1}/")
+        cliente_maria.refresh_from_db()
+        assert cliente_maria.valor_total_compras == Decimal("200.00")
+        assert cliente_maria.valor_recebido == Decimal("200.00")
+
+    def test_serializer_expoe_split(self, client_a, cliente_maria):
+        self._venda(client_a, cliente_maria.id, "300.00", "pago")
+        self._venda(client_a, cliente_maria.id, "200.00", "pendente")
+        r = client_a.get(f"/api/clientes/{cliente_maria.id}/")
+        assert r.data["data"]["valor_total_compras"] == "500.00"
+        assert r.data["data"]["valor_recebido"] == "300.00"
+        assert r.data["data"]["valor_a_receber"] == "200.00"
+
+
+# ─── Testes: Venda → Lançamento financeiro (Parte 3) ──────────────────────────
+
+class TestInteracaoRegistrarFinanceiro:
+    """POST /api/clientes/interacoes/{id}/registrar-financeiro/"""
+
+    def _venda(self, cliente, empresa, usuario, status="pendente"):
+        from datetime import date
+        return InteracaoCliente.objects.create(
+            cliente=cliente, empresa=empresa, tipo="venda",
+            titulo="Casamento - sinal", valor=Decimal("300.00"),
+            status_pagamento=status,
+            data_prevista_pagamento=date(2026, 9, 1) if status == "pendente" else None,
+            criado_por=usuario,
+        )
+
+    def test_registrar_financeiro_cria_receita(self, client_a, empresa_a, usuario_a, cliente_maria):
+        from modules.financeiro.models import Lancamento
+        venda = self._venda(cliente_maria, empresa_a, usuario_a, status="pendente")
+        resp = client_a.post(
+            f"/api/clientes/interacoes/{venda.id}/registrar-financeiro/", {}, format="json"
+        )
+        assert resp.status_code == 201
+        lanc = Lancamento.objects.get(id=resp.data["data"]["id"])
+        assert lanc.tipo == "receita"
+        assert lanc.valor == Decimal("300.00")
+        assert lanc.status == "pendente"
+        assert cliente_maria.nome in lanc.descricao
+        venda.refresh_from_db()
+        assert venda.lancamento_financeiro_id == lanc.id
+
+    def test_status_herda_pago(self, client_a, empresa_a, usuario_a, cliente_maria):
+        from modules.financeiro.models import Lancamento
+        venda = self._venda(cliente_maria, empresa_a, usuario_a, status="pago")
+        resp = client_a.post(
+            f"/api/clientes/interacoes/{venda.id}/registrar-financeiro/", {}, format="json"
+        )
+        assert resp.status_code == 201
+        lanc = Lancamento.objects.get(id=resp.data["data"]["id"])
+        assert lanc.status == "pago"
+        assert lanc.data_pagamento is not None
+
+    def test_interacao_sem_valor_400(self, client_a, empresa_a, usuario_a, cliente_maria):
+        ligacao = InteracaoCliente.objects.create(
+            cliente=cliente_maria, empresa=empresa_a, tipo="ligacao",
+            titulo="Ligação", criado_por=usuario_a,
+        )
+        resp = client_a.post(
+            f"/api/clientes/interacoes/{ligacao.id}/registrar-financeiro/", {}, format="json"
+        )
+        assert resp.status_code == 400
+        assert resp.data["error"]["code"] == "INTERACAO_SEM_VALOR"
+
+    def test_nao_duplica(self, client_a, empresa_a, usuario_a, cliente_maria):
+        venda = self._venda(cliente_maria, empresa_a, usuario_a)
+        url = f"/api/clientes/interacoes/{venda.id}/registrar-financeiro/"
+        assert client_a.post(url, {}, format="json").status_code == 201
+        r2 = client_a.post(url, {}, format="json")
+        assert r2.status_code == 400
+        assert r2.data["error"]["code"] == "VENDA_JA_COM_LANCAMENTO"
+
+    def test_multitenant(self, client_b, empresa_a, usuario_a, cliente_maria):
+        venda = self._venda(cliente_maria, empresa_a, usuario_a)
+        resp = client_b.post(
+            f"/api/clientes/interacoes/{venda.id}/registrar-financeiro/", {}, format="json"
+        )
+        assert resp.status_code == 404

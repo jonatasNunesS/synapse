@@ -502,3 +502,34 @@ class InteracaoCancelarPagamentoView(EmpresaQuerySetMixin, APIView):
             data=InteracaoClienteSerializer(interacao).data,
             message="Essa venda não será cobrada.",
         )
+
+
+class InteracaoRegistrarFinanceiroView(EmpresaQuerySetMixin, APIView):
+    """
+    POST /api/clientes/interacoes/{interacao_id}/registrar-financeiro/
+    Cria um lançamento de receita a partir de uma venda. Não duplica: interação
+    já vinculada é recusada (VENDA_JA_COM_LANCAMENTO).
+    """
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def post(self, request, interacao_id):
+        from shared.exceptions import BusinessRuleViolation
+        from modules.financeiro.serializers import LancamentoSerializer
+
+        try:
+            lancamento = ClienteService.registrar_interacao_no_financeiro(
+                empresa_id=self.get_empresa_id(),
+                usuario_id=request.user.id,
+                interacao_id=interacao_id,
+            )
+        except ResourceNotFound:
+            return error_response("NOT_FOUND", "Interação não encontrada.", status_code=404)
+        except BusinessRuleViolation as exc:
+            return error_response(exc.code, exc.message, details=exc.details, status_code=400)
+
+        return created_response(
+            data=LancamentoSerializer(lancamento).data,
+            message="Receita registrada no financeiro.",
+        )

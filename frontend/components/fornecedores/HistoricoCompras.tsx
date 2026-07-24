@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useComprasFornecedor } from "@/hooks/useFornecedores";
 import { getErrorMessage } from "@/lib/api";
 import { AdicionarEstoqueModal } from "@/components/fornecedores/AdicionarEstoqueModal";
+import { RegistrarFinanceiroModal } from "@/components/financeiro/RegistrarFinanceiroModal";
 import type { CompraFornecedor } from "@/types/fornecedores";
 import type { ApiError } from "@/types/api";
 
@@ -166,6 +167,9 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
   const [excluindo, setExcluindo] = useState(false);
   // Compra recém-criada que pode ir para o estoque
   const [compraParaEstoque, setCompraParaEstoque] = useState<CompraFornecedor | null>(null);
+  // Depois do estoque, oferece registrar no financeiro (mesma compra).
+  const [compraParaFinanceiro, setCompraParaFinanceiro] = useState<CompraFornecedor | null>(null);
+  const { registrarFinanceiro } = useComprasFornecedor();
   const pageSize = 25;
 
   useEffect(() => {
@@ -356,7 +360,24 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
       {compraParaEstoque && (
         <AdicionarEstoqueModal
           compra={compraParaEstoque}
-          onClose={() => setCompraParaEstoque(null)}
+          onClose={() => {
+            // Ao fechar o estoque (sim ou não), oferece o financeiro.
+            setCompraParaFinanceiro(compraParaEstoque);
+            setCompraParaEstoque(null);
+          }}
+          onSuccess={() => fetch(fornecedorId, page)}
+        />
+      )}
+
+      {compraParaFinanceiro && (
+        <RegistrarFinanceiroModal
+          tipo="despesa"
+          valor={String(compraParaFinanceiro.valor)}
+          contraparteLabel="Fornecedor"
+          contraparteNome={compraParaFinanceiro.fornecedor_nome}
+          jaRegistrado={compraParaFinanceiro.ja_no_financeiro}
+          registrar={() => registrarFinanceiro(compraParaFinanceiro.id)}
+          onClose={() => setCompraParaFinanceiro(null)}
           onSuccess={() => fetch(fornecedorId, page)}
         />
       )}

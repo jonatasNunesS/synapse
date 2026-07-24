@@ -233,22 +233,34 @@ class ClienteRepository:
     @staticmethod
     def _recalcular_agregados_venda(cliente_id) -> None:
         """
-        Recalcula valor_total_compras, quantidade_compras e ultima_compra do
-        cliente a partir das interações do tipo 'venda' existentes.
+        Recalcula os agregados de venda do cliente a partir das interações
+        reais (fonte única da verdade), em qualquer operação (criar/editar/
+        apagar). Mantém tudo consistente sem lógica incremental.
 
-        O signal post_save atualiza esses campos de forma incremental na criação;
-        em edição/exclusão recalculamos a partir da verdade (as interações reais)
-        para manter a consistência (ex.: apagar uma venda reduz o total).
+        - valor_total_compras = pago + pendente (canceladas NÃO contam).
+        - valor_recebido      = vendas pagas.
+        - valor_a_receber     = vendas pendentes.
         """
-        agg = InteracaoCliente.objects.filter(
+        vendas = InteracaoCliente.objects.filter(
             cliente_id=cliente_id, tipo="venda"
-        ).aggregate(
+        ).exclude(status_pagamento="cancelado")
+
+        agg = vendas.aggregate(
             total=Sum("valor"),
             qtd=Count("id"),
             ultima=Max("data_interacao"),
         )
+        recebido = vendas.filter(status_pagamento="pago").aggregate(
+            s=Sum("valor")
+        )["s"] or 0
+        a_receber = vendas.filter(status_pagamento="pendente").aggregate(
+            s=Sum("valor")
+        )["s"] or 0
+
         Cliente.objects.filter(pk=cliente_id).update(
             valor_total_compras=agg["total"] or 0,
+            valor_recebido=recebido,
+            valor_a_receber=a_receber,
             quantidade_compras=agg["qtd"] or 0,
             ultima_compra=agg["ultima"].date() if agg["ultima"] else None,
         )

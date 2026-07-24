@@ -42,6 +42,10 @@ export interface ClienteList {
   origem: OrigemCliente;
   origem_display: string;
   valor_total_compras: string;
+  /** Já recebido (vendas pagas). */
+  valor_recebido: string;
+  /** A receber (vendas pendentes). */
+  valor_a_receber: string;
   quantidade_compras: number;
   ultima_compra: string | null;
   proximo_followup: string | null;
@@ -106,6 +110,8 @@ export interface InteracaoCliente {
   criado_em: string;
   /** Venda já baixou estoque? */
   ja_baixado_estoque?: boolean;
+  /** Venda já virou lançamento financeiro? */
+  ja_no_financeiro?: boolean;
 }
 
 export interface InteracaoCreate {

@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Eye,
   AlertCircle,
+  Zap,
 } from "lucide-react";
 import type { ClienteList, StatusFunil } from "@/types/clientes";
 import { STATUS_FUNIL_LABELS, STATUS_FUNIL_COLORS } from "@/types/clientes";
@@ -23,6 +24,7 @@ interface ClienteTableProps {
   onNovo?: () => void;
   onEditar?: (cliente: ClienteList) => void;
   onDeletar?: (id: string) => void;
+  onNovaInteracao?: (cliente: ClienteList) => void;
   onFiltrar?: (filtros: FiltrosClientes) => void;
   pagination?: { count: number; page: number };
   onPageChange?: (page: number) => void;
@@ -77,6 +79,7 @@ export function ClienteTable({
   onNovo,
   onEditar,
   onDeletar,
+  onNovaInteracao,
   onFiltrar,
   pagination,
   onPageChange,
@@ -273,6 +276,16 @@ export function ClienteTable({
                         <Eye className="w-4 h-4" />
                       </Link>
                       <div className="relative">
+                        {onNovaInteracao && (
+                          <button
+                            onClick={() => onNovaInteracao(cliente)}
+                            title="Nova interação"
+                            aria-label={`Nova interação para ${cliente.nome}`}
+                            className="p-1.5 text-gray-400 hover:text-purple-400 hover:bg-purple-500/10 rounded transition-colors"
+                          >
+                            <Zap className="w-4 h-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() =>
                             setOpenMenu(openMenu === cliente.id ? null : cliente.id)

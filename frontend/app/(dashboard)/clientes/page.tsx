@@ -2,12 +2,13 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
-import { List, Kanban, RefreshCw } from "lucide-react";
+import { List, Kanban, RefreshCw, Zap } from "lucide-react";
 import { getErrorMessage } from "@/lib/api";
 import { ResumoCards } from "@/components/clientes/ResumoCards";
 import { ClienteTable } from "@/components/clientes/ClienteTable";
 import { FunilKanban } from "@/components/clientes/FunilKanban";
 import { ClienteForm } from "@/components/clientes/ClienteForm";
+import { NovaInteracaoRapidaModal } from "@/components/clientes/NovaInteracaoRapidaModal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useClientes, useFunilKanban, useResumoClientes } from "@/hooks/useClientes";
 import type { ClienteList } from "@/types/clientes";
@@ -22,6 +23,15 @@ export default function ClientesPage() {
   const [page, setPage] = useState(1);
   const [clienteParaExcluir, setClienteParaExcluir] = useState<string | null>(null);
   const [excluindo, setExcluindo] = useState(false);
+  // Atalho de nova interação: aberto e (opcionalmente) com um cliente fixo.
+  const [showInteracaoRapida, setShowInteracaoRapida] = useState(false);
+  const [clienteInteracao, setClienteInteracao] =
+    useState<{ id: string; nome: string } | null>(null);
+
+  const abrirInteracaoRapida = (cliente: { id: string; nome: string } | null) => {
+    setClienteInteracao(cliente);
+    setShowInteracaoRapida(true);
+  };
 
   const { clientes, pagination, loading, carregar, criar, atualizar, deletar } = useClientes();
   const { funil, loading: funilLoading, carregar: carregarFunil, moverCard } = useFunilKanban();
@@ -123,6 +133,14 @@ export default function ClientesPage() {
           </div>
 
           <button
+            onClick={() => abrirInteracaoRapida(null)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 rounded-lg text-xs text-white font-medium transition-colors"
+          >
+            <Zap className="w-3.5 h-3.5" />
+            Nova interação
+          </button>
+
+          <button
             onClick={carregarTudo}
             className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
             title="Atualizar"
@@ -146,6 +164,7 @@ export default function ClientesPage() {
           }}
           onEditar={handleEditar}
           onDeletar={handleDeletar}
+          onNovaInteracao={(c) => abrirInteracaoRapida({ id: c.id, nome: c.nome })}
           onFiltrar={(filtros) => carregar({ ...filtros, page: 1 })}
           pagination={{ count: pagination.count, page }}
           onPageChange={(p) => {
@@ -187,6 +206,15 @@ export default function ClientesPage() {
             setClienteEditando(null);
           }}
           loading={formLoading}
+        />
+      )}
+
+      {/* Atalho: nova interação (global ou por cliente) */}
+      {showInteracaoRapida && (
+        <NovaInteracaoRapidaModal
+          clienteInicial={clienteInteracao}
+          onClose={() => setShowInteracaoRapida(false)}
+          onCriada={carregarTudo}
         />
       )}
 

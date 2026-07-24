@@ -212,6 +212,15 @@ class CompraFornecedor(models.Model):
         blank=True,
         related_name="compra_origem",
     )
+    # Lançamento financeiro (despesa) gerado a partir desta compra. Evita
+    # duplicar: se já houver lançamento vinculado, a compra já foi ao financeiro.
+    lancamento_financeiro = models.ForeignKey(
+        "synapse_financeiro.Lancamento",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="compra_origem",
+    )
     criado_por = models.ForeignKey(
         CustomUser,
         on_delete=models.SET_NULL,

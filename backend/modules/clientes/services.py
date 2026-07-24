@@ -367,3 +367,49 @@ class ClienteService:
         interacao.save(update_fields=["status_pagamento"])
         ClienteService._invalidar_todos(empresa_id)
         return interacao
+
+    @staticmethod
+    def registrar_interacao_no_financeiro(empresa_id, usuario_id, interacao_id):
+        """
+        Cria um lançamento de receita a partir de uma venda e vincula à interação.
+        - Exige valor > 0 (senão não faz sentido gerar receita).
+        - Status herda de status_pagamento (pago → pago; senão pendente).
+        - Idempotente: interação já vinculada → VENDA_JA_COM_LANCAMENTO.
+        """
+        from datetime import date
+        from modules.financeiro.services import FinanceiroService
+
+        interacao = ClienteService._obter_interacao_por_empresa(empresa_id, interacao_id)
+
+        if interacao.valor is None or interacao.valor <= 0:
+            raise BusinessRuleViolation(
+                "INTERACAO_SEM_VALOR",
+                "Interação sem valor não gera receita.",
+            )
+
+        if interacao.lancamento_financeiro_id:
+            raise BusinessRuleViolation(
+                "VENDA_JA_COM_LANCAMENTO",
+                "Esta venda já tem lançamento financeiro.",
+            )
+
+        hoje = date.today()
+        pago = interacao.status_pagamento == "pago"
+        lancamento = FinanceiroService.criar_lancamento(
+            empresa_id,
+            usuario_id,
+            {
+                "tipo": "receita",
+                "descricao": f"Venda - {interacao.cliente.nome}: {interacao.titulo}",
+                "valor": interacao.valor,
+                "data_vencimento": interacao.data_prevista_pagamento or hoje,
+                "data_pagamento": hoje if pago else None,
+                "status": "pago" if pago else "pendente",
+                "observacoes": f"Referente à interação #{interacao.id}",
+            },
+        )
+
+        interacao.lancamento_financeiro = lancamento
+        interacao.save(update_fields=["lancamento_financeiro"])
+        ClienteService._invalidar_todos(empresa_id)
+        return lancamento

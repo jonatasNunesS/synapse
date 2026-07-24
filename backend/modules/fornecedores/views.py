@@ -375,3 +375,32 @@ class CompraAdicionarEstoqueView(APIView):
             data=MovimentacaoSerializer(movimentacao).data,
             message="Entrada registrada no estoque.",
         )
+
+
+class CompraRegistrarFinanceiroView(APIView):
+    """
+    POST /api/fornecedores/compras/{pk}/registrar-financeiro/
+    Cria um lançamento de despesa a partir da compra. Não duplica: compra já
+    vinculada é recusada (COMPRA_JA_COM_LANCAMENTO).
+    """
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsEmpresaMember]
+
+    def post(self, request, pk):
+        from modules.financeiro.serializers import LancamentoSerializer
+
+        try:
+            lancamento = FornecedorService.registrar_compra_no_financeiro(
+                empresa_id=request.user.empresa_id,
+                usuario_id=request.user.id,
+                compra_id=pk,
+            )
+        except ResourceNotFound as exc:
+            return error_response("NOT_FOUND", str(exc), status_code=404)
+        except BusinessRuleViolation as exc:
+            return error_response(exc.code, exc.message, details=exc.details, status_code=400)
+
+        return created_response(
+            data=LancamentoSerializer(lancamento).data,
+            message="Despesa registrada no financeiro.",
+        )

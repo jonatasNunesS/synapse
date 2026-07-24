@@ -14,6 +14,7 @@ from .views import (
     CompraFornecedorListCreateView,
     CompraFornecedorDetailView,
     CompraAdicionarEstoqueView,
+    CompraRegistrarFinanceiroView,
 )
 
 app_name = "fornecedores"
@@ -24,6 +25,11 @@ urlpatterns = [
         "compras/<uuid:pk>/adicionar-ao-estoque/",
         CompraAdicionarEstoqueView.as_view(),
         name="compras-adicionar-estoque",
+    ),
+    path(
+        "compras/<uuid:pk>/registrar-financeiro/",
+        CompraRegistrarFinanceiroView.as_view(),
+        name="compras-registrar-financeiro",
     ),
 
     # Resumo e Ranking

@@ -46,6 +46,8 @@ export interface CompraFornecedor {
   criado_em: string;
   /** Já foi lançada como entrada no estoque? */
   ja_no_estoque?: boolean;
+  /** Já virou lançamento financeiro? */
+  ja_no_financeiro?: boolean;
 }
 
 export interface FornecedorDetail extends FornecedorList {

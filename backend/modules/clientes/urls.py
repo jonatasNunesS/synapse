@@ -12,6 +12,7 @@ from .views import (
     InteracaoConfirmarPagamentoView,
     InteracaoAdiarPagamentoView,
     InteracaoCancelarPagamentoView,
+    InteracaoRegistrarFinanceiroView,
 )
 
 app_name = "clientes"
@@ -45,6 +46,11 @@ urlpatterns = [
         "interacoes/<uuid:interacao_id>/cancelar-pagamento/",
         InteracaoCancelarPagamentoView.as_view(),
         name="interacao-cancelar-pagamento",
+    ),
+    path(
+        "interacoes/<uuid:interacao_id>/registrar-financeiro/",
+        InteracaoRegistrarFinanceiroView.as_view(),
+        name="interacao-registrar-financeiro",
     ),
 
     # Rotas de detalhe por {pk}

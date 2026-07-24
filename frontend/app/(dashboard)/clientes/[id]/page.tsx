@@ -22,6 +22,7 @@ import { TimelineInteracoes } from "@/components/clientes/TimelineInteracoes";
 import { InteracaoForm } from "@/components/clientes/InteracaoForm";
 import { BaixarEstoqueModal } from "@/components/clientes/BaixarEstoqueModal";
 import { FiadoDecisaoModal } from "@/components/clientes/FiadoDecisaoModal";
+import { RegistrarFinanceiroModal } from "@/components/financeiro/RegistrarFinanceiroModal";
 import { ClienteForm } from "@/components/clientes/ClienteForm";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { STATUS_FUNIL_LABELS, STATUS_FUNIL_COLORS } from "@/types/clientes";
@@ -60,11 +61,14 @@ export default function ClienteDetalhePage() {
     registrar,
     editar,
     apagar,
+    registrarFinanceiro,
   } = useInteracoes(id);
 
   const [showInteracaoForm, setShowInteracaoForm] = useState(false);
   const [editingInteracao, setEditingInteracao] = useState<InteracaoCliente | null>(null);
   const [vendaParaEstoque, setVendaParaEstoque] = useState<InteracaoCliente | null>(null);
+  // Depois do estoque, oferece registrar receita no financeiro (mesma venda).
+  const [vendaParaFinanceiro, setVendaParaFinanceiro] = useState<InteracaoCliente | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [interacaoLoading, setInteracaoLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
@@ -315,6 +319,22 @@ export default function ClienteDetalhePage() {
               </div>
             </div>
 
+            {/* Split recebido / a receber */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-3">
+                <span className="text-xs font-medium text-emerald-400">Recebido</span>
+                <p className="text-sm font-bold text-white mt-0.5">
+                  {formatCurrency(cliente.valor_recebido)}
+                </p>
+              </div>
+              <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3">
+                <span className="text-xs font-medium text-amber-400">A receber</span>
+                <p className="text-sm font-bold text-white mt-0.5">
+                  {formatCurrency(cliente.valor_a_receber)}
+                </p>
+              </div>
+            </div>
+
             {cliente.ultima_compra && (
               <p className="text-xs text-gray-500">
                 Última compra:{" "}
@@ -405,8 +425,29 @@ export default function ClienteDetalhePage() {
           clienteId={id}
           clienteNome={cliente.nome}
           interacao={vendaParaEstoque}
-          onClose={() => setVendaParaEstoque(null)}
+          onClose={() => {
+            // Ao fechar o estoque (sim ou não), oferece o financeiro.
+            setVendaParaFinanceiro(vendaParaEstoque);
+            setVendaParaEstoque(null);
+          }}
           onSuccess={() => carregar()}
+        />
+      )}
+
+      {/* Venda → oferece registrar receita no financeiro */}
+      {vendaParaFinanceiro && cliente && (
+        <RegistrarFinanceiroModal
+          tipo="receita"
+          valor={vendaParaFinanceiro.valor ?? "0"}
+          contraparteLabel="Cliente"
+          contraparteNome={cliente.nome}
+          jaRegistrado={vendaParaFinanceiro.ja_no_financeiro}
+          registrar={() => registrarFinanceiro(vendaParaFinanceiro.id)}
+          onClose={() => setVendaParaFinanceiro(null)}
+          onSuccess={() => {
+            carregar();
+            carregarInteracoes();
+          }}
         />
       )}
 

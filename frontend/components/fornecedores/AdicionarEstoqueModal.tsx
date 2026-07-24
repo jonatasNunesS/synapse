@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { useComprasFornecedor } from "@/hooks/useFornecedores";
 import { getErrorMessage } from "@/lib/api";
 import { ProdutoSelect } from "@/components/estoque/ProdutoSelect";
+import { NovoProdutoInline } from "@/components/estoque/NovoProdutoInline";
 import type { CompraFornecedor } from "@/types/fornecedores";
 import type { ProdutoList } from "@/types/estoque";
 
@@ -30,6 +31,7 @@ export function AdicionarEstoqueModal({
   const { adicionarAoEstoque } = useComprasFornecedor();
   const [etapa, setEtapa] = useState<"pergunta" | "selecao">("pergunta");
   const [produto, setProduto] = useState<ProdutoList | null>(null);
+  const [criandoProduto, setCriandoProduto] = useState(false);
   const [quantidade, setQuantidade] = useState("1");
   const [processando, setProcessando] = useState(false);
 
@@ -93,27 +95,59 @@ export function AdicionarEstoqueModal({
             </>
           ) : (
             <div className="space-y-4">
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-slate-400">
-                  Produto no estoque
-                </label>
-                <ProdutoSelect value={produto} onChange={setProduto} />
-              </div>
-              {produto && (
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-slate-400">
-                    Quantidade
-                  </label>
-                  <input
-                    type="number"
-                    min="0.001"
-                    step="any"
-                    value={quantidade}
-                    onChange={(e) => setQuantidade(e.target.value)}
-                    aria-label="Quantidade"
-                    className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50"
-                  />
-                </div>
+              {criandoProduto ? (
+                <NovoProdutoInline
+                  nomeInicial={compra.descricao}
+                  onCriado={(novo) => {
+                    // Produto criado → já vem selecionado, com a qtd preservada.
+                    setProduto(novo);
+                    setCriandoProduto(false);
+                  }}
+                  onCancelar={() => setCriandoProduto(false)}
+                />
+              ) : (
+                <>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-slate-400">
+                      Qual produto recebeu?
+                    </label>
+                    <ProdutoSelect value={produto} onChange={setProduto} />
+                  </div>
+
+                  {!produto && (
+                    <div>
+                      <div className="flex items-center gap-3 py-1">
+                        <span className="h-px flex-1 bg-white/10" />
+                        <span className="text-xs text-slate-500">ou</span>
+                        <span className="h-px flex-1 bg-white/10" />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setCriandoProduto(true)}
+                        className="w-full rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-slate-300 hover:border-violet-500/50 hover:bg-violet-500/5 hover:text-white transition-colors"
+                      >
+                        + Criar novo produto com base nessa compra
+                      </button>
+                    </div>
+                  )}
+
+                  {produto && (
+                    <div>
+                      <label className="mb-1.5 block text-xs font-medium text-slate-400">
+                        Quantidade
+                      </label>
+                      <input
+                        type="number"
+                        min="0.001"
+                        step="any"
+                        value={quantidade}
+                        onChange={(e) => setQuantidade(e.target.value)}
+                        aria-label="Quantidade"
+                        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50"
+                      />
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -142,6 +176,15 @@ export function AdicionarEstoqueModal({
                 Sim, adicionar ao estoque
               </button>
             </>
+          ) : criandoProduto ? (
+            // O form inline de novo produto tem os próprios botões.
+            <button
+              onClick={onClose}
+              disabled={processando}
+              className="rounded-lg px-4 py-2 text-sm text-slate-300 hover:bg-white/5 disabled:opacity-50"
+            >
+              Cancelar
+            </button>
           ) : (
             <>
               <button

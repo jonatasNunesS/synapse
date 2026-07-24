@@ -60,6 +60,14 @@ class Cliente(models.Model):
     valor_total_compras = models.DecimalField(
         max_digits=12, decimal_places=2, default=0
     )
+    # Split do total: já recebido (vendas pagas) vs. a receber (pendentes).
+    # Total = recebido + a_receber (canceladas não contam em nenhum).
+    valor_recebido = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0
+    )
+    valor_a_receber = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0
+    )
     quantidade_compras = models.IntegerField(default=0)
     ultima_compra = models.DateField(null=True, blank=True)
     proximo_followup = models.DateField(null=True, blank=True)
@@ -182,6 +190,15 @@ class InteracaoCliente(models.Model):
     # duas vezes: se já houver movimentação vinculada, a venda já baixou estoque.
     movimentacao_estoque = models.ForeignKey(
         "synapse_estoque.Movimentacao",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="interacao_origem",
+    )
+    # Lançamento financeiro (receita) gerado a partir desta venda. Evita
+    # duplicar: se já houver lançamento vinculado, a venda já foi ao financeiro.
+    lancamento_financeiro = models.ForeignKey(
+        "synapse_financeiro.Lancamento",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

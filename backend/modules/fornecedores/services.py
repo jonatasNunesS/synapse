@@ -246,3 +246,47 @@ class FornecedorService:
         compra.save(update_fields=["movimentacao_estoque"])
         invalidate_cache(empresa_id, "fornecedores")
         return movimentacao
+
+    @staticmethod
+    def registrar_compra_no_financeiro(empresa_id, usuario_id, compra_id):
+        """
+        Cria um lançamento de despesa a partir da compra e vincula à compra.
+        Idempotente: compra já vinculada → COMPRA_JA_COM_LANCAMENTO.
+        Herda o status da compra (pago/pendente/cancelado).
+        """
+        from modules.financeiro.services import FinanceiroService
+        from modules.financeiro.models import Categoria
+
+        compra = FornecedorRepository.obter_compra(empresa_id, compra_id)  # 404 multi-tenant
+
+        if compra.lancamento_financeiro_id:
+            raise BusinessRuleViolation(
+                "COMPRA_JA_COM_LANCAMENTO",
+                "Esta compra já tem lançamento financeiro.",
+            )
+
+        # Categoria "Fornecedores" (despesa), se a empresa tiver uma; senão, sem categoria.
+        categoria = Categoria.objects.filter(
+            empresa_id=empresa_id, tipo="despesa", nome__iexact="Fornecedores"
+        ).first()
+
+        status = compra.status if compra.status in ("pago", "pendente", "cancelado") else "pendente"
+        lancamento = FinanceiroService.criar_lancamento(
+            empresa_id,
+            usuario_id,
+            {
+                "tipo": "despesa",
+                "descricao": f"Compra - {compra.fornecedor.nome}: {compra.descricao}",
+                "valor": compra.valor,
+                "categoria": categoria,
+                "data_vencimento": compra.data_compra,
+                "data_pagamento": compra.data_pagamento if status == "pago" else None,
+                "status": status,
+                "observacoes": f"Referente à compra #{compra.id}",
+            },
+        )
+
+        compra.lancamento_financeiro = lancamento
+        compra.save(update_fields=["lancamento_financeiro"])
+        invalidate_cache(empresa_id, "fornecedores")
+        return lancamento

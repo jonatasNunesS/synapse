@@ -12,6 +12,8 @@ class InteracaoClienteSerializer(serializers.ModelSerializer):
     status_pagamento_display = serializers.SerializerMethodField()
     # Venda já baixou estoque? (evita oferecer/duplicar a baixa)
     ja_baixado_estoque = serializers.SerializerMethodField()
+    # Venda já virou lançamento financeiro? (evita oferecer/duplicar)
+    ja_no_financeiro = serializers.SerializerMethodField()
     # Pendente com data vencida?
     pagamento_atrasado = serializers.SerializerMethodField()
     # Dias até a previsão (negativo se já venceu; null se não aplicável)
@@ -37,6 +39,7 @@ class InteracaoClienteSerializer(serializers.ModelSerializer):
             "criado_por_nome",
             "criado_em",
             "ja_baixado_estoque",
+            "ja_no_financeiro",
         ]
 
     def get_criado_por_nome(self, obj):
@@ -46,6 +49,9 @@ class InteracaoClienteSerializer(serializers.ModelSerializer):
 
     def get_ja_baixado_estoque(self, obj):
         return bool(obj.movimentacao_estoque_id)
+
+    def get_ja_no_financeiro(self, obj):
+        return bool(obj.lancamento_financeiro_id)
 
     def get_tipo_display(self, obj):
         return obj.get_tipo_display()
@@ -186,6 +192,8 @@ class ClienteListSerializer(serializers.ModelSerializer):
             "origem",
             "origem_display",
             "valor_total_compras",
+            "valor_recebido",
+            "valor_a_receber",
             "quantidade_compras",
             "ultima_compra",
             "ticket_medio",
@@ -250,6 +258,8 @@ class ClienteDetailSerializer(serializers.ModelSerializer):
             "origem",
             "origem_display",
             "valor_total_compras",
+            "valor_recebido",
+            "valor_a_receber",
             "quantidade_compras",
             "ultima_compra",
             "proximo_followup",
