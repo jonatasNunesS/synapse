@@ -39,6 +39,9 @@ class CompraFornecedorSerializer(serializers.ModelSerializer):
     ja_no_estoque = serializers.SerializerMethodField()
     # Já virou lançamento financeiro? (evita oferecer/duplicar)
     ja_no_financeiro = serializers.SerializerMethodField()
+    # Detalhes dos vínculos — usados ao apagar (perguntas de estorno/financeiro)
+    movimentacao_estoque_info = serializers.SerializerMethodField()
+    lancamento_financeiro_info = serializers.SerializerMethodField()
 
     class Meta:
         model = CompraFornecedor
@@ -47,6 +50,7 @@ class CompraFornecedorSerializer(serializers.ModelSerializer):
             "data_compra", "numero_nf", "status", "status_display",
             "data_pagamento", "observacoes", "criado_por_nome", "criado_em",
             "ja_no_estoque", "ja_no_financeiro",
+            "movimentacao_estoque_info", "lancamento_financeiro_info",
         ]
         read_only_fields = ["id", "criado_em", "fornecedor_nome", "criado_por_nome", "status_display"]
 
@@ -55,6 +59,28 @@ class CompraFornecedorSerializer(serializers.ModelSerializer):
 
     def get_ja_no_financeiro(self, obj):
         return bool(obj.lancamento_financeiro_id)
+
+    def get_movimentacao_estoque_info(self, obj):
+        mov = obj.movimentacao_estoque
+        if not mov:
+            return None
+        return {
+            "id": str(mov.id),
+            "produto_nome": mov.produto.nome if mov.produto else "",
+            "quantidade": str(mov.quantidade),
+            "tipo": mov.tipo,
+        }
+
+    def get_lancamento_financeiro_info(self, obj):
+        lanc = obj.lancamento_financeiro
+        if not lanc:
+            return None
+        return {
+            "id": str(lanc.id),
+            "valor": str(lanc.valor),
+            "status": lanc.status,
+            "tipo": lanc.tipo,
+        }
 
     def get_criado_por_nome(self, obj):
         if obj.criado_por:

@@ -271,7 +271,9 @@ class ClienteRepository:
         qs = InteracaoCliente.objects.filter(
             cliente_id=cliente_id,
             empresa_id=empresa_id,
-        ).select_related("criado_por")
+        ).select_related(
+            "criado_por", "movimentacao_estoque__produto", "lancamento_financeiro"
+        )
 
         tipo = filtros.get("tipo")
         if tipo:
@@ -284,6 +286,16 @@ class ClienteRepository:
         data_fim = filtros.get("data_fim")
         if data_fim:
             qs = qs.filter(data_interacao__date__lte=data_fim)
+
+        # Filtro de controle de estoque: só vendas descontadas / não descontadas.
+        # "nao_descontados" = venda com valor mas sem movimentação vinculada.
+        estoque = filtros.get("estoque")
+        if estoque == "descontados":
+            qs = qs.filter(movimentacao_estoque__isnull=False)
+        elif estoque == "nao_descontados":
+            qs = qs.filter(
+                tipo="venda", movimentacao_estoque__isnull=True, valor__gt=0
+            )
 
         return qs.order_by("-data_interacao")
 

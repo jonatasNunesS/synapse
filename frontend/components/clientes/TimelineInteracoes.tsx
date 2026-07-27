@@ -1,8 +1,11 @@
 "use client";
 
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, PackageCheck, PackageX } from "lucide-react";
 import type { InteracaoCliente } from "@/types/clientes";
 import { TIPO_INTERACAO_LABELS, TIPO_INTERACAO_ICONS } from "@/types/clientes";
+
+/** Opções do filtro de controle de estoque (perfil do cliente). */
+export type FiltroEstoque = "" | "descontados" | "nao_descontados";
 
 interface TimelineInteracoesProps {
   interacoes: InteracaoCliente[];
@@ -10,6 +13,24 @@ interface TimelineInteracoesProps {
   onNovaInteracao?: () => void;
   onEditar?: (interacao: InteracaoCliente) => void;
   onApagar?: (interacao: InteracaoCliente) => void;
+  /** Descontar do estoque agora (venda sem baixa) — reabre o modal de produto. */
+  onDescontarEstoque?: (interacao: InteracaoCliente) => void;
+  filtroEstoque?: FiltroEstoque;
+  onFiltroEstoqueChange?: (valor: FiltroEstoque) => void;
+}
+
+/**
+ * Uma venda com valor precisa de controle de estoque. Retorna o estado:
+ * "descontado" (tem movimentação), "pendente" (venda com valor e sem baixa)
+ * ou null (não é venda / sem valor → sem badge).
+ */
+function estadoEstoque(
+  interacao: InteracaoCliente
+): "descontado" | "pendente" | null {
+  if (interacao.movimentacao_estoque_info) return "descontado";
+  const valorNum = interacao.valor ? parseFloat(interacao.valor) : 0;
+  if (interacao.tipo === "venda" && valorNum > 0) return "pendente";
+  return null;
 }
 
 function formatDateTime(dt: string): string {
@@ -62,19 +83,40 @@ export function TimelineInteracoes({
   onNovaInteracao,
   onEditar,
   onApagar,
+  onDescontarEstoque,
+  filtroEstoque = "",
+  onFiltroEstoqueChange,
 }: TimelineInteracoesProps) {
   return (
     <div className="bg-[#0f1117] border border-white/10 rounded-xl">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-white/10">
+      <div className="flex items-center justify-between gap-2 p-4 border-b border-white/10">
         <h3 className="text-sm font-semibold text-white">Histórico de Interações</h3>
-        <button
-          onClick={onNovaInteracao}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 rounded-lg text-xs text-white font-medium transition-colors"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          Nova Interação
-        </button>
+        <div className="flex items-center gap-2">
+          {onFiltroEstoqueChange && (
+            <label className="flex items-center gap-1.5 text-xs text-gray-400">
+              <span className="hidden sm:inline">Estoque</span>
+              <select
+                value={filtroEstoque}
+                onChange={(e) =>
+                  onFiltroEstoqueChange(e.target.value as FiltroEstoque)
+                }
+                className="bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-purple-500/50"
+              >
+                <option value="">Todos</option>
+                <option value="descontados">Descontados</option>
+                <option value="nao_descontados">Não descontados</option>
+              </select>
+            </label>
+          )}
+          <button
+            onClick={onNovaInteracao}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 rounded-lg text-xs text-white font-medium transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Nova Interação
+          </button>
+        </div>
       </div>
 
       {/* Timeline */}
@@ -132,6 +174,26 @@ export function TimelineInteracoes({
                               </span>
                             ) : null;
                           })()}
+                          {(() => {
+                            const estado = estadoEstoque(interacao);
+                            if (estado === "descontado") {
+                              return (
+                                <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium bg-emerald-500/15 text-emerald-400 border-emerald-500/30">
+                                  <PackageCheck className="w-3 h-3" />
+                                  Estoque descontado
+                                </span>
+                              );
+                            }
+                            if (estado === "pendente") {
+                              return (
+                                <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium bg-amber-500/15 text-amber-400 border-amber-500/30">
+                                  <PackageX className="w-3 h-3" />
+                                  Não descontado
+                                </span>
+                              );
+                            }
+                            return null;
+                          })()}
                         </div>
                         <h4 className="text-sm font-medium text-white mt-0.5">
                           {interacao.titulo}
@@ -168,6 +230,16 @@ export function TimelineInteracoes({
                       <p className="text-xs text-gray-400 mt-1 leading-relaxed">
                         {interacao.descricao}
                       </p>
+                    )}
+
+                    {estadoEstoque(interacao) === "pendente" && onDescontarEstoque && (
+                      <button
+                        onClick={() => onDescontarEstoque(interacao)}
+                        className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg text-[11px] text-amber-300 font-medium transition-colors"
+                      >
+                        <PackageCheck className="w-3.5 h-3.5" />
+                        Descontar do estoque agora
+                      </button>
                     )}
 
                     <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">

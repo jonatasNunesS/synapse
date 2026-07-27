@@ -162,6 +162,57 @@ class ClienteService:
         ClienteService._invalidar_todos(empresa_id)
 
     @staticmethod
+    def apagar_interacao_com_ajustes(
+        empresa_id, usuario_id, interacao_id,
+        estornar_estoque=False, apagar_financeiro=False,
+    ):
+        """
+        Apaga uma interação ajustando os vínculos, na ordem: estoque → financeiro
+        → apagar a interação.
+        - estornar_estoque: cria a movimentação inversa (a original é imutável).
+        - apagar_financeiro: apaga o lançamento (se pendente) ou o cancela
+          (se pago — preserva o histórico, regra de imutabilidade).
+        Retorna um resumo do que foi feito.
+        """
+        from modules.estoque.services import EstoqueService
+
+        interacao = ClienteService._obter_interacao_por_empresa(empresa_id, interacao_id)
+        resumo = {"estoque_estornado": False, "financeiro_ajustado": None}
+
+        if estornar_estoque and interacao.movimentacao_estoque_id:
+            EstoqueService.estornar_movimentacao(
+                empresa_id,
+                interacao.movimentacao_estoque_id,
+                usuario_id,
+                motivo_estorno=f"Venda apagada (interação {interacao.id})",
+            )
+            resumo["estoque_estornado"] = True
+
+        if apagar_financeiro and interacao.lancamento_financeiro_id:
+            resumo["financeiro_ajustado"] = ClienteService._ajustar_lancamento_ao_apagar(
+                empresa_id, interacao.lancamento_financeiro
+            )
+
+        ClienteRepository.deletar_interacao(interacao)
+        ClienteService._invalidar_todos(empresa_id)
+        return resumo
+
+    @staticmethod
+    def _ajustar_lancamento_ao_apagar(empresa_id, lancamento):
+        """Pendente → apaga; pago → cancela (imutabilidade). Retorna a ação."""
+        from modules.financeiro.repository import FinanceiroRepository
+
+        if lancamento.status == "pago":
+            lancamento.status = "cancelado"
+            lancamento.save(update_fields=["status"])
+            acao = "cancelado"
+        else:
+            FinanceiroRepository.deletar_lancamento(lancamento)
+            acao = "apagado"
+        invalidate_cache(empresa_id, "financeiro")
+        return acao
+
+    @staticmethod
     def baixar_interacao_estoque(empresa_id, usuario_id, interacao_id, produto_id, quantidade):
         """
         Cria uma saída de estoque a partir de uma interação de VENDA.
@@ -413,3 +464,60 @@ class ClienteService:
         interacao.save(update_fields=["lancamento_financeiro"])
         ClienteService._invalidar_todos(empresa_id)
         return lancamento
+
+    @staticmethod
+    def criar_evento_followup(empresa_id, usuario_id, cliente_id, atualizar=False):
+        """
+        Cria (ou atualiza) um evento de Agenda a partir do proximo_followup do
+        cliente. Não duplica: se já houver evento de follow-up desse cliente na
+        mesma data, exige a intenção explícita (atualizar=True) — senão levanta
+        EVENTO_FOLLOWUP_EXISTE com o id do evento existente.
+
+        Retorna (evento, criado_bool).
+        """
+        from datetime import datetime, time
+        from django.utils import timezone
+        from modules.agenda.services import AgendaService
+        from modules.agenda.models import Evento
+
+        cliente = ClienteService.obter_cliente(empresa_id, cliente_id)  # 404 multi-tenant
+        if not cliente.proximo_followup:
+            raise BusinessRuleViolation(
+                "SEM_FOLLOWUP",
+                "Este cliente não tem próximo follow-up definido.",
+            )
+
+        data = cliente.proximo_followup
+        inicio = timezone.make_aware(datetime.combine(data, time(9, 0)))
+        fim = timezone.make_aware(datetime.combine(data, time(9, 30)))
+
+        existente = Evento.objects.filter(
+            empresa_id=empresa_id,
+            cliente_id=cliente_id,
+            data_inicio__date=data,
+            titulo__startswith="Follow-up:",
+        ).first()
+
+        if existente and not atualizar:
+            raise BusinessRuleViolation(
+                "EVENTO_FOLLOWUP_EXISTE",
+                "Já existe um evento de follow-up para este cliente nesta data.",
+                details={"evento_id": str(existente.id)},
+            )
+
+        dados = {
+            "titulo": f"Follow-up: {cliente.nome}",
+            "descricao": f"Próximo contato com {cliente.nome}",
+            "data_inicio": inicio,
+            "data_fim": fim,
+            "cor": "#3B82F6",  # azul — cor padrão de follow-up
+            "cliente_id": cliente_id,
+            "dia_inteiro": False,
+        }
+
+        if existente and atualizar:
+            evento = AgendaService.atualizar_evento(empresa_id, existente.id, dados)
+            return evento, False
+
+        evento = AgendaService.criar_evento(empresa_id, usuario_id, dados)
+        return evento, True

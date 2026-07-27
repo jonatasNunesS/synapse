@@ -13,6 +13,8 @@ from .views import (
     InteracaoAdiarPagamentoView,
     InteracaoCancelarPagamentoView,
     InteracaoRegistrarFinanceiroView,
+    InteracaoApagarComAjustesView,
+    ClienteCriarEventoFollowupView,
 )
 
 app_name = "clientes"
@@ -52,10 +54,20 @@ urlpatterns = [
         InteracaoRegistrarFinanceiroView.as_view(),
         name="interacao-registrar-financeiro",
     ),
+    path(
+        "interacoes/<uuid:interacao_id>/apagar-com-ajustes/",
+        InteracaoApagarComAjustesView.as_view(),
+        name="interacao-apagar-com-ajustes",
+    ),
 
     # Rotas de detalhe por {pk}
     path("<uuid:pk>/", ClienteDetailView.as_view(), name="cliente-detail"),
     path("<uuid:pk>/mover-funil/", ClienteMoverFunilView.as_view(), name="cliente-mover-funil"),
+    path(
+        "<uuid:pk>/criar-evento-followup/",
+        ClienteCriarEventoFollowupView.as_view(),
+        name="cliente-criar-evento-followup",
+    ),
     path("<uuid:pk>/interacoes/", InteracaoListCreateView.as_view(), name="cliente-interacoes"),
     path(
         "<uuid:pk>/interacoes/<uuid:interacao_id>/",

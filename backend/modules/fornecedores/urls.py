@@ -15,6 +15,7 @@ from .views import (
     CompraFornecedorDetailView,
     CompraAdicionarEstoqueView,
     CompraRegistrarFinanceiroView,
+    CompraApagarComAjustesView,
 )
 
 app_name = "fornecedores"
@@ -30,6 +31,11 @@ urlpatterns = [
         "compras/<uuid:pk>/registrar-financeiro/",
         CompraRegistrarFinanceiroView.as_view(),
         name="compras-registrar-financeiro",
+    ),
+    path(
+        "compras/<uuid:pk>/apagar-com-ajustes/",
+        CompraApagarComAjustesView.as_view(),
+        name="compras-apagar-com-ajustes",
     ),
 
     # Resumo e Ranking

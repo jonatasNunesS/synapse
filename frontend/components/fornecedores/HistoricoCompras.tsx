@@ -10,6 +10,7 @@ import { useComprasFornecedor } from "@/hooks/useFornecedores";
 import { getErrorMessage } from "@/lib/api";
 import { AdicionarEstoqueModal } from "@/components/fornecedores/AdicionarEstoqueModal";
 import { RegistrarFinanceiroModal } from "@/components/financeiro/RegistrarFinanceiroModal";
+import { ApagarComAjustesFlow } from "@/components/clientes/ApagarComAjustesFlow";
 import type { CompraFornecedor } from "@/types/fornecedores";
 import type { ApiError } from "@/types/api";
 
@@ -159,12 +160,15 @@ interface HistoricoComprasProps {
 }
 
 export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
-  const { data, total, loading, error, fetch, atualizar, deletar } = useComprasFornecedor();
+  const { data, total, loading, error, fetch, deletar, apagarComAjustes } =
+    useComprasFornecedor();
   const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [editando, setEditando] = useState<CompraFornecedor | null>(null);
   const [confirmandoDelete, setConfirmandoDelete] = useState<string | null>(null);
   const [excluindo, setExcluindo] = useState(false);
+  // Compra com vínculos (estoque/financeiro) → sequência de perguntas de estorno.
+  const [apagarFlow, setApagarFlow] = useState<CompraFornecedor | null>(null);
   // Compra recém-criada que pode ir para o estoque
   const [compraParaEstoque, setCompraParaEstoque] = useState<CompraFornecedor | null>(null);
   // Depois do estoque, oferece registrar no financeiro (mesma compra).
@@ -188,6 +192,18 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
     }
   };
 
+  // Confirmou o "Sim": se a compra tem vínculos (estoque/financeiro), abre a
+  // sequência de perguntas de estorno; senão, apaga direto.
+  const confirmarDelete = (c: CompraFornecedor) => {
+    if (excluindo) return;
+    if (c.movimentacao_estoque_info || c.lancamento_financeiro_info) {
+      setConfirmandoDelete(null);
+      setApagarFlow(c);
+      return;
+    }
+    handleDeletar(c.id);
+  };
+
   const handleDeletar = async (id: string) => {
     if (excluindo) return; // evita duplo clique / requisição duplicada
     setExcluindo(true);
@@ -198,6 +214,28 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
       fetch(fornecedorId, page);
     } catch (err: unknown) {
       // Erro NUNCA calado: mostra a mensagem real do backend
+      toast.error(getErrorMessage(err), { duration: 7000 });
+    } finally {
+      setExcluindo(false);
+    }
+  };
+
+  // Executa o apagar com as escolhas de estorno/financeiro coletadas no fluxo.
+  const finalizarApagarComAjustes = async (
+    estornarEstoque: boolean,
+    apagarFinanceiro: boolean
+  ) => {
+    if (!apagarFlow || excluindo) return;
+    setExcluindo(true);
+    try {
+      await apagarComAjustes(apagarFlow.id, {
+        estornar_estoque: estornarEstoque,
+        apagar_financeiro: apagarFinanceiro,
+      });
+      toast.success("Compra excluída.");
+      setApagarFlow(null);
+      fetch(fornecedorId, page);
+    } catch (err: unknown) {
       toast.error(getErrorMessage(err), { duration: 7000 });
     } finally {
       setExcluindo(false);
@@ -284,7 +322,7 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
                   {confirmandoDelete === c.id ? (
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => handleDeletar(c.id)}
+                        onClick={() => confirmarDelete(c)}
                         disabled={excluindo}
                         className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                       >
@@ -379,6 +417,17 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
           registrar={() => registrarFinanceiro(compraParaFinanceiro.id)}
           onClose={() => setCompraParaFinanceiro(null)}
           onSuccess={() => fetch(fornecedorId, page)}
+        />
+      )}
+
+      {/* Apagar compra com vínculos → perguntas de estorno/financeiro */}
+      {apagarFlow && (
+        <ApagarComAjustesFlow
+          tipoFinanceiro="despesa"
+          movimentacaoInfo={apagarFlow.movimentacao_estoque_info}
+          lancamentoInfo={apagarFlow.lancamento_financeiro_info}
+          processando={excluindo}
+          onFinalizar={finalizarApagarComAjustes}
         />
       )}
     </div>

@@ -259,6 +259,22 @@ export function useComprasFornecedor() {
     await api.delete(`/fornecedores/${fornecedorId}/compras/${compraId}/`);
   }, []);
 
+  // Apaga a compra ajustando os vínculos (estorno da entrada de estoque /
+  // remoção do lançamento de despesa). Propaga o erro (ApiError) para a UI.
+  const apagarComAjustes = useCallback(
+    async (
+      compraId: string,
+      opts: { estornar_estoque?: boolean; apagar_financeiro?: boolean }
+    ) => {
+      const res = await api.post(
+        `/fornecedores/compras/${compraId}/apagar-com-ajustes/`,
+        opts
+      );
+      return res.data;
+    },
+    []
+  );
+
   // Cria uma entrada de estoque a partir da compra. Propaga o erro (ApiError)
   // para a UI mostrar toast — inclusive COMPRA_JA_NO_ESTOQUE.
   const adicionarAoEstoque = useCallback(
@@ -284,6 +300,6 @@ export function useComprasFornecedor() {
 
   return {
     data, total, loading, error, fetch, criar, atualizar, deletar,
-    adicionarAoEstoque, registrarFinanceiro,
+    apagarComAjustes, adicionarAoEstoque, registrarFinanceiro,
   };
 }

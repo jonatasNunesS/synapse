@@ -19,11 +19,14 @@ import {
 import { toast } from "sonner";
 import { useClienteDetalhe, useInteracoes } from "@/hooks/useClientes";
 import { TimelineInteracoes } from "@/components/clientes/TimelineInteracoes";
+import type { FiltroEstoque } from "@/components/clientes/TimelineInteracoes";
 import { InteracaoForm } from "@/components/clientes/InteracaoForm";
 import { BaixarEstoqueModal } from "@/components/clientes/BaixarEstoqueModal";
 import { FiadoDecisaoModal } from "@/components/clientes/FiadoDecisaoModal";
 import { RegistrarFinanceiroModal } from "@/components/financeiro/RegistrarFinanceiroModal";
 import { ClienteForm } from "@/components/clientes/ClienteForm";
+import { ApagarComAjustesFlow } from "@/components/clientes/ApagarComAjustesFlow";
+import { FollowupAgendaModal } from "@/components/clientes/FollowupAgendaModal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { STATUS_FUNIL_LABELS, STATUS_FUNIL_COLORS } from "@/types/clientes";
 import type { StatusFunil, InteracaoCliente } from "@/types/clientes";
@@ -62,6 +65,8 @@ export default function ClienteDetalhePage() {
     editar,
     apagar,
     registrarFinanceiro,
+    apagarComAjustes,
+    criarEventoFollowup,
   } = useInteracoes(id);
 
   const [showInteracaoForm, setShowInteracaoForm] = useState(false);
@@ -75,13 +80,27 @@ export default function ClienteDetalhePage() {
   const [interacaoParaExcluir, setInteracaoParaExcluir] =
     useState<InteracaoCliente | null>(null);
   const [excluindoInteracao, setExcluindoInteracao] = useState(false);
+  // Fluxo de perguntas de estorno/financeiro ao apagar uma venda com vínculos.
+  const [apagarFlow, setApagarFlow] = useState<InteracaoCliente | null>(null);
   const [confirmarExclusaoCliente, setConfirmarExclusaoCliente] = useState(false);
   const [excluindoCliente, setExcluindoCliente] = useState(false);
+  // Após salvar com um novo follow-up, oferece criar o evento na Agenda.
+  const [followupAgenda, setFollowupAgenda] = useState<string | null>(null);
+  // Filtro de controle de estoque (Todos | Descontados | Não descontados).
+  const [filtroEstoque, setFiltroEstoque] = useState<FiltroEstoque>("");
 
   useEffect(() => {
     carregar();
-    carregarInteracoes();
-  }, [carregar, carregarInteracoes]);
+  }, [carregar]);
+
+  // Recarrega as interações sempre que o filtro de estoque muda.
+  useEffect(() => {
+    carregarInteracoes(filtroEstoque ? { estoque: filtroEstoque } : {});
+  }, [carregarInteracoes, filtroEstoque]);
+
+  // Recarrega as interações preservando o filtro de estoque atual.
+  const recarregarInteracoes = () =>
+    carregarInteracoes(filtroEstoque ? { estoque: filtroEstoque } : {});
 
   const handleRegistrarInteracao = async (dados: Parameters<typeof registrar>[0]) => {
     setInteracaoLoading(true);
@@ -118,9 +137,21 @@ export default function ClienteDetalhePage() {
 
   const handleConfirmarExclusaoInteracao = async () => {
     if (!interacaoParaExcluir || excluindoInteracao) return; // evita duplo clique
+    const alvo = interacaoParaExcluir;
+    const temVinculo =
+      !!alvo.movimentacao_estoque_info || !!alvo.lancamento_financeiro_info;
+
+    // Tem estoque/financeiro vinculado → sequência de perguntas (estorno etc.).
+    if (temVinculo) {
+      setInteracaoParaExcluir(null);
+      setApagarFlow(alvo);
+      return;
+    }
+
+    // Sem vínculo: apaga direto.
     setExcluindoInteracao(true);
     try {
-      await apagar(interacaoParaExcluir.id);
+      await apagar(alvo.id);
       toast.success("Interação excluída.");
       setInteracaoParaExcluir(null);
       carregar(); // recalcula agregados do cliente
@@ -132,13 +163,42 @@ export default function ClienteDetalhePage() {
     }
   };
 
+  // Executa o apagar com as escolhas de estorno/financeiro coletadas no fluxo.
+  const finalizarApagarComAjustes = async (
+    estornarEstoque: boolean,
+    apagarFinanceiro: boolean
+  ) => {
+    if (!apagarFlow || excluindoInteracao) return;
+    setExcluindoInteracao(true);
+    try {
+      await apagarComAjustes(apagarFlow.id, {
+        estornar_estoque: estornarEstoque,
+        apagar_financeiro: apagarFinanceiro,
+      });
+      toast.success("Interação apagada.");
+      setApagarFlow(null);
+      carregar();
+    } catch (err) {
+      toast.error(getErrorMessage(err), { duration: 7000 });
+    } finally {
+      setExcluindoInteracao(false);
+    }
+  };
+
   const handleEditar = async (dados: Parameters<typeof api.patch>[1]) => {
     setEditLoading(true);
+    // Follow-up definido/alterado? Guarda para oferecer o evento na Agenda.
+    const followupAntes = cliente?.proximo_followup ?? null;
     try {
       const resp = await api.patch(`/clientes/${id}/`, dados);
       if (resp.success && resp.data) {
-        setCliente(resp.data as typeof cliente);
+        const atualizado = resp.data as typeof cliente;
+        setCliente(atualizado);
         setShowEditForm(false);
+        const followupDepois = atualizado?.proximo_followup ?? null;
+        if (followupDepois && followupDepois !== followupAntes) {
+          setFollowupAgenda(followupDepois);
+        }
       }
     } finally {
       setEditLoading(false);
@@ -396,6 +456,9 @@ export default function ClienteDetalhePage() {
             onNovaInteracao={() => setShowInteracaoForm(true)}
             onEditar={(interacao) => setEditingInteracao(interacao)}
             onApagar={handleApagarInteracao}
+            onDescontarEstoque={(interacao) => setVendaParaEstoque(interacao)}
+            filtroEstoque={filtroEstoque}
+            onFiltroEstoqueChange={setFiltroEstoque}
           />
         </div>
       </div>
@@ -430,7 +493,10 @@ export default function ClienteDetalhePage() {
             setVendaParaFinanceiro(vendaParaEstoque);
             setVendaParaEstoque(null);
           }}
-          onSuccess={() => carregar()}
+          onSuccess={() => {
+            carregar();
+            recarregarInteracoes(); // reflete o badge "Estoque descontado"
+          }}
         />
       )}
 
@@ -446,7 +512,7 @@ export default function ClienteDetalhePage() {
           onClose={() => setVendaParaFinanceiro(null)}
           onSuccess={() => {
             carregar();
-            carregarInteracoes();
+            recarregarInteracoes();
           }}
         />
       )}
@@ -468,7 +534,7 @@ export default function ClienteDetalhePage() {
             onClose={fechar}
             onResolved={() => {
               carregar();
-              carregarInteracoes();
+              recarregarInteracoes();
             }}
           />
         );
@@ -481,6 +547,27 @@ export default function ClienteDetalhePage() {
           onSubmit={handleEditar}
           onClose={() => setShowEditForm(false)}
           loading={editLoading}
+        />
+      )}
+
+      {/* Apagar venda com vínculos → perguntas de estorno/financeiro */}
+      {apagarFlow && (
+        <ApagarComAjustesFlow
+          tipoFinanceiro="receita"
+          movimentacaoInfo={apagarFlow.movimentacao_estoque_info}
+          lancamentoInfo={apagarFlow.lancamento_financeiro_info}
+          processando={excluindoInteracao}
+          onFinalizar={finalizarApagarComAjustes}
+        />
+      )}
+
+      {/* Follow-up salvo → oferece criar o evento na Agenda */}
+      {followupAgenda && cliente && (
+        <FollowupAgendaModal
+          clienteNome={cliente.nome}
+          dataFollowup={followupAgenda}
+          criarEvento={(atualizar) => criarEventoFollowup(id, atualizar)}
+          onClose={() => setFollowupAgenda(null)}
         />
       )}
 

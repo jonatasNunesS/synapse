@@ -197,6 +197,47 @@ class FornecedorService:
         invalidate_cache(empresa_id, "fornecedores")
 
     @staticmethod
+    def excluir_compra_com_ajustes(
+        empresa_id, usuario_id, compra_id,
+        estornar_estoque=False, apagar_financeiro=False,
+    ):
+        """
+        Apaga uma compra ajustando os vínculos (estoque → financeiro → apaga).
+        - estornar_estoque: cria a movimentação inversa (original imutável).
+        - apagar_financeiro: apaga o lançamento (se pendente) ou o cancela (pago).
+        Retorna resumo do que foi feito.
+        """
+        from modules.estoque.services import EstoqueService
+        from modules.financeiro.repository import FinanceiroRepository
+
+        compra = FornecedorRepository.obter_compra(empresa_id, compra_id)  # 404 multi-tenant
+        resumo = {"estoque_estornado": False, "financeiro_ajustado": None}
+
+        if estornar_estoque and compra.movimentacao_estoque_id:
+            EstoqueService.estornar_movimentacao(
+                empresa_id,
+                compra.movimentacao_estoque_id,
+                usuario_id,
+                motivo_estorno=f"Compra apagada (compra {compra.id})",
+            )
+            resumo["estoque_estornado"] = True
+
+        if apagar_financeiro and compra.lancamento_financeiro_id:
+            lancamento = compra.lancamento_financeiro
+            if lancamento.status == "pago":
+                lancamento.status = "cancelado"
+                lancamento.save(update_fields=["status"])
+                resumo["financeiro_ajustado"] = "cancelado"
+            else:
+                FinanceiroRepository.deletar_lancamento(lancamento)
+                resumo["financeiro_ajustado"] = "apagado"
+            invalidate_cache(empresa_id, "financeiro")
+
+        FornecedorRepository.excluir_compra(empresa_id, compra_id)
+        invalidate_cache(empresa_id, "fornecedores")
+        return resumo
+
+    @staticmethod
     def adicionar_compra_ao_estoque(empresa_id, usuario_id, compra_id, produto_id, quantidade):
         """
         Cria uma entrada de estoque a partir de uma compra de fornecedor.

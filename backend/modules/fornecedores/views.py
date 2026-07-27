@@ -404,3 +404,28 @@ class CompraRegistrarFinanceiroView(APIView):
             data=LancamentoSerializer(lancamento).data,
             message="Despesa registrada no financeiro.",
         )
+
+
+class CompraApagarComAjustesView(APIView):
+    """
+    POST /api/fornecedores/compras/{pk}/apagar-com-ajustes/
+    Body: { estornar_estoque?: bool, apagar_financeiro?: bool }
+    Estorna estoque e/ou ajusta o financeiro, depois apaga a compra.
+    """
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsEmpresaMember]
+
+    def post(self, request, pk):
+        estornar_estoque = bool(request.data.get("estornar_estoque", False))
+        apagar_financeiro = bool(request.data.get("apagar_financeiro", False))
+        try:
+            resumo = FornecedorService.excluir_compra_com_ajustes(
+                empresa_id=request.user.empresa_id,
+                usuario_id=request.user.id,
+                compra_id=pk,
+                estornar_estoque=estornar_estoque,
+                apagar_financeiro=apagar_financeiro,
+            )
+        except ResourceNotFound as exc:
+            return error_response("NOT_FOUND", str(exc), status_code=404)
+        return success_response(data=resumo, message="Compra apagada.")

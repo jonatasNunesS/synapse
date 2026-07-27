@@ -194,23 +194,29 @@ export function useInteracoes(clienteId: string) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const carregar = useCallback(async () => {
-    if (!clienteId) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const resp = await api.get<ApiResponse<InteracaoCliente[]>>(
-        `/clientes/${clienteId}/interacoes/`
-      );
-      if (resp.success && resp.data) {
-        setInteracoes(resp.data as unknown as InteracaoCliente[]);
+  const carregar = useCallback(
+    async (filtros: { estoque?: string } = {}) => {
+      if (!clienteId) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const params = new URLSearchParams();
+        if (filtros.estoque) params.append("estoque", filtros.estoque);
+        const qs = params.toString();
+        const resp = await api.get<ApiResponse<InteracaoCliente[]>>(
+          `/clientes/${clienteId}/interacoes/${qs ? `?${qs}` : ""}`
+        );
+        if (resp.success && resp.data) {
+          setInteracoes(resp.data as unknown as InteracaoCliente[]);
+        }
+      } catch {
+        setError("Erro ao carregar interações.");
+      } finally {
+        setLoading(false);
       }
-    } catch {
-      setError("Erro ao carregar interações.");
-    } finally {
-      setLoading(false);
-    }
-  }, [clienteId]);
+    },
+    [clienteId]
+  );
 
   // Propaga o erro (lança) para que a UI exiba feedback. Antes, o catch
   // silencioso engolia o 400 do backend e a tela "não fazia nada".
@@ -319,6 +325,34 @@ export function useInteracoes(clienteId: string) {
     return res.data;
   }, []);
 
+  // Apaga a interação ajustando os vínculos (estorno de estoque / financeiro).
+  const apagarComAjustes = useCallback(
+    async (
+      interacaoId: string,
+      opts: { estornar_estoque?: boolean; apagar_financeiro?: boolean }
+    ) => {
+      const res = await api.post(
+        `/clientes/interacoes/${interacaoId}/apagar-com-ajustes/`,
+        opts
+      );
+      setInteracoes((prev) => prev.filter((i) => i.id !== interacaoId));
+      return res.data;
+    },
+    []
+  );
+
+  // Cria (ou atualiza) o evento de follow-up na Agenda.
+  const criarEventoFollowup = useCallback(
+    async (clienteId: string, atualizar = false) => {
+      const res = await api.post(
+        `/clientes/${clienteId}/criar-evento-followup/`,
+        { atualizar }
+      );
+      return res.data;
+    },
+    []
+  );
+
   return {
     interacoes,
     loading,
@@ -332,6 +366,8 @@ export function useInteracoes(clienteId: string) {
     adiarPagamento,
     cancelarPagamento,
     registrarFinanceiro,
+    apagarComAjustes,
+    criarEventoFollowup,
   };
 }
 

@@ -14,6 +14,9 @@ class InteracaoClienteSerializer(serializers.ModelSerializer):
     ja_baixado_estoque = serializers.SerializerMethodField()
     # Venda já virou lançamento financeiro? (evita oferecer/duplicar)
     ja_no_financeiro = serializers.SerializerMethodField()
+    # Detalhes dos vínculos — usados ao apagar (perguntas de estorno/financeiro)
+    movimentacao_estoque_info = serializers.SerializerMethodField()
+    lancamento_financeiro_info = serializers.SerializerMethodField()
     # Pendente com data vencida?
     pagamento_atrasado = serializers.SerializerMethodField()
     # Dias até a previsão (negativo se já venceu; null se não aplicável)
@@ -40,6 +43,8 @@ class InteracaoClienteSerializer(serializers.ModelSerializer):
             "criado_em",
             "ja_baixado_estoque",
             "ja_no_financeiro",
+            "movimentacao_estoque_info",
+            "lancamento_financeiro_info",
         ]
 
     def get_criado_por_nome(self, obj):
@@ -52,6 +57,28 @@ class InteracaoClienteSerializer(serializers.ModelSerializer):
 
     def get_ja_no_financeiro(self, obj):
         return bool(obj.lancamento_financeiro_id)
+
+    def get_movimentacao_estoque_info(self, obj):
+        mov = obj.movimentacao_estoque
+        if not mov:
+            return None
+        return {
+            "id": str(mov.id),
+            "produto_nome": mov.produto.nome if mov.produto else "",
+            "quantidade": str(mov.quantidade),
+            "tipo": mov.tipo,
+        }
+
+    def get_lancamento_financeiro_info(self, obj):
+        lanc = obj.lancamento_financeiro
+        if not lanc:
+            return None
+        return {
+            "id": str(lanc.id),
+            "valor": str(lanc.valor),
+            "status": lanc.status,
+            "tipo": lanc.tipo,
+        }
 
     def get_tipo_display(self, obj):
         return obj.get_tipo_display()

@@ -112,6 +112,24 @@ export interface InteracaoCliente {
   ja_baixado_estoque?: boolean;
   /** Venda já virou lançamento financeiro? */
   ja_no_financeiro?: boolean;
+  /** Detalhes da movimentação de estoque vinculada (para perguntar no apagar). */
+  movimentacao_estoque_info?: MovimentacaoInfo | null;
+  /** Detalhes do lançamento financeiro vinculado. */
+  lancamento_financeiro_info?: LancamentoInfo | null;
+}
+
+export interface MovimentacaoInfo {
+  id: string;
+  produto_nome: string;
+  quantidade: string;
+  tipo: string;
+}
+
+export interface LancamentoInfo {
+  id: string;
+  valor: string;
+  status: string;
+  tipo: string;
 }
 
 export interface InteracaoCreate {

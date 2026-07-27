@@ -816,3 +816,47 @@ class TestCompraRegistrarFinanceiro:
             f"/api/fornecedores/compras/{compra.id}/registrar-financeiro/", {}, format="json"
         )
         assert resp.status_code == 404
+
+
+# ─── Testes: Apagar compra com ajustes (Parte 1) ──────────────────────────────
+
+class TestApagarCompraComAjustes:
+
+    def test_apagar_com_estorno_e_financeiro(self, client_a, empresa_a, usuario_a, fornecedor_tecido):
+        from modules.estoque.models import Produto, Movimentacao
+        from modules.financeiro.models import Lancamento
+        produto = Produto.objects.create(empresa=empresa_a, nome="Tecido", estoque_atual=Decimal("0"))
+        compra = CompraFornecedor.objects.create(
+            fornecedor=fornecedor_tecido, empresa=empresa_a, descricao="Rolos",
+            valor=Decimal("500.00"), data_compra=date(2026, 8, 1), status="pendente",
+            criado_por=usuario_a,
+        )
+        # vincula estoque (+5) e financeiro
+        client_a.post(f"/api/fornecedores/compras/{compra.id}/adicionar-ao-estoque/",
+                      {"produto_id": str(produto.id), "quantidade": "5"}, format="json")
+        rf = client_a.post(f"/api/fornecedores/compras/{compra.id}/registrar-financeiro/", {}, format="json")
+        lanc_id = rf.data["data"]["id"]
+        produto.refresh_from_db()
+        assert produto.estoque_atual == Decimal("5.000")
+
+        r = client_a.post(
+            f"/api/fornecedores/compras/{compra.id}/apagar-com-ajustes/",
+            {"estornar_estoque": True, "apagar_financeiro": True}, format="json",
+        )
+        assert r.status_code == 200
+        assert r.data["data"]["estoque_estornado"] is True
+        assert r.data["data"]["financeiro_ajustado"] == "apagado"
+        produto.refresh_from_db()
+        assert produto.estoque_atual == Decimal("0.000")  # estorno devolveu -5
+        assert not Lancamento.objects.filter(id=lanc_id).exists()
+        assert not CompraFornecedor.objects.filter(id=compra.id).exists()
+
+    def test_multitenant(self, client_b, empresa_a, usuario_a, fornecedor_tecido):
+        compra = CompraFornecedor.objects.create(
+            fornecedor=fornecedor_tecido, empresa=empresa_a, descricao="X",
+            valor=Decimal("100.00"), data_compra=date(2026, 8, 1), criado_por=usuario_a,
+        )
+        r = client_b.post(
+            f"/api/fornecedores/compras/{compra.id}/apagar-com-ajustes/", {}, format="json"
+        )
+        assert r.status_code == 404

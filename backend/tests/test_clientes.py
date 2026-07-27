@@ -1345,3 +1345,219 @@ class TestInteracaoRegistrarFinanceiro:
             f"/api/clientes/interacoes/{venda.id}/registrar-financeiro/", {}, format="json"
         )
         assert resp.status_code == 404
+
+
+# ─── Testes: Apagar venda com ajustes (Parte 1) ───────────────────────────────
+
+class TestApagarInteracaoComAjustes:
+
+    def _venda_com_estoque(self, client, empresa, usuario, cliente):
+        from modules.estoque.models import Produto, Movimentacao
+        produto = Produto.objects.create(empresa=empresa, nome="Camisa", estoque_atual=Decimal("10"))
+        venda = InteracaoCliente.objects.create(
+            cliente=cliente, empresa=empresa, tipo="venda", titulo="Venda",
+            valor=Decimal("300.00"), status_pagamento="pendente",
+            data_prevista_pagamento="2026-09-01", criado_por=usuario,
+        )
+        # baixa 2 no estoque, vincula
+        r = client.post(f"/api/clientes/interacoes/{venda.id}/baixar-estoque/",
+                        {"produto_id": str(produto.id), "quantidade": "2"}, format="json")
+        assert r.status_code == 201
+        venda.refresh_from_db(); produto.refresh_from_db()
+        return venda, produto
+
+    def test_apagar_com_estorno_cria_movimentacao_inversa(self, client_a, empresa_a, usuario_a, cliente_maria):
+        from modules.estoque.models import Movimentacao
+        venda, produto = self._venda_com_estoque(client_a, empresa_a, usuario_a, cliente_maria)
+        assert produto.estoque_atual == Decimal("8.000")  # 10 - 2
+
+        r = client_a.post(
+            f"/api/clientes/interacoes/{venda.id}/apagar-com-ajustes/",
+            {"estornar_estoque": True}, format="json",
+        )
+        assert r.status_code == 200
+        assert r.data["data"]["estoque_estornado"] is True
+        produto.refresh_from_db()
+        assert produto.estoque_atual == Decimal("10.000")  # estorno devolveu 2
+        assert not InteracaoCliente.objects.filter(id=venda.id).exists()
+
+    def test_apagar_sem_estorno_mantem_estoque(self, client_a, empresa_a, usuario_a, cliente_maria):
+        venda, produto = self._venda_com_estoque(client_a, empresa_a, usuario_a, cliente_maria)
+        r = client_a.post(
+            f"/api/clientes/interacoes/{venda.id}/apagar-com-ajustes/",
+            {"estornar_estoque": False}, format="json",
+        )
+        assert r.status_code == 200
+        assert r.data["data"]["estoque_estornado"] is False
+        produto.refresh_from_db()
+        assert produto.estoque_atual == Decimal("8.000")  # intacto
+
+    def test_apagar_com_financeiro_pendente_apaga_lancamento(self, client_a, empresa_a, usuario_a, cliente_maria):
+        from modules.financeiro.models import Lancamento
+        venda = InteracaoCliente.objects.create(
+            cliente=cliente_maria, empresa=empresa_a, tipo="venda", titulo="V",
+            valor=Decimal("300.00"), status_pagamento="pendente",
+            data_prevista_pagamento="2026-09-01", criado_por=usuario_a,
+        )
+        rf = client_a.post(f"/api/clientes/interacoes/{venda.id}/registrar-financeiro/", {}, format="json")
+        lanc_id = rf.data["data"]["id"]
+        r = client_a.post(
+            f"/api/clientes/interacoes/{venda.id}/apagar-com-ajustes/",
+            {"apagar_financeiro": True}, format="json",
+        )
+        assert r.status_code == 200
+        assert r.data["data"]["financeiro_ajustado"] == "apagado"
+        assert not Lancamento.objects.filter(id=lanc_id).exists()
+
+    def test_apagar_com_financeiro_pago_cancela_lancamento(self, client_a, empresa_a, usuario_a, cliente_maria):
+        from modules.financeiro.models import Lancamento
+        venda = InteracaoCliente.objects.create(
+            cliente=cliente_maria, empresa=empresa_a, tipo="venda", titulo="V",
+            valor=Decimal("300.00"), status_pagamento="pago", criado_por=usuario_a,
+        )
+        rf = client_a.post(f"/api/clientes/interacoes/{venda.id}/registrar-financeiro/", {}, format="json")
+        lanc_id = rf.data["data"]["id"]
+        r = client_a.post(
+            f"/api/clientes/interacoes/{venda.id}/apagar-com-ajustes/",
+            {"apagar_financeiro": True}, format="json",
+        )
+        assert r.status_code == 200
+        assert r.data["data"]["financeiro_ajustado"] == "cancelado"
+        lanc = Lancamento.objects.get(id=lanc_id)  # preservado
+        assert lanc.status == "cancelado"
+
+    def test_apagar_sem_vinculo_apaga_direto(self, client_a, empresa_a, usuario_a, cliente_maria):
+        venda = InteracaoCliente.objects.create(
+            cliente=cliente_maria, empresa=empresa_a, tipo="venda", titulo="V",
+            valor=Decimal("100.00"), status_pagamento="pendente",
+            data_prevista_pagamento="2026-09-01", criado_por=usuario_a,
+        )
+        r = client_a.post(
+            f"/api/clientes/interacoes/{venda.id}/apagar-com-ajustes/",
+            {"estornar_estoque": True, "apagar_financeiro": True}, format="json",
+        )
+        assert r.status_code == 200
+        assert r.data["data"] == {"estoque_estornado": False, "financeiro_ajustado": None}
+        assert not InteracaoCliente.objects.filter(id=venda.id).exists()
+
+    def test_multitenant(self, client_b, empresa_a, usuario_a, cliente_maria):
+        venda = InteracaoCliente.objects.create(
+            cliente=cliente_maria, empresa=empresa_a, tipo="venda", titulo="V",
+            valor=Decimal("100.00"), criado_por=usuario_a,
+        )
+        r = client_b.post(
+            f"/api/clientes/interacoes/{venda.id}/apagar-com-ajustes/", {}, format="json"
+        )
+        assert r.status_code == 404
+
+
+# ─── Testes: filtro de controle de estoque (Parte 2) ──────────────────────────
+
+class TestFiltroEstoque:
+
+    def test_filtro_nao_descontados(self, client_a, empresa_a, usuario_a, cliente_maria):
+        from modules.estoque.models import Produto
+        produto = Produto.objects.create(empresa=empresa_a, nome="P", estoque_atual=Decimal("10"))
+        v_desc = InteracaoCliente.objects.create(
+            cliente=cliente_maria, empresa=empresa_a, tipo="venda", titulo="Descontada",
+            valor=Decimal("100"), criado_por=usuario_a)
+        client_a.post(f"/api/clientes/interacoes/{v_desc.id}/baixar-estoque/",
+                      {"produto_id": str(produto.id), "quantidade": "1"}, format="json")
+        InteracaoCliente.objects.create(
+            cliente=cliente_maria, empresa=empresa_a, tipo="venda", titulo="Nao descontada",
+            valor=Decimal("50"), criado_por=usuario_a)
+
+        r = client_a.get(f"/api/clientes/{cliente_maria.id}/interacoes/?estoque=nao_descontados")
+        titulos = [i["titulo"] for i in r.data["data"]]
+        assert "Nao descontada" in titulos
+        assert "Descontada" not in titulos
+
+    def test_filtro_descontados(self, client_a, empresa_a, usuario_a, cliente_maria):
+        from modules.estoque.models import Produto
+        produto = Produto.objects.create(empresa=empresa_a, nome="P", estoque_atual=Decimal("10"))
+        v = InteracaoCliente.objects.create(
+            cliente=cliente_maria, empresa=empresa_a, tipo="venda", titulo="Desc",
+            valor=Decimal("100"), criado_por=usuario_a)
+        client_a.post(f"/api/clientes/interacoes/{v.id}/baixar-estoque/",
+                      {"produto_id": str(produto.id), "quantidade": "1"}, format="json")
+        InteracaoCliente.objects.create(
+            cliente=cliente_maria, empresa=empresa_a, tipo="ligacao", titulo="Lig",
+            criado_por=usuario_a)
+        r = client_a.get(f"/api/clientes/{cliente_maria.id}/interacoes/?estoque=descontados")
+        titulos = [i["titulo"] for i in r.data["data"]]
+        assert titulos == ["Desc"]
+
+    def test_serializer_expoe_movimentacao_info(self, client_a, empresa_a, usuario_a, cliente_maria):
+        from modules.estoque.models import Produto
+        produto = Produto.objects.create(empresa=empresa_a, nome="Camisa Branca", estoque_atual=Decimal("10"))
+        v = InteracaoCliente.objects.create(
+            cliente=cliente_maria, empresa=empresa_a, tipo="venda", titulo="V",
+            valor=Decimal("100"), criado_por=usuario_a)
+        client_a.post(f"/api/clientes/interacoes/{v.id}/baixar-estoque/",
+                      {"produto_id": str(produto.id), "quantidade": "2"}, format="json")
+        r = client_a.get(f"/api/clientes/{cliente_maria.id}/interacoes/")
+        item = [i for i in r.data["data"] if i["titulo"] == "V"][0]
+        assert item["ja_baixado_estoque"] is True
+        assert item["movimentacao_estoque_info"]["produto_nome"] == "Camisa Branca"
+        assert item["movimentacao_estoque_info"]["quantidade"] == "2.000"
+
+
+# ─── Testes: Follow-up → Agenda (Parte 3) ─────────────────────────────────────
+
+class TestFollowupAgenda:
+
+    def test_cria_evento_followup(self, client_a, empresa_a, usuario_a, cliente_maria):
+        from datetime import date, timedelta
+        from modules.agenda.models import Evento
+        cliente_maria.proximo_followup = date.today() + timedelta(days=5)
+        cliente_maria.save(update_fields=["proximo_followup"])
+
+        r = client_a.post(f"/api/clientes/{cliente_maria.id}/criar-evento-followup/", {}, format="json")
+        assert r.status_code == 200
+        assert r.data["data"]["criado"] is True
+        ev = r.data["data"]["evento"]
+        assert ev["titulo"] == f"Follow-up: {cliente_maria.nome}"
+        assert str(ev["cliente"]) == str(cliente_maria.id)
+        from django.utils import timezone as djtz
+        evento = Evento.objects.get(id=ev["id"])
+        # 09:00 no horário local (armazenado em UTC no banco)
+        local = djtz.localtime(evento.data_inicio)
+        assert local.date() == cliente_maria.proximo_followup
+        assert local.hour == 9
+
+    def test_sem_followup_400(self, client_a, empresa_a, usuario_a, cliente_maria):
+        cliente_maria.proximo_followup = None
+        cliente_maria.save(update_fields=["proximo_followup"])
+        r = client_a.post(f"/api/clientes/{cliente_maria.id}/criar-evento-followup/", {}, format="json")
+        assert r.status_code == 400
+        assert r.data["error"]["code"] == "SEM_FOLLOWUP"
+
+    def test_nao_duplica_pergunta_atualizar(self, client_a, empresa_a, usuario_a, cliente_maria):
+        from datetime import date, timedelta
+        cliente_maria.proximo_followup = date.today() + timedelta(days=5)
+        cliente_maria.save(update_fields=["proximo_followup"])
+        assert client_a.post(f"/api/clientes/{cliente_maria.id}/criar-evento-followup/", {}, format="json").status_code == 200
+        # Segunda vez sem atualizar → 400 com o id do existente
+        r2 = client_a.post(f"/api/clientes/{cliente_maria.id}/criar-evento-followup/", {}, format="json")
+        assert r2.status_code == 400
+        assert r2.data["error"]["code"] == "EVENTO_FOLLOWUP_EXISTE"
+        assert "evento_id" in r2.data["error"]["details"]
+
+    def test_atualizar_evento_existente(self, client_a, empresa_a, usuario_a, cliente_maria):
+        from datetime import date, timedelta
+        from modules.agenda.models import Evento
+        cliente_maria.proximo_followup = date.today() + timedelta(days=5)
+        cliente_maria.save(update_fields=["proximo_followup"])
+        client_a.post(f"/api/clientes/{cliente_maria.id}/criar-evento-followup/", {}, format="json")
+        r = client_a.post(f"/api/clientes/{cliente_maria.id}/criar-evento-followup/",
+                          {"atualizar": True}, format="json")
+        assert r.status_code == 200
+        assert r.data["data"]["criado"] is False
+        assert Evento.objects.filter(cliente_id=cliente_maria.id, titulo__startswith="Follow-up:").count() == 1
+
+    def test_multitenant(self, client_b, empresa_a, usuario_a, cliente_maria):
+        from datetime import date, timedelta
+        cliente_maria.proximo_followup = date.today() + timedelta(days=5)
+        cliente_maria.save(update_fields=["proximo_followup"])
+        r = client_b.post(f"/api/clientes/{cliente_maria.id}/criar-evento-followup/", {}, format="json")
+        assert r.status_code == 404

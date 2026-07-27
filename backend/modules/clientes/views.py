@@ -237,6 +237,7 @@ class InteracaoListCreateView(EmpresaQuerySetMixin, APIView):
             "tipo": request.query_params.get("tipo"),
             "data_inicio": request.query_params.get("data_inicio"),
             "data_fim": request.query_params.get("data_fim"),
+            "estoque": request.query_params.get("estoque"),
         }
         filtros = {k: v for k, v in filtros.items() if v is not None}
 
@@ -532,4 +533,64 @@ class InteracaoRegistrarFinanceiroView(EmpresaQuerySetMixin, APIView):
         return created_response(
             data=LancamentoSerializer(lancamento).data,
             message="Receita registrada no financeiro.",
+        )
+
+
+class InteracaoApagarComAjustesView(EmpresaQuerySetMixin, APIView):
+    """
+    POST /api/clientes/interacoes/{interacao_id}/apagar-com-ajustes/
+    Body: { estornar_estoque?: bool, apagar_financeiro?: bool }
+    Estorna estoque e/ou ajusta o financeiro (na ordem), depois apaga a interação.
+    """
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def post(self, request, interacao_id):
+        estornar_estoque = bool(request.data.get("estornar_estoque", False))
+        apagar_financeiro = bool(request.data.get("apagar_financeiro", False))
+        try:
+            resumo = ClienteService.apagar_interacao_com_ajustes(
+                empresa_id=self.get_empresa_id(),
+                usuario_id=request.user.id,
+                interacao_id=interacao_id,
+                estornar_estoque=estornar_estoque,
+                apagar_financeiro=apagar_financeiro,
+            )
+        except ResourceNotFound:
+            return error_response("NOT_FOUND", "Interação não encontrada.", status_code=404)
+        return success_response(data=resumo, message="Interação apagada.")
+
+
+class ClienteCriarEventoFollowupView(EmpresaQuerySetMixin, APIView):
+    """
+    POST /api/clientes/{pk}/criar-evento-followup/
+    Body: { atualizar?: bool }
+    Cria (ou atualiza, se atualizar=True) um evento de Agenda a partir do
+    proximo_followup do cliente. Não duplica sem intenção explícita.
+    """
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def post(self, request, pk):
+        from shared.exceptions import BusinessRuleViolation
+        from modules.agenda.serializers import EventoSerializer
+
+        atualizar = bool(request.data.get("atualizar", False))
+        try:
+            evento, criado = ClienteService.criar_evento_followup(
+                empresa_id=self.get_empresa_id(),
+                usuario_id=request.user.id,
+                cliente_id=pk,
+                atualizar=atualizar,
+            )
+        except ResourceNotFound:
+            return error_response("NOT_FOUND", "Cliente não encontrado.", status_code=404)
+        except BusinessRuleViolation as exc:
+            return error_response(exc.code, exc.message, details=exc.details, status_code=400)
+
+        return success_response(
+            data={"evento": EventoSerializer(evento).data, "criado": criado},
+            message="Evento criado na Agenda." if criado else "Evento atualizado na Agenda.",
         )

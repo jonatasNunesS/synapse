@@ -1,5 +1,7 @@
 // M5 — Fornecedores: TypeScript Types
 
+import type { MovimentacaoInfo, LancamentoInfo } from "@/types/clientes";
+
 export type StatusFornecedor = "ativo" | "inativo" | "suspenso" | "em_avaliacao";
 
 export interface CategoriaFornecedor {
@@ -48,6 +50,10 @@ export interface CompraFornecedor {
   ja_no_estoque?: boolean;
   /** Já virou lançamento financeiro? */
   ja_no_financeiro?: boolean;
+  /** Detalhes da movimentação de estoque vinculada (para perguntar no apagar). */
+  movimentacao_estoque_info?: MovimentacaoInfo | null;
+  /** Detalhes do lançamento financeiro vinculado. */
+  lancamento_financeiro_info?: LancamentoInfo | null;
 }
 
 export interface FornecedorDetail extends FornecedorList {

@@ -109,3 +109,51 @@ describe("TimelineInteracoes — badge de pagamento", () => {
     expect(screen.queryByText(/Vence/)).not.toBeInTheDocument();
   });
 });
+
+describe("TimelineInteracoes — badge de controle de estoque", () => {
+  function venda(over: Partial<InteracaoCliente>): InteracaoCliente {
+    return { ...interacao, id: "v", tipo: "venda", tipo_display: "Venda",
+      titulo: "Venda", valor: "500.00", status_pagamento: "nao_se_aplica", ...over };
+  }
+
+  it('venda com movimentação → badge verde "Estoque descontado"', () => {
+    render(<TimelineInteracoes interacoes={[venda({
+      movimentacao_estoque_info: { id: "m1", produto_nome: "Camisa", quantidade: "3", tipo: "saida" },
+    })]} />);
+    expect(screen.getByText("Estoque descontado")).toBeInTheDocument();
+    expect(screen.queryByText("Não descontado")).not.toBeInTheDocument();
+  });
+
+  it('venda com valor e sem movimentação → badge amarelo "Não descontado"', () => {
+    render(<TimelineInteracoes interacoes={[venda({})]} />);
+    expect(screen.getByText("Não descontado")).toBeInTheDocument();
+    expect(screen.queryByText("Estoque descontado")).not.toBeInTheDocument();
+  });
+
+  it("interação que não é venda não mostra badge de estoque", () => {
+    render(<TimelineInteracoes interacoes={[interacao]} />);
+    expect(screen.queryByText("Não descontado")).not.toBeInTheDocument();
+    expect(screen.queryByText("Estoque descontado")).not.toBeInTheDocument();
+  });
+
+  it('"Descontar do estoque agora" dispara onDescontarEstoque', () => {
+    const onDescontar = vi.fn();
+    const v = venda({});
+    render(<TimelineInteracoes interacoes={[v]} onDescontarEstoque={onDescontar} />);
+    fireEvent.click(screen.getByRole("button", { name: /Descontar do estoque agora/ }));
+    expect(onDescontar).toHaveBeenCalledWith(v);
+  });
+
+  it("mudar o filtro de estoque dispara onFiltroEstoqueChange", () => {
+    const onFiltro = vi.fn();
+    render(
+      <TimelineInteracoes
+        interacoes={[]}
+        filtroEstoque=""
+        onFiltroEstoqueChange={onFiltro}
+      />
+    );
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "nao_descontados" } });
+    expect(onFiltro).toHaveBeenCalledWith("nao_descontados");
+  });
+});
