@@ -39,6 +39,11 @@ PERFIL_CHOICES = [
     ("colaborador", "Colaborador"),
 ]
 
+STATUS_EMPRESA_CHOICES = [
+    ("ativa", "Ativa"),
+    ("suspensa", "Suspensa"),
+]
+
 
 # ════════════════════════════════════════════════════════════
 # MODEL: EMPRESA
@@ -66,6 +71,25 @@ class Empresa(models.Model):
     plano_ativo = models.BooleanField(default=True)
     plano_validade = models.DateField(null=True, blank=True)
     ativo = models.BooleanField(default=True)
+
+    # Suspensão administrativa (painel Synapse). Independente de `ativo`: uma
+    # empresa suspensa continua logando, mas vê a tela de aviso e não opera.
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_EMPRESA_CHOICES,
+        default="ativa",
+        db_index=True,
+    )
+    data_suspensao = models.DateTimeField(null=True, blank=True)
+    motivo_suspensao = models.TextField(blank=True, default="")
+    suspensa_por = models.ForeignKey(
+        "synapse_auth.CustomUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="empresas_suspensas",
+    )
+
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
 

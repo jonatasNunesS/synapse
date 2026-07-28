@@ -79,6 +79,16 @@ class AuthService:
         if usuario.empresa and not usuario.empresa.ativo:
             raise EmpresaInativaError()
 
+        # Empresa suspensa NÃO bloqueia o login: o usuário entra, mas o front
+        # exibe a tela de aviso (empresa.status == "suspensa") e não deixa operar.
+
+        # Registra o último acesso (usado nas métricas do painel admin). authenticate()
+        # não atualiza last_login sozinho (só login() faria via signal).
+        from django.utils import timezone
+
+        usuario.last_login = timezone.now()
+        usuario.save(update_fields=["last_login"])
+
         logger.info("Login", extra={"email": email})
         return usuario
 

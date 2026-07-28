@@ -8,6 +8,7 @@ import { useAppStore } from "@/store/useAppStore";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
+import { EmpresaSuspensaAviso } from "@/components/layout/EmpresaSuspensaAviso";
 
 export default function DashboardLayout({
   children,
@@ -15,7 +16,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { sidebarOpen } = useAppStore();
-  const { carregarUsuario, loading, autenticado } = useAuth();
+  const { carregarUsuario, loading, autenticado, empresa } = useAuth();
 
   // Carrega dados do usuário ao montar o layout (se ainda não carregado)
   useEffect(() => {
@@ -34,6 +35,11 @@ export default function DashboardLayout({
         </div>
       </div>
     );
+  }
+
+  // Empresa suspensa: o usuário logou, mas só vê o aviso (não acessa o sistema).
+  if (autenticado && empresa?.status === "suspensa") {
+    return <EmpresaSuspensaAviso />;
   }
 
   return (

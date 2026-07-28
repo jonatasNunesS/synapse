@@ -27,6 +27,7 @@ class EmpresaSerializer(serializers.ModelSerializer):
             "plano_ativo",
             "plano_validade",
             "ativo",
+            "status",
             "criado_em",
         ]
         read_only_fields = fields

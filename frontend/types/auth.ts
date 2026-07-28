@@ -11,6 +11,8 @@ export interface Empresa {
   plano_ativo: boolean;
   plano_validade: string | null;
   ativo: boolean;
+  /** ativa | suspensa — empresa suspensa loga mas vê a tela de aviso. */
+  status: "ativa" | "suspensa";
   criado_em: string;
 }
 

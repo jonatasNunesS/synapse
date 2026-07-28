@@ -3,26 +3,45 @@ Synapse — Painel Administrativo: Serializers.
 """
 from rest_framework import serializers
 
-from modules.auth.models import PLANO_CHOICES, CustomUser, Empresa
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 
-from .models import LogAlteracaoPlano
+from modules.auth.models import (
+    PERFIL_CHOICES,
+    PLANO_CHOICES,
+    SEGMENTO_CHOICES,
+    CustomUser,
+    Empresa,
+)
+
+from .models import AuditLog, LogAlteracaoPlano
 from .services import PainelAdminService
 
 
 class UsuarioAdminSerializer(serializers.ModelSerializer):
     """Usuário visto pelo painel (sem dados sensíveis além do necessário)."""
 
+    ultimo_acesso = serializers.DateTimeField(source="last_login", read_only=True)
+
     class Meta:
         model = CustomUser
-        fields = ["id", "nome", "email", "perfil", "ativo", "is_staff_synapse", "criado_em"]
+        fields = [
+            "id", "nome", "email", "perfil", "ativo", "is_active",
+            "is_staff_synapse", "ultimo_acesso", "criado_em",
+        ]
         read_only_fields = fields
 
 
 class EmpresaAdminListSerializer(serializers.ModelSerializer):
-    """Item da lista de empresas, com contadores da plataforma."""
+    """Item da lista de empresas, com contadores e métricas da plataforma."""
 
     num_usuarios = serializers.IntegerField(read_only=True)
+    total_usuarios = serializers.IntegerField(source="num_usuarios", read_only=True)
+    ultimo_acesso = serializers.DateTimeField(read_only=True)
     creditos_usados_hoje = serializers.SerializerMethodField()
+    creditos_usados_mes = serializers.SerializerMethodField()
+    total_lancamentos = serializers.SerializerMethodField()
+    total_clientes = serializers.SerializerMethodField()
 
     class Meta:
         model = Empresa
@@ -33,8 +52,15 @@ class EmpresaAdminListSerializer(serializers.ModelSerializer):
             "plano",
             "plano_ativo",
             "ativo",
+            "status",
+            "data_suspensao",
             "num_usuarios",
+            "total_usuarios",
+            "ultimo_acesso",
             "creditos_usados_hoje",
+            "creditos_usados_mes",
+            "total_lancamentos",
+            "total_clientes",
             "criado_em",
         ]
         read_only_fields = fields
@@ -42,13 +68,28 @@ class EmpresaAdminListSerializer(serializers.ModelSerializer):
     def get_creditos_usados_hoje(self, obj) -> int:
         return PainelAdminService.creditos_usados_hoje(obj.id)
 
+    def get_creditos_usados_mes(self, obj) -> int:
+        return PainelAdminService.creditos_usados_mes(obj.id)
+
+    def get_total_lancamentos(self, obj) -> int:
+        return PainelAdminService.total_lancamentos(obj.id)
+
+    def get_total_clientes(self, obj) -> int:
+        return PainelAdminService.total_clientes(obj.id)
+
 
 class EmpresaAdminDetailSerializer(serializers.ModelSerializer):
-    """Detalhe da empresa + usuários + contadores."""
+    """Detalhe da empresa + usuários + contadores + métricas."""
 
     usuarios = serializers.SerializerMethodField()
     num_usuarios = serializers.SerializerMethodField()
+    total_usuarios = serializers.SerializerMethodField()
+    ultimo_acesso = serializers.SerializerMethodField()
     creditos_usados_hoje = serializers.SerializerMethodField()
+    creditos_usados_mes = serializers.SerializerMethodField()
+    total_lancamentos = serializers.SerializerMethodField()
+    total_clientes = serializers.SerializerMethodField()
+    suspensa_por_nome = serializers.SerializerMethodField()
 
     class Meta:
         model = Empresa
@@ -61,8 +102,17 @@ class EmpresaAdminDetailSerializer(serializers.ModelSerializer):
             "plano_ativo",
             "plano_validade",
             "ativo",
+            "status",
+            "data_suspensao",
+            "motivo_suspensao",
+            "suspensa_por_nome",
             "num_usuarios",
+            "total_usuarios",
+            "ultimo_acesso",
             "creditos_usados_hoje",
+            "creditos_usados_mes",
+            "total_lancamentos",
+            "total_clientes",
             "usuarios",
             "criado_em",
             "atualizado_em",
@@ -76,8 +126,28 @@ class EmpresaAdminDetailSerializer(serializers.ModelSerializer):
     def get_num_usuarios(self, obj) -> int:
         return PainelAdminService.usuarios_da_empresa(obj.id).count()
 
+    def get_total_usuarios(self, obj) -> int:
+        return PainelAdminService.usuarios_da_empresa(obj.id).count()
+
+    def get_ultimo_acesso(self, obj):
+        return PainelAdminService.ultimo_acesso(obj.id)
+
     def get_creditos_usados_hoje(self, obj) -> int:
         return PainelAdminService.creditos_usados_hoje(obj.id)
+
+    def get_creditos_usados_mes(self, obj) -> int:
+        return PainelAdminService.creditos_usados_mes(obj.id)
+
+    def get_total_lancamentos(self, obj) -> int:
+        return PainelAdminService.total_lancamentos(obj.id)
+
+    def get_total_clientes(self, obj) -> int:
+        return PainelAdminService.total_clientes(obj.id)
+
+    def get_suspensa_por_nome(self, obj):
+        if obj.suspensa_por:
+            return obj.suspensa_por.nome or obj.suspensa_por.email
+        return None
 
 
 class LogAlteracaoPlanoSerializer(serializers.ModelSerializer):
@@ -87,6 +157,7 @@ class LogAlteracaoPlanoSerializer(serializers.ModelSerializer):
         model = LogAlteracaoPlano
         fields = [
             "id",
+            "acao",
             "plano_anterior",
             "plano_novo",
             "observacao",
@@ -103,6 +174,18 @@ class LogAlteracaoPlanoSerializer(serializers.ModelSerializer):
         return None
 
 
+class AuditLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AuditLog
+        fields = [
+            "id", "empresa_id", "empresa_nome", "acao",
+            "realizado_por_email", "detalhes", "criado_em",
+        ]
+        read_only_fields = fields
+
+
+# ── Entradas (write) ────────────────────────────────────────────────────────
+
 class TrocarPlanoSerializer(serializers.Serializer):
     """Entrada de POST .../trocar-plano/."""
 
@@ -110,3 +193,59 @@ class TrocarPlanoSerializer(serializers.Serializer):
     observacao = serializers.CharField(
         required=False, allow_blank=True, default="", max_length=1000
     )
+
+
+class CriarEmpresaSerializer(serializers.Serializer):
+    """Entrada de POST /empresas/ — cria empresa + admin."""
+
+    nome_empresa = serializers.CharField(max_length=255)
+    segmento = serializers.ChoiceField(choices=[s[0] for s in SEGMENTO_CHOICES])
+    plano = serializers.ChoiceField(choices=[p[0] for p in PLANO_CHOICES])
+    admin_nome = serializers.CharField(max_length=255)
+    admin_email = serializers.EmailField()
+    admin_senha = serializers.CharField(write_only=True)
+
+    def validate_admin_email(self, value: str) -> str:
+        value = value.lower()
+        if CustomUser.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Este e-mail já está cadastrado.")
+        return value
+
+    def validate_admin_senha(self, value: str) -> str:
+        try:
+            validate_password(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(list(exc.messages))
+        return value
+
+
+class EditarEmpresaSerializer(serializers.Serializer):
+    """Entrada de PATCH /empresas/{id}/ — nome e/ou segmento."""
+
+    nome = serializers.CharField(max_length=255, required=False)
+    segmento = serializers.ChoiceField(
+        choices=[s[0] for s in SEGMENTO_CHOICES], required=False
+    )
+
+
+class SuspenderSerializer(serializers.Serializer):
+    """Entrada de POST .../suspender/ — motivo obrigatório (min 10 chars)."""
+
+    motivo = serializers.CharField(min_length=10, max_length=2000)
+
+
+class ReativarSerializer(serializers.Serializer):
+    """Entrada de POST .../reativar/ — motivo opcional."""
+
+    motivo = serializers.CharField(
+        required=False, allow_blank=True, default="", max_length=2000
+    )
+
+
+class EditarUsuarioSerializer(serializers.Serializer):
+    """Entrada de PATCH .../usuarios/{uid}/ — perfil e/ou is_active."""
+
+    perfil = serializers.ChoiceField(
+        choices=[p[0] for p in PERFIL_CHOICES], required=False
+    )
+    is_active = serializers.BooleanField(required=False)
