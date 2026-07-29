@@ -63,6 +63,9 @@ export interface TarefaDetail extends TarefaList {
   atualizado_em: string;
   comentarios: Comentario[];
   checklist: ChecklistItem[];
+  /** Coluna do Kanban da EQUIPE onde a tarefa aparece (null = não exibir). */
+  coluna_kanban_equipe: string | null;
+  coluna_kanban_equipe_nome: string | null;
 }
 
 export interface TarefaCreatePayload {
@@ -74,6 +77,8 @@ export interface TarefaCreatePayload {
   data_prazo?: string | null;
   ordem?: number;
   estimativa_horas?: string | null;
+  /** Só o admin define; null = não exibir no Kanban da equipe. */
+  coluna_kanban_equipe?: string | null;
 }
 
 export interface TarefaMoverPayload {

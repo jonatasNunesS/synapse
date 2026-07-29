@@ -82,3 +82,79 @@ export const PERIODO_META_LABELS: Record<PeriodoMeta, string> = {
   trimestral: "Trimestral",
   anual: "Anual",
 };
+
+// ── Kanban da equipe ─────────────────────────────────────────────────────────
+
+export type PrioridadeTarefa = "baixa" | "media" | "alta" | "urgente";
+export type OrigemTarefa = "pessoal" | "projeto";
+
+export interface ColunaKanban {
+  id: string;
+  nome: string;
+  ordem: number;
+  cor: string;
+  criado_em: string;
+}
+
+export interface ResponsavelResumo {
+  id: string;
+  nome: string;
+  avatar_url: string;
+}
+
+/** Card unificado do board consolidado (tarefa pessoal ou de projeto). */
+export interface TarefaKanban {
+  id: string;
+  origem: OrigemTarefa;
+  titulo: string;
+  descricao: string;
+  prioridade: PrioridadeTarefa;
+  prazo: string | null;
+  esta_atrasada: boolean;
+  coluna_id: string;
+  ordem: number;
+  responsavel: ResponsavelResumo | null;
+  read_only: boolean;
+  projeto_id: string | null;
+  projeto_nome: string | null;
+}
+
+export interface ColunaKanbanComTarefas {
+  id: string;
+  nome: string;
+  ordem: number;
+  cor: string;
+  tarefas: TarefaKanban[];
+}
+
+export interface KanbanConsolidado {
+  colunas: ColunaKanbanComTarefas[];
+}
+
+export interface TarefaPessoalFormData {
+  coluna: string;
+  titulo: string;
+  descricao?: string;
+  responsavel: string;
+  prazo?: string | null;
+  prioridade: "baixa" | "media" | "alta";
+}
+
+export interface ColunaFormData {
+  nome: string;
+  cor?: string;
+}
+
+export const PRIORIDADE_TAREFA_LABELS: Record<PrioridadeTarefa, string> = {
+  baixa: "Baixa",
+  media: "Média",
+  alta: "Alta",
+  urgente: "Urgente",
+};
+
+export const PRIORIDADE_TAREFA_CORES: Record<PrioridadeTarefa, string> = {
+  baixa: "bg-slate-500/20 text-slate-300",
+  media: "bg-blue-500/20 text-blue-300",
+  alta: "bg-amber-500/20 text-amber-300",
+  urgente: "bg-red-500/20 text-red-300",
+};

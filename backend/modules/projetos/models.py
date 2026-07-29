@@ -153,6 +153,15 @@ class Tarefa(models.Model):
         blank=True,
         related_name="tarefas_responsavel",
     )
+    # Coluna do Kanban da EQUIPE onde esta tarefa aparece (read-only lá). Null =
+    # não exibida no Kanban da equipe. Definida pelo admin no modal do projeto.
+    coluna_kanban_equipe = models.ForeignKey(
+        "equipe.ColunaKanbanEquipe",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tarefas_projeto",
+    )
     data_prazo = models.DateField(null=True, blank=True)
     data_conclusao = models.DateField(null=True, blank=True)
     ordem = models.IntegerField(default=0)

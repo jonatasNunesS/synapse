@@ -20,6 +20,7 @@ import { MembroCard } from "@/components/equipe/MembroCard";
 import { MembroForm } from "@/components/equipe/MembroForm";
 import type { MembroEquipe, MembroFormData } from "@/types/equipe";
 import { ConvidarModal } from "@/components/equipe/ConvidarModal";
+import { KanbanEquipeGeral } from "@/components/equipe/kanban/KanbanEquipeGeral";
 
 export default function EquipePage() {
   const [busca, setBusca] = useState("");
@@ -31,6 +32,7 @@ export default function EquipePage() {
   const [membroEditando, setMembroEditando] = useState<MembroEquipe | null>(null);
   const [membroParaRemover, setMembroParaRemover] = useState<string | null>(null);
   const [removendo, setRemovendo] = useState(false);
+  const [aba, setAba] = useState<"membros" | "kanban">("membros");
 
   const { membros, pagination, isLoading, adicionarMembro, atualizarMembro, removerMembro, mutate } =
     useMembros({
@@ -97,6 +99,34 @@ export default function EquipePage() {
         </div>
       </div>
 
+      {/* Abas: Membros | Kanban da Equipe */}
+      <div className="flex items-center gap-1 border-b border-border">
+        <button
+          onClick={() => setAba("membros")}
+          className={`px-4 py-2 text-sm font-medium -mb-px border-b-2 transition-colors ${
+            aba === "membros"
+              ? "border-violet-500 text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Membros
+        </button>
+        <button
+          onClick={() => setAba("kanban")}
+          className={`px-4 py-2 text-sm font-medium -mb-px border-b-2 transition-colors ${
+            aba === "kanban"
+              ? "border-violet-500 text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Kanban da Equipe
+        </button>
+      </div>
+
+      {aba === "kanban" && <KanbanEquipeGeral />}
+
+      {aba === "membros" && (
+      <>
       {/* Resumo */}
       <ResumoEquipeCards />
 
@@ -178,6 +208,8 @@ export default function EquipePage() {
             </Button>
           </div>
         </div>
+      )}
+      </>
       )}
 
       {/* Modal de Adição */}

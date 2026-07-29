@@ -278,8 +278,14 @@ class TarefaDetailView(EmpresaQuerySetMixin, APIView):
         except ValueError as e:
             return error_response("TAREFA_NAO_ENCONTRADA", str(e), status_code=404)
 
+        # A coluna do Kanban da equipe só o admin define. Para não-admin, o
+        # campo é ignorado silenciosamente (membro comum nem enxerga o campo).
+        dados = request.data
+        if request.user.perfil != "admin" and "coluna_kanban_equipe" in dados:
+            dados = {k: v for k, v in dados.items() if k != "coluna_kanban_equipe"}
+
         serializer = TarefaCreateSerializer(
-            tarefa, data=request.data, partial=partial, context={"request": request}
+            tarefa, data=dados, partial=partial, context={"request": request}
         )
         serializer.is_valid(raise_exception=True)
         try:

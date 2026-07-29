@@ -84,6 +84,9 @@ class TarefaDetailSerializer(serializers.ModelSerializer):
     dias_restantes = serializers.IntegerField(read_only=True)
     comentarios = ComentarioSerializer(many=True, read_only=True)
     checklist = ChecklistItemSerializer(many=True, read_only=True)
+    coluna_kanban_equipe_nome = serializers.CharField(
+        source="coluna_kanban_equipe.nome", read_only=True, default=None
+    )
 
     class Meta:
         model = Tarefa
@@ -92,6 +95,7 @@ class TarefaDetailSerializer(serializers.ModelSerializer):
             "status", "prioridade", "responsavel_nome", "responsavel_avatar",
             "data_prazo", "data_conclusao", "esta_atrasada", "dias_restantes",
             "ordem", "estimativa_horas", "horas_gastas",
+            "coluna_kanban_equipe", "coluna_kanban_equipe_nome",
             "criado_por_nome", "criado_em", "atualizado_em",
             "comentarios", "checklist",
         ]
@@ -118,16 +122,23 @@ class TarefaCreateSerializer(serializers.ModelSerializer):
         fields = [
             "projeto", "titulo", "descricao", "status", "prioridade",
             "responsavel", "data_prazo", "ordem", "estimativa_horas",
+            "coluna_kanban_equipe",
         ]
 
     def validate(self, data):
         request = self.context.get("request")
+        empresa_id = request.user.empresa_id if request else None
         if request and data.get("projeto"):
-            empresa_id = request.user.empresa_id
             if str(data["projeto"].empresa_id) != str(empresa_id):
                 raise serializers.ValidationError(
                     {"projeto": "Projeto não pertence à sua empresa."}
                 )
+        # A coluna do Kanban da equipe precisa ser da mesma empresa.
+        coluna = data.get("coluna_kanban_equipe")
+        if coluna and empresa_id and str(coluna.empresa_id) != str(empresa_id):
+            raise serializers.ValidationError(
+                {"coluna_kanban_equipe": "Coluna não pertence à sua empresa."}
+            )
         return data
 
 

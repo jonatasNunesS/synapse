@@ -182,8 +182,11 @@ private buildUrl(
     });
   }
 
-  async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: "DELETE" });
+  async delete<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: "DELETE",
+      body: data !== undefined ? JSON.stringify(data) : undefined,
+    });
   }
 
   async upload<T>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {

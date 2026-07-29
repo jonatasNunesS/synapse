@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import type { TarefaCreatePayload, TarefaDetail, TarefaStatus } from "@/types/projetos";
 import type { ApiError } from "@/types/api";
+import { useAuth } from "@/hooks/useAuth";
+import { useColunasEquipe } from "@/hooks/useEquipe";
 
 interface TarefaFormProps {
   aberto: boolean;
@@ -22,6 +24,10 @@ export function TarefaForm({
   onFechar,
   onSalvar,
 }: TarefaFormProps) {
+  const { usuario } = useAuth();
+  const isAdmin = usuario?.perfil === "admin";
+  // Colunas do Kanban da equipe — só carregam/exibem para admin.
+  const { colunas } = useColunasEquipe();
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [dados, setDados] = useState<TarefaCreatePayload>({
@@ -31,6 +37,7 @@ export function TarefaForm({
     prioridade: "media",
     data_prazo: "",
     estimativa_horas: "",
+    coluna_kanban_equipe: null,
   });
 
   useEffect(() => {
@@ -42,6 +49,7 @@ export function TarefaForm({
         prioridade: tarefa.prioridade,
         data_prazo: tarefa.data_prazo ?? "",
         estimativa_horas: tarefa.estimativa_horas ?? "",
+        coluna_kanban_equipe: tarefa.coluna_kanban_equipe ?? null,
       });
     } else {
       setDados({
@@ -51,6 +59,7 @@ export function TarefaForm({
         prioridade: "media",
         data_prazo: "",
         estimativa_horas: "",
+        coluna_kanban_equipe: null,
       });
     }
     setErro(null);
@@ -202,6 +211,32 @@ export function TarefaForm({
               />
             </div>
           </div>
+
+          {/* Coluna no Kanban da Equipe (só admin) */}
+          {isAdmin && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Coluna no Kanban da Equipe
+              </label>
+              <select
+                value={dados.coluna_kanban_equipe ?? ""}
+                onChange={(e) =>
+                  setDados({ ...dados, coluna_kanban_equipe: e.target.value || null })
+                }
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">Não exibir no Kanban</option>
+                {colunas.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-400 mt-1">
+                Onde esta tarefa aparece no Kanban da equipe (read-only lá).
+              </p>
+            </div>
+          )}
 
           {/* Botões */}
           <div className="flex justify-end gap-3 pt-2">

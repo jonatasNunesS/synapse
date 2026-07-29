@@ -1,8 +1,11 @@
 """
 Synapse — M7: Módulo Equipe
 Models MembroEquipe e MetaMembro com multi-tenant obrigatório.
+Kanban da equipe: ColunaKanbanEquipe e TarefaPessoal.
 """
 import uuid
+from datetime import date
+
 from django.db import models
 
 
@@ -134,3 +137,108 @@ class MetaMembro(models.Model):
         if self.valor_meta and float(self.valor_meta) > 0:
             return round(float(self.valor_atual) / float(self.valor_meta) * 100, 1)
         return 0.0
+
+
+# ════════════════════════════════════════════════════════════
+# KANBAN DA EQUIPE
+# ════════════════════════════════════════════════════════════
+
+# Colunas padrão criadas ao nascer a empresa (seed via signal + data migration).
+COLUNAS_PADRAO = [
+    ("A Fazer", 1),
+    ("Em Andamento", 2),
+    ("Concluído", 3),
+]
+
+
+class ColunaKanbanEquipe(models.Model):
+    """Coluna do quadro Kanban operacional da equipe (por empresa)."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    empresa = models.ForeignKey(
+        "synapse_auth.Empresa",
+        on_delete=models.CASCADE,
+        related_name="colunas_kanban_equipe",
+    )
+    nome = models.CharField(max_length=100)
+    ordem = models.IntegerField(default=0)
+    cor = models.CharField(max_length=9, blank=True, default="")
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "equipe_kanban_colunas"
+        ordering = ["ordem", "criado_em"]
+        indexes = [
+            models.Index(fields=["empresa", "ordem"], name="equipe_col_ordem_idx"),
+        ]
+        verbose_name = "Coluna do Kanban da Equipe"
+        verbose_name_plural = "Colunas do Kanban da Equipe"
+
+    def __str__(self):
+        return f"{self.nome} ({self.ordem}) @ {self.empresa_id}"
+
+
+class TarefaPessoal(models.Model):
+    """
+    Tarefa operacional de um membro — NÃO vinculada a projeto. Vive numa coluna
+    do Kanban da equipe e pode ser arrastada entre colunas.
+    """
+
+    PRIORIDADE_CHOICES = [
+        ("baixa", "Baixa"),
+        ("media", "Média"),
+        ("alta", "Alta"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    empresa = models.ForeignKey(
+        "synapse_auth.Empresa",
+        on_delete=models.CASCADE,
+        related_name="tarefas_pessoais",
+    )
+    coluna = models.ForeignKey(
+        ColunaKanbanEquipe,
+        on_delete=models.CASCADE,
+        related_name="tarefas_pessoais",
+    )
+    titulo = models.CharField(max_length=255)
+    descricao = models.TextField(blank=True, default="")
+    responsavel = models.ForeignKey(
+        "synapse_auth.CustomUser",
+        on_delete=models.CASCADE,
+        related_name="tarefas_pessoais",
+    )
+    criado_por = models.ForeignKey(
+        "synapse_auth.CustomUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tarefas_pessoais_criadas",
+    )
+    prazo = models.DateField(null=True, blank=True)
+    prioridade = models.CharField(
+        max_length=10, choices=PRIORIDADE_CHOICES, default="media"
+    )
+    # Posição dentro da coluna (ordem_na_coluna do endpoint de mover).
+    ordem = models.IntegerField(default=0)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "equipe_tarefas_pessoais"
+        ordering = ["ordem", "criado_em"]
+        indexes = [
+            models.Index(fields=["empresa", "responsavel"], name="equipe_tp_resp_idx"),
+            models.Index(fields=["coluna", "ordem"], name="equipe_tp_col_ordem_idx"),
+        ]
+        verbose_name = "Tarefa Pessoal"
+        verbose_name_plural = "Tarefas Pessoais"
+
+    def __str__(self):
+        return f"{self.titulo} [{self.prioridade}]"
+
+    @property
+    def esta_atrasada(self) -> bool:
+        if not self.prazo:
+            return False
+        return self.prazo < date.today()

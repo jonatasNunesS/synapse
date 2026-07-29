@@ -14,6 +14,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { getErrorMessage } from "@/lib/api";
 import { useMembro, useMetasMembro } from "@/hooks/useEquipe";
 import { MetaForm } from "@/components/equipe/MetaForm";
+import { KanbanEquipeIndividual } from "@/components/equipe/kanban/KanbanEquipeIndividual";
 import type { MetaMembro, MetaFormData } from "@/types/equipe";
 import { TIPO_META_LABELS, PERIODO_META_LABELS } from "@/types/equipe";
 import { format } from "date-fns";
@@ -112,6 +113,7 @@ export default function MembroDetailPage() {
   const [metaEditando, setMetaEditando] = useState<MetaMembro | null>(null);
   const [metaParaExcluir, setMetaParaExcluir] = useState<string | null>(null);
   const [excluindoMeta, setExcluindoMeta] = useState(false);
+  const [aba, setAba] = useState<"metas" | "kanban">("metas");
 
   const handleSalvarMeta = async (dados: MetaFormData) => {
     if (metaEditando) {
@@ -241,7 +243,29 @@ export default function MembroDetailPage() {
         </CardContent>
       </Card>
 
+      {/* Abas: Metas | Kanban */}
+      <div className="flex items-center gap-1 border-b border-border">
+        {(["metas", "kanban"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setAba(t)}
+            className={`px-4 py-2 text-sm font-medium -mb-px border-b-2 transition-colors ${
+              aba === t
+                ? "border-violet-500 text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t === "metas" ? "Metas" : "Kanban"}
+          </button>
+        ))}
+      </div>
+
+      {aba === "kanban" && (
+        <KanbanEquipeIndividual membroUsuarioId={membro.usuario_id} membroNome={membro.nome} />
+      )}
+
       {/* Metas */}
+      {aba === "metas" && (
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -280,6 +304,7 @@ export default function MembroDetailPage() {
           )}
         </CardContent>
       </Card>
+      )}
 
       {/* Modal de Meta */}
       {showMetaForm && (
