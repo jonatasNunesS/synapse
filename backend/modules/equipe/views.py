@@ -10,6 +10,7 @@ from shared.authentication import CookieJWTAuthentication
 from shared.pagination import StandardPagination
 from shared.permissions import IsEmpresaMember
 from shared.responses import success_response, error_response, no_content_response
+from shared.exceptions import BusinessRuleViolation
 from .exceptions import ConviteEmailError
 from .models import MembroEquipe, MetaMembro
 from .repository import EquipeRepository
@@ -127,6 +128,11 @@ class ConvidarMembroView(APIView):
         try:
             usuario, membro = EquipeService.convidar_membro(
                 str(request.user.empresa_id), dados_usuario, dados_membro
+            )
+        except BusinessRuleViolation as exc:
+            # E-mail já cadastrado (mesma empresa ou outra) → 400 com mensagem clara.
+            return error_response(
+                exc.code, exc.message, details=exc.details, status_code=400
             )
         except ConviteEmailError as exc:
             # Envio falhou → rollback já ocorreu (nenhum membro criado).

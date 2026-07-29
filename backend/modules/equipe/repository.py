@@ -155,6 +155,28 @@ class EquipeRepository:
         link de convite (token de definição de senha), nunca por senha pronta.
         """
         from modules.auth.models import CustomUser
+        from shared.exceptions import BusinessRuleViolation
+
+        # Multi-tenant: um usuário pertence a UMA empresa. Se o e-mail já existe,
+        # traduz o conflito em 400 claro (em vez do IntegrityError → 500 que o
+        # create_user levantaria por causa do unique global de email).
+        try:
+            existente = CustomUser.objects.get(email=dados_usuario["email"])
+            if str(existente.empresa_id) == str(empresa_id):
+                raise BusinessRuleViolation(
+                    code="MEMBRO_JA_NA_EQUIPE",
+                    message="Este usuário já faz parte da sua equipe.",
+                )
+            raise BusinessRuleViolation(
+                code="EMAIL_OUTRA_EMPRESA",
+                message=(
+                    "Este email já está cadastrado em outra empresa no Synapse "
+                    "e não pode ser convidado."
+                ),
+            )
+        except CustomUser.DoesNotExist:
+            pass  # E-mail livre — segue para a criação.
+
         with transaction.atomic():
             usuario = CustomUser.objects.create_user(
                 email=dados_usuario["email"],

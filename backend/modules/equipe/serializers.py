@@ -120,14 +120,9 @@ class ConvidarMembroSerializer(serializers.Serializer):
     cargo = serializers.CharField(max_length=100, required=False, allow_blank=True)
     departamento = serializers.CharField(max_length=100, required=False, allow_blank=True)
 
-    def validate_email(self, value):
-        from modules.auth.models import CustomUser
-        empresa_id = self.context["request"].user.empresa_id
-        if CustomUser.objects.filter(email=value, empresa_id=empresa_id).exists():
-            raise serializers.ValidationError(
-                "Este e-mail já está cadastrado nesta empresa."
-            )
-        return value
+    # A checagem de e-mail duplicado (mesma empresa vs. outra empresa) é feita no
+    # EquipeRepository.criar_membro_convidado, que distingue os dois casos com
+    # códigos próprios (MEMBRO_JA_NA_EQUIPE / EMAIL_OUTRA_EMPRESA).
 
 
 class ResumoEquipeSerializer(serializers.Serializer):

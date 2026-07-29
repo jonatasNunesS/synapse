@@ -547,3 +547,46 @@ def test_resumo_inclui_metas(auth_client_a, membro_a, empresa_a):
     assert data["metas_ativas"] == 2
     assert data["metas_atingidas"] == 1
     assert "membros_inativos" in data
+
+
+# ════════════════════════════════════════════════════════════
+# BUG: convite com e-mail já existente → 400 claro (não 500)
+# ════════════════════════════════════════════════════════════
+
+@pytest.mark.django_db
+def test_convidar_email_de_outra_empresa_400(auth_client_a, usuario_b, convite_email_ok):
+    """E-mail já cadastrado em OUTRA empresa → 400 EMAIL_OUTRA_EMPRESA (não 500)."""
+    resp = auth_client_a.post(
+        "/api/equipe/convidar/",
+        data={"email": usuario_b.email, "nome": "De Outra", "perfil": "colaborador"},
+        content_type="application/json",
+    )
+    assert resp.status_code == 400
+    body = resp.json()
+    assert body["success"] is False
+    assert body["error"]["code"] == "EMAIL_OUTRA_EMPRESA"
+
+
+@pytest.mark.django_db
+def test_convidar_email_ja_membro_da_empresa_400(auth_client_a, usuario_a2, convite_email_ok):
+    """E-mail já é membro da MESMA empresa → 400 MEMBRO_JA_NA_EQUIPE."""
+    resp = auth_client_a.post(
+        "/api/equipe/convidar/",
+        data={"email": usuario_a2.email, "nome": "Já membro", "perfil": "colaborador"},
+        content_type="application/json",
+    )
+    assert resp.status_code == 400
+    body = resp.json()
+    assert body["success"] is False
+    assert body["error"]["code"] == "MEMBRO_JA_NA_EQUIPE"
+
+
+@pytest.mark.django_db
+def test_convidar_email_novo_201(auth_client_a, convite_email_ok):
+    """E-mail livre → 201 (comportamento atual preservado)."""
+    resp = auth_client_a.post(
+        "/api/equipe/convidar/",
+        data={"email": "novo.membro@alpha.com", "nome": "Novo", "perfil": "colaborador"},
+        content_type="application/json",
+    )
+    assert resp.status_code == 201
