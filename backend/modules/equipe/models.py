@@ -121,6 +121,8 @@ class MetaMembro(models.Model):
     data_inicio = models.DateField()
     data_fim = models.DateField()
     atingida = models.BooleanField(default=False)
+    # Garante que o e-mail de "meta concluída" é disparado uma única vez.
+    email_conclusao_enviado = models.BooleanField(default=False)
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:

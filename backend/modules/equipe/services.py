@@ -6,10 +6,41 @@ import logging
 
 from django.core.cache import cache
 
+from . import emails
 from .models import MembroEquipe, MetaMembro
 from .repository import EquipeRepository
 
 logger = logging.getLogger("synapse")
+
+# Campos da meta cujas mudanças são anunciadas no e-mail de "editada".
+_CAMPOS_META_RASTREADOS = [
+    "titulo", "descricao", "tipo", "valor_meta", "valor_atual",
+    "periodo", "data_inicio", "data_fim",
+]
+
+
+def _meta_concluida(meta: MetaMembro) -> bool:
+    """True se a meta atingiu/superou o alvo (alvo > 0)."""
+    return bool(
+        meta.valor_meta
+        and float(meta.valor_meta) > 0
+        and float(meta.valor_atual) >= float(meta.valor_meta)
+    )
+
+
+def _disparar_conclusao_se_preciso(meta: MetaMembro) -> bool:
+    """
+    Se a meta acabou de ser concluída (e o e-mail ainda não foi enviado),
+    marca atingida + email_conclusao_enviado e dispara o e-mail de parabéns.
+    Retorna True se enviou o e-mail de conclusão.
+    """
+    if _meta_concluida(meta) and not meta.email_conclusao_enviado:
+        meta.atingida = True
+        meta.email_conclusao_enviado = True
+        meta.save(update_fields=["atingida", "email_conclusao_enviado"])
+        emails.enviar_email_meta(meta, "concluida")
+        return True
+    return False
 
 # Chaves de cache (espelham as constantes do repository)
 _CACHE_MEMBROS = "synapse:{empresa_id}:equipe:membros"
@@ -89,6 +120,10 @@ class EquipeService:
         EquipeRepository.obter(membro_id, empresa_id)
         meta = EquipeRepository.criar_meta(membro_id, empresa_id, dados)
         _invalidar_cache_equipe(empresa_id)
+        # Momento 1: e-mail de "meta criada" para o membro.
+        emails.enviar_email_meta(meta, "criada")
+        # Caso raro: meta já nasce concluída → também dispara o parabéns (uma vez).
+        _disparar_conclusao_se_preciso(meta)
         return meta
 
     @staticmethod
@@ -96,8 +131,27 @@ class EquipeService:
         meta_id: str, membro_id: str, empresa_id: str, dados: dict
     ) -> MetaMembro:
         meta = EquipeRepository.obter_meta(meta_id, membro_id, empresa_id)
+
+        # Captura o "antes" dos campos rastreados para montar o diff do e-mail.
+        antes = {c: getattr(meta, c) for c in _CAMPOS_META_RASTREADOS}
+
         resultado = EquipeRepository.atualizar_meta(meta, dados)
         _invalidar_cache_equipe(empresa_id)
+
+        # Momento 3 tem prioridade: se esta edição concluiu a meta, manda o
+        # e-mail de parabéns (e NÃO o de "editada", pra não duplicar aviso).
+        if _disparar_conclusao_se_preciso(resultado):
+            return resultado
+
+        # Momento 2: e-mail de "editada" com o que mudou (se algo mudou).
+        campos_alterados = {}
+        for campo in _CAMPOS_META_RASTREADOS:
+            novo = getattr(resultado, campo)
+            if antes[campo] != novo:
+                campos_alterados[campo] = {"de": antes[campo], "para": novo}
+        if campos_alterados:
+            emails.enviar_email_meta(resultado, "editada", campos_alterados)
+
         return resultado
 
     @staticmethod
