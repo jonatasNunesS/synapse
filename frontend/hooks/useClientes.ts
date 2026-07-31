@@ -23,6 +23,8 @@ export interface FiltrosClientes {
   busca?: string;
   tags?: string;
   followup_atrasado?: string;
+  mes?: number;
+  ano?: number;
   page?: number;
 }
 
@@ -174,10 +176,11 @@ export function useResumoClientes() {
   const [resumo, setResumo] = useState<ResumoClientes | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const carregar = useCallback(async () => {
+  const carregar = useCallback(async (periodo?: { mes: number; ano: number }) => {
     setLoading(true);
     try {
-      const resp = await api.get<ResumoClientes>("/clientes/resumo/");
+      const qs = periodo ? `?mes=${periodo.mes}&ano=${periodo.ano}` : "";
+      const resp = await api.get<ResumoClientes>(`/clientes/resumo/${qs}`);
       if (resp.success && resp.data) setResumo(resp.data);
     } finally {
       setLoading(false);

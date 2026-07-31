@@ -9,8 +9,10 @@ import { ClienteTable } from "@/components/clientes/ClienteTable";
 import { FunilKanban } from "@/components/clientes/FunilKanban";
 import { ClienteForm } from "@/components/clientes/ClienteForm";
 import { NovaInteracaoRapidaModal } from "@/components/clientes/NovaInteracaoRapidaModal";
+import { PeriodoSelector, type Periodo } from "@/components/clientes/PeriodoSelector";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useClientes, useFunilKanban, useResumoClientes } from "@/hooks/useClientes";
+import type { FiltrosClientes } from "@/hooks/useClientes";
 import type { ClienteList } from "@/types/clientes";
 
 type ViewMode = "lista" | "kanban";
@@ -37,13 +39,19 @@ export default function ClientesPage() {
   const { funil, loading: funilLoading, carregar: carregarFunil, moverCard } = useFunilKanban();
   const { resumo, loading: resumoLoading, carregar: carregarResumo } = useResumoClientes();
 
+  // Filtro de período (Mês + Ano) e os filtros da tabela (busca/status/etc.)
+  // convivem: ambos entram em toda recarga.
+  const [periodo, setPeriodo] = useState<Periodo | null>(null);
+  const [filtrosTabela, setFiltrosTabela] = useState<FiltrosClientes>({});
+
   const carregarTudo = useCallback(async () => {
+    const p = periodo ?? {};
     await Promise.all([
-      carregar({ page }),
+      carregar({ ...filtrosTabela, ...p, page }),
       carregarFunil(),
-      carregarResumo(),
+      carregarResumo(periodo ?? undefined),
     ]);
-  }, [carregar, carregarFunil, carregarResumo, page]);
+  }, [carregar, carregarFunil, carregarResumo, page, periodo, filtrosTabela]);
 
   useEffect(() => {
     carregarTudo();
@@ -140,6 +148,14 @@ export default function ClientesPage() {
             Nova interação
           </button>
 
+          <PeriodoSelector
+            periodo={periodo}
+            onChange={(p) => {
+              setPeriodo(p);
+              setPage(1);
+            }}
+          />
+
           <button
             onClick={carregarTudo}
             className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
@@ -151,7 +167,7 @@ export default function ClientesPage() {
       </div>
 
       {/* KPIs */}
-      <ResumoCards resumo={resumo} loading={resumoLoading} />
+      <ResumoCards resumo={resumo} loading={resumoLoading} periodoAtivo={!!periodo} />
 
       {/* Conteúdo principal */}
       {viewMode === "lista" ? (
@@ -165,11 +181,15 @@ export default function ClientesPage() {
           onEditar={handleEditar}
           onDeletar={handleDeletar}
           onNovaInteracao={(c) => abrirInteracaoRapida({ id: c.id, nome: c.nome })}
-          onFiltrar={(filtros) => carregar({ ...filtros, page: 1 })}
+          onFiltrar={(filtros) => {
+            setFiltrosTabela(filtros);
+            setPage(1);
+            carregar({ ...filtros, ...(periodo ?? {}), page: 1 });
+          }}
           pagination={{ count: pagination.count, page }}
           onPageChange={(p) => {
             setPage(p);
-            carregar({ page: p });
+            carregar({ ...filtrosTabela, ...(periodo ?? {}), page: p });
           }}
         />
       ) : (

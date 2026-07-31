@@ -1242,6 +1242,50 @@ class TestAgregadosVendaCliente:
         assert cliente_maria.valor_a_receber == Decimal("0")
         assert cliente_maria.valor_total_compras == Decimal("500.00")
 
+    def test_venda_a_vista_conta_em_recebido(self, client_a, cliente_maria):
+        """
+        BUG do painel de receita: venda À VISTA (nao_se_aplica) é dinheiro que já
+        entrou → deve contar em RECEBIDO. Antes ficava só no Total e o painel
+        "Recebido" mostrava R$ 0,00, quebrando Total = Recebido + A receber.
+        """
+        self._venda(client_a, cliente_maria.id, "400.00", "nao_se_aplica")
+        cliente_maria.refresh_from_db()
+        assert cliente_maria.valor_total_compras == Decimal("400.00")
+        assert cliente_maria.valor_recebido == Decimal("400.00")   # ← era 0 (bug)
+        assert cliente_maria.valor_a_receber == Decimal("0")
+        # Invariante restaurada: Total = Recebido + A receber.
+        assert cliente_maria.valor_total_compras == (
+            cliente_maria.valor_recebido + cliente_maria.valor_a_receber
+        )
+
+    def test_qualquer_status_conta_no_total(self, client_a, cliente_maria):
+        """valor_total_compras soma TODAS as vendas (pago + pendente + à vista)."""
+        self._venda(client_a, cliente_maria.id, "100.00", "pago")
+        self._venda(client_a, cliente_maria.id, "200.00", "pendente")
+        self._venda(client_a, cliente_maria.id, "300.00", "nao_se_aplica")
+        cliente_maria.refresh_from_db()
+        assert cliente_maria.valor_total_compras == Decimal("600.00")
+        # Recebido = pago (100) + à vista (300); A receber = pendente (200).
+        assert cliente_maria.valor_recebido == Decimal("400.00")
+        assert cliente_maria.valor_a_receber == Decimal("200.00")
+
+    def test_criar_editar_apagar_venda_atualiza_total(self, client_a, cliente_maria):
+        """Total reflete criar → editar → apagar de uma venda."""
+        iid = self._venda(client_a, cliente_maria.id, "500.00", "pago")
+        cliente_maria.refresh_from_db()
+        assert cliente_maria.valor_total_compras == Decimal("500.00")
+        # Editar o valor → total reflete
+        client_a.patch(
+            f"/api/clientes/{cliente_maria.id}/interacoes/{iid}/",
+            {"valor": "800.00"}, format="json",
+        )
+        cliente_maria.refresh_from_db()
+        assert cliente_maria.valor_total_compras == Decimal("800.00")
+        # Apagar → total diminui
+        client_a.delete(f"/api/clientes/{cliente_maria.id}/interacoes/{iid}/")
+        cliente_maria.refresh_from_db()
+        assert cliente_maria.valor_total_compras == Decimal("0")
+
     def test_cancelar_pagamento_exclui_do_total(self, client_a, cliente_maria):
         iid = self._venda(client_a, cliente_maria.id, "500.00", "pendente")
         self._venda(client_a, cliente_maria.id, "100.00", "pago")
@@ -1561,3 +1605,101 @@ class TestFollowupAgenda:
         cliente_maria.save(update_fields=["proximo_followup"])
         r = client_b.post(f"/api/clientes/{cliente_maria.id}/criar-evento-followup/", {}, format="json")
         assert r.status_code == 404
+
+
+# ─── Testes: filtros CRM por período (mês/ano) — Parte 1 ──────────────────────
+
+from datetime import datetime  # noqa: E402
+
+
+def _set_criado_em(cliente, ano, mes, dia=15):
+    """criado_em é auto_now_add — ajusta via update para simular o período."""
+    Cliente.objects.filter(id=cliente.id).update(
+        criado_em=timezone.make_aware(datetime(ano, mes, dia, 12, 0))
+    )
+
+
+class TestFiltroPeriodoCRM:
+
+    def _novo_cliente(self, empresa, usuario, nome, ano, mes):
+        c = Cliente.objects.create(empresa=empresa, nome=nome, criado_por=usuario)
+        _set_criado_em(c, ano, mes)
+        return c
+
+    def test_lista_filtra_por_mes_ano(self, client_a, empresa_a, usuario_a):
+        self._novo_cliente(empresa_a, usuario_a, "Julho A", 2026, 7)
+        self._novo_cliente(empresa_a, usuario_a, "Julho B", 2026, 7)
+        self._novo_cliente(empresa_a, usuario_a, "Junho C", 2026, 6)
+
+        resp = client_a.get("/api/clientes/?mes=7&ano=2026")
+        assert resp.status_code == 200
+        nomes = [c["nome"] for c in resp.json()["data"]]
+        assert set(nomes) == {"Julho A", "Julho B"}
+        assert "Junho C" not in nomes
+
+    def test_lista_sem_params_retorna_todos(self, client_a, empresa_a, usuario_a):
+        self._novo_cliente(empresa_a, usuario_a, "Julho A", 2026, 7)
+        self._novo_cliente(empresa_a, usuario_a, "Junho C", 2026, 6)
+        resp = client_a.get("/api/clientes/")
+        assert resp.status_code == 200
+        assert resp.json()["pagination"]["count"] == 2
+
+    def test_resumo_periodo_comparativo(self, client_a, empresa_a, usuario_a):
+        # Julho: 3 novos · Junho: 1 novo → diff +2 vs junho
+        for i in range(3):
+            self._novo_cliente(empresa_a, usuario_a, f"Jul{i}", 2026, 7)
+        self._novo_cliente(empresa_a, usuario_a, "Jun0", 2026, 6)
+
+        resp = client_a.get("/api/clientes/resumo/?mes=7&ano=2026")
+        assert resp.status_code == 200
+        data = resp.json()["data"]
+        assert data["novos_no_periodo"] == 3
+        assert data["periodo"]["label"] == "julho 2026"
+        assert data["comparativo"]["novos_mes_anterior"] == 1
+        assert data["comparativo"]["novos_diff"] == 2
+        assert data["comparativo"]["mes_anterior_label"] == "junho"
+
+    def test_resumo_periodo_valor_gerado(self, client_a, empresa_a, usuario_a, cliente_maria):
+        # Venda em julho conta no valor gerado do período.
+        venda = InteracaoCliente.objects.create(
+            empresa=empresa_a, cliente=cliente_maria, criado_por=usuario_a,
+            tipo="venda", titulo="V", valor=Decimal("900.00"),
+            status_pagamento="pago",
+            data_interacao=timezone.make_aware(datetime(2026, 7, 10, 12, 0)),
+        )
+        resp = client_a.get("/api/clientes/resumo/?mes=7&ano=2026")
+        data = resp.json()["data"]
+        assert Decimal(str(data["valor_gerado_no_periodo"])) == Decimal("900.00")
+
+    def test_resumo_mes_sem_dados_zeros(self, client_a, empresa_a, usuario_a):
+        resp = client_a.get("/api/clientes/resumo/?mes=3&ano=2020")
+        assert resp.status_code == 200
+        data = resp.json()["data"]
+        assert data["novos_no_periodo"] == 0
+        assert Decimal(str(data["valor_gerado_no_periodo"])) == Decimal("0")
+        assert data["comparativo"]["novos_diff"] == 0
+
+    def test_periodo_multitenant(self, client_a, client_b, empresa_a, empresa_b,
+                                 usuario_a, usuario_b):
+        self._novo_cliente(empresa_a, usuario_a, "Alpha Julho", 2026, 7)
+        self._novo_cliente(empresa_b, usuario_b, "Beta Julho", 2026, 7)
+        # A empresa A só vê o cliente dela no período.
+        resp = client_a.get("/api/clientes/?mes=7&ano=2026")
+        nomes = [c["nome"] for c in resp.json()["data"]]
+        assert nomes == ["Alpha Julho"]
+
+    def test_interacoes_filtra_por_periodo(self, client_a, empresa_a, usuario_a, cliente_maria):
+        InteracaoCliente.objects.create(
+            empresa=empresa_a, cliente=cliente_maria, criado_por=usuario_a,
+            tipo="ligacao", titulo="Jul",
+            data_interacao=timezone.make_aware(datetime(2026, 7, 5, 12, 0)),
+        )
+        InteracaoCliente.objects.create(
+            empresa=empresa_a, cliente=cliente_maria, criado_por=usuario_a,
+            tipo="ligacao", titulo="Jun",
+            data_interacao=timezone.make_aware(datetime(2026, 6, 5, 12, 0)),
+        )
+        resp = client_a.get(f"/api/clientes/{cliente_maria.id}/interacoes/?mes=7&ano=2026")
+        assert resp.status_code == 200
+        titulos = [i["titulo"] for i in resp.json()["data"]]
+        assert "Jul" in titulos and "Jun" not in titulos

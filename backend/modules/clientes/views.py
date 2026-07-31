@@ -39,6 +39,9 @@ class ClienteListCreateView(EmpresaQuerySetMixin, APIView):
             "busca": request.query_params.get("busca"),
             "tags": request.query_params.get("tags"),
             "tem_followup_atrasado": request.query_params.get("followup_atrasado"),
+            # Período por data de cadastro (opcional; retrocompatível).
+            "mes": request.query_params.get("mes"),
+            "ano": request.query_params.get("ano"),
         }
         # Remove filtros nulos
         filtros = {k: v for k, v in filtros.items() if v is not None}
@@ -194,10 +197,25 @@ class ClienteResumoView(EmpresaQuerySetMixin, APIView):
     permission_classes = [IsAuthenticated, IsEmpresaMember]
 
     def get(self, request):
-        resumo = ClienteService.obter_resumo(self.get_empresa_id())
-        serializer = ResumoClientesSerializer(resumo)
+        def _int(v):
+            try:
+                return int(v)
+            except (TypeError, ValueError):
+                return None
+
+        mes = _int(request.query_params.get("mes"))
+        ano = _int(request.query_params.get("ano"))
+        resumo = ClienteService.obter_resumo(self.get_empresa_id(), mes, ano)
+
+        data = dict(ResumoClientesSerializer(resumo).data)
+        # Campos do período (quando mes/ano informados) não estão no serializer
+        # base — anexa direto do resumo para não quebrar a retrocompatibilidade.
+        for chave in ("periodo", "novos_no_periodo", "valor_gerado_no_periodo", "comparativo"):
+            if chave in resumo:
+                data[chave] = resumo[chave]
+
         return success_response(
-            data=serializer.data,
+            data=data,
             message="Resumo carregado com sucesso.",
         )
 
@@ -238,6 +256,8 @@ class InteracaoListCreateView(EmpresaQuerySetMixin, APIView):
             "data_inicio": request.query_params.get("data_inicio"),
             "data_fim": request.query_params.get("data_fim"),
             "estoque": request.query_params.get("estoque"),
+            "mes": request.query_params.get("mes"),
+            "ano": request.query_params.get("ano"),
         }
         filtros = {k: v for k, v in filtros.items() if v is not None}
 

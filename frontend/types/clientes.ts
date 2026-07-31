@@ -172,6 +172,15 @@ export interface ResumoClientes {
   followups_atrasados: number;
   por_status: Record<StatusFunil, number>;
   por_origem: Record<string, number>;
+  // Presentes só quando há filtro de período (mes/ano):
+  periodo?: { mes: number; ano: number; label: string };
+  novos_no_periodo?: number;
+  valor_gerado_no_periodo?: string;
+  comparativo?: {
+    novos_mes_anterior: number;
+    novos_diff: number;
+    mes_anterior_label: string;
+  };
 }
 
 // ─── Labels de exibição ──────────────────────────────────────────────────────

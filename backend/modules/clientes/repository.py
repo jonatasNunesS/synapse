@@ -6,6 +6,29 @@ from django.utils import timezone
 from .models import Cliente, InteracaoCliente
 from .serializers import ClienteFunilCardSerializer
 
+# Nomes dos meses em pt-BR (índice 1..12) para rótulos e comparativos.
+MESES_PT = [
+    "", "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+    "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+]
+
+
+def _parse_int(valor):
+    """Converte para int com segurança; retorna None se vazio/inválido."""
+    if valor in (None, ""):
+        return None
+    try:
+        return int(valor)
+    except (TypeError, ValueError):
+        return None
+
+
+def _mes_anterior(mes: int, ano: int) -> tuple:
+    """Mês/ano imediatamente anterior (vira o ano em janeiro)."""
+    if mes == 1:
+        return 12, ano - 1
+    return mes - 1, ano
+
 
 class ClienteRepository:
     """Camada de acesso a dados para o módulo de Clientes."""
@@ -52,6 +75,15 @@ class ClienteRepository:
         followup_atrasado = filtros.get("tem_followup_atrasado")
         if followup_atrasado in (True, "true", "1"):
             qs = qs.filter(proximo_followup__lt=date.today())
+
+        # Filtro de período por data de cadastro (mês/ano). Independentes:
+        # ?ano=2026 filtra o ano; ?mes=7 filtra o mês; juntos, o mês/ano exato.
+        ano = _parse_int(filtros.get("ano"))
+        mes = _parse_int(filtros.get("mes"))
+        if ano:
+            qs = qs.filter(criado_em__year=ano)
+        if mes:
+            qs = qs.filter(criado_em__month=mes)
 
         return qs.select_related("criado_por").order_by("-criado_em")
 
@@ -138,8 +170,60 @@ class ClienteRepository:
         return resultado
 
     @staticmethod
-    def calcular_resumo(empresa_id) -> dict:
-        """Calcula KPIs do CRM para a empresa."""
+    def _novos_no_periodo(empresa_id, mes: int, ano: int) -> int:
+        return Cliente.objects.filter(
+            empresa_id=empresa_id, criado_em__year=ano, criado_em__month=mes
+        ).count()
+
+    @staticmethod
+    def _valor_gerado_no_periodo(empresa_id, mes: int, ano: int):
+        """Receita gerada no mês = soma das vendas (não canceladas) do período."""
+        return (
+            InteracaoCliente.objects.filter(
+                empresa_id=empresa_id,
+                tipo="venda",
+                data_interacao__year=ano,
+                data_interacao__month=mes,
+            )
+            .exclude(status_pagamento="cancelado")
+            .aggregate(s=Sum("valor"))["s"]
+            or 0
+        )
+
+    @staticmethod
+    def resumo_periodo(empresa_id, mes: int, ano: int) -> dict:
+        """
+        KPIs do período + comparativo automático com o mês anterior.
+        followups_atrasados NÃO entra aqui (é sempre "hoje", vem do resumo base).
+        """
+        novos = ClienteRepository._novos_no_periodo(empresa_id, mes, ano)
+        valor = ClienteRepository._valor_gerado_no_periodo(empresa_id, mes, ano)
+
+        mes_ant, ano_ant = _mes_anterior(mes, ano)
+        novos_ant = ClienteRepository._novos_no_periodo(empresa_id, mes_ant, ano_ant)
+
+        return {
+            "periodo": {
+                "mes": mes,
+                "ano": ano,
+                "label": f"{MESES_PT[mes]} {ano}",
+            },
+            "novos_no_periodo": novos,
+            "valor_gerado_no_periodo": valor,
+            "comparativo": {
+                "novos_mes_anterior": novos_ant,
+                "novos_diff": novos - novos_ant,
+                "mes_anterior_label": MESES_PT[mes_ant],
+            },
+        }
+
+    @staticmethod
+    def calcular_resumo(empresa_id, mes: int = None, ano: int = None) -> dict:
+        """
+        KPIs do CRM para a empresa. Se mes/ano forem informados, adiciona os
+        KPIs do período (novos_no_periodo, valor_gerado_no_periodo) e o
+        comparativo com o mês anterior — mantendo os campos base (retrocompatível).
+        """
         hoje = date.today()
         inicio_mes = hoje.replace(day=1)
 
@@ -169,7 +253,7 @@ class ClienteRepository:
             item["status_funil"]: item["count"] for item in por_status_qs
         }
 
-        return {
+        resumo = {
             "total_clientes": total_clientes,
             "clientes_ativos": clientes_ativos,
             "novos_este_mes": novos_este_mes,
@@ -178,6 +262,12 @@ class ClienteRepository:
             "followups_atrasados": followups_atrasados,
             "clientes_por_status": clientes_por_status,
         }
+
+        # Período informado → anexa KPIs do mês + comparativo com o anterior.
+        if mes and ano:
+            resumo.update(ClienteRepository.resumo_periodo(empresa_id, mes, ano))
+
+        return resumo
 
     @staticmethod
     def listar_followups_proximos(empresa_id, dias: int = 3):
@@ -237,9 +327,14 @@ class ClienteRepository:
         reais (fonte única da verdade), em qualquer operação (criar/editar/
         apagar). Mantém tudo consistente sem lógica incremental.
 
-        - valor_total_compras = pago + pendente (canceladas NÃO contam).
-        - valor_recebido      = vendas pagas.
-        - valor_a_receber     = vendas pendentes.
+        - valor_total_compras = recebido + a_receber (canceladas NÃO contam).
+        - valor_recebido      = vendas pagas + vendas à vista (nao_se_aplica).
+        - valor_a_receber     = vendas pendentes (fiado em aberto).
+
+        Venda "nao_se_aplica" é venda à vista (fluxo rápido, sem fiado): o
+        dinheiro já entrou, então conta como RECEBIDO. Sem isso, uma venda à
+        vista aparecia no Total mas com Recebido = R$ 0,00 (o bug do painel de
+        receita) e o Total deixava de bater com Recebido + A receber.
         """
         vendas = InteracaoCliente.objects.filter(
             cliente_id=cliente_id, tipo="venda"
@@ -250,9 +345,9 @@ class ClienteRepository:
             qtd=Count("id"),
             ultima=Max("data_interacao"),
         )
-        recebido = vendas.filter(status_pagamento="pago").aggregate(
-            s=Sum("valor")
-        )["s"] or 0
+        recebido = vendas.filter(
+            status_pagamento__in=["pago", "nao_se_aplica"]
+        ).aggregate(s=Sum("valor"))["s"] or 0
         a_receber = vendas.filter(status_pagamento="pendente").aggregate(
             s=Sum("valor")
         )["s"] or 0
@@ -286,6 +381,14 @@ class ClienteRepository:
         data_fim = filtros.get("data_fim")
         if data_fim:
             qs = qs.filter(data_interacao__date__lte=data_fim)
+
+        # Filtro de período (mês/ano) pela data da interação.
+        ano = _parse_int(filtros.get("ano"))
+        mes = _parse_int(filtros.get("mes"))
+        if ano:
+            qs = qs.filter(data_interacao__year=ano)
+        if mes:
+            qs = qs.filter(data_interacao__month=mes)
 
         # Filtro de controle de estoque: só vendas descontadas / não descontadas.
         # "nao_descontados" = venda com valor mas sem movimentação vinculada.

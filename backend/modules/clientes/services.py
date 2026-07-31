@@ -76,14 +76,15 @@ class ClienteService:
     # ─── Resumo e Funil ───────────────────────────────────────────────────────
 
     @staticmethod
-    def obter_resumo(empresa_id) -> dict:
-        """Retorna KPIs do CRM com cache de 5 minutos."""
-        cache_key = build_cache_key(empresa_id, "clientes", "resumo")
+    def obter_resumo(empresa_id, mes: int = None, ano: int = None) -> dict:
+        """Retorna KPIs do CRM com cache de 5 minutos (chave inclui o período)."""
+        sufixo = f"resumo:{mes or 0}:{ano or 0}"
+        cache_key = build_cache_key(empresa_id, "clientes", sufixo)
         cached = get_cached(cache_key)
         if cached is not None:
             return cached
 
-        resumo = ClienteRepository.calcular_resumo(empresa_id)
+        resumo = ClienteRepository.calcular_resumo(empresa_id, mes, ano)
         set_cached(cache_key, resumo, ttl=ClienteService.TTL_RESUMO)
         return resumo
 
