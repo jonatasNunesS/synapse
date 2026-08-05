@@ -5,10 +5,16 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff, Loader2, Zap } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Loader2, Zap } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { getErrorMessage } from "@/lib/api";
 import { SEGMENTOS } from "@/types/auth";
+import type { ModuloOpcional } from "@/types/auth";
+import {
+  PERGUNTAS,
+  PerguntasModulos,
+  type RespostasModulos,
+} from "@/components/auth/PerguntasModulos";
 
 // ── Schema de Validação ──────────────────────────────────────
 
@@ -38,30 +44,66 @@ const registroSchema = z
 
 type RegistroForm = z.infer<typeof registroSchema>;
 
+const CAMPOS_ETAPA_1: (keyof RegistroForm)[] = [
+  "nome_usuario",
+  "email",
+  "senha",
+  "confirmar_senha",
+];
+const CAMPOS_ETAPA_2: (keyof RegistroForm)[] = ["nome_empresa", "segmento"];
+const TOTAL_ETAPAS = 3;
+
 // ════════════════════════════════════════════════════════════
-// COMPONENTE
+// COMPONENTE — cadastro em 3 etapas
 // ════════════════════════════════════════════════════════════
 
 export default function RegistroPage() {
   const { registro } = useAuth();
+  const [etapa, setEtapa] = useState<1 | 2 | 3>(1);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [respostas, setRespostas] = useState<RespostasModulos>({});
 
   const {
     register,
     handleSubmit,
+    trigger,
     formState: { errors },
   } = useForm<RegistroForm>({
     resolver: zodResolver(registroSchema),
+    mode: "onTouched",
   });
 
+  const todasRespondidas = PERGUNTAS.every((p) => respostas[p.modulo] !== undefined);
+
+  const avancar = async () => {
+    setServerError(null);
+    const campos = etapa === 1 ? CAMPOS_ETAPA_1 : CAMPOS_ETAPA_2;
+    const ok = await trigger(campos);
+    if (ok) setEtapa((e) => (e === 1 ? 2 : 3));
+  };
+
+  const responder = (modulo: ModuloOpcional, valor: boolean) =>
+    setRespostas((r) => ({ ...r, [modulo]: valor }));
+
   const onSubmit = async (data: RegistroForm) => {
+    // Trava: só envia com as 6 perguntas respondidas.
+    if (!todasRespondidas) return;
     setServerError(null);
     setIsSubmitting(true);
     try {
-      await registro(data);
+      await registro({
+        ...data,
+        // As respostas viram a configuração de módulos da empresa.
+        modulo_estoque: respostas.estoque,
+        modulo_fornecedores: respostas.fornecedores,
+        modulo_projetos: respostas.projetos,
+        modulo_agenda: respostas.agenda,
+        modulo_equipe: respostas.equipe,
+        modulo_documentos: respostas.documentos,
+      });
     } catch (err) {
       setServerError(getErrorMessage(err));
     } finally {
@@ -73,6 +115,15 @@ export default function RegistroPage() {
     `w-full px-3.5 py-2.5 rounded-lg bg-slate-900/60 border text-white placeholder-slate-500 text-sm
     focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-colors
     ${hasError ? "border-red-500/60" : "border-slate-700/60 focus:border-violet-500/60"}`;
+
+  const TITULOS: Record<number, { titulo: string; sub: string }> = {
+    1: { titulo: "Sua conta", sub: "Comece gratuitamente. Sem cartão de crédito." },
+    2: { titulo: "Sua empresa", sub: "Como devemos chamar o seu negócio?" },
+    3: {
+      titulo: "Como você trabalha",
+      sub: "Suas respostas configuram o Synapse pro seu negócio.",
+    },
+  };
 
   return (
     <div className="w-full max-w-lg">
@@ -86,10 +137,33 @@ export default function RegistroPage() {
 
       {/* Card */}
       <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
-        <h1 className="text-xl font-semibold text-white mb-1">Criar sua conta</h1>
-        <p className="text-sm text-slate-400 mb-6">
-          Comece gratuitamente. Sem cartão de crédito.
-        </p>
+        {/* Progresso */}
+        <div className="mb-5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-violet-400">
+              Etapa {etapa} de {TOTAL_ETAPAS}
+            </span>
+            {etapa > 1 && (
+              <button
+                type="button"
+                onClick={() => setEtapa((e) => (e === 3 ? 2 : 1))}
+                className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 transition-colors"
+              >
+                <ArrowLeft className="w-3 h-3" />
+                Voltar
+              </button>
+            )}
+          </div>
+          <div className="h-1.5 w-full rounded-full bg-slate-700/60 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-violet-600 transition-all duration-300"
+              style={{ width: `${(etapa / TOTAL_ETAPAS) * 100}%` }}
+            />
+          </div>
+        </div>
+
+        <h1 className="text-xl font-semibold text-white mb-1">{TITULOS[etapa].titulo}</h1>
+        <p className="text-sm text-slate-400 mb-6">{TITULOS[etapa].sub}</p>
 
         {serverError && (
           <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
@@ -98,12 +172,8 @@ export default function RegistroPage() {
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Dados pessoais */}
-          <div className="space-y-4">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Dados pessoais
-            </p>
-
+          {/* ── ETAPA 1: Sua conta ───────────────────────────── */}
+          <div className={etapa === 1 ? "space-y-4" : "hidden"}>
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1.5">
                 Seu nome completo
@@ -153,6 +223,7 @@ export default function RegistroPage() {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                    aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -178,6 +249,7 @@ export default function RegistroPage() {
                     type="button"
                     onClick={() => setShowConfirm(!showConfirm)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                    aria-label={showConfirm ? "Esconder senha" : "Mostrar senha"}
                   >
                     {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -189,12 +261,8 @@ export default function RegistroPage() {
             </div>
           </div>
 
-          {/* Divisor */}
-          <div className="border-t border-slate-700/50 pt-4 space-y-4">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Sua empresa
-            </p>
-
+          {/* ── ETAPA 2: Sua empresa ─────────────────────────── */}
+          <div className={etapa === 2 ? "space-y-4" : "hidden"}>
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1.5">
                 Nome da empresa
@@ -234,22 +302,44 @@ export default function RegistroPage() {
             </div>
           </div>
 
-          {/* Botão */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full py-2.5 px-4 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:bg-violet-600/50
-              text-white font-medium text-sm transition-colors flex items-center justify-center gap-2 mt-2"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Criando conta...
-              </>
-            ) : (
-              "Criar conta grátis"
+          {/* ── ETAPA 3: Como você trabalha ──────────────────── */}
+          <div className={etapa === 3 ? "block" : "hidden"}>
+            <PerguntasModulos respostas={respostas} onResponder={responder} />
+            {!todasRespondidas && (
+              <p className="mt-4 text-xs text-slate-500">
+                Responda todas as perguntas para continuar.
+              </p>
             )}
-          </button>
+          </div>
+
+          {/* ── Ações ────────────────────────────────────────── */}
+          {etapa < 3 ? (
+            <button
+              type="button"
+              onClick={avancar}
+              className="w-full py-2.5 px-4 rounded-lg bg-violet-600 hover:bg-violet-500
+                text-white font-medium text-sm transition-colors mt-2"
+            >
+              Continuar
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={isSubmitting || !todasRespondidas}
+              className="w-full py-2.5 px-4 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:bg-violet-600/40
+                disabled:cursor-not-allowed text-white font-medium text-sm transition-colors
+                flex items-center justify-center gap-2 mt-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Criando conta...
+                </>
+              ) : (
+                "Criar conta grátis"
+              )}
+            </button>
+          )}
 
           <p className="text-xs text-slate-500 text-center">
             Ao criar uma conta, você concorda com nossos{" "}

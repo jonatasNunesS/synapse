@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { Toaster } from "sonner";
+import { usePathname, useRouter } from "next/navigation";
+import { Toaster, toast } from "sonner";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { useAppStore } from "@/store/useAppStore";
 import { useAuth } from "@/hooks/useAuth";
+import { useModulos, MODULO_LABEL } from "@/hooks/useModulos";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { EmpresaSuspensaAviso } from "@/components/layout/EmpresaSuspensaAviso";
@@ -17,6 +19,9 @@ export default function DashboardLayout({
 }) {
   const { sidebarOpen } = useAppStore();
   const { carregarUsuario, loading, autenticado, empresa } = useAuth();
+  const { rotaPermitida, moduloDaRota } = useModulos();
+  const pathname = usePathname();
+  const router = useRouter();
 
   // Carrega dados do usuário ao montar o layout (se ainda não carregado)
   useEffect(() => {
@@ -24,6 +29,18 @@ export default function DashboardLayout({
       carregarUsuario();
     }
   }, [autenticado, carregarUsuario]);
+
+  // Guard de rota: módulo desligado → volta pro dashboard com aviso.
+  // Só age depois do usuário carregado (antes disso tudo é considerado ativo).
+  useEffect(() => {
+    if (!autenticado || rotaPermitida(pathname)) return;
+    const modulo = moduloDaRota(pathname);
+    toast.error(
+      modulo ? `Módulo ${MODULO_LABEL[modulo]} desativado` : "Módulo desativado",
+      { description: "Ative em Configurações para voltar a usar." }
+    );
+    router.replace("/");
+  }, [autenticado, pathname, rotaPermitida, moduloDaRota, router]);
 
   // Tela de loading enquanto busca o usuário
   if (loading && !autenticado) {

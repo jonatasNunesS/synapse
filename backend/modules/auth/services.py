@@ -38,9 +38,20 @@ class AuthService:
         Returns:
             Tupla (empresa, usuario).
         """
+        # Etapa 3 do cadastro: as respostas ligam/desligam os módulos opcionais.
+        # Ausentes → default True (empresa nasce com tudo ligado, como antes).
+        from shared.modulos import MODULOS_OPCIONAIS
+
+        modulos = {
+            f"modulo_{nome}": dados[f"modulo_{nome}"]
+            for nome in MODULOS_OPCIONAIS
+            if f"modulo_{nome}" in dados
+        }
+
         empresa = Empresa.objects.create(
             nome=dados["nome_empresa"],
             segmento=dados["segmento"],
+            **modulos,
         )
 
         usuario = CustomUser.objects.create_user(
@@ -178,3 +189,34 @@ class AuthService:
         reset_token.save(update_fields=["usado"])
 
         logger.info("Senha redefinida", extra={"email": usuario.email})
+
+    # ── Módulos configuráveis ────────────────────────────────
+
+    @staticmethod
+    def contar_registros_por_modulo(empresa_id) -> dict:
+        """
+        Quantos registros a empresa já tem em cada módulo opcional. Usado no
+        aviso de desativação ("Você tem 47 produtos cadastrados no Estoque").
+        Desativar não apaga nada — a contagem é só informativa.
+        """
+        from modules.agenda.models import Evento
+        from modules.documentos.models import Documento
+        from modules.equipe.models import MembroEquipe
+        from modules.estoque.models import Produto
+        from modules.fornecedores.models import Fornecedor
+        from modules.projetos.models import Projeto
+
+        def _conta(model):
+            try:
+                return model.objects.filter(empresa_id=empresa_id).count()
+            except Exception:  # pragma: no cover — defensivo
+                return 0
+
+        return {
+            "estoque": _conta(Produto),
+            "fornecedores": _conta(Fornecedor),
+            "projetos": _conta(Projeto),
+            "agenda": _conta(Evento),
+            "equipe": _conta(MembroEquipe),
+            "documentos": _conta(Documento),
+        }

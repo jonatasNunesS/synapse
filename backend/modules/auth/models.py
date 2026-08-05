@@ -72,6 +72,17 @@ class Empresa(models.Model):
     plano_validade = models.DateField(null=True, blank=True)
     ativo = models.BooleanField(default=True)
 
+    # ── Módulos opcionais ────────────────────────────────────────────────
+    # Cada empresa escolhe o que usa (no cadastro e depois em Configurações).
+    # Default True: empresas já existentes seguem com tudo ligado — desligar
+    # apenas OCULTA o módulo, nunca apaga dados.
+    modulo_estoque = models.BooleanField(default=True)
+    modulo_fornecedores = models.BooleanField(default=True)
+    modulo_projetos = models.BooleanField(default=True)
+    modulo_agenda = models.BooleanField(default=True)
+    modulo_equipe = models.BooleanField(default=True)
+    modulo_documentos = models.BooleanField(default=True)
+
     # Suspensão administrativa (painel Synapse). Independente de `ativo`: uma
     # empresa suspensa continua logando, mas vê a tela de aviso e não opera.
     status = models.CharField(

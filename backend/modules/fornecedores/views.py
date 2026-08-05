@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 
 from shared.authentication import CookieJWTAuthentication
 from shared.permissions import IsEmpresaMember
+from shared.modulos import ModuloAtivo
 from shared.pagination import StandardPagination
 from shared.responses import success_response, created_response, no_content_response, error_response
 from shared.exceptions import ResourceNotFound, BusinessRuleViolation
@@ -32,7 +33,8 @@ logger = logging.getLogger(__name__)
 
 class FornecedorResumoView(APIView):
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsEmpresaMember]
+    permission_classes = [IsEmpresaMember, ModuloAtivo]
+    modulo = "fornecedores"
 
     def get(self, request):
         empresa_id = request.user.empresa_id
@@ -45,7 +47,8 @@ class FornecedorResumoView(APIView):
 
 class FornecedorRankingView(APIView):
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsEmpresaMember]
+    permission_classes = [IsEmpresaMember, ModuloAtivo]
+    modulo = "fornecedores"
 
     def get(self, request):
         empresa_id = request.user.empresa_id
@@ -58,7 +61,8 @@ class FornecedorRankingView(APIView):
 
 class CategoriaFornecedorListCreateView(APIView):
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsEmpresaMember]
+    permission_classes = [IsEmpresaMember, ModuloAtivo]
+    modulo = "fornecedores"
 
     def get(self, request):
         empresa_id = request.user.empresa_id
@@ -87,7 +91,8 @@ class CategoriaFornecedorListCreateView(APIView):
 
 class CategoriaFornecedorDetailView(APIView):
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsEmpresaMember]
+    permission_classes = [IsEmpresaMember, ModuloAtivo]
+    modulo = "fornecedores"
 
     def get(self, request, pk):
         try:
@@ -130,7 +135,8 @@ class CategoriaFornecedorDetailView(APIView):
 
 class FornecedorListCreateView(APIView):
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsEmpresaMember]
+    permission_classes = [IsEmpresaMember, ModuloAtivo]
+    modulo = "fornecedores"
 
     def get(self, request):
         empresa_id = request.user.empresa_id
@@ -172,7 +178,8 @@ class FornecedorListCreateView(APIView):
 
 class FornecedorDetailView(APIView):
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsEmpresaMember]
+    permission_classes = [IsEmpresaMember, ModuloAtivo]
+    modulo = "fornecedores"
 
     def get(self, request, pk):
         try:
@@ -213,7 +220,8 @@ class FornecedorDetailView(APIView):
 
 class FornecedorAvaliacaoView(APIView):
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsEmpresaMember]
+    permission_classes = [IsEmpresaMember, ModuloAtivo]
+    modulo = "fornecedores"
 
     def post(self, request, pk):
         serializer = AvaliacaoFornecedorSerializer(data=request.data)
@@ -240,7 +248,8 @@ class FornecedorAvaliacaoView(APIView):
 
 class CompraFornecedorListCreateView(APIView):
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsEmpresaMember]
+    permission_classes = [IsEmpresaMember, ModuloAtivo]
+    modulo = "fornecedores"
 
     def get(self, request, fornecedor_pk):
         empresa_id = request.user.empresa_id
@@ -290,7 +299,8 @@ class CompraFornecedorDetailView(APIView):
     DELETE /api/fornecedores/{fornecedor_pk}/compras/{pk}/  — excluir
     """
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsEmpresaMember]
+    permission_classes = [IsEmpresaMember, ModuloAtivo]
+    modulo = "fornecedores"
 
     def get(self, request, fornecedor_pk, pk):
         empresa_id = request.user.empresa_id
@@ -341,7 +351,8 @@ class CompraAdicionarEstoqueView(APIView):
     vinculada a uma movimentação é recusada (COMPRA_JA_NO_ESTOQUE).
     """
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsEmpresaMember]
+    permission_classes = [IsEmpresaMember, ModuloAtivo]
+    modulo = "fornecedores"
 
     def post(self, request, pk):
         from decimal import Decimal, InvalidOperation
@@ -384,7 +395,8 @@ class CompraRegistrarFinanceiroView(APIView):
     vinculada é recusada (COMPRA_JA_COM_LANCAMENTO).
     """
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsEmpresaMember]
+    permission_classes = [IsEmpresaMember, ModuloAtivo]
+    modulo = "fornecedores"
 
     def post(self, request, pk):
         from modules.financeiro.serializers import LancamentoSerializer
@@ -413,7 +425,8 @@ class CompraApagarComAjustesView(APIView):
     Estorna estoque e/ou ajusta o financeiro, depois apaga a compra.
     """
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsEmpresaMember]
+    permission_classes = [IsEmpresaMember, ModuloAtivo]
+    modulo = "fornecedores"
 
     def post(self, request, pk):
         estornar_estoque = bool(request.data.get("estornar_estoque", False))

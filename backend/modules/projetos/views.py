@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from shared.authentication import CookieJWTAuthentication
 from shared.pagination import StandardPagination
 from shared.permissions import EmpresaQuerySetMixin, IsEmpresaMember
+from shared.modulos import ModuloAtivo
 from shared.responses import (
     created_response,
     error_response,
@@ -44,7 +45,8 @@ class ProjetoListCreateView(EmpresaQuerySetMixin, APIView):
     """GET /api/projetos/ — POST /api/projetos/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "projetos"
 
     def get(self, request):
         empresa_id = self.get_empresa_id()
@@ -85,7 +87,8 @@ class ProjetoDetailView(EmpresaQuerySetMixin, APIView):
     """GET/PUT/PATCH/DELETE /api/projetos/{id}/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "projetos"
 
     def get(self, request, pk):
         empresa_id = self.get_empresa_id()
@@ -138,7 +141,8 @@ class ProjetoKanbanView(EmpresaQuerySetMixin, APIView):
     """GET /api/projetos/{id}/kanban/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "projetos"
 
     def get(self, request, pk):
         empresa_id = self.get_empresa_id()
@@ -159,7 +163,8 @@ class ProjetoTarefasView(EmpresaQuerySetMixin, APIView):
     """GET /api/projetos/{id}/tarefas/ — POST /api/projetos/{id}/tarefas/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "projetos"
 
     def get(self, request, pk):
         empresa_id = self.get_empresa_id()
@@ -205,7 +210,8 @@ class ProjetoResumoView(EmpresaQuerySetMixin, APIView):
     """GET /api/projetos/resumo/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "projetos"
 
     def get(self, request):
         empresa_id = self.get_empresa_id()
@@ -232,7 +238,8 @@ class TarefaListView(EmpresaQuerySetMixin, APIView):
     """GET /api/tarefas/ — lista todas as tarefas da empresa"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "projetos"
 
     def get(self, request):
         empresa_id = self.get_empresa_id()
@@ -255,7 +262,8 @@ class TarefaDetailView(EmpresaQuerySetMixin, APIView):
     """GET/PUT/PATCH/DELETE /api/tarefas/{id}/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "projetos"
 
     def get(self, request, pk):
         empresa_id = self.get_empresa_id()
@@ -312,7 +320,8 @@ class TarefaMoverView(EmpresaQuerySetMixin, APIView):
     """PATCH /api/tarefas/{id}/mover/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "projetos"
 
     def patch(self, request, pk):
         empresa_id = self.get_empresa_id()
@@ -343,7 +352,8 @@ class ComentarioListCreateView(EmpresaQuerySetMixin, APIView):
     """GET/POST /api/tarefas/{id}/comentarios/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "projetos"
 
     def get(self, request, pk):
         empresa_id = self.get_empresa_id()
@@ -382,7 +392,8 @@ class ComentarioDetailView(EmpresaQuerySetMixin, APIView):
     """PATCH/DELETE /api/tarefas/{tarefa_id}/comentarios/{cid}/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "projetos"
 
     def patch(self, request, pk, cid):
         empresa_id = self.get_empresa_id()
@@ -432,7 +443,8 @@ class ChecklistCreateView(EmpresaQuerySetMixin, APIView):
     """POST /api/tarefas/{id}/checklist/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "projetos"
 
     def post(self, request, pk):
         empresa_id = self.get_empresa_id()
@@ -461,7 +473,8 @@ class ChecklistDetailView(EmpresaQuerySetMixin, APIView):
     """PATCH/DELETE /api/tarefas/{tarefa_id}/checklist/{item_id}/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "projetos"
 
     def patch(self, request, pk, item_id):
         empresa_id = self.get_empresa_id()

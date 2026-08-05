@@ -312,3 +312,77 @@ class MeView(APIView):
             data=UsuarioSerializer(request.user).data,
             message="Perfil atualizado com sucesso.",
         )
+
+
+# ════════════════════════════════════════════════════════════
+# GET/PATCH /api/auth/empresa/modulos/
+# ════════════════════════════════════════════════════════════
+
+
+class ModulosEmpresaView(APIView):
+    """
+    GET   — módulos da empresa + quantos registros cada um já tem (para o
+            aviso de desativação) e os metadados de exibição.
+    PATCH — liga/desliga módulos opcionais. Só admin. Desligar NUNCA apaga dados.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        from shared.modulos import (
+            MODULOS_INFO,
+            MODULOS_OBRIGATORIOS,
+            modulos_da_empresa,
+        )
+
+        empresa = request.user.empresa
+        if empresa is None:
+            return error_response(
+                code="SEM_EMPRESA",
+                message="Usuário sem empresa vinculada.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return success_response(
+            data={
+                "modulos": modulos_da_empresa(empresa),
+                "obrigatorios": MODULOS_OBRIGATORIOS,
+                "info": MODULOS_INFO,
+                "contagens": AuthService.contar_registros_por_modulo(empresa.id),
+            }
+        )
+
+    def patch(self, request: Request) -> Response:
+        from .serializers import ModulosEmpresaSerializer
+        from shared.modulos import modulos_da_empresa
+
+        if request.user.perfil != "admin":
+            return error_response(
+                code="PERMISSION_DENIED",
+                message="Apenas administradores podem alterar os módulos.",
+                status_code=status.HTTP_403_FORBIDDEN,
+            )
+
+        empresa = request.user.empresa
+        if empresa is None:
+            return error_response(
+                code="SEM_EMPRESA",
+                message="Usuário sem empresa vinculada.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = ModulosEmpresaSerializer(empresa, data=request.data, partial=True)
+        if not serializer.is_valid():
+            return error_response(
+                code="VALIDATION_ERROR",
+                message="Dados inválidos.",
+                details=serializer.errors,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer.save()
+        empresa.refresh_from_db()
+
+        return success_response(
+            data={"modulos": modulos_da_empresa(empresa)},
+            message="Módulos atualizados.",
+        )

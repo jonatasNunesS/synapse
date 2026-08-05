@@ -13,6 +13,7 @@ import { RegistrarFinanceiroModal } from "@/components/financeiro/RegistrarFinan
 import { ApagarComAjustesFlow } from "@/components/clientes/ApagarComAjustesFlow";
 import type { CompraFornecedor } from "@/types/fornecedores";
 import type { ApiError } from "@/types/api";
+import { useModulos } from "@/hooks/useModulos";
 
 const STATUS_COMPRA: Record<string, { label: string; color: string }> = {
   pendente: { label: "Pendente", color: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
@@ -162,6 +163,7 @@ interface HistoricoComprasProps {
 export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
   const { data, total, loading, error, fetch, deletar, apagarComAjustes } =
     useComprasFornecedor();
+  const { moduloAtivo } = useModulos();
   const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [editando, setEditando] = useState<CompraFornecedor | null>(null);
@@ -186,9 +188,11 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
     setShowForm(false);
     setEditando(null);
     fetch(fornecedorId, page);
-    // Só oferece adicionar ao estoque após CRIAR (não ao editar)
+    // Só oferece adicionar ao estoque após CRIAR (não ao editar) e apenas se
+    // o módulo Estoque estiver ativo — senão vai direto pro financeiro.
     if (compraCriada) {
-      setCompraParaEstoque(compraCriada);
+      if (moduloAtivo("estoque")) setCompraParaEstoque(compraCriada);
+      else setCompraParaFinanceiro(compraCriada);
     }
   };
 
@@ -196,7 +200,8 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
   // sequência de perguntas de estorno; senão, apaga direto.
   const confirmarDelete = (c: CompraFornecedor) => {
     if (excluindo) return;
-    if (c.movimentacao_estoque_info || c.lancamento_financeiro_info) {
+    const temEstoque = moduloAtivo("estoque") && !!c.movimentacao_estoque_info;
+    if (temEstoque || c.lancamento_financeiro_info) {
       setConfirmandoDelete(null);
       setApagarFlow(c);
       return;
@@ -424,7 +429,9 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
       {apagarFlow && (
         <ApagarComAjustesFlow
           tipoFinanceiro="despesa"
-          movimentacaoInfo={apagarFlow.movimentacao_estoque_info}
+          movimentacaoInfo={
+            moduloAtivo("estoque") ? apagarFlow.movimentacao_estoque_info : null
+          }
           lancamentoInfo={apagarFlow.lancamento_financeiro_info}
           processando={excluindo}
           onFinalizar={finalizarApagarComAjustes}

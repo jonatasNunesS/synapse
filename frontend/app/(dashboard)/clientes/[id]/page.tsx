@@ -31,6 +31,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { STATUS_FUNIL_LABELS, STATUS_FUNIL_COLORS } from "@/types/clientes";
 import type { StatusFunil, InteracaoCliente } from "@/types/clientes";
 import { api, getErrorMessage } from "@/lib/api";
+import { useModulos } from "@/hooks/useModulos";
 
 function formatCurrency(value: string | number): string {
   const num = typeof value === "string" ? parseFloat(value) : value;
@@ -57,6 +58,7 @@ export default function ClienteDetalhePage() {
   const [fiadoFechado, setFiadoFechado] = useState<string | null>(null);
 
   const { cliente, loading, carregar, setCliente } = useClienteDetalhe(id);
+  const { moduloAtivo } = useModulos();
   const {
     interacoes,
     loading: interacoesLoading,
@@ -108,9 +110,11 @@ export default function ClienteDetalhePage() {
       const nova = await registrar(dados); // lança em caso de erro → o form exibe o banner
       setShowInteracaoForm(false);
       carregar(); // Recarrega para atualizar valor_total_compras etc.
-      // Venda? Oferece baixar do estoque logo após registrar.
+      // Venda? Oferece baixar do estoque — só se o módulo Estoque estiver
+      // ativo; senão vai direto para o financeiro (que é obrigatório).
       if (nova?.tipo === "venda") {
-        setVendaParaEstoque(nova);
+        if (moduloAtivo("estoque")) setVendaParaEstoque(nova);
+        else setVendaParaFinanceiro(nova);
       }
     } finally {
       setInteracaoLoading(false);
@@ -138,8 +142,9 @@ export default function ClienteDetalhePage() {
   const handleConfirmarExclusaoInteracao = async () => {
     if (!interacaoParaExcluir || excluindoInteracao) return; // evita duplo clique
     const alvo = interacaoParaExcluir;
-    const temVinculo =
-      !!alvo.movimentacao_estoque_info || !!alvo.lancamento_financeiro_info;
+    // Estoque desligado → não pergunta sobre estorno de estoque (só financeiro).
+    const temEstoque = moduloAtivo("estoque") && !!alvo.movimentacao_estoque_info;
+    const temVinculo = temEstoque || !!alvo.lancamento_financeiro_info;
 
     // Tem estoque/financeiro vinculado → sequência de perguntas (estorno etc.).
     if (temVinculo) {
@@ -196,7 +201,12 @@ export default function ClienteDetalhePage() {
         setCliente(atualizado);
         setShowEditForm(false);
         const followupDepois = atualizado?.proximo_followup ?? null;
-        if (followupDepois && followupDepois !== followupAntes) {
+        // Só oferece a Agenda se o módulo estiver ativo.
+        if (
+          followupDepois &&
+          followupDepois !== followupAntes &&
+          moduloAtivo("agenda")
+        ) {
           setFollowupAgenda(followupDepois);
         }
       }
@@ -456,7 +466,11 @@ export default function ClienteDetalhePage() {
             onNovaInteracao={() => setShowInteracaoForm(true)}
             onEditar={(interacao) => setEditingInteracao(interacao)}
             onApagar={handleApagarInteracao}
-            onDescontarEstoque={(interacao) => setVendaParaEstoque(interacao)}
+            onDescontarEstoque={
+              moduloAtivo("estoque")
+                ? (interacao) => setVendaParaEstoque(interacao)
+                : undefined
+            }
             filtroEstoque={filtroEstoque}
             onFiltroEstoqueChange={setFiltroEstoque}
           />
@@ -554,7 +568,9 @@ export default function ClienteDetalhePage() {
       {apagarFlow && (
         <ApagarComAjustesFlow
           tipoFinanceiro="receita"
-          movimentacaoInfo={apagarFlow.movimentacao_estoque_info}
+          movimentacaoInfo={
+            moduloAtivo("estoque") ? apagarFlow.movimentacao_estoque_info : null
+          }
           lancamentoInfo={apagarFlow.lancamento_financeiro_info}
           processando={excluindoInteracao}
           onFinalizar={finalizarApagarComAjustes}

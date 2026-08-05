@@ -26,6 +26,8 @@ import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
 import { useAuth } from "@/hooks/useAuth";
 import { PLANO_CORES, PLANO_LABELS } from "@/types/auth";
+import type { ModuloOpcional } from "@/types/auth";
+import { useModulos } from "@/hooks/useModulos";
 import { VERSION_LABEL } from "@/lib/version";
 
 interface NavItem {
@@ -34,18 +36,20 @@ interface NavItem {
   icon: React.ElementType;
   badge?: number;
   disabled?: boolean;
+  /** Módulo opcional dono do item — ausente = sempre visível (obrigatório). */
+  modulo?: ModuloOpcional;
 }
 
 const navigation: NavItem[] = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "Financeiro", href: "/financeiro", icon: DollarSign },
-  { label: "Estoque", href: "/estoque", icon: Package },
+  { label: "Estoque", href: "/estoque", icon: Package, modulo: "estoque" },
   { label: "Clientes", href: "/clientes", icon: Users },
-  { label: "Fornecedores", href: "/fornecedores", icon: Truck },
-  { label: "Projetos", href: "/projetos", icon: FolderKanban },
-  { label: "Agenda", href: "/agenda", icon: CalendarDays },
-  { label: "Equipe", href: "/equipe", icon: UserCog },
-  { label: "Documentos", href: "/documentos", icon: FileText },
+  { label: "Fornecedores", href: "/fornecedores", icon: Truck, modulo: "fornecedores" },
+  { label: "Projetos", href: "/projetos", icon: FolderKanban, modulo: "projetos" },
+  { label: "Agenda", href: "/agenda", icon: CalendarDays, modulo: "agenda" },
+  { label: "Equipe", href: "/equipe", icon: UserCog, modulo: "equipe" },
+  { label: "Documentos", href: "/documentos", icon: FileText, modulo: "documentos" },
   { label: "Notificações", href: "/notificacoes", icon: Bell },
   { label: "Analytics", href: "/analytics", icon: BarChart2 },
   { label: "AI Hub", href: "/ai-hub", icon: Sparkles },
@@ -55,6 +59,13 @@ export function Sidebar() {
   const pathname = usePathname();
   const { sidebarOpen, toggleSidebar, setSidebarOpen } = useAppStore();
   const { usuario, empresa, logout } = useAuth();
+  const { moduloAtivo } = useModulos();
+
+  // Itens de módulos desligados não aparecem. Dashboard, Financeiro e
+  // Clientes (obrigatórios) não têm `modulo` e ficam sempre visíveis.
+  const itensVisiveis = navigation.filter(
+    (item) => !item.modulo || moduloAtivo(item.modulo)
+  );
 
   // Iniciais do nome do usuário para o avatar
   const iniciais = usuario?.nome
@@ -144,7 +155,7 @@ export function Sidebar() {
 
         {/* ── Navegação ─────────────────────────────────────── */}
         <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
-          {navigation.map((item) => {
+          {itensVisiveis.map((item) => {
             const isActive =
               pathname === item.href ||
               (item.href !== "/" && pathname.startsWith(item.href));

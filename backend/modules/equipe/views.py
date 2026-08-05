@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from shared.authentication import CookieJWTAuthentication
 from shared.pagination import StandardPagination
 from shared.permissions import IsEmpresaMember
+from shared.modulos import ModuloAtivo
 from shared.responses import success_response, error_response, no_content_response
 from shared.exceptions import BusinessRuleViolation
 from .exceptions import ConviteEmailError
@@ -31,7 +32,8 @@ class MembroListCreateView(APIView):
     """GET /api/equipe/membros/ | POST /api/equipe/membros/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "equipe"
 
     def get(self, request):
         empresa_id = str(request.user.empresa_id)
@@ -73,7 +75,8 @@ class MembroDetailView(APIView):
     """GET/PATCH/DELETE /api/equipe/membros/{id}/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "equipe"
 
     def get(self, request, pk):
         try:
@@ -106,7 +109,8 @@ class ConvidarMembroView(APIView):
     """POST /api/equipe/convidar/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "equipe"
 
     def post(self, request):
         serializer = ConvidarMembroSerializer(
@@ -157,7 +161,8 @@ class ResumoEquipeView(APIView):
     """GET /api/equipe/resumo/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "equipe"
 
     def get(self, request):
         resumo = EquipeService.obter_resumo(str(request.user.empresa_id))
@@ -168,7 +173,8 @@ class MetaListCreateView(APIView):
     """GET/POST /api/equipe/membros/{id}/metas/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "equipe"
 
     def get(self, request, membro_id):
         try:
@@ -200,7 +206,8 @@ class MetaDetailView(APIView):
     """GET/PATCH/DELETE /api/equipe/membros/{id}/metas/{meta_id}/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "equipe"
 
     def get(self, request, membro_id, meta_id):
         try:

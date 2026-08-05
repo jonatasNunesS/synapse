@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 
 from shared.authentication import CookieJWTAuthentication
 from shared.permissions import IsEmpresaMember
+from shared.modulos import ModuloAtivo
 from shared.responses import (
     created_response,
     error_response,
@@ -48,7 +49,8 @@ class ColunasListCreateView(APIView):
     """GET/POST /api/equipe/kanban/colunas/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "equipe"
 
     def get(self, request):
         empresa_id = str(request.user.empresa_id)
@@ -77,7 +79,8 @@ class ColunaDetailView(APIView):
     """PATCH/DELETE /api/equipe/kanban/colunas/{id}/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "equipe"
 
     def patch(self, request, coluna_id):
         serializer = ColunaCreateUpdateSerializer(data=request.data, partial=True)
@@ -116,7 +119,8 @@ class ReordenarColunasView(APIView):
     """POST /api/equipe/kanban/colunas/reordenar/ — Body: [{id, ordem}, ...]"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "equipe"
 
     def post(self, request):
         serializer = ReordenarColunasSerializer(data=request.data)
@@ -142,7 +146,8 @@ class TarefasPessoaisListCreateView(APIView):
     """GET/POST /api/equipe/tarefas/?membro=&coluna="""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "equipe"
 
     def get(self, request):
         filtros = {
@@ -178,7 +183,8 @@ class TarefaPessoalDetailView(APIView):
     """PATCH/DELETE /api/equipe/tarefas/{id}/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "equipe"
 
     def patch(self, request, tarefa_id):
         serializer = TarefaPessoalCreateSerializer(
@@ -218,7 +224,8 @@ class MoverTarefaView(APIView):
     """POST /api/equipe/tarefas/{id}/mover/ — Body: {coluna_id, ordem_na_coluna}"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "equipe"
 
     def post(self, request, tarefa_id):
         serializer = MoverTarefaSerializer(data=request.data)
@@ -246,7 +253,8 @@ class KanbanConsolidadoView(APIView):
     """GET /api/equipe/kanban/?membro={id} — board consolidado (cacheado 60s)."""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "equipe"
 
     def get(self, request):
         membro = request.query_params.get("membro")

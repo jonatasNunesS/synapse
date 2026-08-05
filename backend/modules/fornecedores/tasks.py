@@ -20,7 +20,12 @@ def relatorio_semanal_fornecedores():
     from modules.fornecedores.models import CompraFornecedor
     from django.db.models import Sum, Count
 
-    empresas = Empresa.objects.filter(ativo=True)
+    from shared.modulos import empresas_com_modulo
+
+    # Empresas que desligaram Fornecedores ficam de fora do relatório.
+    empresas = Empresa.objects.filter(
+        ativo=True, id__in=empresas_com_modulo("fornecedores")
+    )
     for empresa in empresas:
         try:
             inicio_semana = timezone.now().date() - timezone.timedelta(days=7)

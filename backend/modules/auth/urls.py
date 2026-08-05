@@ -9,6 +9,7 @@ from .views import (
     LoginView,
     LogoutView,
     MeView,
+    ModulosEmpresaView,
     RecuperarSenhaView,
     RedefinirSenhaView,
     RefreshView,
@@ -23,4 +24,9 @@ urlpatterns = [
     path("recuperar-senha/", RecuperarSenhaView.as_view(), name="auth-recuperar-senha"),
     path("redefinir-senha/", RedefinirSenhaView.as_view(), name="auth-redefinir-senha"),
     path("me/", MeView.as_view(), name="auth-me"),
+    path(
+        "empresa/modulos/",
+        ModulosEmpresaView.as_view(),
+        name="auth-empresa-modulos",
+    ),
 ]

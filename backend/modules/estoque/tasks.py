@@ -19,10 +19,15 @@ def verificar_estoque_minimo(self):
     try:
         from modules.estoque.models import Produto
         from modules.notificacoes.services import NotificacaoService
+        from shared.modulos import empresas_com_modulo
+
+        # Empresas que desligaram o módulo Estoque não recebem alerta.
+        empresas_ativas = empresas_com_modulo("estoque")
 
         produtos_criticos = Produto.objects.filter(
             ativo=True,
             estoque_atual__lte=F("estoque_minimo"),
+            empresa_id__in=empresas_ativas,
         ).select_related("empresa")
 
         total_alertas = 0

@@ -16,6 +16,7 @@ import { ClienteSelect } from "@/components/clientes/ClienteSelect";
 import { BaixarEstoqueModal } from "@/components/clientes/BaixarEstoqueModal";
 import { RegistrarFinanceiroModal } from "@/components/financeiro/RegistrarFinanceiroModal";
 import type { InteracaoCliente } from "@/types/clientes";
+import { useModulos } from "@/hooks/useModulos";
 
 interface Props {
   clienteInicial?: { id: string; nome: string } | null;
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export function NovaInteracaoRapidaModal({ clienteInicial, onClose, onCriada }: Props) {
+  const { moduloAtivo } = useModulos();
   const [cliente, setCliente] = useState(clienteInicial ?? null);
   const [salvando, setSalvando] = useState(false);
   // Chain do pós-venda (reaproveita o motor)
@@ -40,8 +42,10 @@ export function NovaInteracaoRapidaModal({ clienteInicial, onClose, onCriada }: 
       toast.success(`Interação registrada para ${cliente.nome}`);
       onCriada?.();
       if (nova?.tipo === "venda") {
-        // Dispara o mesmo fluxo de perguntas (estoque → financeiro)
-        setVendaParaEstoque(nova);
+        // Dispara o mesmo fluxo de perguntas (estoque → financeiro). Com o
+        // módulo Estoque desligado, pula direto para o financeiro.
+        if (moduloAtivo("estoque")) setVendaParaEstoque(nova);
+        else setVendaParaFinanceiro(nova);
       } else {
         onClose();
       }

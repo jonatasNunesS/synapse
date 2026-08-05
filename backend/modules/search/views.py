@@ -39,20 +39,31 @@ class BuscaGlobalView(APIView):
                 status_code=400,
             )
 
+        from shared.modulos import modulos_da_empresa
+
         empresa_id = request.user.empresa_id
-        cache_key = f"synapse:{empresa_id}:search:{q.lower()}"
+        # A configuração de módulos entra na chave: ligar/desligar um módulo
+        # muda o resultado na hora, sem esperar o TTL do cache expirar.
+        modulos = modulos_da_empresa(request.user.empresa)
+        fingerprint = "".join("1" if v else "0" for v in modulos.values())
+        cache_key = f"synapse:{empresa_id}:search:{fingerprint}:{q.lower()}"
 
         cached = cache.get(cache_key)
         if cached:
             return success_response(data=cached)
 
-        resultados = self._buscar(empresa_id, q)
+        resultados = self._buscar(empresa_id, q, request.user.empresa)
 
         cache.set(cache_key, resultados, self.CACHE_TTL)
         return success_response(data=resultados)
 
-    def _buscar(self, empresa_id: int, q: str) -> dict:
-        """Executa as 5 buscas e retorna dict com resultados agrupados."""
+    def _buscar(self, empresa_id: int, q: str, empresa=None) -> dict:
+        """
+        Executa as buscas e retorna dict com resultados agrupados.
+        Módulos desligados não são pesquisados (lista vazia no lugar).
+        """
+        from shared.modulos import modulo_ativo
+
         from modules.clientes.models import Cliente
         from modules.estoque.models import Produto
         from modules.fornecedores.models import Fornecedor
@@ -82,6 +93,8 @@ class BuscaGlobalView(APIView):
                 | Q(codigo_barras__icontains=q)
             )
             .values("id", "nome", "sku")[:n]
+            if modulo_ativo(empresa, "estoque")
+            else []
         )
 
         # ── Fornecedores ──────────────────────────────────────────
@@ -89,6 +102,8 @@ class BuscaGlobalView(APIView):
             Fornecedor.objects.filter(empresa_id=empresa_id)
             .filter(Q(nome__icontains=q) | Q(cnpj__icontains=q))
             .values("id", "nome")[:n]
+            if modulo_ativo(empresa, "fornecedores")
+            else []
         )
 
         # ── Projetos ──────────────────────────────────────────────
@@ -96,6 +111,8 @@ class BuscaGlobalView(APIView):
             Projeto.objects.filter(empresa_id=empresa_id)
             .filter(Q(nome__icontains=q))
             .values("id", "nome")[:n]
+            if modulo_ativo(empresa, "projetos")
+            else []
         )
 
         # ── Lançamentos ───────────────────────────────────────────

@@ -5,10 +5,12 @@
  * Página principal com KPIs, widgets e atividade recente.
  */
 
+import { Suspense } from "react";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/store/useAppStore";
 import { AvisoMigracaoRecorrencias } from "@/components/recorrencias/AvisoMigracao";
+import { useModulos } from "@/hooks/useModulos";
 
 // Hooks M8
 import {
@@ -25,6 +27,7 @@ import {
 
 // Componentes M8
 import { BoasVindasCard } from "@/components/dashboard/BoasVindasCard";
+import { BoasVindasToast } from "@/components/dashboard/BoasVindasToast";
 import { KPIGrid } from "@/components/dashboard/KPIGrid";
 import { FluxoCaixaWidget } from "@/components/dashboard/FluxoCaixaWidget";
 import { FunilWidget } from "@/components/dashboard/FunilWidget";
@@ -45,12 +48,17 @@ export default function DashboardPage() {
   const { vencimentos, isLoading: loadingVencimentos } = useDashboardVencimentos(7);
   const { followups, isLoading: loadingFollowUps } = useDashboardFollowUps(3);
   const { tarefas, isLoading: loadingTarefas } = useDashboardMinhasTarefas();
+  const { moduloAtivo } = useModulos();
   const { alertas, isLoading: loadingAlertas } = useDashboardAlertasEstoque();
   const { projetos, isLoading: loadingProjetos } = useDashboardProjetos();
   const { eventos, isLoading: loadingAtividade } = useDashboardAtividade(10);
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
+      {/* Boas-vindas pós-cadastro (?boas_vindas=1) — isolado pelo Suspense */}
+      <Suspense fallback={null}>
+        <BoasVindasToast />
+      </Suspense>
       {/* Aviso único da migração das recorrências (some após dispensar) */}
       <AvisoMigracaoRecorrencias />
       {/* ── Cabeçalho ──────────────────────────────────────── */}
@@ -99,15 +107,25 @@ export default function DashboardPage() {
         <FollowUpsWidget followups={followups} isLoading={loadingFollowUps} />
       </div>
 
-      {/* ── Linha 3: Minhas Tarefas + Alertas de Estoque ──── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <MinhasTarefasWidget tarefas={tarefas} isLoading={loadingTarefas} />
-        <AlertasEstoqueWidget alertas={alertas} isLoading={loadingAlertas} />
-      </div>
+      {/* ── Linha 3: Minhas Tarefas + Alertas de Estoque ────
+          Widgets de módulos opcionais somem quando o módulo está desligado.
+          Financeiro e Clientes (obrigatórios) aparecem sempre. */}
+      {(moduloAtivo("projetos") || moduloAtivo("estoque")) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {moduloAtivo("projetos") && (
+            <MinhasTarefasWidget tarefas={tarefas} isLoading={loadingTarefas} />
+          )}
+          {moduloAtivo("estoque") && (
+            <AlertasEstoqueWidget alertas={alertas} isLoading={loadingAlertas} />
+          )}
+        </div>
+      )}
 
       {/* ── Linha 4: Projetos + Atividade Recente ─────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ProjetosWidget projetos={projetos} isLoading={loadingProjetos} />
+        {moduloAtivo("projetos") && (
+          <ProjetosWidget projetos={projetos} isLoading={loadingProjetos} />
+        )}
         <AtividadeWidget eventos={eventos} isLoading={loadingAtividade} />
       </div>
     </div>

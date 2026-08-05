@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from shared.pagination import StandardPagination
 from shared.authentication import CookieJWTAuthentication
 from shared.permissions import IsEmpresaMember
+from shared.modulos import ModuloAtivo
 from shared.responses import success_response, error_response, no_content_response
 from .models import Documento, VersaoDocumento
 from .repository import DocumentoRepository
@@ -30,7 +31,8 @@ class DocumentoListCreateView(APIView):
     """GET /api/documentos/ | POST /api/documentos/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "documentos"
 
     def get(self, request):
         empresa_id = str(request.user.empresa_id)
@@ -67,7 +69,8 @@ class DocumentoDetailView(APIView):
     """GET/PATCH/DELETE /api/documentos/{id}/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "documentos"
 
     def get(self, request, pk):
         try:
@@ -103,7 +106,8 @@ class VersaoListCreateView(APIView):
     """GET/POST /api/documentos/{id}/versoes/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "documentos"
 
     def get(self, request, doc_id):
         try:
@@ -148,7 +152,8 @@ class DocumentoDownloadView(APIView):
     """
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "documentos"
 
     def get(self, request, pk):
         try:

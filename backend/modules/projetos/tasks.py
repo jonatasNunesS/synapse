@@ -19,14 +19,19 @@ def verificar_prazos_tarefas(self):
     """
     from .repository import ProjetoRepository
     from modules.notificacoes.services import NotificacaoService
+    from shared.modulos import empresas_com_modulo
 
     hoje = date.today()
     notificacoes_criadas = 0
+    # Empresas que desligaram o módulo Projetos não recebem alerta.
+    empresas_ativas = empresas_com_modulo("projetos")
 
     try:
         # Tarefas que vencem hoje
         vencendo_hoje = ProjetoRepository.listar_tarefas_vencendo_hoje()
         for tarefa in vencendo_hoje:
+            if str(tarefa.empresa_id) not in empresas_ativas:
+                continue
             if not tarefa.responsavel_id:
                 continue
             try:
@@ -131,14 +136,18 @@ def verificar_projetos_atrasados(self):
     """
     from .repository import ProjetoRepository
     from modules.notificacoes.services import NotificacaoService
+    from shared.modulos import empresas_com_modulo
 
     hoje = date.today()
     notificacoes_criadas = 0
+    empresas_ativas = empresas_com_modulo("projetos")
 
     try:
         projetos_atrasados = ProjetoRepository.listar_projetos_atrasados()
 
         for projeto in projetos_atrasados:
+            if str(projeto.empresa_id) not in empresas_ativas:
+                continue
             try:
                 dias_atraso = (hoje - projeto.data_prazo).days
                 titulo = f"Projeto atrasado: {projeto.nome}"

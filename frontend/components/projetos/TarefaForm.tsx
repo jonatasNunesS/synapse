@@ -8,6 +8,7 @@ import type { TarefaCreatePayload, TarefaDetail, TarefaStatus } from "@/types/pr
 import type { ApiError } from "@/types/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useColunasEquipe } from "@/hooks/useEquipe";
+import { useModulos } from "@/hooks/useModulos";
 
 interface TarefaFormProps {
   aberto: boolean;
@@ -25,7 +26,10 @@ export function TarefaForm({
   onSalvar,
 }: TarefaFormProps) {
   const { usuario } = useAuth();
-  const isAdmin = usuario?.perfil === "admin";
+  const { moduloAtivo } = useModulos();
+  // O campo de coluna do Kanban da Equipe só existe se o módulo Equipe
+  // estiver ativo (e só para admin).
+  const isAdmin = usuario?.perfil === "admin" && moduloAtivo("equipe");
   // Colunas do Kanban da equipe — só carregam/exibem para admin.
   const { colunas } = useColunasEquipe();
   const [loading, setLoading] = useState(false);

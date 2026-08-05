@@ -99,8 +99,16 @@ def _build_error_response(exc, response):
         )
 
     if isinstance(exc, DRFPermissionDenied):
+        # A permission pode carregar um código próprio (ex.: ModuloAtivo →
+        # MODULO_DESATIVADO). O DRF propaga esse code no ErrorDetail.
+        codigo_detalhe = getattr(exc.detail, "code", None)
+        codigo = (
+            str(codigo_detalhe).upper()
+            if codigo_detalhe and str(codigo_detalhe) != "permission_denied"
+            else "PERMISSION_DENIED"
+        )
         return _format_error(
-            "PERMISSION_DENIED",
+            codigo,
             str(exc.detail) if exc.detail else "Acesso negado.",
             {},
         )

@@ -11,6 +11,7 @@ from rest_framework.viewsets import ViewSet
 from shared.authentication import CookieJWTAuthentication
 from shared.pagination import StandardPagination as SynapsePagination
 from shared.permissions import IsEmpresaMember as IsAuthenticatedEmpresa
+from shared.modulos import ModuloAtivo
 from shared.responses import success_response, error_response, created_response
 from shared.exceptions import (
     ResourceNotFound as SynapseNotFoundError,
@@ -35,7 +36,8 @@ class CategoriaEstoqueViewSet(ViewSet):
     """CRUD de categorias de estoque."""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticatedEmpresa]
+    permission_classes = [IsAuthenticatedEmpresa, ModuloAtivo]
+    modulo = "estoque"
 
     def list(self, request):
         empresa_id = request.user.empresa_id
@@ -104,7 +106,8 @@ class ProdutoViewSet(ViewSet):
     """CRUD de produtos com filtros e ações de movimentação."""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticatedEmpresa]
+    permission_classes = [IsAuthenticatedEmpresa, ModuloAtivo]
+    modulo = "estoque"
 
     def list(self, request):
         empresa_id = request.user.empresa_id
@@ -256,7 +259,8 @@ class MovimentacaoViewSet(ViewSet):
     """Criação de movimentações de estoque."""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticatedEmpresa]
+    permission_classes = [IsAuthenticatedEmpresa, ModuloAtivo]
+    modulo = "estoque"
 
     def create(self, request):
         empresa_id = request.user.empresa_id
@@ -314,7 +318,8 @@ class EstornarMovimentacaoView(APIView):
     Cria uma movimentação inversa (estorno) respeitando a imutabilidade.
     """
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticatedEmpresa]
+    permission_classes = [IsAuthenticatedEmpresa, ModuloAtivo]
+    modulo = "estoque"
 
     def post(self, request, pk):
         empresa_id = request.user.empresa_id
@@ -342,7 +347,8 @@ class EstoqueResumoView(ViewSet):
     """Views de resumo, alertas e relatório do estoque."""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticatedEmpresa]
+    permission_classes = [IsAuthenticatedEmpresa, ModuloAtivo]
+    modulo = "estoque"
 
     @action(detail=False, methods=["get"], url_path="resumo")
     def resumo(self, request):

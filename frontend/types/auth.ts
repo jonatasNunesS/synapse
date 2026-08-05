@@ -16,6 +16,26 @@ export interface Empresa {
   criado_em: string;
 }
 
+/** Módulos OPCIONAIS — cada empresa liga/desliga. Os obrigatórios não entram. */
+export type ModuloOpcional =
+  | "estoque"
+  | "fornecedores"
+  | "projetos"
+  | "agenda"
+  | "equipe"
+  | "documentos";
+
+export type ModulosEmpresa = Record<ModuloOpcional, boolean>;
+
+export const MODULOS_OPCIONAIS: ModuloOpcional[] = [
+  "estoque",
+  "fornecedores",
+  "projetos",
+  "agenda",
+  "equipe",
+  "documentos",
+];
+
 export interface Usuario {
   id: string;
   email: string;
@@ -26,6 +46,8 @@ export interface Usuario {
   is_staff_synapse: boolean;
   viu_aviso_recorrencias: boolean;
   empresa: Empresa | null;
+  /** Config de módulos da empresa (vem do /auth/me e do login). */
+  modulos?: ModulosEmpresa;
   criado_em: string;
 }
 
@@ -50,6 +72,13 @@ export interface RegistroPayload {
   confirmar_senha: string;
   nome_empresa: string;
   segmento: string;
+  // Etapa 3 do cadastro — as respostas configuram os módulos.
+  modulo_estoque?: boolean;
+  modulo_fornecedores?: boolean;
+  modulo_projetos?: boolean;
+  modulo_agenda?: boolean;
+  modulo_equipe?: boolean;
+  modulo_documentos?: boolean;
 }
 
 export interface RecuperarSenhaPayload {

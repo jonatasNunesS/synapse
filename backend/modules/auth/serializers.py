@@ -37,6 +37,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
     """Serializer de leitura para CustomUser (sem senha)."""
 
     empresa = EmpresaSerializer(read_only=True)
+    modulos = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomUser
@@ -50,9 +51,16 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "is_staff_synapse",
             "viu_aviso_recorrencias",
             "empresa",
+            "modulos",
             "criado_em",
         ]
         read_only_fields = fields
+
+    def get_modulos(self, obj) -> dict:
+        """Mapa {modulo: bool} dos módulos OPCIONAIS da empresa do usuário."""
+        from shared.modulos import modulos_da_empresa
+
+        return modulos_da_empresa(obj.empresa)
 
 
 # ════════════════════════════════════════════════════════════
@@ -77,6 +85,16 @@ class RegistroSerializer(serializers.Serializer):
     segmento = serializers.ChoiceField(
         choices=["varejo", "servicos", "alimentacao", "moda", "eventos", "agencia", "outro"]
     )
+
+    # Etapa 3 do cadastro — as respostas configuram os módulos opcionais.
+    # Opcionais na API: se não vierem, a empresa nasce com tudo ligado (o
+    # comportamento de antes, mantendo a retrocompatibilidade do endpoint).
+    modulo_estoque = serializers.BooleanField(required=False)
+    modulo_fornecedores = serializers.BooleanField(required=False)
+    modulo_projetos = serializers.BooleanField(required=False)
+    modulo_agenda = serializers.BooleanField(required=False)
+    modulo_equipe = serializers.BooleanField(required=False)
+    modulo_documentos = serializers.BooleanField(required=False)
 
     def validate_email(self, value: str) -> str:
         """Verifica unicidade do e-mail."""
@@ -182,3 +200,26 @@ class AtualizarPerfilSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ["nome", "avatar_url"]
+
+
+# ════════════════════════════════════════════════════════════
+# SERIALIZER: MÓDULOS DA EMPRESA (PATCH /empresa/modulos/)
+# ════════════════════════════════════════════════════════════
+
+
+class ModulosEmpresaSerializer(serializers.ModelSerializer):
+    """
+    Liga/desliga os módulos OPCIONAIS da empresa. Módulos obrigatórios
+    (financeiro, clientes, dashboard) não têm campo — não podem ser desligados.
+    """
+
+    class Meta:
+        model = Empresa
+        fields = [
+            "modulo_estoque",
+            "modulo_fornecedores",
+            "modulo_projetos",
+            "modulo_agenda",
+            "modulo_equipe",
+            "modulo_documentos",
+        ]

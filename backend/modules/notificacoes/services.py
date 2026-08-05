@@ -8,6 +8,34 @@ from .models import Notificacao
 
 logger = logging.getLogger("synapse")
 
+# tipo da notificação → módulo que precisa estar ativo para ela existir.
+# Tipos ausentes (financeiro, cliente, sistema) são de módulos obrigatórios.
+TIPO_PARA_MODULO = {
+    "estoque": "estoque",
+    "fornecedor": "fornecedores",
+    "projeto": "projetos",
+    "equipe": "equipe",
+    "documento": "documentos",
+}
+
+
+def _modulo_do_tipo_ativo(empresa_id, tipo: str) -> bool:
+    """
+    Ponto único que impede notificação de módulo desligado (independente de
+    quem chama: task, signal ou service). Módulos obrigatórios passam sempre.
+    """
+    nome_modulo = TIPO_PARA_MODULO.get(tipo)
+    if not nome_modulo or not empresa_id:
+        return True
+
+    from modules.auth.models import Empresa
+    from shared.modulos import modulo_ativo
+
+    empresa = Empresa.objects.filter(pk=empresa_id).only(
+        f"modulo_{nome_modulo}"
+    ).first()
+    return modulo_ativo(empresa, nome_modulo)
+
 
 class NotificacaoService:
 
@@ -22,6 +50,14 @@ class NotificacaoService:
         prioridade: str = "normal",
     ) -> Notificacao:
         """Cria uma notificação e invalida o cache de contagem."""
+        # Módulo desligado → nenhuma notificação é gerada.
+        if not _modulo_do_tipo_ativo(empresa_id, tipo):
+            logger.info(
+                "Notificação ignorada (módulo desativado)",
+                extra={"empresa_id": str(empresa_id), "tipo": tipo},
+            )
+            return None
+
         dados = {
             "tipo": tipo,
             "titulo": titulo,
@@ -50,6 +86,14 @@ class NotificacaoService:
         """Cria notificação para todos os admins da empresa, excluindo opcionalmente um usuário."""
         from modules.auth.models import CustomUser
 
+        # Módulo desligado → nenhuma notificação (evita varrer os admins à toa).
+        if not _modulo_do_tipo_ativo(empresa_id, tipo):
+            logger.info(
+                "Notificação de empresa ignorada (módulo desativado)",
+                extra={"empresa_id": str(empresa_id), "tipo": tipo},
+            )
+            return []
+
         admins = CustomUser.objects.filter(
             empresa_id=empresa_id,
             perfil__in=["admin", "gerente"],
@@ -69,7 +113,8 @@ class NotificacaoService:
                 acao_url=acao_url,
                 prioridade=prioridade,
             )
-            notificacoes.append(notif)
+            if notif is not None:
+                notificacoes.append(notif)
         return notificacoes
 
     @staticmethod

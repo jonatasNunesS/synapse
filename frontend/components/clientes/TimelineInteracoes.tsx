@@ -3,6 +3,7 @@
 import { Plus, Pencil, Trash2, PackageCheck, PackageX } from "lucide-react";
 import type { InteracaoCliente } from "@/types/clientes";
 import { TIPO_INTERACAO_LABELS, TIPO_INTERACAO_ICONS } from "@/types/clientes";
+import { useModulos } from "@/hooks/useModulos";
 
 /** Opções do filtro de controle de estoque (perfil do cliente). */
 export type FiltroEstoque = "" | "descontados" | "nao_descontados";
@@ -87,13 +88,17 @@ export function TimelineInteracoes({
   filtroEstoque = "",
   onFiltroEstoqueChange,
 }: TimelineInteracoesProps) {
+  // Módulo Estoque desligado → a timeline não fala de estoque (nem badge,
+  // nem filtro, nem a ação de descontar).
+  const { moduloAtivo } = useModulos();
+  const mostrarEstoque = moduloAtivo("estoque");
   return (
     <div className="bg-[#0f1117] border border-white/10 rounded-xl">
       {/* Header */}
       <div className="flex items-center justify-between gap-2 p-4 border-b border-white/10">
         <h3 className="text-sm font-semibold text-white">Histórico de Interações</h3>
         <div className="flex items-center gap-2">
-          {onFiltroEstoqueChange && (
+          {mostrarEstoque && onFiltroEstoqueChange && (
             <label className="flex items-center gap-1.5 text-xs text-gray-400">
               <span className="hidden sm:inline">Estoque</span>
               <select
@@ -175,7 +180,9 @@ export function TimelineInteracoes({
                             ) : null;
                           })()}
                           {(() => {
-                            const estado = estadoEstoque(interacao);
+                            const estado = mostrarEstoque
+                              ? estadoEstoque(interacao)
+                              : null;
                             if (estado === "descontado") {
                               return (
                                 <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium bg-emerald-500/15 text-emerald-400 border-emerald-500/30">
@@ -232,15 +239,17 @@ export function TimelineInteracoes({
                       </p>
                     )}
 
-                    {estadoEstoque(interacao) === "pendente" && onDescontarEstoque && (
-                      <button
-                        onClick={() => onDescontarEstoque(interacao)}
-                        className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg text-[11px] text-amber-300 font-medium transition-colors"
-                      >
-                        <PackageCheck className="w-3.5 h-3.5" />
-                        Descontar do estoque agora
-                      </button>
-                    )}
+                    {mostrarEstoque &&
+                      estadoEstoque(interacao) === "pendente" &&
+                      onDescontarEstoque && (
+                        <button
+                          onClick={() => onDescontarEstoque(interacao)}
+                          className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg text-[11px] text-amber-300 font-medium transition-colors"
+                        >
+                          <PackageCheck className="w-3.5 h-3.5" />
+                          Descontar do estoque agora
+                        </button>
+                      )}
 
                     <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
                       <span className="text-xs text-gray-500">

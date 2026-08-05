@@ -13,6 +13,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { DashboardResumo } from "@/types/dashboard";
+import type { ModuloOpcional } from "@/types/auth";
+import { useModulos } from "@/hooks/useModulos";
 
 interface KPICardProps {
   titulo: string;
@@ -75,6 +77,10 @@ interface KPIGridProps {
 }
 
 export function KPIGrid({ resumo, isLoading }: KPIGridProps) {
+  // KPIs de módulos opcionais desligados não aparecem (Financeiro e Clientes
+  // são obrigatórios e ficam sempre).
+  const { moduloAtivo } = useModulos();
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -92,7 +98,7 @@ export function KPIGrid({ resumo, isLoading }: KPIGridProps) {
   const formatCurrency = (v: number) =>
     v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-  const kpis: KPICardProps[] = [
+  const kpis: (KPICardProps & { modulo?: ModuloOpcional })[] = [
     {
       titulo: "Receitas do Mês",
       valor: formatCurrency(financeiro.total_receitas),
@@ -120,6 +126,7 @@ export function KPIGrid({ resumo, isLoading }: KPIGridProps) {
       alerta: financeiro.total_atrasado > 0,
     },
     {
+      modulo: "estoque",
       titulo: "Produtos em Estoque",
       valor: estoque.total_produtos.toString(),
       subtitulo: estoque.produtos_abaixo_minimo > 0
@@ -145,6 +152,7 @@ export function KPIGrid({ resumo, isLoading }: KPIGridProps) {
       cor: "border-l-indigo-500",
     },
     {
+      modulo: "projetos",
       titulo: "Projetos Ativos",
       valor: projetos.projetos_ativos.toString(),
       subtitulo: projetos.projetos_atrasados > 0
@@ -155,6 +163,7 @@ export function KPIGrid({ resumo, isLoading }: KPIGridProps) {
       alerta: projetos.projetos_atrasados > 0,
     },
     {
+      modulo: "projetos",
       titulo: "Minhas Tarefas",
       valor: projetos.tarefas_minhas.toString(),
       subtitulo: projetos.tarefas_atrasadas > 0
@@ -168,9 +177,11 @@ export function KPIGrid({ resumo, isLoading }: KPIGridProps) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {kpis.map((kpi) => (
-        <KPICard key={kpi.titulo} {...kpi} />
-      ))}
+      {kpis
+        .filter((kpi) => !kpi.modulo || moduloAtivo(kpi.modulo))
+        .map(({ modulo: _modulo, ...kpi }) => (
+          <KPICard key={kpi.titulo} {...kpi} />
+        ))}
     </div>
   );
 }

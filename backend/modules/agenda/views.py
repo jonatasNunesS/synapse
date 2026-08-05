@@ -13,6 +13,7 @@ from shared.authentication import CookieJWTAuthentication
 from shared.cache import build_cache_key, get_cached, set_cached
 from shared.pagination import StandardPagination
 from shared.permissions import EmpresaQuerySetMixin, IsEmpresaMember
+from shared.modulos import ModuloAtivo
 from shared.responses import (
     created_response,
     error_response,
@@ -34,7 +35,8 @@ class EventoListCreateView(EmpresaQuerySetMixin, APIView):
     """
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "agenda"
 
     def get(self, request):
         empresa_id = self.get_empresa_id()
@@ -100,7 +102,8 @@ class EventoDetailView(EmpresaQuerySetMixin, APIView):
     """GET/PUT/PATCH/DELETE /api/agenda/{id}/"""
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated, IsEmpresaMember]
+    permission_classes = [IsAuthenticated, IsEmpresaMember, ModuloAtivo]
+    modulo = "agenda"
 
     def get(self, request, pk):
         empresa_id = self.get_empresa_id()

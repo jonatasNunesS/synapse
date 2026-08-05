@@ -18,6 +18,7 @@ import { api } from "@/lib/api";
 import { PLANO_LABELS, PLANO_CORES, SEGMENTOS } from "@/types/auth";
 import type { ApiError } from "@/types/api";
 import { UpgradeWhatsappButton } from "@/components/ui/UpgradeWhatsappButton";
+import { ModulosSection } from "@/components/configuracoes/ModulosSection";
 
 // ── Schema de empresa ────────────────────────────────────────────────────────
 
@@ -107,6 +108,9 @@ export default function ConfiguracoesPage() {
           <UpgradeWhatsappButton label="Quero fazer upgrade" />
         </div>
       )}
+
+      {/* Módulos ativos da empresa */}
+      <ModulosSection />
 
       {/* Dados da empresa */}
       <section className="bg-[#0d1117] border border-white/10 rounded-xl p-6">
