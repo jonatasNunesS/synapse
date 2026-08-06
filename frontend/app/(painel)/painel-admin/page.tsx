@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useEmpresasAdmin } from "@/hooks/usePainelAdmin";
 import { CriarEmpresaModal } from "@/components/painel_admin/CriarEmpresaModal";
+import { PlanosPrecosSection } from "@/components/painel_admin/PlanosPrecosSection";
 import {
   PLANOS,
   SAUDE_COR,
@@ -265,6 +266,9 @@ export default function PainelAdminEmpresasPage() {
           </div>
         )}
       </div>
+
+      {/* Preços e limites da plataforma (o que a landing pública mostra) */}
+      <PlanosPrecosSection />
 
       {criando && (
         <CriarEmpresaModal

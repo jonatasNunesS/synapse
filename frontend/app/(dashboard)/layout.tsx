@@ -39,7 +39,7 @@ export default function DashboardLayout({
       modulo ? `Módulo ${MODULO_LABEL[modulo]} desativado` : "Módulo desativado",
       { description: "Ative em Configurações para voltar a usar." }
     );
-    router.replace("/");
+    router.replace("/dashboard");
   }, [autenticado, pathname, rotaPermitida, moduloDaRota, router]);
 
   // Tela de loading enquanto busca o usuário

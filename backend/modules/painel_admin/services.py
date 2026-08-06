@@ -360,3 +360,51 @@ def _gerar_senha_temporaria() -> str:
     except DjangoValidationError:  # pragma: no cover — fallback improvável
         senha = f"Synapse@{secrets.token_urlsafe(6)}"
     return senha
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# PLANOS (preços e limites da plataforma)
+# ════════════════════════════════════════════════════════════════════════════
+
+# Ordem comercial dos planos — o público vê nesta sequência, não em ordem
+# alfabética.
+PLANOS_COMERCIAIS = ["starter", "pro", "business"]
+
+
+class ConfiguracaoPlanoService:
+    """Preços e limites dos planos. Leitura é pública; escrita é do staff."""
+
+    @staticmethod
+    def listar():
+        """
+        Os 3 planos comerciais, na ordem starter → pro → business.
+
+        Usa get_or_create para que o endpoint público nunca devolva uma lista
+        incompleta, mesmo num banco em que a seed não rodou.
+        """
+        from .models import ConfiguracaoPlano
+
+        planos = []
+        for nome in PLANOS_COMERCIAIS:
+            config, _ = ConfiguracaoPlano.objects.get_or_create(plano=nome)
+            planos.append(config)
+        return planos
+
+    @staticmethod
+    def obter(plano: str):
+        from .models import ConfiguracaoPlano
+
+        if plano not in PLANOS_COMERCIAIS:
+            raise ResourceNotFound("Plano", plano)
+        config, _ = ConfiguracaoPlano.objects.get_or_create(plano=plano)
+        return config
+
+    @staticmethod
+    def atualizar(plano: str, dados: dict):
+        """Atualiza preços/limites de um plano. `dados` já vem validado."""
+        config = ConfiguracaoPlanoService.obter(plano)
+        for campo, valor in dados.items():
+            setattr(config, campo, valor)
+        config.save()
+        logger.info("painel_admin: plano %s atualizado (%s)", plano, list(dados))
+        return config

@@ -27,7 +27,7 @@ export default function PainelAdminLayout({
   // Guard: usuário carregado e NÃO é staff → fora daqui.
   useEffect(() => {
     if (autenticado && usuario && !usuario.is_staff_synapse) {
-      router.replace("/");
+      router.replace("/dashboard");
     }
   }, [autenticado, usuario, router]);
 
@@ -74,7 +74,7 @@ export default function PainelAdminLayout({
               {usuario.nome} · staff
             </span>
             <Link
-              href="/"
+              href="/dashboard"
               className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-white transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5" />

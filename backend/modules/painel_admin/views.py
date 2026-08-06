@@ -1,13 +1,14 @@
 """
 Synapse — Painel Administrativo: Views (visão de plataforma).
 
-Todas protegidas por IsStaffSynapse. NÃO usam EmpresaQuerySetMixin — é uma
-visão cross-tenant consciente, restrita ao staff da plataforma.
+Protegidas por IsStaffSynapse (exceção: PlanosPublicosView, que a landing
+consome sem login). NÃO usam EmpresaQuerySetMixin — é uma visão cross-tenant
+consciente, restrita ao staff da plataforma.
 """
 import logging
 
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 
 from shared.authentication import CookieJWTAuthentication
@@ -20,9 +21,11 @@ from shared.responses import (
 )
 from shared.exceptions import BusinessRuleViolation, ResourceNotFound
 
-from .services import PainelAdminService
+from .services import ConfiguracaoPlanoService, PainelAdminService
 from .serializers import (
+    ConfiguracaoPlanoSerializer,
     CriarEmpresaSerializer,
+    EditarConfiguracaoPlanoSerializer,
     EditarEmpresaSerializer,
     EditarUsuarioSerializer,
     EmpresaAdminDetailSerializer,
@@ -333,3 +336,57 @@ class HistoricoPlanoView(APIView):
         page = paginator.paginate_queryset(qs, request)
         serializer = LogAlteracaoPlanoSerializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# PLANOS — leitura pública (landing) + edição pelo staff
+# ════════════════════════════════════════════════════════════════════════════
+
+
+class PlanosPublicosView(APIView):
+    """
+    GET /api/planos/ — preços e limites dos 3 planos. SEM autenticação:
+    é o que a landing pública consome. Campos ainda não definidos vêm null.
+    """
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        planos = ConfiguracaoPlanoService.listar()
+        return success_response(data=ConfiguracaoPlanoSerializer(planos, many=True).data)
+
+
+class ConfiguracaoPlanoDetailView(APIView):
+    """
+    PATCH /api/painel-admin/planos/{plano}/ — edita preço, limites e suporte.
+    Restrito ao staff da plataforma.
+    """
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsStaffSynapse]
+
+    def get(self, request, plano):
+        try:
+            config = ConfiguracaoPlanoService.obter(plano)
+        except ResourceNotFound:
+            return _404("Plano não encontrado.")
+        return success_response(data=ConfiguracaoPlanoSerializer(config).data)
+
+    def patch(self, request, plano):
+        serializer = EditarConfiguracaoPlanoSerializer(data=request.data, partial=True)
+        if not serializer.is_valid():
+            return error_response(
+                code="VALIDATION_ERROR",
+                message="Dados inválidos.",
+                details=serializer.errors,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            config = ConfiguracaoPlanoService.atualizar(plano, serializer.validated_data)
+        except ResourceNotFound:
+            return _404("Plano não encontrado.")
+        return success_response(
+            data=ConfiguracaoPlanoSerializer(config).data,
+            message="Plano atualizado com sucesso.",
+        )

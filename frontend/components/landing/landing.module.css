@@ -1,0 +1,145 @@
+/*
+ * Landing pública — base e estados de :hover.
+ *
+ * Espelha o <style> do HTML original, só que escopado em .landing para não
+ * vazar no tema escuro do sistema. Os `style-hover` do HTML viraram as
+ * classes .linkPrimario / .linkSecundario / etc. mais abaixo.
+ */
+
+:global(html) {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :global(html) {
+    scroll-behavior: auto;
+  }
+}
+
+.landing {
+  min-height: 100vh;
+  background: #fafaf9;
+  color: #18181b;
+  /*
+   * O HTML original não define line-height no body: tudo que não traz o seu
+   * próprio herda o `normal` do navegador. O preflight do Tailwind força 1.5
+   * no html, o que engordaria cada bloco. Aqui voltamos ao normal.
+   */
+  line-height: normal;
+  font-family: var(--font-plex-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.landing * {
+  box-sizing: border-box;
+}
+
+.landing a {
+  color: #6d28d9;
+  text-decoration: none;
+}
+
+.landing a:hover {
+  color: #5b21b6;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.landing :focus-visible {
+  outline: 2px solid #6d28d9;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.landing ::selection {
+  background: #ddd6fe;
+  color: #18181b;
+}
+
+.landing summary::-webkit-details-marker {
+  display: none;
+}
+
+.landing summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.landing h1,
+.landing h2,
+.landing h3,
+.landing h4,
+.landing p,
+.landing ul,
+.landing ol,
+.landing figure,
+.landing blockquote {
+  margin: 0;
+}
+
+.landing ul {
+  padding: 0;
+  list-style: none;
+}
+
+/*
+ * O original zera o padding só das <ul>; as <ol> mantêm o recuo padrão do
+ * navegador. O preflight do Tailwind zera as duas, então devolvemos o recuo
+ * (quem precisa de 0 já traz `padding:0` no style inline).
+ */
+.landing ol {
+  padding-inline-start: 40px;
+}
+
+.landing button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* ── style-hover do Design Canvas ───────────────────────────────────────── */
+
+/* Header: "Criar conta" (fundo preto → roxo) */
+.ctaHeader:hover {
+  background: #6d28d9;
+  text-decoration: none;
+}
+
+/* CTA roxo (hero, fechamento, plano Pro) */
+.ctaPrimario:hover {
+  background: #5b21b6;
+  text-decoration: none;
+}
+
+/* CTA de contorno (hero "Ver planos", "Falar no WhatsApp") */
+.ctaSecundario:hover {
+  border-color: rgba(24, 24, 27, 0.4);
+  text-decoration: none;
+}
+
+/* Botão "Começar" dos planos sem destaque */
+.ctaPlano:hover {
+  border-color: #6d28d9;
+  color: #6d28d9;
+  text-decoration: none;
+}
+
+/* Linhas de pergunta da personalização */
+.linhaToggle:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/*
+ * O header do original já ocupa a largura inteira num celular de 390px. Como
+ * o menu ganhou o link "Entrar" (exigido pelo roteamento público), em telas
+ * estreitas escondemos as âncoras de seção — que continuam no rodapé — para
+ * a página não ganhar rolagem horizontal. Acima de 600px nada muda.
+ */
+@media (max-width: 599px) {
+  .ancoraSecao {
+    display: none;
+  }
+}

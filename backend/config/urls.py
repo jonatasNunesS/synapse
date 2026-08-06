@@ -96,6 +96,8 @@ urlpatterns = [
     path("api/agenda/", include("modules.agenda.urls")),
     path("api/search/", include("modules.search.urls")),
     path("api/painel-admin/", include("modules.painel_admin.urls")),
+    # Público (landing): preços e limites dos planos, sem autenticação.
+    path("api/planos/", include("modules.painel_admin.public_urls")),
     path("api/recorrencias/", include("modules.recorrencias.urls")),
 ]
 

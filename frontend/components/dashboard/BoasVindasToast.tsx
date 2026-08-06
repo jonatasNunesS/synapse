@@ -5,7 +5,7 @@
  * Dispara uma vez só e limpa a query.
  *
  * Fica isolado num componente porque `useSearchParams()` exige um limite de
- * Suspense — sem isso o "/" não pré-renderiza no build.
+ * Suspense — sem isso o "/dashboard" não pré-renderiza no build.
  */
 import { useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -23,7 +23,7 @@ export function BoasVindasToast() {
       description: "Você pode ajustar isso em Configurações.",
       duration: 8000,
     });
-    router.replace("/");
+    router.replace("/dashboard");
   }, [searchParams, router]);
 
   return null;

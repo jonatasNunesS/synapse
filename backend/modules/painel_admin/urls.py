@@ -4,6 +4,7 @@ Synapse — Painel Administrativo: URLs.
 from django.urls import path
 
 from .views import (
+    ConfiguracaoPlanoDetailView,
     EmpresasListView,
     EmpresaDetailView,
     SuspenderEmpresaView,
@@ -54,5 +55,11 @@ urlpatterns = [
         "empresas/<uuid:empresa_id>/historico/",
         HistoricoPlanoView.as_view(),
         name="historico",
+    ),
+    # ── Planos da plataforma (preços e limites) ──────────────────────────
+    path(
+        "planos/<str:plano>/",
+        ConfiguracaoPlanoDetailView.as_view(),
+        name="plano-detalhe",
     ),
 ]

@@ -63,7 +63,7 @@ export function useAuth() {
         if (response.success && usuario) {
           setUsuario(usuario);
           setAutenticado(true);
-          router.push("/");
+          router.push("/dashboard");
         }
       } catch (error: unknown) {
         // Re-lança com mensagem útil para o componente de login exibir
@@ -87,7 +87,7 @@ export function useAuth() {
         if (response.success && usuario) {
           setUsuario(usuario);
           setAutenticado(true);
-          router.push("/?boas_vindas=1");
+          router.push("/dashboard?boas_vindas=1");
         }
       } catch (error: unknown) {
         // Re-lança com mensagem útil para o componente de registro exibir

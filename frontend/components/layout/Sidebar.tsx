@@ -41,7 +41,7 @@ interface NavItem {
 }
 
 const navigation: NavItem[] = [
-  { label: "Dashboard", href: "/", icon: LayoutDashboard },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Financeiro", href: "/financeiro", icon: DollarSign },
   { label: "Estoque", href: "/estoque", icon: Package, modulo: "estoque" },
   { label: "Clientes", href: "/clientes", icon: Users },
@@ -113,7 +113,7 @@ export function Sidebar() {
         {/* ── Logo ──────────────────────────────────────────── */}
         <div className="flex h-16 items-center justify-between border-b border-slate-800 px-4">
           {sidebarOpen && (
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/dashboard" className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600">
                 <Zap className="h-4 w-4 text-white" />
               </div>

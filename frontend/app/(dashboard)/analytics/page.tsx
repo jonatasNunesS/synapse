@@ -123,7 +123,7 @@ export default function AnalyticsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link
-            href="/"
+            href="/dashboard"
             className="p-2 rounded-lg hover:bg-muted transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />

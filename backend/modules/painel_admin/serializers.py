@@ -1,6 +1,8 @@
 """
 Synapse — Painel Administrativo: Serializers.
 """
+from decimal import Decimal
+
 from rest_framework import serializers
 
 from django.contrib.auth.password_validation import validate_password
@@ -14,7 +16,7 @@ from modules.auth.models import (
     Empresa,
 )
 
-from .models import AuditLog, LogAlteracaoPlano
+from .models import AuditLog, ConfiguracaoPlano, LogAlteracaoPlano
 from .services import PainelAdminService
 
 
@@ -249,3 +251,45 @@ class EditarUsuarioSerializer(serializers.Serializer):
         choices=[p[0] for p in PERFIL_CHOICES], required=False
     )
     is_active = serializers.BooleanField(required=False)
+
+
+class ConfiguracaoPlanoSerializer(serializers.ModelSerializer):
+    """
+    Plano como a landing pública o vê. Preço/limites podem vir null — o
+    frontend mostra "a definir" nesse caso.
+    """
+
+    class Meta:
+        model = ConfiguracaoPlano
+        fields = [
+            "plano",
+            "preco_mensal",
+            "preco_anual",
+            "limite_usuarios",
+            "limite_armazenamento_gb",
+            "descricao_suporte",
+            "ativo",
+            "atualizado_em",
+        ]
+        read_only_fields = fields
+
+
+class EditarConfiguracaoPlanoSerializer(serializers.ModelSerializer):
+    """PATCH do staff: preços, limites e descrição do suporte."""
+
+    class Meta:
+        model = ConfiguracaoPlano
+        fields = [
+            "preco_mensal",
+            "preco_anual",
+            "limite_usuarios",
+            "limite_armazenamento_gb",
+            "descricao_suporte",
+            "ativo",
+        ]
+        extra_kwargs = {
+            "preco_mensal": {"allow_null": True, "min_value": Decimal("0")},
+            "preco_anual": {"allow_null": True, "min_value": Decimal("0")},
+            "limite_usuarios": {"allow_null": True, "min_value": 1},
+            "limite_armazenamento_gb": {"allow_null": True, "min_value": 1},
+        }

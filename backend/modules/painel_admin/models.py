@@ -104,3 +104,43 @@ class AuditLog(models.Model):
 
     def __str__(self) -> str:
         return f"{self.acao}: {self.empresa_nome} ({self.empresa_id})"
+
+
+class ConfiguracaoPlano(models.Model):
+    """
+    Preços e limites de cada plano da plataforma, editáveis pelo staff.
+
+    Existe uma linha por plano comercial (starter/pro/business). Preço e
+    limites nascem NULL: enquanto não forem definidos, a landing mostra
+    "a definir" em vez de um valor inventado.
+    """
+
+    PLANO_CHOICES = [
+        ("starter", "Starter"),
+        ("pro", "Pro"),
+        ("business", "Business"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    plano = models.CharField(max_length=20, choices=PLANO_CHOICES, unique=True)
+    preco_mensal = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
+    preco_anual = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
+    limite_usuarios = models.IntegerField(null=True, blank=True)
+    limite_armazenamento_gb = models.IntegerField(null=True, blank=True)
+    descricao_suporte = models.CharField(max_length=255, blank=True, default="")
+    ativo = models.BooleanField(default=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "synapse_configuracao_plano"
+        verbose_name = "Configuração de Plano"
+        verbose_name_plural = "Configurações de Plano"
+        ordering = ["plano"]
+
+    def __str__(self) -> str:
+        preco = self.preco_mensal if self.preco_mensal is not None else "a definir"
+        return f"{self.plano}: {preco}"
