@@ -103,7 +103,7 @@ export default function CaixinhasPage() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              <PiggyBank className="w-6 h-6 text-violet-400" />
+              <PiggyBank className="w-6 h-6 text-brand-400" />
               Caixinhas
             </h1>
             <p className="text-sm text-slate-400 mt-0.5">
@@ -113,7 +113,7 @@ export default function CaixinhasPage() {
               </span>
               <span className="mx-2">·</span>
               Total em caixinhas:{" "}
-              <span className="text-violet-300 font-medium">
+              <span className="text-brand-300 font-medium">
                 {moedaCaixinha(totalEmCaixinhas)}
               </span>
             </p>
@@ -121,7 +121,7 @@ export default function CaixinhasPage() {
         </div>
         <button
           onClick={() => setMostrarForm(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm font-medium text-white transition-colors self-start sm:self-auto"
+          className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 rounded-lg text-sm font-medium text-white transition-colors self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
           Nova Caixinha
@@ -147,7 +147,7 @@ export default function CaixinhasPage() {
           </p>
           <button
             onClick={() => setMostrarForm(true)}
-            className="mt-4 text-violet-400 hover:text-violet-300 text-sm transition-colors"
+            className="mt-4 text-brand-400 hover:text-brand-300 text-sm transition-colors"
           >
             Criar primeira caixinha
           </button>

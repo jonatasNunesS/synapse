@@ -152,7 +152,7 @@ export default function ProjetoDetalhePage() {
     return (
       <div className="p-6 max-w-7xl mx-auto text-center py-20">
         <p className="text-gray-500">Projeto não encontrado.</p>
-        <Link href="/projetos" className="text-indigo-600 hover:underline mt-2 block">
+        <Link href="/projetos" className="text-brand-600 hover:underline mt-2 block">
           Voltar para Projetos
         </Link>
       </div>
@@ -163,7 +163,7 @@ export default function ProjetoDetalhePage() {
     <div className="p-6 max-w-7xl mx-auto space-y-5">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-gray-500">
-        <Link href="/projetos" className="hover:text-indigo-600 flex items-center gap-1">
+        <Link href="/projetos" className="hover:text-brand-600 flex items-center gap-1">
           <ArrowLeft size={14} />
           Projetos
         </Link>
@@ -272,7 +272,7 @@ export default function ProjetoDetalhePage() {
                 {projeto.membros.slice(0, 5).map((m) => (
                   <div
                     key={m.id}
-                    className="w-6 h-6 rounded-full bg-indigo-100 border-2 border-white flex items-center justify-center text-indigo-700 text-xs font-bold"
+                    className="w-6 h-6 rounded-full bg-brand-100 border-2 border-white flex items-center justify-center text-brand-700 text-xs font-bold"
                     title={m.nome}
                   >
                     {m.nome.charAt(0).toUpperCase()}
@@ -317,7 +317,7 @@ export default function ProjetoDetalhePage() {
         </div>
         <button
           onClick={() => handleNovaTarefa("a_fazer")}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+          className="flex items-center gap-2 bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition-colors text-sm font-medium"
         >
           + Nova Tarefa
         </button>

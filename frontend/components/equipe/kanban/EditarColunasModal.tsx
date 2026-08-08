@@ -107,7 +107,7 @@ export function EditarColunasModal({ onFechar, onMudou }: Props) {
         </div>
 
         <div className="p-5 space-y-2">
-          {isLoading && <Loader2 className="h-5 w-5 animate-spin text-violet-400 mx-auto" />}
+          {isLoading && <Loader2 className="h-5 w-5 animate-spin text-brand-400 mx-auto" />}
           {locais.map((col, idx) => (
             <div
               key={col.id}
@@ -144,7 +144,7 @@ export function EditarColunasModal({ onFechar, onMudou }: Props) {
                   if (e.target.value.trim() && e.target.value !== col.nome)
                     renomear(col, e.target.value.trim());
                 }}
-                className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-violet-500"
+                className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
               <button
                 onClick={() => setExcluir(col)}
@@ -163,12 +163,12 @@ export function EditarColunasModal({ onFechar, onMudou }: Props) {
               onChange={(e) => setNovaCol(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && adicionar()}
               placeholder="Nome da nova coluna"
-              className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+              className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
             <button
               onClick={adicionar}
               disabled={!novaCol.trim() || salvando}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-500 disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-500 disabled:opacity-40"
             >
               <Plus className="h-4 w-4" /> Adicionar
             </button>
@@ -192,7 +192,7 @@ export function EditarColunasModal({ onFechar, onMudou }: Props) {
             <select
               value={moverPara}
               onChange={(e) => setMoverPara(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-violet-500"
+              className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
             >
               <option value="">— selecione —</option>
               {locais

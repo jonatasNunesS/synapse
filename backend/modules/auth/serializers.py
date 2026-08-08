@@ -28,6 +28,8 @@ class EmpresaSerializer(serializers.ModelSerializer):
             "plano_validade",
             "ativo",
             "status",
+            "tema_paleta",
+            "tema_fonte",
             "criado_em",
         ]
         read_only_fields = fields
@@ -223,3 +225,19 @@ class ModulosEmpresaSerializer(serializers.ModelSerializer):
             "modulo_equipe",
             "modulo_documentos",
         ]
+
+
+# ════════════════════════════════════════════════════════════
+# SERIALIZER: IDENTIDADE VISUAL (PATCH /empresa/tema/)
+# ════════════════════════════════════════════════════════════
+
+
+class TemaEmpresaSerializer(serializers.ModelSerializer):
+    """
+    Paleta e fonte da empresa. As duas são escolhas curadas: qualquer valor
+    fora das opções é 400 (o ModelSerializer valida pelos choices do model).
+    """
+
+    class Meta:
+        model = Empresa
+        fields = ["tema_paleta", "tema_fonte"]

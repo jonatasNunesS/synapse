@@ -114,14 +114,14 @@ export function Sidebar() {
         <div className="flex h-16 items-center justify-between border-b border-slate-800 px-4">
           {sidebarOpen && (
             <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600">
                 <Zap className="h-4 w-4 text-white" />
               </div>
               <span className="text-lg font-bold text-white tracking-tight">Synapse</span>
             </Link>
           )}
           {!sidebarOpen && (
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600 mx-auto">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 mx-auto">
               <Zap className="h-4 w-4 text-white" />
             </div>
           )}
@@ -168,7 +168,7 @@ export function Sidebar() {
   className={cn(
     "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
     isActive
-      ? "bg-violet-600/15 text-violet-400 shadow-sm"
+      ? "bg-brand-600/15 text-brand-400 shadow-sm"
       : "text-slate-400 hover:bg-slate-800 hover:text-slate-200",
     item.disabled && "cursor-not-allowed opacity-40",
     !sidebarOpen && "justify-center px-2"
@@ -185,14 +185,14 @@ export function Sidebar() {
   <Icon
     className={cn(
       "h-4 w-4 shrink-0",
-      isActive ? "text-violet-400" : "text-slate-500"
+      isActive ? "text-brand-400" : "text-slate-500"
     )}
   />
   {sidebarOpen && (
     <>
       <span className="flex-1">{item.label}</span>
       {item.badge !== undefined && item.badge > 0 && (
-        <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-violet-600 px-1.5 text-[10px] font-bold text-white">
+        <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-brand-600 px-1.5 text-[10px] font-bold text-white">
           {item.badge}
         </span>
       )}
@@ -212,7 +212,7 @@ export function Sidebar() {
           {sidebarOpen ? (
             <div className="group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-800 transition-colors cursor-default">
               {/* Avatar */}
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-600/20 text-violet-400 text-xs font-bold border border-violet-600/30">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600/20 text-brand-400 text-xs font-bold border border-brand-600/30">
                 {iniciais}
               </div>
               {/* Info */}
@@ -244,7 +244,7 @@ export function Sidebar() {
               <button
                 onClick={() => logout()}
                 title="Sair"
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600/20 text-violet-400 text-xs font-bold border border-violet-600/30 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 transition-all"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-600/20 text-brand-400 text-xs font-bold border border-brand-600/30 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 transition-all"
               >
                 {iniciais}
               </button>

@@ -260,8 +260,8 @@ export default function ProdutoDetailPage() {
           valor={produto.total_movimentacoes.toLocaleString("pt-BR")}
           sub="Total registrado"
           icone={Package}
-          cor="text-purple-400"
-          bg="bg-purple-500/10"
+          cor="text-brand-400"
+          bg="bg-brand-500/10"
         />
       </div>
 

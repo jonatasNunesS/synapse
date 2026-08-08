@@ -30,7 +30,7 @@ export function NovoProdutoInline({ nomeInicial, onCriado, onCancelar }: NovoPro
   const [salvando, setSalvando] = useState(false);
 
   const input =
-    "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50";
+    "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-500/50";
   const label = "mb-1 block text-xs font-medium text-slate-400";
 
   const salvar = async () => {
@@ -52,7 +52,7 @@ export function NovoProdutoInline({ nomeInicial, onCriado, onCancelar }: NovoPro
   };
 
   return (
-    <div className="rounded-lg border border-violet-500/30 bg-violet-500/5 p-4 space-y-3">
+    <div className="rounded-lg border border-brand-500/30 bg-brand-500/5 p-4 space-y-3">
       <p className="text-sm font-medium text-white">Novo produto</p>
       <div>
         <label className={label}>Nome *</label>
@@ -106,7 +106,7 @@ export function NovoProdutoInline({ nomeInicial, onCriado, onCancelar }: NovoPro
           type="button"
           onClick={salvar}
           disabled={!nome.trim() || salvando}
-          className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 disabled:opacity-50"
         >
           {salvando && <Loader2 className="h-4 w-4 animate-spin" />}
           Salvar produto

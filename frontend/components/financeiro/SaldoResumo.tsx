@@ -148,7 +148,7 @@ export function SaldoResumo({ saldo, loading, filtroAtivo, onFiltrar }: SaldoRes
                     {temCaixinhas && (
                       <Link
                         href="/financeiro/caixinhas"
-                        className="inline-flex items-center gap-1 text-violet-400 hover:text-violet-300 transition-colors"
+                        className="inline-flex items-center gap-1 text-brand-400 hover:text-brand-300 transition-colors"
                       >
                         <PiggyBank className="h-3.5 w-3.5" />
                         Em caixinhas: {moeda(saldo?.caixinhas?.total ?? 0)}

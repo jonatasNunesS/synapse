@@ -101,7 +101,7 @@ export function MovimentosCaixinhaModal({
                       className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                         deposito
                           ? "bg-emerald-500/10 text-emerald-400"
-                          : "bg-violet-500/10 text-violet-400"
+                          : "bg-brand-500/10 text-brand-400"
                       }`}
                     >
                       {deposito ? (
@@ -124,7 +124,7 @@ export function MovimentosCaixinhaModal({
                     </div>
                     <span
                       className={`text-sm font-semibold tabular-nums flex-shrink-0 ${
-                        deposito ? "text-emerald-400" : "text-violet-300"
+                        deposito ? "text-emerald-400" : "text-brand-300"
                       }`}
                     >
                       {deposito ? "+" : "−"}

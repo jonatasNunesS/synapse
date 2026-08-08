@@ -25,7 +25,7 @@ function ProgressBar({ value, atingida }: { value: number; atingida: boolean }) 
   return (
     <div className="w-full bg-muted rounded-full h-2">
       <div
-        className={`h-2 rounded-full transition-all ${atingida ? "bg-green-500" : "bg-violet-500"}`}
+        className={`h-2 rounded-full transition-all ${atingida ? "bg-green-500" : "bg-brand-500"}`}
         style={{ width: `${pct}%` }}
       />
     </div>
@@ -186,7 +186,7 @@ export default function MembroDetailPage() {
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row items-start gap-5">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-600/20 text-violet-400 text-xl font-bold border border-violet-600/30 flex-shrink-0">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-600/20 text-brand-400 text-xl font-bold border border-brand-600/30 flex-shrink-0">
               {iniciais}
             </div>
             <div className="flex-1">
@@ -251,7 +251,7 @@ export default function MembroDetailPage() {
             onClick={() => setAba(t)}
             className={`px-4 py-2 text-sm font-medium -mb-px border-b-2 transition-colors ${
               aba === t
-                ? "border-violet-500 text-foreground"
+                ? "border-brand-500 text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >

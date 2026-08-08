@@ -9,6 +9,7 @@ import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAppStore } from "@/store/useAppStore";
 import api, { getErrorMessage } from "@/lib/api";
+import { limparTemaDoCookie, sincronizarTema } from "@/lib/tema";
 import type {
   AtualizarPerfilPayload,
   LoginPayload,
@@ -40,6 +41,9 @@ export function useAuth() {
       if (response.success && response.data) {
         setUsuario(response.data);
         setAutenticado(true);
+        // Identidade visual da empresa: reaplica e guarda no cookie, para o
+        // próximo carregamento já nascer na cor certa (sem flash).
+        sincronizarTema(response.data.empresa);
         return true;
       }
       return false;
@@ -108,6 +112,8 @@ export function useAuth() {
       // Silencioso — limpa estado mesmo se a API falhar
     } finally {
       clearAuth();
+      // Máquina compartilhada: o próximo login não herda a cor da outra empresa.
+      limparTemaDoCookie();
       router.push("/login");
     }
   }, [clearAuth, router]);

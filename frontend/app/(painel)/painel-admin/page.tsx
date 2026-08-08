@@ -34,7 +34,7 @@ import {
 const PLANO_COR: Record<string, string> = {
   starter: "bg-slate-500/20 text-slate-300",
   pro: "bg-blue-500/20 text-blue-300",
-  business: "bg-violet-500/20 text-violet-300",
+  business: "bg-brand-500/20 text-brand-300",
   enterprise: "bg-amber-500/20 text-amber-300",
 };
 

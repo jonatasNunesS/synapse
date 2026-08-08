@@ -74,7 +74,7 @@ export default function ProjetosPage() {
             setProjetoEditando(null);
             setModalAberto(true);
           }}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+          className="flex items-center gap-2 bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition-colors text-sm font-medium"
         >
           <Plus size={16} />
           Novo Projeto
@@ -100,7 +100,7 @@ export default function ProjetosPage() {
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar projetos..."
-            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -108,7 +108,7 @@ export default function ProjetosPage() {
           <select
             value={filtroStatus}
             onChange={(e) => setFiltroStatus(e.target.value as ProjetoStatus | "")}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           >
             <option value="">Todos os status</option>
             <option value="planejamento">Planejamento</option>
@@ -120,7 +120,7 @@ export default function ProjetosPage() {
           <select
             value={filtroPrioridade}
             onChange={(e) => setFiltroPrioridade(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           >
             <option value="">Todas as prioridades</option>
             <option value="baixa">Baixa</option>

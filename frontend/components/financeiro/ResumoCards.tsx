@@ -75,10 +75,10 @@ export function ResumoCards({ resumo, loading }: ResumoCardsProps) {
         valor={formatarMoeda(resumo?.saldo ?? 0)}
         icon={
           <TrendingUp
-            className={`w-4 h-4 ${saldoPositivo ? "text-violet-400" : "text-red-400"}`}
+            className={`w-4 h-4 ${saldoPositivo ? "text-brand-400" : "text-red-400"}`}
           />
         }
-        cor={saldoPositivo ? "bg-violet-400/10" : "bg-red-400/10"}
+        cor={saldoPositivo ? "bg-brand-400/10" : "bg-red-400/10"}
         descricao="Receitas - Despesas pagas"
         loading={loading}
       />

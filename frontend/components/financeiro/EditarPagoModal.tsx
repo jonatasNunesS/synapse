@@ -84,7 +84,7 @@ export function EditarPagoModal({
   };
 
   const inputClass =
-    "w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors";
+    "w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -110,7 +110,7 @@ export function EditarPagoModal({
                 <span
                   className={`flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full ${
                     i === etapa
-                      ? "bg-violet-600/20 text-violet-300 border border-violet-500/40"
+                      ? "bg-brand-600/20 text-brand-300 border border-brand-500/40"
                       : i < etapa
                         ? "text-emerald-400"
                         : "text-slate-500"
@@ -272,7 +272,7 @@ export function EditarPagoModal({
               type="button"
               onClick={() => setEtapa(etapa + 1)}
               disabled={etapa === 0 && !dadosValidos}
-              className="inline-flex items-center gap-1.5 py-2.5 px-4 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-white transition-colors"
+              className="inline-flex items-center gap-1.5 py-2.5 px-4 rounded-lg bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-white transition-colors"
             >
               Avançar
               <ChevronRight className="w-4 h-4" />
@@ -282,7 +282,7 @@ export function EditarPagoModal({
               type="button"
               onClick={salvar}
               disabled={!motivoValido || salvando}
-              className="inline-flex items-center gap-2 py-2.5 px-4 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-white transition-colors"
+              className="inline-flex items-center gap-2 py-2.5 px-4 rounded-lg bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-white transition-colors"
             >
               {salvando && <Loader2 className="w-4 h-4 animate-spin" />}
               Salvar alteração

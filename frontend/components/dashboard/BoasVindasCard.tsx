@@ -33,16 +33,16 @@ export function BoasVindasCard({ resumo, nomeUsuario, isLoading }: BoasVindasCar
   const saldoPositivo = saldoMes >= 0;
 
   return (
-    <Card className="bg-gradient-to-r from-indigo-600 to-indigo-800 text-white border-0 shadow-lg">
+    <Card className="bg-gradient-to-r from-brand-600 to-brand-800 text-white border-0 shadow-lg">
       <CardContent className="p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           {/* Saudação */}
           <div>
-            <p className="text-indigo-200 text-sm font-medium">{saudacao},</p>
+            <p className="text-brand-200 text-sm font-medium">{saudacao},</p>
             <h1 className="text-2xl font-bold text-white mt-0.5">
               {isLoading ? "..." : primeiroNome} 👋
             </h1>
-            <p className="text-indigo-200 text-sm mt-1">
+            <p className="text-brand-200 text-sm mt-1">
               Resumo de {mes} de {ano}
             </p>
           </div>
@@ -54,7 +54,7 @@ export function BoasVindasCard({ resumo, nomeUsuario, isLoading }: BoasVindasCar
               <div className="flex items-center gap-1.5 bg-white/10 rounded-lg px-3 py-2">
                 <TrendingUp className={`h-4 w-4 ${saldoPositivo ? "text-green-300" : "text-red-300"}`} />
                 <div>
-                  <p className="text-xs text-indigo-200">Saldo do mês</p>
+                  <p className="text-xs text-brand-200">Saldo do mês</p>
                   <p className={`text-sm font-bold ${saldoPositivo ? "text-green-300" : "text-red-300"}`}>
                     {saldoPositivo ? "+" : ""}
                     {saldoMes.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
@@ -68,7 +68,7 @@ export function BoasVindasCard({ resumo, nomeUsuario, isLoading }: BoasVindasCar
               <div className="flex items-center gap-1.5 bg-white/10 rounded-lg px-3 py-2">
                 <Bell className="h-4 w-4 text-yellow-300" />
                 <div>
-                  <p className="text-xs text-indigo-200">Notificações</p>
+                  <p className="text-xs text-brand-200">Notificações</p>
                   <p className="text-sm font-bold text-yellow-300">
                     {naoLidas} nova{naoLidas !== 1 ? "s" : ""}
                   </p>
@@ -80,7 +80,7 @@ export function BoasVindasCard({ resumo, nomeUsuario, isLoading }: BoasVindasCar
             {!isLoading && (resumo?.projetos.tarefas_minhas ?? 0) > 0 && (
               <div className="flex items-center gap-1.5 bg-white/10 rounded-lg px-3 py-2">
                 <div>
-                  <p className="text-xs text-indigo-200">Minhas tarefas</p>
+                  <p className="text-xs text-brand-200">Minhas tarefas</p>
                   <p className="text-sm font-bold text-white">
                     {resumo?.projetos.tarefas_minhas} pendente{resumo?.projetos.tarefas_minhas !== 1 ? "s" : ""}
                   </p>

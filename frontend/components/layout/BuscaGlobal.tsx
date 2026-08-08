@@ -147,7 +147,7 @@ export function BuscaGlobal() {
           onFocus={() => resultados && setAberto(true)}
           placeholder="Buscar clientes, produtos, projetos..."
           className="h-9 w-full rounded-lg border border-slate-800 bg-slate-900/60 pl-9 pr-8 text-sm text-slate-300 placeholder:text-slate-600
-            focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/40 transition-colors"
+            focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500/40 transition-colors"
         />
       </div>
 

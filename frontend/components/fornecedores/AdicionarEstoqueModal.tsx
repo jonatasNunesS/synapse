@@ -59,7 +59,7 @@ export function AdicionarEstoqueModal({
       <div className="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
           <div className="flex items-center gap-2">
-            <PackagePlus className="h-5 w-5 text-violet-400" />
+            <PackagePlus className="h-5 w-5 text-brand-400" />
             <h3 className="text-base font-semibold text-white">
               Adicionar ao estoque
             </h3>
@@ -124,7 +124,7 @@ export function AdicionarEstoqueModal({
                       <button
                         type="button"
                         onClick={() => setCriandoProduto(true)}
-                        className="w-full rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-slate-300 hover:border-violet-500/50 hover:bg-violet-500/5 hover:text-white transition-colors"
+                        className="w-full rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-slate-300 hover:border-brand-500/50 hover:bg-brand-500/5 hover:text-white transition-colors"
                       >
                         + Criar novo produto com base nessa compra
                       </button>
@@ -143,7 +143,7 @@ export function AdicionarEstoqueModal({
                         value={quantidade}
                         onChange={(e) => setQuantidade(e.target.value)}
                         aria-label="Quantidade"
-                        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50"
+                        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-500/50"
                       />
                     </div>
                   )}
@@ -157,7 +157,7 @@ export function AdicionarEstoqueModal({
           {jaNoEstoque ? (
             <button
               onClick={onClose}
-              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
+              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500"
             >
               Fechar
             </button>
@@ -171,7 +171,7 @@ export function AdicionarEstoqueModal({
               </button>
               <button
                 onClick={() => setEtapa("selecao")}
-                className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
+                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500"
               >
                 Sim, adicionar ao estoque
               </button>
@@ -197,7 +197,7 @@ export function AdicionarEstoqueModal({
               <button
                 onClick={handleConfirmar}
                 disabled={!produto || !(Number(quantidade) > 0) || processando}
-                className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {processando && <Loader2 className="h-4 w-4 animate-spin" />}
                 Confirmar entrada

@@ -139,7 +139,7 @@ export function BaixarEstoqueModal({
                       value={quantidade}
                       onChange={(e) => setQuantidade(e.target.value)}
                       aria-label="Quantidade"
-                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50"
+                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-500/50"
                     />
                   </div>
                   {qtd > 0 && (

@@ -2,6 +2,8 @@
  * Synapse — M1: Tipos de Autenticação
  */
 
+import type { FonteTema, Paleta } from "@/lib/tema";
+
 export interface Empresa {
   id: string;
   nome: string;
@@ -13,6 +15,9 @@ export interface Empresa {
   ativo: boolean;
   /** ativa | suspensa — empresa suspensa loga mas vê a tela de aviso. */
   status: "ativa" | "suspensa";
+  /** Identidade visual (white-label) — vale para toda a equipe. */
+  tema_paleta: Paleta;
+  tema_fonte: FonteTema;
   criado_em: string;
 }
 

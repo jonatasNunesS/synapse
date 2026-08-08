@@ -48,7 +48,7 @@ export default function AIHubPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-purple-500" />
+            <Sparkles className="h-6 w-6 text-brand-500" />
             AI Hub
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
@@ -98,34 +98,34 @@ export default function AIHubPage() {
       </div>
 
       {/* Dicas de uso */}
-      <div className="rounded-xl border border-purple-100 bg-purple-50/50 p-4">
-        <h3 className="text-sm font-semibold text-purple-800 mb-2 flex items-center gap-2">
+      <div className="rounded-xl border border-brand-100 bg-brand-50/50 p-4">
+        <h3 className="text-sm font-semibold text-brand-800 mb-2 flex items-center gap-2">
           <Sparkles className="h-4 w-4" />
           Dicas para melhores resultados
         </h3>
-        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-purple-700">
+        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-brand-700">
           <li className="flex items-start gap-1.5">
-            <span className="text-purple-400 mt-0.5">→</span>
+            <span className="text-brand-400 mt-0.5">→</span>
             Seja específico no nome do produto ou serviço
           </li>
           <li className="flex items-start gap-1.5">
-            <span className="text-purple-400 mt-0.5">→</span>
+            <span className="text-brand-400 mt-0.5">→</span>
             Informe o tom desejado (urgente, descontraído, profissional)
           </li>
           <li className="flex items-start gap-1.5">
-            <span className="text-purple-400 mt-0.5">→</span>
+            <span className="text-brand-400 mt-0.5">→</span>
             Use o Relatório do Negócio para análises mensais completas
           </li>
           <li className="flex items-start gap-1.5">
-            <span className="text-purple-400 mt-0.5">→</span>
+            <span className="text-brand-400 mt-0.5">→</span>
             Salve os melhores conteúdos como favoritos para reutilizar
           </li>
           <li className="flex items-start gap-1.5">
-            <span className="text-purple-400 mt-0.5">→</span>
+            <span className="text-brand-400 mt-0.5">→</span>
             O insight semanal usa dados reais do seu negócio
           </li>
           <li className="flex items-start gap-1.5">
-            <span className="text-purple-400 mt-0.5">→</span>
+            <span className="text-brand-400 mt-0.5">→</span>
             Use o Pedido Livre para qualquer conteúdo fora dos tipos prontos
           </li>
         </ul>

@@ -124,7 +124,7 @@ export function TarefaForm({
               value={dados.titulo}
               onChange={(e) => setDados({ ...dados, titulo: e.target.value })}
               placeholder="Ex: Criar wireframes da tela inicial"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               maxLength={300}
               autoFocus
             />
@@ -140,7 +140,7 @@ export function TarefaForm({
               onChange={(e) => setDados({ ...dados, descricao: e.target.value })}
               placeholder="Detalhes da tarefa..."
               rows={3}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
             />
           </div>
 
@@ -155,7 +155,7 @@ export function TarefaForm({
                 onChange={(e) =>
                   setDados({ ...dados, status: e.target.value as TarefaStatus })
                 }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               >
                 <option value="a_fazer">A Fazer</option>
                 <option value="em_andamento">Em Andamento</option>
@@ -175,7 +175,7 @@ export function TarefaForm({
                     prioridade: e.target.value as TarefaCreatePayload["prioridade"],
                   })
                 }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               >
                 <option value="baixa">Baixa</option>
                 <option value="media">Média</option>
@@ -195,7 +195,7 @@ export function TarefaForm({
                 type="date"
                 value={dados.data_prazo ?? ""}
                 onChange={(e) => setDados({ ...dados, data_prazo: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
             <div>
@@ -211,7 +211,7 @@ export function TarefaForm({
                   setDados({ ...dados, estimativa_horas: e.target.value || null })
                 }
                 placeholder="Ex: 4.5"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
           </div>
@@ -227,7 +227,7 @@ export function TarefaForm({
                 onChange={(e) =>
                   setDados({ ...dados, coluna_kanban_equipe: e.target.value || null })
                 }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               >
                 <option value="">Não exibir no Kanban</option>
                 {colunas.map((c) => (
@@ -254,7 +254,7 @@ export function TarefaForm({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
+              className="px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-60"
             >
               {loading ? "Salvando..." : tarefa ? "Salvar" : "Criar Tarefa"}
             </button>

@@ -106,7 +106,7 @@ export function TimelineInteracoes({
                 onChange={(e) =>
                   onFiltroEstoqueChange(e.target.value as FiltroEstoque)
                 }
-                className="bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-purple-500/50"
+                className="bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-brand-500/50"
               >
                 <option value="">Todos</option>
                 <option value="descontados">Descontados</option>
@@ -116,7 +116,7 @@ export function TimelineInteracoes({
           )}
           <button
             onClick={onNovaInteracao}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 rounded-lg text-xs text-white font-medium transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-600 hover:bg-brand-700 rounded-lg text-xs text-white font-medium transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             Nova Interação
@@ -143,7 +143,7 @@ export function TimelineInteracoes({
             <p className="text-gray-500 text-sm">Nenhuma interação registrada.</p>
             <button
               onClick={onNovaInteracao}
-              className="mt-3 text-purple-400 hover:text-purple-300 text-sm transition-colors"
+              className="mt-3 text-brand-400 hover:text-brand-300 text-sm transition-colors"
             >
               Registrar primeira interação
             </button>
@@ -166,7 +166,7 @@ export function TimelineInteracoes({
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs font-medium text-purple-400 uppercase tracking-wide">
+                          <span className="text-xs font-medium text-brand-400 uppercase tracking-wide">
                             {TIPO_INTERACAO_LABELS[interacao.tipo]}
                           </span>
                           {(() => {
@@ -216,7 +216,7 @@ export function TimelineInteracoes({
                           <button
                             onClick={() => onEditar(interacao)}
                             title="Editar interação"
-                            className="p-1 text-gray-500 hover:text-purple-400 hover:bg-white/10 rounded transition-colors"
+                            className="p-1 text-gray-500 hover:text-brand-400 hover:bg-white/10 rounded transition-colors"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>

@@ -105,7 +105,7 @@ export function HistoricoLancamentoModal({
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
           <div>
             <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              <History className="w-5 h-5 text-violet-400" />
+              <History className="w-5 h-5 text-brand-400" />
               Histórico de alterações
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">{lancamento.descricao}</p>
@@ -142,7 +142,7 @@ export function HistoricoLancamentoModal({
                         className={`w-8 h-8 rounded-full border flex items-center justify-center flex-shrink-0 z-10 ${
                           log.acao === "excluido"
                             ? "bg-red-500/10 border-red-500/30 text-red-400"
-                            : "bg-violet-500/10 border-violet-500/30 text-violet-400"
+                            : "bg-brand-500/10 border-brand-500/30 text-brand-400"
                         }`}
                       >
                         {log.acao === "excluido" ? (

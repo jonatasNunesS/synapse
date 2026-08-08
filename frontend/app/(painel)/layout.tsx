@@ -52,7 +52,7 @@ export default function PainelAdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="tema-app min-h-screen bg-slate-950 text-slate-100">
       {/* Faixa de plataforma — deliberadamente distinta do dashboard do cliente */}
       <header className="sticky top-0 z-10 border-b border-amber-500/30 bg-gradient-to-r from-amber-950/60 to-slate-950">
         <div className="max-w-6xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between gap-3">

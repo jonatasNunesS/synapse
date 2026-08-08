@@ -68,7 +68,7 @@ function KanbanColuna({
         </div>
         <button
           onClick={() => onNovaTarefa(col.key)}
-          className="text-gray-400 hover:text-indigo-600 transition-colors text-lg leading-none"
+          className="text-gray-400 hover:text-brand-600 transition-colors text-lg leading-none"
           title={`Nova tarefa em ${col.label}`}
         >
           +
@@ -79,7 +79,7 @@ function KanbanColuna({
       <div
         ref={setNodeRef}
         className={`flex flex-col gap-2 px-3 pb-3 flex-1 min-h-[100px] rounded-b-xl transition-colors ${
-          isOver ? "bg-indigo-50" : "bg-gray-50"
+          isOver ? "bg-brand-50" : "bg-gray-50"
         }`}
       >
         {tarefas.map((tarefa) => (
@@ -169,7 +169,7 @@ function KanbanCard({
           )}
           {tarefa.responsavel_nome && (
             <div
-              className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-xs font-bold"
+              className="w-5 h-5 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-xs font-bold"
               title={tarefa.responsavel_nome}
             >
               {tarefa.responsavel_nome.charAt(0).toUpperCase()}

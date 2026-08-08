@@ -107,7 +107,7 @@ function ConteudoCard({
         {temMais && (
           <button
             onClick={() => setExpandido(!expandido)}
-            className="text-xs text-purple-600 hover:text-purple-700 mt-1"
+            className="text-xs text-brand-600 hover:text-brand-700 mt-1"
           >
             {expandido ? "Ver menos" : "Ver mais"}
           </button>

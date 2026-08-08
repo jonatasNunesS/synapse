@@ -28,7 +28,7 @@ export function ClienteSelect({ onSelect }: ClienteSelectProps) {
           onChange={(e) => setBusca(e.target.value)}
           placeholder="Buscar cliente..."
           aria-label="Buscar cliente"
-          className="w-full rounded-lg border border-white/10 bg-white/5 py-2 pl-9 pr-3 text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500"
+          className="w-full rounded-lg border border-white/10 bg-white/5 py-2 pl-9 pr-3 text-sm text-white placeholder-slate-500 outline-none focus:border-brand-500"
         />
       </div>
       <div className="mt-2 max-h-56 overflow-y-auto rounded-lg border border-white/10 bg-white/[0.02]">

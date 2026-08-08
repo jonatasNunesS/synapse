@@ -101,7 +101,7 @@ export function TarefaModal({ tarefa, onFechar, onEditar, onRecarregar }: Tarefa
           <div className="flex gap-2 flex-shrink-0">
             <button
               onClick={onEditar}
-              className="text-gray-400 hover:text-indigo-600 transition-colors p-1"
+              className="text-gray-400 hover:text-brand-600 transition-colors p-1"
               title="Editar tarefa"
             >
               <Pencil size={16} />
@@ -214,11 +214,11 @@ export function TarefaModal({ tarefa, onFechar, onEditar, onRecarregar }: Tarefa
                 onChange={(e) => setNovoItem(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAdicionarItem()}
                 placeholder="Adicionar item..."
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
               <button
                 onClick={handleAdicionarItem}
-                className="text-sm text-indigo-600 font-medium hover:text-indigo-700 px-2"
+                className="text-sm text-brand-600 font-medium hover:text-brand-700 px-2"
               >
                 Adicionar
               </button>
@@ -233,7 +233,7 @@ export function TarefaModal({ tarefa, onFechar, onEditar, onRecarregar }: Tarefa
             <div className="space-y-3 mb-3">
               {comentarios.map((com) => (
                 <div key={com.id} className="flex gap-3 group">
-                  <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-xs font-bold flex-shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-xs font-bold flex-shrink-0">
                     {com.autor_nome.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -275,12 +275,12 @@ export function TarefaModal({ tarefa, onFechar, onEditar, onRecarregar }: Tarefa
                 onChange={(e) => setNovoComentario(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleEnviarComentario()}
                 placeholder="Escreva um comentário..."
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
               <button
                 onClick={handleEnviarComentario}
                 disabled={enviandoComentario || !novoComentario.trim()}
-                className="bg-indigo-600 text-white rounded-lg px-3 py-2 hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                className="bg-brand-600 text-white rounded-lg px-3 py-2 hover:bg-brand-700 transition-colors disabled:opacity-50"
               >
                 <Send size={15} />
               </button>

@@ -24,7 +24,7 @@ function ProgressBar({ value }: { value: number }) {
   return (
     <div className="w-full bg-muted rounded-full h-1.5">
       <div
-        className="h-1.5 rounded-full bg-violet-500 transition-all"
+        className="h-1.5 rounded-full bg-brand-500 transition-all"
         style={{ width: `${pct}%` }}
       />
     </div>
@@ -50,7 +50,7 @@ export function MembroCard({ membro, onEditar, onRemover }: MembroCardProps) {
         <div className="flex items-start justify-between gap-3">
           {/* Avatar + Info */}
           <Link href={`/equipe/${membro.id}`} className="flex items-start gap-3 flex-1 min-w-0">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-600/20 text-violet-400 text-sm font-bold border border-violet-600/30 flex-shrink-0">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-600/20 text-brand-400 text-sm font-bold border border-brand-600/30 flex-shrink-0">
               {iniciais}
             </div>
             <div className="min-w-0">

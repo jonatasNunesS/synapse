@@ -19,6 +19,7 @@ import { PLANO_LABELS, PLANO_CORES, SEGMENTOS } from "@/types/auth";
 import type { ApiError } from "@/types/api";
 import { UpgradeWhatsappButton } from "@/components/ui/UpgradeWhatsappButton";
 import { ModulosSection } from "@/components/configuracoes/ModulosSection";
+import { IdentidadeVisualSection } from "@/components/configuracoes/IdentidadeVisualSection";
 
 // ── Schema de empresa ────────────────────────────────────────────────────────
 
@@ -78,8 +79,8 @@ export default function ConfiguracoesPage() {
       {/* Plano atual */}
       {empresa && (
         <div className="flex items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-xl">
-          <div className="p-2.5 rounded-lg bg-indigo-600/20 border border-indigo-500/30">
-            <CreditCard className="w-5 h-5 text-indigo-400" />
+          <div className="p-2.5 rounded-lg bg-brand-600/20 border border-brand-500/30">
+            <CreditCard className="w-5 h-5 text-brand-400" />
           </div>
           <div className="flex-1">
             <p className="text-sm text-slate-400">Plano atual</p>
@@ -112,10 +113,13 @@ export default function ConfiguracoesPage() {
       {/* Módulos ativos da empresa */}
       <ModulosSection />
 
+      {/* Cores e fonte que a equipe inteira vê */}
+      <IdentidadeVisualSection />
+
       {/* Dados da empresa */}
       <section className="bg-[#0d1117] border border-white/10 rounded-xl p-6">
         <h2 className="text-base font-semibold text-white mb-5 flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-indigo-400" />
+          <Building2 className="w-4 h-4 text-brand-400" />
           Dados da Empresa
         </h2>
 
@@ -145,7 +149,7 @@ export default function ConfiguracoesPage() {
             <input
               {...register("nome")}
               disabled={!isAdmin}
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             />
             {errors.nome && <p className="mt-1 text-xs text-red-400">{errors.nome.message}</p>}
           </div>
@@ -158,7 +162,7 @@ export default function ConfiguracoesPage() {
               <select
                 {...register("segmento")}
                 disabled={!isAdmin}
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-indigo-500/50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-brand-500/50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <option value="" className="bg-[#0d1117]">Selecione...</option>
                 {SEGMENTOS.map((s) => (
@@ -177,7 +181,7 @@ export default function ConfiguracoesPage() {
                 {...register("cnpj")}
                 disabled={!isAdmin}
                 placeholder="00.000.000/0001-00"
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
           </div>
@@ -187,7 +191,7 @@ export default function ConfiguracoesPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-medium text-sm transition-colors"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white font-medium text-sm transition-colors"
               >
                 {isSubmitting ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -204,7 +208,7 @@ export default function ConfiguracoesPage() {
       {/* Notificações */}
       <section className="bg-[#0d1117] border border-white/10 rounded-xl p-6">
         <h2 className="text-base font-semibold text-white mb-5 flex items-center gap-2">
-          <Bell className="w-4 h-4 text-indigo-400" />
+          <Bell className="w-4 h-4 text-brand-400" />
           Preferências de Notificação
         </h2>
         <div className="space-y-3">
@@ -221,7 +225,7 @@ export default function ConfiguracoesPage() {
               <input
                 type="checkbox"
                 defaultChecked
-                className="mt-0.5 w-4 h-4 rounded border-white/20 bg-white/5 text-indigo-600 focus:ring-indigo-500/50 cursor-pointer"
+                className="mt-0.5 w-4 h-4 rounded border-white/20 bg-white/5 text-brand-600 focus:ring-brand-500/50 cursor-pointer"
               />
               <div>
                 <p className="text-sm font-medium text-white">{item.label}</p>

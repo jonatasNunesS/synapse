@@ -16,8 +16,8 @@ export function ResumoProjetosCards({ resumo }: ResumoProjetosCardsProps) {
       valor: resumo.projetos_ativos,
       total: resumo.total_projetos,
       icon: FolderOpen,
-      cor: "text-indigo-600",
-      bg: "bg-indigo-50",
+      cor: "text-brand-600",
+      bg: "bg-brand-50",
     },
     {
       label: "Projetos Atrasados",

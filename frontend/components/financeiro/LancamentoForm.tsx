@@ -221,7 +221,7 @@ export function LancamentoForm({
             <input
               {...register("descricao")}
               placeholder="Ex: Venda de produto, Aluguel..."
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
+              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors"
             />
             {errors.descricao && (
               <p className="mt-1 text-xs text-red-400">{errors.descricao.message}</p>
@@ -237,7 +237,7 @@ export function LancamentoForm({
               <input
                 {...register("valor")}
                 placeholder="0,00"
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
+                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors"
               />
               {errors.valor && (
                 <p className="mt-1 text-xs text-red-400">{errors.valor.message}</p>
@@ -249,7 +249,7 @@ export function LancamentoForm({
               </label>
               <select
                 {...register("categoria")}
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500 transition-colors"
+                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
               >
                 <option value="">Sem categoria</option>
                 {categoriasFiltradas.map((cat) => (
@@ -340,7 +340,7 @@ export function LancamentoForm({
               <input
                 type="date"
                 {...register("data_vencimento")}
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500 transition-colors"
+                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
               />
               {errors.data_vencimento && (
                 <p className="mt-1 text-xs text-red-400">
@@ -354,7 +354,7 @@ export function LancamentoForm({
               </label>
               <select
                 {...register("status")}
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500 transition-colors"
+                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
               >
                 <option value="pendente">Pendente</option>
                 <option value="pago">Pago</option>
@@ -373,7 +373,7 @@ export function LancamentoForm({
               <input
                 type="date"
                 {...register("data_pagamento")}
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500 transition-colors"
+                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
               />
               {errors.data_pagamento && (
                 <p className="mt-1 text-xs text-red-400">
@@ -390,7 +390,7 @@ export function LancamentoForm({
               type="checkbox"
               id="recorrente"
               {...register("recorrente")}
-              className="w-4 h-4 rounded border-white/20 bg-white/5 text-violet-500 focus:ring-violet-500"
+              className="w-4 h-4 rounded border-white/20 bg-white/5 text-brand-500 focus:ring-brand-500"
             />
             <label htmlFor="recorrente" className="text-sm text-slate-300">
               Lançamento recorrente
@@ -405,7 +405,7 @@ export function LancamentoForm({
               </label>
               <select
                 {...register("recorrencia")}
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500 transition-colors"
+                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
               >
                 <option value="">Selecione...</option>
                 <option value="semanal">Semanal</option>
@@ -429,7 +429,7 @@ export function LancamentoForm({
               {...register("observacoes")}
               rows={2}
               placeholder="Notas adicionais..."
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors resize-none"
+              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors resize-none"
             />
           </div>
 
@@ -445,7 +445,7 @@ export function LancamentoForm({
             <button
               type="submit"
               disabled={isSubmitting || loading}
-              className="flex-1 py-2.5 px-4 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-white transition-colors"
+              className="flex-1 py-2.5 px-4 rounded-lg bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-white transition-colors"
             >
               {isSubmitting ? "Salvando..." : "Salvar Lançamento"}
             </button>

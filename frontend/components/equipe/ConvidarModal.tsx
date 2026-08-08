@@ -73,7 +73,7 @@ export function ConvidarModal({ onFechar, onConvidado }: ConvidarModalProps) {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/10">
           <div className="flex items-center gap-2">
-            <UserPlus className="w-5 h-5 text-indigo-400" />
+            <UserPlus className="w-5 h-5 text-brand-400" />
             <h2 className="text-lg font-semibold text-white">Convidar Membro</h2>
           </div>
           <button
@@ -100,7 +100,7 @@ export function ConvidarModal({ onFechar, onConvidado }: ConvidarModalProps) {
               {...register("email")}
               type="email"
               placeholder="colaborador@empresa.com"
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-colors text-sm"
+              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
             />
             {errors.email && (
               <p className="mt-1 text-xs text-red-400">{errors.email.message}</p>
@@ -114,7 +114,7 @@ export function ConvidarModal({ onFechar, onConvidado }: ConvidarModalProps) {
             <input
               {...register("nome")}
               placeholder="João da Silva"
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-colors text-sm"
+              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
             />
             {errors.nome && (
               <p className="mt-1 text-xs text-red-400">{errors.nome.message}</p>
@@ -127,7 +127,7 @@ export function ConvidarModal({ onFechar, onConvidado }: ConvidarModalProps) {
             </label>
             <select
               {...register("perfil")}
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-indigo-500/50 transition-colors text-sm"
+              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
             >
               <option value="colaborador" className="bg-[#0d1117]">Colaborador</option>
               <option value="gerente" className="bg-[#0d1117]">Gerente</option>
@@ -143,7 +143,7 @@ export function ConvidarModal({ onFechar, onConvidado }: ConvidarModalProps) {
               <input
                 {...register("cargo")}
                 placeholder="Ex: Analista"
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-colors text-sm"
+                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
               />
             </div>
             <div>
@@ -153,7 +153,7 @@ export function ConvidarModal({ onFechar, onConvidado }: ConvidarModalProps) {
               <input
                 {...register("departamento")}
                 placeholder="Ex: Vendas"
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-colors text-sm"
+                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
               />
             </div>
           </div>
@@ -173,7 +173,7 @@ export function ConvidarModal({ onFechar, onConvidado }: ConvidarModalProps) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-medium text-sm transition-colors flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 rounded-lg bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white font-medium text-sm transition-colors flex items-center justify-center gap-2"
             >
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
               Enviar Convite

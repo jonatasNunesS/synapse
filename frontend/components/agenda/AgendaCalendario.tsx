@@ -103,7 +103,7 @@ export function AgendaCalendario({
         onSelectSlot={onSelectSlot}
         onSelectEvent={(item) => onSelectEvent(item.resource)}
         eventPropGetter={(item) => ({
-          style: { backgroundColor: item.resource.cor || "#6D28D9" },
+          style: { backgroundColor: item.resource.cor || "var(--brand-primary)" },
         })}
         style={{ height: "100%" }}
       />

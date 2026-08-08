@@ -153,7 +153,7 @@ export default function LancamentosPage() {
         </div>
         <button
           onClick={() => setMostrarForm(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm font-medium text-white transition-colors self-start sm:self-auto"
+          className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 rounded-lg text-sm font-medium text-white transition-colors self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
           Novo Lançamento
@@ -170,7 +170,7 @@ export default function LancamentosPage() {
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
               placeholder="Buscar por descrição..."
-              className="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
+              className="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors"
             />
           </div>
 
@@ -180,7 +180,7 @@ export default function LancamentosPage() {
             onChange={(e) =>
               atualizarFiltro("tipo", e.target.value as TipoFinanceiro)
             }
-            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500 transition-colors"
+            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
           >
             <option value="">Todos os tipos</option>
             <option value="receita">Receita</option>
@@ -193,7 +193,7 @@ export default function LancamentosPage() {
             onChange={(e) =>
               atualizarFiltro("status", e.target.value as StatusLancamento)
             }
-            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500 transition-colors"
+            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
           >
             <option value="">Todos os status</option>
             <option value="pendente">Pendente</option>
@@ -206,7 +206,7 @@ export default function LancamentosPage() {
           <select
             value={filtros.categoria_id ?? ""}
             onChange={(e) => atualizarFiltro("categoria_id", e.target.value)}
-            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500 transition-colors"
+            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
           >
             <option value="">Todas as categorias</option>
             {categorias.map((cat) => (
@@ -227,7 +227,7 @@ export default function LancamentosPage() {
               type="date"
               value={filtros.data_inicio ?? ""}
               onChange={(e) => atualizarFiltro("data_inicio", e.target.value)}
-              className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500 transition-colors"
+              className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -238,7 +238,7 @@ export default function LancamentosPage() {
               type="date"
               value={filtros.data_fim ?? ""}
               onChange={(e) => atualizarFiltro("data_fim", e.target.value)}
-              className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500 transition-colors"
+              className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
             />
           </div>
         </div>

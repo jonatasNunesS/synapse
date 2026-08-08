@@ -105,26 +105,26 @@ function NovaCompraForm({ fornecedorId, onSuccess, onClose, compraId, initialDat
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <label className="mb-1 block text-xs font-medium text-zinc-400">Descrição *</label>
-              <input {...register("descricao")} placeholder="Descrição da compra" className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-violet-500/50" />
+              <input {...register("descricao")} placeholder="Descrição da compra" className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-brand-500/50" />
               {errors.descricao && <p className="mt-1 text-xs text-red-400">{errors.descricao.message}</p>}
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-zinc-400">Valor *</label>
-              <input {...register("valor", { valueAsNumber: true })} type="number" step="0.01" placeholder="0,00" className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-violet-500/50" />
+              <input {...register("valor", { valueAsNumber: true })} type="number" step="0.01" placeholder="0,00" className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-brand-500/50" />
               {errors.valor && <p className="mt-1 text-xs text-red-400">{errors.valor.message}</p>}
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-zinc-400">Data da Compra *</label>
-              <input {...register("data_compra")} type="date" className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50" />
+              <input {...register("data_compra")} type="date" className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-brand-500/50" />
               {errors.data_compra && <p className="mt-1 text-xs text-red-400">{errors.data_compra.message}</p>}
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-zinc-400">Nº Nota Fiscal</label>
-              <input {...register("numero_nf")} placeholder="NF-001" className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-violet-500/50" />
+              <input {...register("numero_nf")} placeholder="NF-001" className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-brand-500/50" />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-zinc-400">Status</label>
-              <select {...register("status")} className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50">
+              <select {...register("status")} className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-brand-500/50">
                 <option value="pendente">Pendente</option>
                 <option value="pago">Pago</option>
                 <option value="cancelado">Cancelado</option>
@@ -133,19 +133,19 @@ function NovaCompraForm({ fornecedorId, onSuccess, onClose, compraId, initialDat
             {statusWatch === "pago" && (
               <div>
                 <label className="mb-1 block text-xs font-medium text-zinc-400">Data de Pagamento</label>
-                <input {...register("data_pagamento")} type="date" className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50" />
+                <input {...register("data_pagamento")} type="date" className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-brand-500/50" />
               </div>
             )}
             <div className="sm:col-span-2">
               <label className="mb-1 block text-xs font-medium text-zinc-400">Observações</label>
-              <textarea {...register("observacoes")} rows={2} placeholder="Observações adicionais..." className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-violet-500/50" />
+              <textarea {...register("observacoes")} rows={2} placeholder="Observações adicionais..." className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-brand-500/50" />
             </div>
           </div>
           <div className="mt-5 flex justify-end gap-3">
             <button type="button" onClick={onClose} className="rounded-lg border border-white/10 px-4 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-white">
               Cancelar
             </button>
-            <button type="submit" disabled={isSubmitting} className="flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-60">
+            <button type="submit" disabled={isSubmitting} className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 disabled:opacity-60">
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
               {isEdit ? "Salvar Alterações" : "Registrar Compra"}
             </button>
@@ -254,17 +254,17 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
         <div className="flex items-center gap-2">
-          <ShoppingCart className="h-4 w-4 text-violet-400" />
+          <ShoppingCart className="h-4 w-4 text-brand-400" />
           <h3 className="text-sm font-semibold text-white">Histórico de Compras</h3>
           {total > 0 && (
-            <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-xs text-violet-400">
+            <span className="rounded-full bg-brand-500/20 px-2 py-0.5 text-xs text-brand-400">
               {total}
             </span>
           )}
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-violet-600/20 px-3 py-1.5 text-xs font-medium text-violet-400 transition-colors hover:bg-violet-600/30"
+          className="flex items-center gap-1.5 rounded-lg bg-brand-600/20 px-3 py-1.5 text-xs font-medium text-brand-400 transition-colors hover:bg-brand-600/30"
         >
           <Plus className="h-3.5 w-3.5" />
           Registrar Compra
@@ -275,7 +275,7 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
       <div className="divide-y divide-white/5">
         {loading && (
           <div className="flex items-center justify-center gap-2 py-8 text-sm text-zinc-500">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
             Carregando...
           </div>
         )}
@@ -288,7 +288,7 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
             <p className="text-sm text-zinc-500">Nenhuma compra registrada.</p>
             <button
               onClick={() => setShowForm(true)}
-              className="mt-3 text-xs text-violet-400 hover:text-violet-300"
+              className="mt-3 text-xs text-brand-400 hover:text-brand-300"
             >
               Registrar primeira compra
             </button>
@@ -319,7 +319,7 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
                 <div className="flex items-center gap-1 mt-0.5">
                   <button
                     onClick={() => setEditando(c)}
-                    className="p-1 rounded text-zinc-500 hover:text-violet-400 hover:bg-violet-500/10 transition-colors"
+                    className="p-1 rounded text-zinc-500 hover:text-brand-400 hover:bg-brand-500/10 transition-colors"
                     title="Editar compra"
                   >
                     <Pencil className="h-3 w-3" />

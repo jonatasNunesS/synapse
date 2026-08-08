@@ -37,7 +37,7 @@ const STATUS_ICON: Record<string, React.ReactNode> = {
   confirmada: <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />,
   cancelada: <XCircle className="h-3.5 w-3.5 text-red-400" />,
   adiada: <Clock className="h-3.5 w-3.5 text-amber-400" />,
-  pendente: <Clock className="h-3.5 w-3.5 text-violet-400" />,
+  pendente: <Clock className="h-3.5 w-3.5 text-brand-400" />,
   encerrada: <XCircle className="h-3.5 w-3.5 text-zinc-500" />,
 };
 
@@ -83,7 +83,7 @@ export default function RecorrenciasPage() {
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Repeat className="h-6 w-6 text-violet-400" />
+              <Repeat className="h-6 w-6 text-brand-400" />
               Recorrências
             </h1>
             <p className="text-sm text-slate-400 mt-0.5">
@@ -92,7 +92,7 @@ export default function RecorrenciasPage() {
           </div>
           <button
             onClick={abrirNova}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium transition-colors"
           >
             <Plus className="h-4 w-4" />
             Nova recorrência
@@ -102,7 +102,7 @@ export default function RecorrenciasPage() {
 
       {loading ? (
         <div className="flex justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-violet-500" />
+          <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
         </div>
       ) : recorrencias.length === 0 ? (
         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-10 text-center">

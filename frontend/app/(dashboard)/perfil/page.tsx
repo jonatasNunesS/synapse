@@ -108,18 +108,18 @@ export default function PerfilPage() {
 
       {/* Avatar + info */}
       <div className="flex items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-xl">
-        <div className="w-16 h-16 rounded-full bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center overflow-hidden flex-shrink-0">
+        <div className="w-16 h-16 rounded-full bg-brand-600/30 border border-brand-500/40 flex items-center justify-center overflow-hidden flex-shrink-0">
           {usuario?.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={usuario.avatar_url} alt="avatar" className="w-full h-full object-cover" />
           ) : (
-            <User className="w-8 h-8 text-indigo-400" />
+            <User className="w-8 h-8 text-brand-400" />
           )}
         </div>
         <div>
           <p className="font-semibold text-white">{usuario?.nome}</p>
           <p className="text-sm text-slate-400">{usuario?.email}</p>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 mt-1 inline-block capitalize">
+          <span className="text-xs px-2 py-0.5 rounded-full bg-brand-600/20 text-brand-400 border border-brand-500/30 mt-1 inline-block capitalize">
             {usuario?.perfil}
           </span>
         </div>
@@ -134,7 +134,7 @@ export default function PerfilPage() {
       {/* Formulário de perfil */}
       <section className="bg-[#0d1117] border border-white/10 rounded-xl p-6">
         <h2 className="text-base font-semibold text-white mb-5 flex items-center gap-2">
-          <User className="w-4 h-4 text-indigo-400" />
+          <User className="w-4 h-4 text-brand-400" />
           Informações Pessoais
         </h2>
 
@@ -155,7 +155,7 @@ export default function PerfilPage() {
             <label className="block text-sm font-medium text-slate-300 mb-1.5">Nome</label>
             <input
               {...regPerfil("nome")}
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-colors text-sm"
+              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
             />
             {errPerfil.nome && <p className="mt-1 text-xs text-red-400">{errPerfil.nome.message}</p>}
           </div>
@@ -168,7 +168,7 @@ export default function PerfilPage() {
               {...regPerfil("avatar_url")}
               type="url"
               placeholder="https://..."
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-colors text-sm"
+              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
             />
             {errPerfil.avatar_url && <p className="mt-1 text-xs text-red-400">{errPerfil.avatar_url.message}</p>}
           </div>
@@ -187,7 +187,7 @@ export default function PerfilPage() {
             <button
               type="submit"
               disabled={loadingPerfil}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-medium text-sm transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white font-medium text-sm transition-colors"
             >
               {loadingPerfil ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Salvar Alterações
@@ -199,7 +199,7 @@ export default function PerfilPage() {
       {/* Formulário de senha */}
       <section className="bg-[#0d1117] border border-white/10 rounded-xl p-6">
         <h2 className="text-base font-semibold text-white mb-5 flex items-center gap-2">
-          <Lock className="w-4 h-4 text-indigo-400" />
+          <Lock className="w-4 h-4 text-brand-400" />
           Alterar Senha
         </h2>
 
@@ -222,7 +222,7 @@ export default function PerfilPage() {
               {...regSenha("senha_atual")}
               type="password"
               autoComplete="current-password"
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-colors text-sm"
+              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
             />
             {errSenha.senha_atual && <p className="mt-1 text-xs text-red-400">{errSenha.senha_atual.message}</p>}
           </div>
@@ -234,7 +234,7 @@ export default function PerfilPage() {
                 {...regSenha("nova_senha")}
                 type="password"
                 autoComplete="new-password"
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-colors text-sm"
+                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
               />
               {errSenha.nova_senha && <p className="mt-1 text-xs text-red-400">{errSenha.nova_senha.message}</p>}
             </div>
@@ -244,7 +244,7 @@ export default function PerfilPage() {
                 {...regSenha("confirmar_senha")}
                 type="password"
                 autoComplete="new-password"
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-colors text-sm"
+                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
               />
               {errSenha.confirmar_senha && <p className="mt-1 text-xs text-red-400">{errSenha.confirmar_senha.message}</p>}
             </div>
@@ -254,7 +254,7 @@ export default function PerfilPage() {
             <button
               type="submit"
               disabled={loadingSenha}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-medium text-sm transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white font-medium text-sm transition-colors"
             >
               {loadingSenha ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
               Alterar Senha

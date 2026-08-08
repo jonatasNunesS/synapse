@@ -73,7 +73,7 @@ export function OperacaoCaixinhaModal({
   };
 
   const inputClass =
-    "w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors";
+    "w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -85,7 +85,7 @@ export function OperacaoCaixinhaModal({
             {isDeposito ? (
               <ArrowDownToLine className="w-5 h-5 text-emerald-400" />
             ) : (
-              <ArrowUpFromLine className="w-5 h-5 text-violet-400" />
+              <ArrowUpFromLine className="w-5 h-5 text-brand-400" />
             )}
             {isDeposito ? "Depositar em" : "Retirar de"} {caixinha.icone}{" "}
             {caixinha.nome}
@@ -194,7 +194,7 @@ export function OperacaoCaixinhaModal({
             className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
               isDeposito
                 ? "bg-emerald-600 hover:bg-emerald-500"
-                : "bg-violet-600 hover:bg-violet-500"
+                : "bg-brand-600 hover:bg-brand-500"
             }`}
           >
             {processando && <Loader2 className="w-4 h-4 animate-spin" />}

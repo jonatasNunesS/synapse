@@ -98,7 +98,7 @@ export function CategoriaFinanceiroModal({ onClose }: CategoriaFinanceiroModalPr
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 flex-shrink-0">
           <div className="flex items-center gap-2">
-            <Tag className="h-5 w-5 text-violet-400" />
+            <Tag className="h-5 w-5 text-brand-400" />
             <h2 className="text-lg font-semibold text-white">Categorias Financeiras</h2>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
@@ -125,7 +125,7 @@ export function CategoriaFinanceiroModal({ onClose }: CategoriaFinanceiroModalPr
                 <input
                   {...register("nome")}
                   placeholder="Ex: Vendas, Aluguel..."
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors"
                 />
                 {errors.nome && <p className="mt-1 text-xs text-red-400">{errors.nome.message}</p>}
               </div>
@@ -184,7 +184,7 @@ export function CategoriaFinanceiroModal({ onClose }: CategoriaFinanceiroModalPr
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-xs font-medium text-white transition-colors"
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-xs font-medium text-white transition-colors"
                 >
                   {isSubmitting ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -208,7 +208,7 @@ export function CategoriaFinanceiroModal({ onClose }: CategoriaFinanceiroModalPr
                   onClick={() => setTipoFiltro(t)}
                   className={`px-3 py-1 rounded-full text-xs font-medium transition-colors capitalize ${
                     tipoFiltro === t
-                      ? "bg-violet-500/20 text-violet-400"
+                      ? "bg-brand-500/20 text-brand-400"
                       : "text-slate-400 hover:text-white"
                   }`}
                 >
@@ -241,7 +241,7 @@ export function CategoriaFinanceiroModal({ onClose }: CategoriaFinanceiroModalPr
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => abrirEdicao(cat)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-violet-400 hover:bg-violet-500/10 transition-colors"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-brand-400 hover:bg-brand-500/10 transition-colors"
                           title="Editar"
                         >
                           <Pencil className="h-3.5 w-3.5" />

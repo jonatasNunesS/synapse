@@ -27,8 +27,8 @@ export function AvisoMigracaoRecorrencias() {
   };
 
   return (
-    <div className="rounded-xl border border-violet-500/30 bg-violet-500/10 p-4 flex items-start gap-3">
-      <div className="h-9 w-9 rounded-lg bg-violet-500/20 text-violet-300 flex items-center justify-center flex-shrink-0">
+    <div className="rounded-xl border border-brand-500/30 bg-brand-500/10 p-4 flex items-start gap-3">
+      <div className="h-9 w-9 rounded-lg bg-brand-500/20 text-brand-300 flex items-center justify-center flex-shrink-0">
         <Repeat className="h-5 w-5" />
       </div>
       <div className="flex-1 min-w-0">
@@ -42,7 +42,7 @@ export function AvisoMigracaoRecorrencias() {
         <Link
           href="/financeiro/recorrencias"
           onClick={dispensar}
-          className="inline-flex items-center gap-1 text-xs font-medium text-violet-300 hover:text-violet-200 mt-2"
+          className="inline-flex items-center gap-1 text-xs font-medium text-brand-300 hover:text-brand-200 mt-2"
         >
           Ver recorrências <ArrowRight className="h-3.5 w-3.5" />
         </Link>

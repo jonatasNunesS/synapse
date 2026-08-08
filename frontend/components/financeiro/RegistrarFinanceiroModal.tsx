@@ -115,7 +115,7 @@ export function RegistrarFinanceiroModal({
           {jaRegistrado ? (
             <button
               onClick={onClose}
-              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
+              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500"
             >
               Fechar
             </button>

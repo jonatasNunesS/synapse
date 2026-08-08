@@ -62,7 +62,7 @@ export function Header() {
             className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 hover:bg-slate-800 transition-colors"
           >
             {/* Avatar */}
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-600/20 text-violet-400 text-xs font-bold border border-violet-600/30">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-600/20 text-brand-400 text-xs font-bold border border-brand-600/30">
               {iniciais}
             </div>
             <div className="hidden md:block text-left">

@@ -81,8 +81,8 @@ export function ResumoCards() {
         title="Total Gasto"
         value={loading ? "—" : formatCurrency(data?.valor_total_gasto ?? "0")}
         subtitle="em compras registradas"
-        icon={<DollarSign className="h-5 w-5 text-violet-400" />}
-        color="bg-violet-500/10"
+        icon={<DollarSign className="h-5 w-5 text-brand-400" />}
+        color="bg-brand-500/10"
         loading={loading}
       />
       <KpiCard

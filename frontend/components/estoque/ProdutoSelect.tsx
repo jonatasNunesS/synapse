@@ -27,7 +27,7 @@ export function ProdutoSelect({ value, onChange, disabled }: ProdutoSelectProps)
 
   if (value) {
     return (
-      <div className="flex items-center justify-between rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-2.5">
+      <div className="flex items-center justify-between rounded-lg border border-brand-500/30 bg-brand-500/10 px-3 py-2.5">
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-white">{value.nome}</p>
           <p className="text-xs text-slate-400">
@@ -38,7 +38,7 @@ export function ProdutoSelect({ value, onChange, disabled }: ProdutoSelectProps)
           <button
             type="button"
             onClick={() => onChange(null)}
-            className="ml-3 shrink-0 text-xs text-violet-300 hover:text-violet-200"
+            className="ml-3 shrink-0 text-xs text-brand-300 hover:text-brand-200"
           >
             Trocar
           </button>
@@ -56,7 +56,7 @@ export function ProdutoSelect({ value, onChange, disabled }: ProdutoSelectProps)
           onChange={(e) => setBusca(e.target.value)}
           placeholder="Buscar produto por nome ou SKU..."
           aria-label="Buscar produto"
-          className="w-full rounded-lg border border-white/10 bg-white/5 py-2 pl-9 pr-3 text-sm text-white placeholder-slate-500 outline-none focus:border-violet-500/50"
+          className="w-full rounded-lg border border-white/10 bg-white/5 py-2 pl-9 pr-3 text-sm text-white placeholder-slate-500 outline-none focus:border-brand-500/50"
         />
       </div>
 

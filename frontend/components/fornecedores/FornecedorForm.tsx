@@ -122,7 +122,7 @@ export function FornecedorForm({ fornecedor, onSuccess, onClose }: FornecedorFor
         {...register(name, type === "number" ? { valueAsNumber: true } : {})}
         type={type}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20"
+        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20"
       />
       {errors[name] && (
         <p className="mt-1 text-xs text-red-400">{errors[name]?.message as string}</p>
@@ -176,7 +176,7 @@ export function FornecedorForm({ fornecedor, onSuccess, onClose }: FornecedorFor
               <label className="mb-1 block text-xs font-medium text-zinc-400">Estado</label>
               <select
                 {...register("endereco_estado")}
-                className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50"
+                className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-brand-500/50"
               >
                 <option value="">Selecionar</option>
                 {ESTADOS.map((uf) => (
@@ -190,7 +190,7 @@ export function FornecedorForm({ fornecedor, onSuccess, onClose }: FornecedorFor
               <label className="mb-1 block text-xs font-medium text-zinc-400">Categoria</label>
               <select
                 {...register("categoria")}
-                className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50"
+                className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-brand-500/50"
               >
                 <option value="">Sem categoria</option>
                 {categorias.map((c) => (
@@ -204,7 +204,7 @@ export function FornecedorForm({ fornecedor, onSuccess, onClose }: FornecedorFor
               <label className="mb-1 block text-xs font-medium text-zinc-400">Status *</label>
               <select
                 {...register("status")}
-                className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50"
+                className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-brand-500/50"
               >
                 <option value="ativo">Ativo</option>
                 <option value="inativo">Inativo</option>
@@ -227,7 +227,7 @@ export function FornecedorForm({ fornecedor, onSuccess, onClose }: FornecedorFor
                 {...register("notas")}
                 rows={3}
                 placeholder="Observações sobre o fornecedor..."
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20"
               />
             </div>
           </div>
@@ -244,7 +244,7 @@ export function FornecedorForm({ fornecedor, onSuccess, onClose }: FornecedorFor
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-violet-500 disabled:opacity-60"
+              className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-500 disabled:opacity-60"
             >
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
               {isEdit ? "Salvar Alterações" : "Criar Fornecedor"}

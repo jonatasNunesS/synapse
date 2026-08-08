@@ -169,7 +169,7 @@ export default function DREPage() {
         <div
           className={`border rounded-xl p-5 ${
             (dre?.lucro_bruto ?? 0) >= 0
-              ? "bg-violet-500/10 border-violet-500/20"
+              ? "bg-brand-500/10 border-brand-500/20"
               : "bg-red-500/10 border-red-500/20"
           }`}
         >
@@ -178,7 +178,7 @@ export default function DREPage() {
             <span
               className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                 (dre?.lucro_bruto ?? 0) >= 0
-                  ? "bg-violet-500/20 text-violet-400"
+                  ? "bg-brand-500/20 text-brand-400"
                   : "bg-red-500/20 text-red-400"
               }`}
             >
@@ -190,7 +190,7 @@ export default function DREPage() {
           ) : (
             <p
               className={`text-2xl font-bold tabular-nums ${
-                (dre?.lucro_bruto ?? 0) >= 0 ? "text-violet-400" : "text-red-400"
+                (dre?.lucro_bruto ?? 0) >= 0 ? "text-brand-400" : "text-red-400"
               }`}
             >
               {formatarMoeda(dre?.lucro_bruto ?? 0)}

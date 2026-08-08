@@ -54,7 +54,7 @@ function Toggle({
       disabled={disabled}
       onClick={onClick}
       className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-        ativo ? "bg-indigo-600" : "bg-slate-700"
+        ativo ? "bg-brand-600" : "bg-slate-700"
       } ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
     >
       <span
@@ -131,7 +131,7 @@ export function ModulosSection() {
   return (
     <section className="bg-[#0d1117] border border-white/10 rounded-xl p-6">
       <h2 className="text-base font-semibold text-white mb-1 flex items-center gap-2">
-        <Blocks className="w-4 h-4 text-indigo-400" />
+        <Blocks className="w-4 h-4 text-brand-400" />
         Módulos
       </h2>
       <p className="text-xs text-slate-500 mb-5">
@@ -147,7 +147,7 @@ export function ModulosSection() {
 
       {carregando ? (
         <div className="flex justify-center py-8">
-          <Loader2 className="w-5 h-5 animate-spin text-indigo-400" />
+          <Loader2 className="w-5 h-5 animate-spin text-brand-400" />
         </div>
       ) : (
         <div className="space-y-2">
@@ -182,7 +182,7 @@ export function ModulosSection() {
                     {ativo ? "Ativo" : "Inativo"}
                   </span>
                   {salvando === modulo ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
+                    <Loader2 className="w-4 h-4 animate-spin text-brand-400" />
                   ) : (
                     <Toggle
                       ativo={ativo}

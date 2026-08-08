@@ -243,7 +243,7 @@ export default function ClienteDetalhePage() {
     return (
       <div className="text-center py-20">
         <p className="text-gray-500">Cliente não encontrado.</p>
-        <Link href="/clientes" className="text-purple-400 hover:text-purple-300 mt-2 inline-block">
+        <Link href="/clientes" className="text-brand-400 hover:text-brand-300 mt-2 inline-block">
           Voltar para Clientes
         </Link>
       </div>
@@ -302,7 +302,7 @@ export default function ClienteDetalhePage() {
           {/* Card de perfil */}
           <div className="bg-[#0f1117] border border-white/10 rounded-xl p-5">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-purple-600/20 flex items-center justify-center text-purple-400 text-xl font-bold">
+              <div className="w-12 h-12 rounded-full bg-brand-600/20 flex items-center justify-center text-brand-400 text-xl font-bold">
                 {cliente.nome.charAt(0).toUpperCase()}
               </div>
               <div>
@@ -370,7 +370,7 @@ export default function ClienteDetalhePage() {
                 <p className="text-lg font-bold text-white">{cliente.quantidade_compras}</p>
               </div>
               <div className="bg-white/3 rounded-lg p-3">
-                <div className="flex items-center gap-1.5 text-purple-400 mb-1">
+                <div className="flex items-center gap-1.5 text-brand-400 mb-1">
                   <DollarSign className="w-3.5 h-3.5" />
                   <span className="text-xs font-medium">Ticket Médio</span>
                 </div>

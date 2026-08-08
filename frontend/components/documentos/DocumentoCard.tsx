@@ -28,7 +28,7 @@ export function DocumentoCard({ documento, onEditar, onDeletar }: DocumentoCardP
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3 flex-1 min-w-0">
-            <div className="p-2 rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 flex-shrink-0">
+            <div className="p-2 rounded-lg bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400 flex-shrink-0">
               <FileText className="h-4 w-4" />
             </div>
             <div className="min-w-0 flex-1">

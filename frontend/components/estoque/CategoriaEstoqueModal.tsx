@@ -115,7 +115,7 @@ export function CategoriaEstoqueModal({ onFechar }: CategoriaEstoqueModalProps) 
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/10 flex-shrink-0">
           <div className="flex items-center gap-2">
-            <Tag className="w-5 h-5 text-indigo-400" />
+            <Tag className="w-5 h-5 text-brand-400" />
             <h2 className="text-lg font-semibold text-white">Categorias de Estoque</h2>
           </div>
           <button
@@ -137,7 +137,7 @@ export function CategoriaEstoqueModal({ onFechar }: CategoriaEstoqueModalProps) 
           {/* Lista de categorias */}
           {loading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-indigo-400" />
+              <Loader2 className="w-6 h-6 animate-spin text-brand-400" />
             </div>
           ) : categorias.length === 0 && !showForm ? (
             <div className="text-center py-8 text-slate-500">
@@ -164,7 +164,7 @@ export function CategoriaEstoqueModal({ onFechar }: CategoriaEstoqueModalProps) 
                   <div className="flex gap-1 flex-shrink-0">
                     <button
                       onClick={() => setEditando(cat)}
-                      className="p-1.5 rounded-md text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 transition-colors"
+                      className="p-1.5 rounded-md text-slate-500 hover:text-brand-400 hover:bg-brand-500/10 transition-colors"
                       title="Editar"
                     >
                       <Pencil className="w-3.5 h-3.5" />
@@ -184,7 +184,7 @@ export function CategoriaEstoqueModal({ onFechar }: CategoriaEstoqueModalProps) 
 
           {/* Formulário inline */}
           {showForm && (
-            <div className="border border-indigo-500/30 rounded-xl p-4 bg-indigo-500/5 space-y-4">
+            <div className="border border-brand-500/30 rounded-xl p-4 bg-brand-500/5 space-y-4">
               <h3 className="text-sm font-semibold text-white">
                 {editando ? "Editar Categoria" : "Nova Categoria"}
               </h3>
@@ -197,7 +197,7 @@ export function CategoriaEstoqueModal({ onFechar }: CategoriaEstoqueModalProps) 
                   <input
                     {...register("nome")}
                     placeholder="Ex: Eletrônicos"
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-colors text-sm"
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
                   />
                   {errors.nome && <p className="mt-1 text-xs text-red-400">{errors.nome.message}</p>}
                 </div>
@@ -209,7 +209,7 @@ export function CategoriaEstoqueModal({ onFechar }: CategoriaEstoqueModalProps) 
                   <input
                     {...register("descricao")}
                     placeholder="Descrição breve..."
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-colors text-sm"
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
                   />
                 </div>
 
@@ -248,7 +248,7 @@ export function CategoriaEstoqueModal({ onFechar }: CategoriaEstoqueModalProps) 
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 px-3 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white font-medium text-sm transition-colors flex items-center justify-center gap-2"
                   >
                     {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     {editando ? "Salvar" : "Criar"}
@@ -264,7 +264,7 @@ export function CategoriaEstoqueModal({ onFechar }: CategoriaEstoqueModalProps) 
           <div className="p-4 border-t border-white/10 flex-shrink-0">
             <button
               onClick={handleNovaCategoria}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-dashed border-white/20 text-slate-400 hover:text-white hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-colors text-sm font-medium"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-dashed border-white/20 text-slate-400 hover:text-white hover:border-brand-500/50 hover:bg-brand-500/5 transition-colors text-sm font-medium"
             >
               <Plus className="w-4 h-4" />
               Nova Categoria

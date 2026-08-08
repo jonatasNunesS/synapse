@@ -28,8 +28,8 @@ const ICONES: Record<AtividadeTipo, React.ReactNode> = {
 const CORES: Record<AtividadeTipo, string> = {
   lancamento: "text-green-600 bg-green-50",
   movimentacao: "text-blue-600 bg-blue-50",
-  cliente: "text-purple-600 bg-purple-50",
-  interacao: "text-indigo-600 bg-indigo-50",
+  cliente: "text-brand-600 bg-brand-50",
+  interacao: "text-brand-600 bg-brand-50",
   tarefa: "text-orange-600 bg-orange-50",
   projeto: "text-cyan-600 bg-cyan-50",
   documento: "text-gray-600 bg-gray-100",

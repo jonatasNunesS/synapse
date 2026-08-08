@@ -44,6 +44,24 @@ STATUS_EMPRESA_CHOICES = [
     ("suspensa", "Suspensa"),
 ]
 
+# ── Identidade visual (white-label) ──────────────────────────────────────────
+# Paletas e fontes são CURADAS: a empresa escolhe uma das opções, não digita
+# cor nem nome de fonte. As cores de cada paleta vivem no frontend (CSS), aqui
+# fica só a chave escolhida.
+TEMA_PALETA_CHOICES = [
+    ("synapse", "Synapse"),
+    ("oceano", "Oceano"),
+    ("floresta", "Floresta"),
+    ("ambar", "Âmbar"),
+    ("grafite", "Grafite"),
+]
+
+TEMA_FONTE_CHOICES = [
+    ("padrao", "Padrão"),
+    ("serifada", "Serifada"),
+    ("geometrica", "Geométrica"),
+]
+
 
 # ════════════════════════════════════════════════════════════
 # MODEL: EMPRESA
@@ -82,6 +100,20 @@ class Empresa(models.Model):
     modulo_agenda = models.BooleanField(default=True)
     modulo_equipe = models.BooleanField(default=True)
     modulo_documentos = models.BooleanField(default=True)
+
+    # ── Identidade visual ────────────────────────────────────────────────
+    # Vale para TODOS os usuários da empresa (white-label, não preferência
+    # individual). Empresas existentes seguem no padrão Synapse.
+    tema_paleta = models.CharField(
+        max_length=20,
+        choices=TEMA_PALETA_CHOICES,
+        default="synapse",
+    )
+    tema_fonte = models.CharField(
+        max_length=20,
+        choices=TEMA_FONTE_CHOICES,
+        default="padrao",
+    )
 
     # Suspensão administrativa (painel Synapse). Independente de `ativo`: uma
     # empresa suspensa continua logando, mas vê a tela de aviso e não opera.

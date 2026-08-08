@@ -105,8 +105,8 @@ export function CategoriaFornecedorModal({ onFechar }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 px-6 py-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600/20">
-              <Tag className="h-4 w-4 text-violet-400" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600/20">
+              <Tag className="h-4 w-4 text-brand-400" />
             </div>
             <h2 className="text-base font-semibold text-slate-100">Categorias de Fornecedores</h2>
           </div>
@@ -129,7 +129,7 @@ export function CategoriaFornecedorModal({ onFechar }: Props) {
           {/* Lista de categorias */}
           {loading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-violet-500" />
+              <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
             </div>
           ) : categorias.length === 0 && !showForm ? (
             <div className="rounded-xl border border-dashed border-slate-700 py-8 text-center">
@@ -184,7 +184,7 @@ export function CategoriaFornecedorModal({ onFechar }: Props) {
                 <input
                   {...register("nome", { required: "Nome é obrigatório" })}
                   placeholder="Ex: Matéria-prima"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/40"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500/40"
                 />
                 {errors.nome && (
                   <p className="mt-1 text-xs text-red-400">{errors.nome.message}</p>
@@ -216,7 +216,7 @@ export function CategoriaFornecedorModal({ onFechar }: Props) {
                 <button
                   type="submit"
                   disabled={salvando}
-                  className="flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 disabled:opacity-50 transition-colors"
                 >
                   {salvando && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   {editando ? "Salvar alterações" : "Criar categoria"}
@@ -236,7 +236,7 @@ export function CategoriaFornecedorModal({ onFechar }: Props) {
           {!showForm && (
             <button
               onClick={handleNovaCategoria}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-slate-700 py-3 text-sm text-slate-500 hover:border-violet-500/40 hover:text-violet-400 hover:bg-violet-500/5 transition-colors"
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-slate-700 py-3 text-sm text-slate-500 hover:border-brand-500/40 hover:text-brand-400 hover:bg-brand-500/5 transition-colors"
             >
               <Plus className="h-4 w-4" />
               Nova categoria

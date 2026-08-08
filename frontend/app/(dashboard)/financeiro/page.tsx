@@ -144,7 +144,7 @@ export default function FinanceiroPage() {
           {/* Botão novo lançamento */}
           <button
             onClick={() => setMostrarForm(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm font-medium text-white transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 rounded-lg text-sm font-medium text-white transition-colors"
           >
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">Novo Lançamento</span>
@@ -208,7 +208,7 @@ export default function FinanceiroPage() {
                   {" · "}
                   <button
                     onClick={() => setFiltroMetrica(null)}
-                    className="text-violet-400 hover:text-violet-300 transition-colors"
+                    className="text-brand-400 hover:text-brand-300 transition-colors"
                   >
                     filtrado ({filtroMetrica.tipo}/{filtroMetrica.status}) — limpar
                   </button>
@@ -218,7 +218,7 @@ export default function FinanceiroPage() {
           </div>
           <a
             href="/financeiro/lancamentos"
-            className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+            className="text-xs text-brand-400 hover:text-brand-300 transition-colors"
           >
             Ver todos →
           </a>

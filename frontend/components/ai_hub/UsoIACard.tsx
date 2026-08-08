@@ -19,7 +19,7 @@ const PLANO_LABELS: Record<string, string> = {
 const PLANO_CORES: Record<string, string> = {
   starter: "bg-slate-100 text-slate-700",
   pro: "bg-blue-100 text-blue-700",
-  business: "bg-purple-100 text-purple-700",
+  business: "bg-brand-100 text-brand-700",
   enterprise: "bg-amber-100 text-amber-700",
 };
 

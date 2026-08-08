@@ -165,7 +165,7 @@ export function FiadoDecisaoModal({
                 value={valorRecebido}
                 onChange={(e) => setValorRecebido(e.target.value)}
                 aria-label="Valor recebido"
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
               />
               <div className="flex gap-2">
                 <button
@@ -201,7 +201,7 @@ export function FiadoDecisaoModal({
                 value={dataRestante}
                 onChange={(e) => setDataRestante(e.target.value)}
                 aria-label="Previsão do restante"
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
               />
               <div className="flex gap-2">
                 <button
@@ -214,7 +214,7 @@ export function FiadoDecisaoModal({
                 <button
                   onClick={() => efetivarConfirmacao(true)}
                   disabled={processando || !dataRestante}
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium disabled:opacity-50"
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium disabled:opacity-50"
                 >
                   {processando && <Loader2 className="h-4 w-4 animate-spin" />}
                   Sim, criar pendência
@@ -233,7 +233,7 @@ export function FiadoDecisaoModal({
                 value={dias}
                 onChange={(e) => setDias(Math.max(1, parseInt(e.target.value) || 1))}
                 aria-label="Dias para adiar"
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
               />
               <div className="flex gap-2">
                 <button
@@ -245,7 +245,7 @@ export function FiadoDecisaoModal({
                 <button
                   onClick={adiar}
                   disabled={processando}
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium disabled:opacity-60"
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium disabled:opacity-60"
                 >
                   {processando && <Loader2 className="h-4 w-4 animate-spin" />}
                   Adiar

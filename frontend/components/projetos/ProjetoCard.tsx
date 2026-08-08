@@ -33,7 +33,7 @@ export function ProjetoCard({ projeto, onEditar, onDeletar }: ProjetoCardProps) 
           />
           <Link
             href={`/projetos/${projeto.id}`}
-            className="font-semibold text-white truncate hover:text-indigo-400 transition-colors"
+            className="font-semibold text-white truncate hover:text-brand-400 transition-colors"
           >
             {projeto.nome}
           </Link>
@@ -100,7 +100,7 @@ export function ProjetoCard({ projeto, onEditar, onDeletar }: ProjetoCardProps) 
               {onEditar && (
                 <button
                   onClick={() => onEditar(projeto)}
-                  className="text-slate-500 hover:text-indigo-400 transition-colors p-0.5"
+                  className="text-slate-500 hover:text-brand-400 transition-colors p-0.5"
                   title="Editar"
                 >
                   ✏

@@ -166,8 +166,8 @@ export default function AnalyticsPage() {
             {
               label: "Clientes",
               valor: resumo.resumo.crm.total_clientes.toString(),
-              cor: "text-purple-600",
-              bg: "bg-purple-50",
+              cor: "text-brand-600",
+              bg: "bg-brand-50",
             },
           ].map((kpi) => (
             <Card key={kpi.label} className={`${kpi.bg} border-0`}>

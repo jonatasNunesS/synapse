@@ -55,7 +55,7 @@ function LoginContent() {
     <div className="w-full max-w-md">
       {/* Logo */}
       <div className="flex items-center justify-center gap-2 mb-8">
-        <div className="w-9 h-9 rounded-lg bg-violet-600 flex items-center justify-center">
+        <div className="w-9 h-9 rounded-lg bg-brand-600 flex items-center justify-center">
           <Zap className="w-5 h-5 text-white" />
         </div>
         <span className="text-2xl font-bold text-white tracking-tight">Synapse</span>
@@ -100,8 +100,8 @@ function LoginContent() {
               autoComplete="email"
               placeholder="seu@email.com"
               className={`w-full px-3.5 py-2.5 rounded-lg bg-slate-900/60 border text-white placeholder-slate-500 text-sm
-                focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-colors
-                ${errors.email ? "border-red-500/60" : "border-slate-700/60 focus:border-violet-500/60"}`}
+                focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-colors
+                ${errors.email ? "border-red-500/60" : "border-slate-700/60 focus:border-brand-500/60"}`}
             />
             {errors.email && (
               <p className="mt-1 text-xs text-red-400">{errors.email.message}</p>
@@ -116,7 +116,7 @@ function LoginContent() {
               </label>
               <Link
                 href="/recuperar-senha"
-                className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                className="text-xs text-brand-400 hover:text-brand-300 transition-colors"
               >
                 Esqueci minha senha
               </Link>
@@ -128,8 +128,8 @@ function LoginContent() {
                 autoComplete="current-password"
                 placeholder="••••••••"
                 className={`w-full px-3.5 py-2.5 pr-10 rounded-lg bg-slate-900/60 border text-white placeholder-slate-500 text-sm
-                  focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-colors
-                  ${errors.senha ? "border-red-500/60" : "border-slate-700/60 focus:border-violet-500/60"}`}
+                  focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-colors
+                  ${errors.senha ? "border-red-500/60" : "border-slate-700/60 focus:border-brand-500/60"}`}
               />
               <button
                 type="button"
@@ -152,7 +152,7 @@ function LoginContent() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-2.5 px-4 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:bg-violet-600/50
+            className="w-full py-2.5 px-4 rounded-lg bg-brand-600 hover:bg-brand-500 disabled:bg-brand-600/50
               text-white font-medium text-sm transition-colors flex items-center justify-center gap-2 mt-2"
           >
             {isSubmitting ? (
@@ -171,7 +171,7 @@ function LoginContent() {
           Não tem uma conta?{" "}
           <Link
             href="/registro"
-            className="text-violet-400 hover:text-violet-300 font-medium transition-colors"
+            className="text-brand-400 hover:text-brand-300 font-medium transition-colors"
           >
             Criar conta grátis
           </Link>
@@ -188,7 +188,7 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center">
-          <Loader2 className="w-6 h-6 animate-spin text-violet-500" />
+          <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
         </div>
       }
     >

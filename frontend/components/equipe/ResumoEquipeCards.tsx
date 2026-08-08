@@ -58,7 +58,7 @@ export function ResumoEquipeCards() {
         icon={Users}
         label="Total de Membros"
         value={resumo.total_membros}
-        color="bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400"
+        color="bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400"
       />
       <StatCard
         icon={UserCheck}

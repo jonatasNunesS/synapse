@@ -14,6 +14,7 @@ from .views import (
     RedefinirSenhaView,
     RefreshView,
     RegistroView,
+    TemaEmpresaView,
 )
 
 urlpatterns = [
@@ -28,5 +29,10 @@ urlpatterns = [
         "empresa/modulos/",
         ModulosEmpresaView.as_view(),
         name="auth-empresa-modulos",
+    ),
+    path(
+        "empresa/tema/",
+        TemaEmpresaView.as_view(),
+        name="auth-empresa-tema",
     ),
 ]

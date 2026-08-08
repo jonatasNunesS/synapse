@@ -47,7 +47,7 @@ export default function DashboardLayout({
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
+          <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
           <p className="text-sm text-slate-500">Carregando...</p>
         </div>
       </div>
@@ -60,7 +60,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="tema-app min-h-screen bg-slate-950">
       <Sidebar />
       <Header />
       <main

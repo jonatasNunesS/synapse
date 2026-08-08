@@ -38,7 +38,7 @@ export function FollowUpsWidget({ followups, isLoading }: FollowUpsWidgetProps) 
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
-            <Phone className="h-4 w-4 text-purple-500" />
+            <Phone className="h-4 w-4 text-brand-500" />
             Follow-ups Próximos
           </CardTitle>
           <Link
@@ -63,8 +63,8 @@ export function FollowUpsWidget({ followups, isLoading }: FollowUpsWidgetProps) 
                 className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted transition-colors group"
               >
                 {/* Avatar */}
-                <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-xs font-semibold text-purple-700">
+                <div className="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-semibold text-brand-700">
                     {f.nome.charAt(0).toUpperCase()}
                   </span>
                 </div>

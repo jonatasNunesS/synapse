@@ -79,7 +79,7 @@ export function CaixinhaFormModal({
   };
 
   const inputClass =
-    "w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors";
+    "w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -211,7 +211,7 @@ export function CaixinhaFormModal({
             <button
               onClick={salvar}
               disabled={!valido || salvando || excluindo}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {salvando && <Loader2 className="w-4 h-4 animate-spin" />}
               {modoEdicao ? "Salvar" : "Criar caixinha"}

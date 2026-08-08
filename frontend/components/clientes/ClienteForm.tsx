@@ -78,7 +78,7 @@ export function ClienteForm({ cliente, onSubmit, onClose, loading }: ClienteForm
   }, [cliente, reset]);
 
   const inputClass =
-    "w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors";
+    "w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 transition-colors";
   const labelClass = "block text-xs font-medium text-gray-400 mb-1";
   const errorClass = "text-xs text-red-400 mt-0.5";
 
@@ -238,7 +238,7 @@ export function ClienteForm({ cliente, onSubmit, onClose, loading }: ClienteForm
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 rounded-lg text-sm text-white font-medium transition-colors flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 rounded-lg text-sm text-white font-medium transition-colors flex items-center justify-center gap-2"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               {cliente ? "Salvar Alterações" : "Criar Cliente"}

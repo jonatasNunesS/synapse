@@ -104,7 +104,7 @@ export default function FornecedorDetailPage() {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-3">
         <p className="text-red-400">{error ?? "Fornecedor não encontrado."}</p>
-        <Link href="/fornecedores" className="text-sm text-violet-400 hover:text-violet-300">
+        <Link href="/fornecedores" className="text-sm text-brand-400 hover:text-brand-300">
           Voltar para Fornecedores
         </Link>
       </div>
@@ -173,8 +173,8 @@ export default function FornecedorDetailPage() {
           <div className="rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500/10">
-                  <Building2 className="h-6 w-6 text-violet-400" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500/10">
+                  <Building2 className="h-6 w-6 text-brand-400" />
                 </div>
                 <div>
                   <h1 className="text-lg font-bold text-white">{localData.nome}</h1>

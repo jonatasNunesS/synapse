@@ -68,7 +68,7 @@ function KanbanColuna({
       <div
         ref={setNodeRef}
         className={`flex-1 min-h-[200px] rounded-xl p-2 transition-colors ${
-          isOver ? "bg-purple-500/10 border border-purple-500/30" : "bg-white/3 border border-white/5"
+          isOver ? "bg-brand-500/10 border border-brand-500/30" : "bg-white/3 border border-white/5"
         }`}
       >
         <div className="flex flex-col gap-2">
@@ -110,13 +110,13 @@ function KanbanCard({ cliente, isDragging }: { cliente: ClienteList; isDragging?
     >
       {/* Nome */}
       <div className="flex items-center gap-2 mb-2">
-        <div className="w-6 h-6 rounded-full bg-purple-600/20 flex items-center justify-center text-purple-400 text-xs font-semibold flex-shrink-0">
+        <div className="w-6 h-6 rounded-full bg-brand-600/20 flex items-center justify-center text-brand-400 text-xs font-semibold flex-shrink-0">
           {cliente.nome.charAt(0).toUpperCase()}
         </div>
         <Link
           href={`/clientes/${cliente.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="text-sm font-medium text-white hover:text-purple-400 transition-colors truncate"
+          className="text-sm font-medium text-white hover:text-brand-400 transition-colors truncate"
         >
           {cliente.nome}
         </Link>

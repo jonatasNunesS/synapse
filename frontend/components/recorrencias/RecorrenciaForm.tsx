@@ -90,7 +90,7 @@ export function RecorrenciaForm({ inicial, onClose, onSubmit }: Props) {
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
               placeholder="Ex: Salário Patrícia"
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
             />
             {erros.titulo && <p className="text-xs text-red-400 mt-1">{erros.titulo}</p>}
           </div>
@@ -104,7 +104,7 @@ export function RecorrenciaForm({ inicial, onClose, onSubmit }: Props) {
                   setTipo(e.target.value as TipoRecorrencia);
                   setCategoria("");
                 }}
-                className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500"
+                className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
               >
                 <option value="receita">Receita</option>
                 <option value="despesa">Despesa</option>
@@ -118,7 +118,7 @@ export function RecorrenciaForm({ inicial, onClose, onSubmit }: Props) {
                 value={valor}
                 onChange={(e) => setValor(e.target.value)}
                 placeholder="0,00"
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
               />
               {erros.valor && <p className="text-xs text-red-400 mt-1">{erros.valor}</p>}
             </div>
@@ -129,7 +129,7 @@ export function RecorrenciaForm({ inicial, onClose, onSubmit }: Props) {
             <select
               value={categoria ?? ""}
               onChange={(e) => setCategoria(e.target.value)}
-              className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500"
+              className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
             >
               <option value="">Sem categoria</option>
               {catsDoTipo.map((c) => (
@@ -146,7 +146,7 @@ export function RecorrenciaForm({ inicial, onClose, onSubmit }: Props) {
               <select
                 value={freq}
                 onChange={(e) => setFreq(e.target.value as FrequenciaTipo)}
-                className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500"
+                className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
               >
                 <option value="mensal">Mensal</option>
                 <option value="semanal">Semanal</option>
@@ -162,7 +162,7 @@ export function RecorrenciaForm({ inicial, onClose, onSubmit }: Props) {
                   max={31}
                   value={diaRef}
                   onChange={(e) => setDiaRef(parseInt(e.target.value) || 1)}
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
                 />
                 {erros.dia && <p className="text-xs text-red-400 mt-1">{erros.dia}</p>}
               </div>
@@ -173,7 +173,7 @@ export function RecorrenciaForm({ inicial, onClose, onSubmit }: Props) {
                 <select
                   value={diaRef}
                   onChange={(e) => setDiaRef(parseInt(e.target.value))}
-                  className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500"
+                  className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
                 >
                   {DIAS_SEMANA.map((d) => (
                     <option key={d.value} value={d.value}>
@@ -203,7 +203,7 @@ export function RecorrenciaForm({ inicial, onClose, onSubmit }: Props) {
                 type="number"
                 value={aviso}
                 onChange={(e) => setAviso(parseInt(e.target.value) || 0)}
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
               />
             </div>
           </div>
@@ -214,7 +214,7 @@ export function RecorrenciaForm({ inicial, onClose, onSubmit }: Props) {
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
               rows={2}
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
             />
           </div>
 
@@ -229,7 +229,7 @@ export function RecorrenciaForm({ inicial, onClose, onSubmit }: Props) {
             <button
               type="submit"
               disabled={salvando}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium disabled:opacity-60"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium disabled:opacity-60"
             >
               {salvando && <Loader2 className="h-4 w-4 animate-spin" />}
               {inicial ? "Salvar" : "Criar recorrência"}

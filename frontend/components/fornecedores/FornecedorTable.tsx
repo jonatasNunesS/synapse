@@ -78,7 +78,7 @@ export function FornecedorTable({ onNovo }: FornecedorTableProps) {
               placeholder="Buscar..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="h-8 rounded-lg border border-white/10 bg-white/5 pl-8 pr-3 text-sm text-white placeholder-zinc-500 outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20"
+              className="h-8 rounded-lg border border-white/10 bg-white/5 pl-8 pr-3 text-sm text-white placeholder-zinc-500 outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20"
             />
           </div>
           {/* Status filter */}
@@ -87,7 +87,7 @@ export function FornecedorTable({ onNovo }: FornecedorTableProps) {
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="h-8 rounded-lg border border-white/10 bg-zinc-900 pl-8 pr-3 text-sm text-white outline-none focus:border-violet-500/50"
+              className="h-8 rounded-lg border border-white/10 bg-zinc-900 pl-8 pr-3 text-sm text-white outline-none focus:border-brand-500/50"
             >
               <option value="">Todos os status</option>
               <option value="ativo">Ativo</option>
@@ -101,7 +101,7 @@ export function FornecedorTable({ onNovo }: FornecedorTableProps) {
             <select
               value={categoriaFilter}
               onChange={(e) => { setCategoriaFilter(e.target.value); setPage(1); }}
-              className="h-8 rounded-lg border border-white/10 bg-zinc-900 px-3 text-sm text-white outline-none focus:border-violet-500/50"
+              className="h-8 rounded-lg border border-white/10 bg-zinc-900 px-3 text-sm text-white outline-none focus:border-brand-500/50"
             >
               <option value="">Todas as categorias</option>
               {categorias.map((c) => (
@@ -111,7 +111,7 @@ export function FornecedorTable({ onNovo }: FornecedorTableProps) {
           )}
           <button
             onClick={onNovo}
-            className="flex h-8 items-center gap-1.5 rounded-lg bg-violet-600 px-3 text-sm font-medium text-white transition-colors hover:bg-violet-500"
+            className="flex h-8 items-center gap-1.5 rounded-lg bg-brand-600 px-3 text-sm font-medium text-white transition-colors hover:bg-brand-500"
           >
             <Plus className="h-4 w-4" />
             Novo
@@ -138,7 +138,7 @@ export function FornecedorTable({ onNovo }: FornecedorTableProps) {
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-zinc-500">
                   <div className="flex items-center justify-center gap-2">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
                     Carregando...
                   </div>
                 </td>

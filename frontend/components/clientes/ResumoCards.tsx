@@ -60,8 +60,8 @@ export function ResumoCards({ resumo, loading, periodoAtivo }: ResumoCardsProps)
   return (
     <div className="space-y-3">
       {emPeriodo && (
-        <div className="flex items-center justify-between flex-wrap gap-2 rounded-lg border border-purple-500/20 bg-purple-500/5 px-4 py-2.5">
-          <span className="text-sm text-purple-300 font-medium capitalize">
+        <div className="flex items-center justify-between flex-wrap gap-2 rounded-lg border border-brand-500/20 bg-brand-500/5 px-4 py-2.5">
+          <span className="text-sm text-brand-300 font-medium capitalize">
             {resumo!.periodo!.label}
           </span>
           {comparativoTxt && (
@@ -94,7 +94,7 @@ export function ResumoCards({ resumo, loading, periodoAtivo }: ResumoCardsProps)
           value={emPeriodo ? resumo?.novos_no_periodo ?? 0 : resumo?.novos_este_mes ?? 0}
           subtitle={emPeriodo ? comparativoTxt : undefined}
           icon={UserPlus}
-          color="bg-purple-500"
+          color="bg-brand-500"
           loading={loading}
         />
         <Card

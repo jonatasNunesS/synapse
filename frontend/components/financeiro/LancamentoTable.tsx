@@ -267,7 +267,7 @@ export function LancamentoTable({
                     (isAdmin ? (
                       <button
                         onClick={() => onEditar(lancamento)}
-                        className="p-1.5 rounded text-violet-400 hover:bg-violet-400/10 transition-colors"
+                        className="p-1.5 rounded text-brand-400 hover:bg-brand-400/10 transition-colors"
                         title="Editar pagamento (com auditoria)"
                       >
                         <Pencil className="w-4 h-4" />

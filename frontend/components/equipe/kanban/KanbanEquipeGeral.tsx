@@ -120,7 +120,7 @@ export function KanbanEquipeGeral() {
           <select
             value={prioridadeFiltro}
             onChange={(e) => setPrioridadeFiltro(e.target.value as PrioridadeTarefa | "")}
-            className="rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-violet-500"
+            className="rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
             aria-label="Filtrar por prioridade"
           >
             <option value="">Toda prioridade</option>
@@ -135,7 +135,7 @@ export function KanbanEquipeGeral() {
               type="checkbox"
               checked={mostrarProjeto}
               onChange={(e) => setMostrarProjeto(e.target.checked)}
-              className="accent-violet-600"
+              className="accent-brand-600"
             />
             Tarefas de projeto
           </label>
@@ -152,7 +152,7 @@ export function KanbanEquipeGeral() {
 
       {isLoading ? (
         <div className="flex justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-violet-500" />
+          <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
         </div>
       ) : (
         <EquipeKanbanBoard
@@ -187,7 +187,7 @@ export function KanbanEquipeGeral() {
 function chip(ativo: boolean): string {
   return `px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
     ativo
-      ? "bg-violet-600 text-white"
+      ? "bg-brand-600 text-white"
       : "bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700"
   }`;
 }

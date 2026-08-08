@@ -112,7 +112,7 @@ export function ClienteTable({
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+            className="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand-500"
           />
         </div>
 
@@ -123,7 +123,7 @@ export function ClienteTable({
               setStatusFunil(e.target.value);
               onFiltrar?.({ busca, status_funil: e.target.value, origem });
             }}
-            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-purple-500"
+            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500"
           >
             {STATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value} className="bg-[#0f1117]">
@@ -138,7 +138,7 @@ export function ClienteTable({
               setOrigem(e.target.value);
               onFiltrar?.({ busca, status_funil: statusFunil, origem: e.target.value });
             }}
-            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-purple-500"
+            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500"
           >
             {ORIGEM_OPTIONS.map((o) => (
               <option key={o.value} value={o.value} className="bg-[#0f1117]">
@@ -157,7 +157,7 @@ export function ClienteTable({
 
           <button
             onClick={onNovo}
-            className="px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm text-white transition-colors flex items-center gap-2"
+            className="px-3 py-2 bg-brand-600 hover:bg-brand-700 rounded-lg text-sm text-white transition-colors flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">Novo</span>
@@ -207,13 +207,13 @@ export function ClienteTable({
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-purple-600/20 flex items-center justify-center text-purple-400 font-semibold text-sm flex-shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-brand-600/20 flex items-center justify-center text-brand-400 font-semibold text-sm flex-shrink-0">
                         {cliente.nome.charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <Link
                           href={`/clientes/${cliente.id}`}
-                          className="font-medium text-white hover:text-purple-400 transition-colors"
+                          className="font-medium text-white hover:text-brand-400 transition-colors"
                         >
                           {cliente.nome}
                         </Link>
@@ -281,7 +281,7 @@ export function ClienteTable({
                             onClick={() => onNovaInteracao(cliente)}
                             title="Nova interação"
                             aria-label={`Nova interação para ${cliente.nome}`}
-                            className="p-1.5 text-gray-400 hover:text-purple-400 hover:bg-purple-500/10 rounded transition-colors"
+                            className="p-1.5 text-gray-400 hover:text-brand-400 hover:bg-brand-500/10 rounded transition-colors"
                           >
                             <Zap className="w-4 h-4" />
                           </button>

@@ -66,7 +66,7 @@ export function FormularioConteudo({ onSubmit, gerando, erro }: FormularioConteu
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <Sparkles className="h-5 w-5 text-purple-500" />
+          <Sparkles className="h-5 w-5 text-brand-500" />
           Gerar Conteúdo com IA
         </CardTitle>
       </CardHeader>
@@ -94,9 +94,9 @@ export function FormularioConteudo({ onSubmit, gerando, erro }: FormularioConteu
 
           {/* Campos dinâmicos por tipo */}
           {campos.length === 0 ? (
-            <div className="rounded-lg bg-purple-50 border border-purple-100 p-3 text-sm text-purple-700">
+            <div className="rounded-lg bg-brand-50 border border-brand-100 p-3 text-sm text-brand-700">
               <p className="font-medium mb-1">Geração automática</p>
-              <p className="text-xs text-purple-600">
+              <p className="text-xs text-brand-600">
                 Este tipo de conteúdo usa os dados do seu negócio automaticamente.
                 Clique em &quot;Gerar&quot; para criar.
               </p>
@@ -137,7 +137,7 @@ export function FormularioConteudo({ onSubmit, gerando, erro }: FormularioConteu
           <Button
             type="submit"
             disabled={gerando || (campos.length > 0 && camposObrigatoriosFaltando)}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+            className="w-full bg-brand-600 hover:bg-brand-700 text-white"
           >
             {gerando ? (
               <span className="flex items-center gap-2">

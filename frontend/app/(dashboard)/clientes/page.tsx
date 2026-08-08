@@ -120,7 +120,7 @@ export default function ClientesPage() {
               onClick={() => setViewMode("lista")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                 viewMode === "lista"
-                  ? "bg-purple-600 text-white"
+                  ? "bg-brand-600 text-white"
                   : "text-gray-400 hover:text-white"
               }`}
             >
@@ -131,7 +131,7 @@ export default function ClientesPage() {
               onClick={() => setViewMode("kanban")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                 viewMode === "kanban"
-                  ? "bg-purple-600 text-white"
+                  ? "bg-brand-600 text-white"
                   : "text-gray-400 hover:text-white"
               }`}
             >
@@ -142,7 +142,7 @@ export default function ClientesPage() {
 
           <button
             onClick={() => abrirInteracaoRapida(null)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 rounded-lg text-xs text-white font-medium transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-600 hover:bg-brand-700 rounded-lg text-xs text-white font-medium transition-colors"
           >
             <Zap className="w-3.5 h-3.5" />
             Nova interação
@@ -203,7 +203,7 @@ export default function ClientesPage() {
                 setClienteEditando(null);
                 setShowForm(true);
               }}
-              className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 rounded-lg text-xs text-white font-medium transition-colors"
+              className="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 rounded-lg text-xs text-white font-medium transition-colors"
             >
               + Novo Cliente
             </button>

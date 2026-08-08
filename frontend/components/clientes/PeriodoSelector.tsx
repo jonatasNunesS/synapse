@@ -39,7 +39,7 @@ export function PeriodoSelector({ periodo, onChange }: Props) {
         aria-label="Mês"
         value={mes || ""}
         onChange={(e) => aplicar(Number(e.target.value), ano || anoAtual)}
-        className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-2 text-sm text-white focus:outline-none focus:border-purple-500/50"
+        className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-2 text-sm text-white focus:outline-none focus:border-brand-500/50"
       >
         <option value="">Mês</option>
         {MESES.map((m, i) => (
@@ -52,7 +52,7 @@ export function PeriodoSelector({ periodo, onChange }: Props) {
         aria-label="Ano"
         value={ano || ""}
         onChange={(e) => aplicar(mes || new Date().getMonth() + 1, Number(e.target.value))}
-        className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-2 text-sm text-white focus:outline-none focus:border-purple-500/50"
+        className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-2 text-sm text-white focus:outline-none focus:border-brand-500/50"
       >
         <option value="">Ano</option>
         {anos.map((a) => (

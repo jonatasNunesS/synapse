@@ -80,7 +80,7 @@ function Card({
       </div>
 
       {projeto && tarefa.projeto_nome && (
-        <span className="inline-block mt-2 text-[10px] font-medium px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300">
+        <span className="inline-block mt-2 text-[10px] font-medium px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-300">
           Projeto {tarefa.projeto_nome}
         </span>
       )}
@@ -112,7 +112,7 @@ function Card({
           )}
           {mostrarResponsavel && tarefa.responsavel && (
             <div
-              className="w-5 h-5 rounded-full bg-violet-600/30 flex items-center justify-center text-violet-200 text-[10px] font-bold"
+              className="w-5 h-5 rounded-full bg-brand-600/30 flex items-center justify-center text-brand-200 text-[10px] font-bold"
               title={tarefa.responsavel.nome}
             >
               {iniciais(tarefa.responsavel.nome)}
@@ -155,7 +155,7 @@ function Coluna({
         {permiteCriar && onNovaTarefa && (
           <button
             onClick={() => onNovaTarefa(coluna.id)}
-            className="text-slate-400 hover:text-violet-400 transition-colors"
+            className="text-slate-400 hover:text-brand-400 transition-colors"
             title={`Nova tarefa em ${coluna.nome}`}
           >
             <Plus size={16} />
@@ -165,7 +165,7 @@ function Coluna({
       <div
         ref={setNodeRef}
         className={`flex flex-col gap-2 px-2 pb-3 pt-1 flex-1 min-h-[120px] rounded-xl border transition-colors ${
-          isOver ? "bg-violet-500/10 border-violet-500/40" : "bg-slate-900/40 border-slate-800"
+          isOver ? "bg-brand-500/10 border-brand-500/40" : "bg-slate-900/40 border-slate-800"
         }`}
       >
         {coluna.tarefas.map((t) => (

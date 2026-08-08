@@ -49,7 +49,7 @@ type FormData = z.infer<typeof schema>;
 
 const TIPOS: { value: TipoInteracao; label: string; icon: React.ElementType; color: string }[] = [
   { value: "ligacao", label: "Ligação", icon: Phone, color: "text-blue-400 bg-blue-400/10" },
-  { value: "email", label: "E-mail", icon: Mail, color: "text-purple-400 bg-purple-400/10" },
+  { value: "email", label: "E-mail", icon: Mail, color: "text-brand-400 bg-brand-400/10" },
   { value: "reuniao", label: "Reunião", icon: Users, color: "text-yellow-400 bg-yellow-400/10" },
   {
     value: "whatsapp",
@@ -124,7 +124,7 @@ export function InteracaoForm({ onSubmit, onClose, loading, interacao }: Interac
   const statusPagamento = watch("status_pagamento");
 
   const inputClass =
-    "w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors";
+    "w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 transition-colors";
   const labelClass = "block text-xs font-medium text-gray-400 mb-1";
   const errorClass = "text-xs text-red-400 mt-0.5";
 
@@ -162,7 +162,7 @@ export function InteracaoForm({ onSubmit, onClose, loading, interacao }: Interac
                   onClick={() => setValue("tipo", value)}
                   className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all text-xs font-medium ${
                     tipoSelecionado === value
-                      ? "border-purple-500 bg-purple-500/10 text-white"
+                      ? "border-brand-500 bg-brand-500/10 text-white"
                       : "border-white/10 bg-white/3 text-gray-400 hover:border-white/20"
                   }`}
                 >
@@ -220,7 +220,7 @@ export function InteracaoForm({ onSubmit, onClose, loading, interacao }: Interac
                       onClick={() => setValue("status_pagamento", value)}
                       className={`px-3 py-2 rounded-lg border text-sm transition-colors ${
                         ativo
-                          ? "border-purple-500 bg-purple-500/10 text-white"
+                          ? "border-brand-500 bg-brand-500/10 text-white"
                           : "border-white/10 bg-white/3 text-gray-400 hover:border-white/20"
                       }`}
                     >
@@ -290,7 +290,7 @@ export function InteracaoForm({ onSubmit, onClose, loading, interacao }: Interac
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 rounded-lg text-sm text-white font-medium transition-colors flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 rounded-lg text-sm text-white font-medium transition-colors flex items-center justify-center gap-2"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               {modoEdicao ? "Salvar alterações" : "Registrar"}

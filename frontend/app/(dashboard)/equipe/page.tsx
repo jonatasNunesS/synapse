@@ -105,7 +105,7 @@ export default function EquipePage() {
           onClick={() => setAba("membros")}
           className={`px-4 py-2 text-sm font-medium -mb-px border-b-2 transition-colors ${
             aba === "membros"
-              ? "border-violet-500 text-foreground"
+              ? "border-brand-500 text-foreground"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
@@ -115,7 +115,7 @@ export default function EquipePage() {
           onClick={() => setAba("kanban")}
           className={`px-4 py-2 text-sm font-medium -mb-px border-b-2 transition-colors ${
             aba === "kanban"
-              ? "border-violet-500 text-foreground"
+              ? "border-brand-500 text-foreground"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >

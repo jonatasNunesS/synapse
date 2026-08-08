@@ -45,7 +45,7 @@ export default function RecuperarSenhaPage() {
     <div className="w-full max-w-md">
       {/* Logo */}
       <div className="flex items-center justify-center gap-2 mb-8">
-        <div className="w-9 h-9 rounded-lg bg-violet-600 flex items-center justify-center">
+        <div className="w-9 h-9 rounded-lg bg-brand-600 flex items-center justify-center">
           <Zap className="w-5 h-5 text-white" />
         </div>
         <span className="text-2xl font-bold text-white tracking-tight">Synapse</span>
@@ -69,7 +69,7 @@ export default function RecuperarSenhaPage() {
             </p>
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 text-sm text-violet-400 hover:text-violet-300 transition-colors"
+              className="inline-flex items-center gap-2 text-sm text-brand-400 hover:text-brand-300 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               Voltar para o login
@@ -108,8 +108,8 @@ export default function RecuperarSenhaPage() {
                   autoComplete="email"
                   placeholder="seu@email.com"
                   className={`w-full px-3.5 py-2.5 rounded-lg bg-slate-900/60 border text-white placeholder-slate-500 text-sm
-                    focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-colors
-                    ${errors.email ? "border-red-500/60" : "border-slate-700/60 focus:border-violet-500/60"}`}
+                    focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-colors
+                    ${errors.email ? "border-red-500/60" : "border-slate-700/60 focus:border-brand-500/60"}`}
                 />
                 {errors.email && (
                   <p className="mt-1 text-xs text-red-400">{errors.email.message}</p>
@@ -119,7 +119,7 @@ export default function RecuperarSenhaPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-2.5 px-4 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:bg-violet-600/50
+                className="w-full py-2.5 px-4 rounded-lg bg-brand-600 hover:bg-brand-500 disabled:bg-brand-600/50
                   text-white font-medium text-sm transition-colors flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (

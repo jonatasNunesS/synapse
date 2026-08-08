@@ -71,7 +71,7 @@ export function ConfirmDialog({
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
               danger
                 ? "bg-red-600 hover:bg-red-500"
-                : "bg-violet-600 hover:bg-violet-500"
+                : "bg-brand-600 hover:bg-brand-500"
             }`}
           >
             {processando && <Loader2 className="h-4 w-4 animate-spin" />}
