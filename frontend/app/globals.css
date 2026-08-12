@@ -317,9 +317,61 @@
   --font-titulo: var(--font-geometrica), var(--font-inter), system-ui, sans-serif;
 }
 
+/* IBM Plex Sans e Figtree trocam títulos E corpo: as duas são fontes de
+   interface desenhadas para leitura em tela, então dá para usá-las no texto
+   corrido sem perder legibilidade em tabela. */
+[data-fonte="plex"] {
+  --font-titulo: var(--font-plex), var(--font-inter), system-ui, sans-serif;
+  --font-corpo: var(--font-plex), var(--font-inter), system-ui, sans-serif;
+}
+
+[data-fonte="figtree"] {
+  --font-titulo: var(--font-figtree), var(--font-inter), system-ui, sans-serif;
+  --font-corpo: var(--font-figtree), var(--font-inter), system-ui, sans-serif;
+}
+
 [data-fonte="serifada"] .tema-app :is(h1, h2, h3, h4),
 [data-fonte="geometrica"] .tema-app :is(h1, h2, h3, h4),
+[data-fonte="plex"] .tema-app :is(h1, h2, h3, h4),
+[data-fonte="figtree"] .tema-app :is(h1, h2, h3, h4),
 [data-fonte="serifada"] .tema-app .titulo-tema,
-[data-fonte="geometrica"] .tema-app .titulo-tema {
+[data-fonte="geometrica"] .tema-app .titulo-tema,
+[data-fonte="plex"] .tema-app .titulo-tema,
+[data-fonte="figtree"] .tema-app .titulo-tema {
   font-family: var(--font-titulo);
 }
+
+[data-fonte="plex"] .tema-app,
+[data-fonte="figtree"] .tema-app {
+  font-family: var(--font-corpo);
+}
+
+/* ── Tamanho do texto (preferência de cada usuário) ───────────
+   Mexe no font-size da raiz; como o Tailwind trabalha em rem, todo o resto
+   acompanha junto — inclusive espaçamentos, o que mantém a proporção.
+
+   O que NÃO acompanha, de propósito: larguras estruturais (sidebar, header)
+   e ícones, presos em px nas regras abaixo. Se crescessem, a sidebar comeria
+   a tela e os ícones desalinhariam dentro dos botões compactos.
+   ───────────────────────────────────────────────────────────── */
+
+html[data-fonte-tamanho="medio"] {
+  font-size: 112.5%;
+}
+
+html[data-fonte-tamanho="grande"] {
+  font-size: 125%;
+}
+
+html[data-fonte-tamanho="maior"] {
+  font-size: 137.5%;
+}
+
+/* Ícones acompanham o texto de propósito: como TUDO na tela é rem (ícone,
+   padding e fonte), a escala é uniforme e o alinhamento dentro dos botões
+   compactos se mantém. Travar o ícone em px é que criaria o desencontro —
+   texto grande com pictograma miúdo. Conferido nos quatro níveis.
+
+   A moldura (sidebar e header) é que fica em px: ela não depende do texto,
+   e crescer junto só roubaria largura útil do conteúdo. */
+

@@ -116,14 +116,16 @@ export function ClienteTable({
           />
         </div>
 
-        <div className="flex gap-2">
+        {/* flex-wrap + min-w-0 nos selects: com o texto grande, os filtros
+            descem de linha em vez de esticar a tabela para fora da tela. */}
+        <div className="flex flex-wrap gap-2">
           <select
             value={statusFunil}
             onChange={(e) => {
               setStatusFunil(e.target.value);
               onFiltrar?.({ busca, status_funil: e.target.value, origem });
             }}
-            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500"
+            className="min-w-0 flex-1 sm:flex-none px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500"
           >
             {STATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value} className="bg-[#0f1117]">
@@ -138,7 +140,7 @@ export function ClienteTable({
               setOrigem(e.target.value);
               onFiltrar?.({ busca, status_funil: statusFunil, origem: e.target.value });
             }}
-            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500"
+            className="min-w-0 flex-1 sm:flex-none px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500"
           >
             {ORIGEM_OPTIONS.map((o) => (
               <option key={o.value} value={o.value} className="bg-[#0f1117]">

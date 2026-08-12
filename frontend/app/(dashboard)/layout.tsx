@@ -65,10 +65,10 @@ export default function DashboardLayout({
       <Header />
       <main
         className={cn(
-          "pt-16 min-h-screen transition-all duration-300",
+          "pt-[64px] min-h-screen transition-all duration-300",
           // Mobile (< md): sem padding lateral — sidebar fica como overlay
           // Desktop (>= md): padding conforme estado da sidebar
-          sidebarOpen ? "md:pl-64" : "md:pl-16"
+          sidebarOpen ? "md:pl-[256px]" : "md:pl-[64px]"
         )}
       >
         <div className="p-4 md:p-6">{children}</div>

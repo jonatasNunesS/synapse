@@ -29,11 +29,11 @@ export function Header() {
   return (
     <header
       className={cn(
-        "fixed top-0 right-0 z-30 flex h-16 items-center justify-between border-b border-slate-800 bg-slate-950/80 backdrop-blur-sm px-4 md:px-6 transition-all duration-300",
+        "fixed top-0 right-0 z-30 flex h-[64px] items-center justify-between border-b border-slate-800 bg-slate-950/80 backdrop-blur-sm px-4 md:px-6 transition-all duration-300",
         // Mobile: sempre left-0 (sidebar é overlay)
         // Desktop: ajusta conforme estado da sidebar
         "left-0",
-        sidebarOpen ? "md:left-64" : "md:left-16"
+        sidebarOpen ? "md:left-[256px]" : "md:left-[64px]"
       )}
     >
       {/* ── Hamburger (mobile only) ────────────────────────── */}
@@ -98,7 +98,7 @@ export function Header() {
                         <p className="text-xs font-medium text-slate-300 truncate max-w-[160px]">
                           {empresa.nome}
                         </p>
-                        <p className="text-[11px] text-slate-600">Plano {planoLabel}</p>
+                        <p className="text-[0.6875rem] text-slate-600">Plano {planoLabel}</p>
                       </div>
                     </div>
                   </div>

@@ -18,7 +18,13 @@ export const PALETAS_VALIDAS = [
   "grafite",
 ] as const;
 
-export const FONTES_VALIDAS = ["padrao", "serifada", "geometrica"] as const;
+export const FONTES_VALIDAS = [
+  "padrao",
+  "serifada",
+  "geometrica",
+  "plex",
+  "figtree",
+] as const;
 
 export type Paleta = (typeof PALETAS_VALIDAS)[number];
 export type FonteTema = (typeof FONTES_VALIDAS)[number];
@@ -126,6 +132,18 @@ export const FONTES: FonteInfo[] = [
     nome: "Geométrica",
     descricao: "Títulos em sans geométrica — ar mais moderno",
     familiaPreview: "var(--font-geometrica), var(--font-inter), sans-serif",
+  },
+  {
+    id: "plex",
+    nome: "IBM Plex Sans",
+    descricao: "Títulos e corpo — a mesma da página pública",
+    familiaPreview: "var(--font-plex), var(--font-inter), sans-serif",
+  },
+  {
+    id: "figtree",
+    nome: "Figtree",
+    descricao: "Títulos e corpo — geométrica mais amigável",
+    familiaPreview: "var(--font-figtree), var(--font-inter), sans-serif",
   },
 ];
 

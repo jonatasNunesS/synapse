@@ -103,15 +103,16 @@ export function Sidebar() {
       <aside
         className={cn(
           "fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-slate-800 bg-slate-900 transition-all duration-300",
-          // Desktop: colapsa para w-16 quando fechado
+          // Desktop: colapsa para 64px quando fechado. Largura em px de
+          // propósito: a moldura não escala com o tamanho do texto.
           // Mobile: some completamente (translate) quando fechado
           sidebarOpen
-            ? "w-64 translate-x-0"
-            : "w-16 -translate-x-full md:translate-x-0"
+            ? "w-[256px] translate-x-0"
+            : "w-[64px] -translate-x-full md:translate-x-0"
         )}
       >
         {/* ── Logo ──────────────────────────────────────────── */}
-        <div className="flex h-16 items-center justify-between border-b border-slate-800 px-4">
+        <div className="flex h-[64px] items-center justify-between border-b border-slate-800 px-4">
           {sidebarOpen && (
             <Link href="/dashboard" className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600">
@@ -192,12 +193,12 @@ export function Sidebar() {
     <>
       <span className="flex-1">{item.label}</span>
       {item.badge !== undefined && item.badge > 0 && (
-        <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-brand-600 px-1.5 text-[10px] font-bold text-white">
+        <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-brand-600 px-1.5 text-[0.625rem] font-bold text-white">
           {item.badge}
         </span>
       )}
       {item.disabled && (
-        <span className="text-[10px] text-slate-600 font-normal">breve</span>
+        <span className="text-[0.625rem] text-slate-600 font-normal">breve</span>
       )}
     </>
   )}
@@ -251,7 +252,7 @@ export function Sidebar() {
             </div>
           )}
           {sidebarOpen && (
-            <p className="mt-1 px-3 pb-0.5 text-[10px] tabular-nums text-slate-600 select-none">
+            <p className="mt-1 px-3 pb-0.5 text-[0.625rem] tabular-nums text-slate-600 select-none">
               Synapse {VERSION_LABEL}
             </p>
           )}

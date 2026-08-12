@@ -118,7 +118,7 @@ export function CriarEmpresaModal({ onClose, onSuccess }: Props) {
           </div>
 
           <div className="pt-2 border-t border-slate-800">
-            <p className="text-[11px] uppercase tracking-wide text-slate-500 mb-3">
+            <p className="text-[0.6875rem] uppercase tracking-wide text-slate-500 mb-3">
               Administrador da empresa
             </p>
             <div className="space-y-4">

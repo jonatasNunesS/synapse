@@ -103,12 +103,14 @@ export default function ProjetosPage() {
             className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <Filter size={15} className="text-gray-400" />
+        {/* flex-wrap + min-w-0: com o texto grande os filtros descem de linha
+            em vez de esticar a página para fora da tela. */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Filter size={15} className="text-gray-400 flex-shrink-0" />
           <select
             value={filtroStatus}
             onChange={(e) => setFiltroStatus(e.target.value as ProjetoStatus | "")}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="min-w-0 flex-1 sm:flex-none border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           >
             <option value="">Todos os status</option>
             <option value="planejamento">Planejamento</option>
@@ -120,7 +122,7 @@ export default function ProjetosPage() {
           <select
             value={filtroPrioridade}
             onChange={(e) => setFiltroPrioridade(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="min-w-0 flex-1 sm:flex-none border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           >
             <option value="">Todas as prioridades</option>
             <option value="baixa">Baixa</option>

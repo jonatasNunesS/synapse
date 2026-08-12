@@ -123,7 +123,7 @@ export default function EstoquePage() {
             Gerencie seus produtos e movimentações
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => carregarTudo()}
             className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"

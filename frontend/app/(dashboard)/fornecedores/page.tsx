@@ -23,8 +23,10 @@ export default function FornecedoresPage() {
   return (
     <div className="space-y-6 p-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      {/* flex-wrap: com o texto grande, o botão desce em vez de esticar a
+          página para fora da tela. */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10">
             <Building2 className="h-5 w-5 text-brand-400" />
           </div>

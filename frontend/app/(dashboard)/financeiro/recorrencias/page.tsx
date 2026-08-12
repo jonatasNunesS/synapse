@@ -155,7 +155,7 @@ export default function RecorrenciasPage() {
                       {r.ultimas_ocorrencias.map((oc) => (
                         <span
                           key={oc.id}
-                          className="inline-flex items-center gap-1 text-[11px] text-zinc-500"
+                          className="inline-flex items-center gap-1 text-[0.6875rem] text-zinc-500"
                           title={oc.status}
                         >
                           {STATUS_ICON[oc.status]}

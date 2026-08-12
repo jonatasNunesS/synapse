@@ -16,6 +16,15 @@ import type { DashboardResumo } from "@/types/dashboard";
 import type { ModuloOpcional } from "@/types/auth";
 import { useModulos } from "@/hooks/useModulos";
 
+/**
+ * A largura mínima da coluna está em rem, então ela cresce junto com a
+ * preferência de tamanho de texto e o próprio navegador escolhe quantos KPIs
+ * cabem por linha: em 1280px são 4 no normal (como antes), 3 no médio/grande e
+ * 2 no "maior" — assim o valor nunca precisa ser cortado nem quebrado no meio.
+ * 13.75rem = 220px é exatamente a largura de 1/4 da área útil no nível normal.
+ */
+const GRID_KPI = "grid grid-cols-[repeat(auto-fit,minmax(13.75rem,1fr))] gap-4";
+
 interface KPICardProps {
   titulo: string;
   valor: string;
@@ -30,16 +39,20 @@ function KPICard({ titulo, valor, subtitulo, icone, cor, tendencia, alerta }: KP
   return (
     <Card className={`border-l-4 ${cor} hover:shadow-md transition-shadow`}>
       <CardContent className="p-5">
-        <div className="flex items-start justify-between">
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-muted-foreground truncate">{titulo}</p>
-            <p className="text-2xl font-bold text-foreground mt-1 truncate">{valor}</p>
-            <p className="text-xs text-muted-foreground mt-1 truncate">{subtitulo}</p>
-          </div>
-          <div className={`p-2.5 rounded-lg ml-3 flex-shrink-0 ${alerta ? "bg-red-50" : "bg-muted"}`}>
+        {/* O ícone divide a linha só com o título; o valor ocupa a largura
+            inteira do card. Com break-words no lugar de truncate, o número
+            continua legível por completo em qualquer tamanho de fonte — o
+            card cresce em altura em vez de cortar o texto. */}
+        <div className="flex items-start justify-between gap-3">
+          <p className="flex-1 min-w-0 text-sm font-medium text-muted-foreground break-words">
+            {titulo}
+          </p>
+          <div className={`p-2.5 rounded-lg flex-shrink-0 ${alerta ? "bg-red-50" : "bg-muted"}`}>
             {icone}
           </div>
         </div>
+        <p className="text-2xl font-bold text-foreground mt-1 break-words">{valor}</p>
+        <p className="text-xs text-muted-foreground mt-1 break-words">{subtitulo}</p>
         {tendencia && (
           <div className="flex items-center gap-1 mt-3">
             {tendencia === "positiva" ? (
@@ -83,7 +96,7 @@ export function KPIGrid({ resumo, isLoading }: KPIGridProps) {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className={GRID_KPI}>
         {Array.from({ length: 8 }).map((_, i) => (
           <KPICardSkeleton key={i} />
         ))}
@@ -176,7 +189,7 @@ export function KPIGrid({ resumo, isLoading }: KPIGridProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className={GRID_KPI}>
       {kpis
         .filter((kpi) => !kpi.modulo || moduloAtivo(kpi.modulo))
         .map(({ modulo: _modulo, ...kpi }) => (

@@ -167,7 +167,7 @@ export function ModulosSection() {
                     <p className="text-sm font-medium text-white">{info?.label ?? modulo}</p>
                     <p className="text-xs text-slate-500 mt-0.5">{info?.descricao}</p>
                     {qtd > 0 && (
-                      <p className="text-[11px] text-slate-600 mt-0.5">
+                      <p className="text-[0.6875rem] text-slate-600 mt-0.5">
                         {qtd} {qtd === 1 ? "registro" : "registros"}
                       </p>
                     )}
@@ -197,7 +197,7 @@ export function ModulosSection() {
           })}
 
           {/* Obrigatórios — toggle travado */}
-          <p className="text-[11px] uppercase tracking-wide text-slate-600 pt-3 pb-1">
+          <p className="text-[0.6875rem] uppercase tracking-wide text-slate-600 pt-3 pb-1">
             Essenciais
           </p>
           {(config?.obrigatorios ?? Object.keys(OBRIGATORIOS_INFO)).map((modulo) => {

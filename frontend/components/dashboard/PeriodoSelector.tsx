@@ -10,7 +10,9 @@ interface PeriodoSelectorProps {
 
 export function PeriodoSelector({ value, onChange }: PeriodoSelectorProps) {
   return (
-    <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+    /* flex-wrap: com o texto grande os períodos descem de linha em vez de
+       empurrar a página para fora da tela. */
+    <div className="flex flex-wrap items-center gap-1 bg-muted rounded-lg p-1">
       {PERIODOS.map((p) => (
         <Button
           key={p.value}

@@ -173,7 +173,7 @@ export function LancamentoTable({
                     <p className="font-medium text-slate-200 truncate max-w-[200px] flex items-center gap-1.5">
                       {lancamento.descricao}
                       {lancamento.tipo === "emprestimo" && (
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/25 flex-shrink-0">
+                        <span className="text-[0.625rem] font-medium px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/25 flex-shrink-0">
                           Empréstimo
                         </span>
                       )}

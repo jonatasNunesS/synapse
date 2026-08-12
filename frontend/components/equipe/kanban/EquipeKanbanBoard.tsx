@@ -80,14 +80,14 @@ function Card({
       </div>
 
       {projeto && tarefa.projeto_nome && (
-        <span className="inline-block mt-2 text-[10px] font-medium px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-300">
+        <span className="inline-block mt-2 text-[0.625rem] font-medium px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-300">
           Projeto {tarefa.projeto_nome}
         </span>
       )}
 
       <div className="flex items-center justify-between mt-2 gap-1">
         <span
-          className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+          className={`text-[0.625rem] px-1.5 py-0.5 rounded font-medium ${
             PRIORIDADE_TAREFA_CORES[tarefa.prioridade]
           }`}
         >
@@ -99,7 +99,7 @@ function Card({
           )}
           {tarefa.prazo && (
             <span
-              className={`flex items-center gap-0.5 text-[11px] ${
+              className={`flex items-center gap-0.5 text-[0.6875rem] ${
                 tarefa.esta_atrasada ? "text-red-400" : "text-slate-400"
               }`}
             >
@@ -112,7 +112,7 @@ function Card({
           )}
           {mostrarResponsavel && tarefa.responsavel && (
             <div
-              className="w-5 h-5 rounded-full bg-brand-600/30 flex items-center justify-center text-brand-200 text-[10px] font-bold"
+              className="w-5 h-5 rounded-full bg-brand-600/30 flex items-center justify-center text-brand-200 text-[0.625rem] font-bold"
               title={tarefa.responsavel.nome}
             >
               {iniciais(tarefa.responsavel.nome)}

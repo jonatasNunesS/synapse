@@ -121,7 +121,9 @@ export default function FinanceiroPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* flex-wrap: são cinco ações; em tela estreita (ou com o texto no
+            tamanho "Maior") elas descem de linha em vez de empurrar a página. */}
+        <div className="flex flex-wrap items-center gap-3">
           {/* Navegação de mês */}
           <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
             <button

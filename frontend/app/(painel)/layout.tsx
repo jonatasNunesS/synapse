@@ -64,7 +64,7 @@ export default function PainelAdminLayout({
               <p className="text-sm font-bold text-amber-300 leading-tight">
                 Plataforma Synapse
               </p>
-              <p className="text-[11px] text-amber-500/70 leading-tight">
+              <p className="text-[0.6875rem] text-amber-500/70 leading-tight">
                 Painel Administrativo — visão interna
               </p>
             </div>

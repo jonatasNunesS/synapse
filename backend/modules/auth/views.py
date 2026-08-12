@@ -446,3 +446,40 @@ class TemaEmpresaView(APIView):
             data=TemaEmpresaSerializer(empresa).data,
             message="Identidade visual atualizada.",
         )
+
+
+class PreferenciasUsuarioView(APIView):
+    """
+    PATCH — preferências pessoais do usuário logado (hoje: tamanho do texto).
+
+    Diferente do tema da empresa, aqui não há checagem de perfil: cada um
+    ajusta o SEU. E também não há como mexer no de outra pessoa — o alvo é
+    sempre `request.user`.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        from .serializers import PreferenciasUsuarioSerializer
+
+        return success_response(data=PreferenciasUsuarioSerializer(request.user).data)
+
+    def patch(self, request: Request) -> Response:
+        from .serializers import PreferenciasUsuarioSerializer
+
+        serializer = PreferenciasUsuarioSerializer(
+            request.user, data=request.data, partial=True
+        )
+        if not serializer.is_valid():
+            return error_response(
+                code="VALIDATION_ERROR",
+                message="Dados inválidos.",
+                details=serializer.errors,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer.save()
+
+        return success_response(
+            data=PreferenciasUsuarioSerializer(request.user).data,
+            message="Preferências atualizadas.",
+        )

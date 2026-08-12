@@ -168,7 +168,7 @@ export function BuscaGlobal() {
                     {/* Cabeçalho da categoria */}
                     <div className="flex items-center gap-1.5 px-3 py-1.5">
                       <span className="text-slate-600">{ICONES[cat]}</span>
-                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                      <span className="text-[0.6875rem] font-semibold text-slate-500 uppercase tracking-wider">
                         {LABELS[cat]}
                       </span>
                     </div>

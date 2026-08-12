@@ -60,6 +60,18 @@ TEMA_FONTE_CHOICES = [
     ("padrao", "Padrão"),
     ("serifada", "Serifada"),
     ("geometrica", "Geométrica"),
+    ("plex", "IBM Plex Sans"),
+    ("figtree", "Figtree"),
+]
+
+# ── Acessibilidade: tamanho do texto ─────────────────────────────────────────
+# Diferente do tema, esta é preferência de CADA USUÁRIO — acessibilidade é
+# individual. A escala em si (100%, 112.5%, 125%, 137.5%) vive no CSS.
+TAMANHO_FONTE_CHOICES = [
+    ("normal", "Normal"),
+    ("medio", "Médio"),
+    ("grande", "Grande"),
+    ("maior", "Maior"),
 ]
 
 
@@ -216,6 +228,15 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     # Já viu o aviso único da migração das recorrências pro novo modelo?
     viu_aviso_recorrencias = models.BooleanField(default=False)
+
+    # ── Preferências pessoais ────────────────────────────────────────────
+    # Tamanho do texto: só este usuário vê a diferença. Quem já existe fica
+    # no normal.
+    tamanho_fonte = models.CharField(
+        max_length=10,
+        choices=TAMANHO_FONTE_CHOICES,
+        default="normal",
+    )
 
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)

@@ -48,7 +48,7 @@ function Preview({ paleta, fonte }: { paleta: Paleta; fonte: FonteTema }) {
           </p>
         </div>
         <span
-          className="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium"
+          className="inline-flex items-center rounded-full px-2.5 py-1 text-[0.6875rem] font-medium"
           style={{ background: `${cores.primary}26`, color: cores.ring }}
         >
           Em dia
@@ -194,7 +194,7 @@ export function IdentidadeVisualSection() {
                 <span className="text-sm font-medium text-white">{p.nome}</span>
                 {selecionada && <Check className="w-3.5 h-3.5 text-brand-400" />}
               </span>
-              <span className="block text-[11px] text-slate-500">
+              <span className="block text-[0.6875rem] text-slate-500">
                 {p.descricao}
               </span>
             </button>
@@ -229,7 +229,7 @@ export function IdentidadeVisualSection() {
                   <span className="text-sm font-medium text-white">{f.nome}</span>
                   {selecionada && <Check className="w-3.5 h-3.5 text-brand-400" />}
                 </span>
-                <span className="block text-[11px] text-slate-500">
+                <span className="block text-[0.6875rem] text-slate-500">
                   {f.descricao}
                 </span>
               </span>
@@ -237,7 +237,7 @@ export function IdentidadeVisualSection() {
                 className="text-lg text-slate-200 flex-shrink-0"
                 style={{ fontFamily: f.familiaPreview }}
               >
-                Aa — Resumo do mês
+                Aa<span className="hidden sm:inline"> — Resumo do mês</span>
               </span>
             </button>
           );

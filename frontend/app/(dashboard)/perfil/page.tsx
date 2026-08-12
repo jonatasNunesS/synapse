@@ -10,6 +10,7 @@ import { useAppStore } from "@/store/useAppStore";
 import { api } from "@/lib/api";
 import type { AtualizarPerfilPayload } from "@/types/auth";
 import type { ApiError } from "@/types/api";
+import { PreferenciasSection } from "@/components/perfil/PreferenciasSection";
 
 // ── Schema de perfil ─────────────────────────────────────────────────────────
 
@@ -107,7 +108,7 @@ export default function PerfilPage() {
       </div>
 
       {/* Avatar + info */}
-      <div className="flex items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-xl">
+      <div className="flex flex-wrap items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-xl">
         <div className="w-16 h-16 rounded-full bg-brand-600/30 border border-brand-500/40 flex items-center justify-center overflow-hidden flex-shrink-0">
           {usuario?.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -130,6 +131,9 @@ export default function PerfilPage() {
           </div>
         )}
       </div>
+
+      {/* Preferências pessoais (só este usuário vê a diferença) */}
+      <PreferenciasSection />
 
       {/* Formulário de perfil */}
       <section className="bg-[#0d1117] border border-white/10 rounded-xl p-6">
