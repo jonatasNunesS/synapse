@@ -50,7 +50,7 @@ export function MembroCard({ membro, onEditar, onRemover }: MembroCardProps) {
         <div className="flex items-start justify-between gap-3">
           {/* Avatar + Info */}
           <Link href={`/equipe/${membro.id}`} className="flex items-start gap-3 flex-1 min-w-0">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-600/20 text-brand-400 text-sm font-bold border border-brand-600/30 flex-shrink-0">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-600/20 text-brand-accent text-sm font-bold border border-brand-600/30 flex-shrink-0">
               {iniciais}
             </div>
             <div className="min-w-0">
@@ -93,7 +93,7 @@ export function MembroCard({ membro, onEditar, onRemover }: MembroCardProps) {
                   Editar
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className="text-destructive"
+                  className="text-erro"
                   onClick={() => onRemover(membro.id)}
                 >
                   <Trash2 className="h-4 w-4 mr-2" />

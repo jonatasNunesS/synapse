@@ -19,8 +19,8 @@ const NOMES: Record<NomePlano, string> = {
 };
 
 const inputCls =
-  "w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500";
-const labelCls = "block text-xs font-medium text-slate-400 mb-1";
+  "w-full rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-foreground placeholder:text-muted-suave focus:outline-none focus:ring-1 focus:ring-amber-500";
+const labelCls = "block text-xs font-medium text-muted-foreground mb-1";
 
 /** null/undefined → "" (campo vazio = a definir). */
 function texto(valor: string | number | null | undefined): string {
@@ -106,19 +106,19 @@ export function PlanosPrecosSection() {
   };
 
   return (
-    <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
-      <h2 className="text-base font-semibold text-white flex items-center gap-2">
-        <Tag className="h-4 w-4 text-amber-400" />
+    <section className="rounded-xl border border-border bg-card/60 p-5">
+      <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
+        <Tag className="h-4 w-4 text-alerta" />
         Planos e Preços
       </h2>
-      <p className="text-xs text-slate-500 mt-1 mb-4">
+      <p className="text-xs text-muted-suave mt-1 mb-4">
         O que aparece na página pública. Campo em branco fica como{" "}
-        <strong className="text-slate-400">a definir</strong> na landing.
+        <strong className="text-muted-foreground">a definir</strong> na landing.
       </p>
 
       {carregando ? (
         <div className="flex justify-center py-8">
-          <Loader2 className="h-5 w-5 animate-spin text-amber-400" />
+          <Loader2 className="h-5 w-5 animate-spin text-alerta" />
         </div>
       ) : (
         <div className="space-y-4">
@@ -128,10 +128,10 @@ export function PlanosPrecosSection() {
             return (
               <div
                 key={plano.plano}
-                className="rounded-lg border border-slate-800 bg-slate-900 p-4"
+                className="rounded-lg border border-border bg-card shadow-elevacao p-4"
               >
                 <div className="flex items-center justify-between gap-3 mb-3">
-                  <h3 className="text-sm font-semibold text-white">
+                  <h3 className="text-sm font-semibold text-foreground">
                     {NOMES[plano.plano] ?? plano.plano}
                   </h3>
                   <button

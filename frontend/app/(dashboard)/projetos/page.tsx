@@ -64,7 +64,7 @@ export default function ProjetosPage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Projetos</h1>
+          <h1 className="text-2xl font-bold text-foreground">Projetos</h1>
           <p className="text-sm text-muted-suave mt-0.5">
             {loading ? "Carregando..." : `${total} projeto${total !== 1 ? "s" : ""} encontrado${total !== 1 ? "s" : ""}`}
           </p>
@@ -86,7 +86,7 @@ export default function ProjetosPage() {
       {loadingResumo && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-gray-100 rounded-xl h-20 animate-pulse" />
+            <div key={i} className="bg-muted rounded-xl h-20 animate-pulse" />
           ))}
         </div>
       )}
@@ -100,7 +100,7 @@ export default function ProjetosPage() {
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar projetos..."
-            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="w-full pl-9 pr-3 py-2 border border-border bg-superficie text-foreground rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
         </div>
         {/* flex-wrap + min-w-0: com o texto grande os filtros descem de linha
@@ -110,7 +110,7 @@ export default function ProjetosPage() {
           <select
             value={filtroStatus}
             onChange={(e) => setFiltroStatus(e.target.value as ProjetoStatus | "")}
-            className="min-w-0 flex-1 sm:flex-none border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="min-w-0 flex-1 sm:flex-none border border-border bg-superficie text-foreground rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           >
             <option value="">Todos os status</option>
             <option value="planejamento">Planejamento</option>
@@ -122,7 +122,7 @@ export default function ProjetosPage() {
           <select
             value={filtroPrioridade}
             onChange={(e) => setFiltroPrioridade(e.target.value)}
-            className="min-w-0 flex-1 sm:flex-none border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="min-w-0 flex-1 sm:flex-none border border-border bg-superficie text-foreground rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           >
             <option value="">Todas as prioridades</option>
             <option value="baixa">Baixa</option>
@@ -137,7 +137,7 @@ export default function ProjetosPage() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-gray-100 rounded-xl h-36 animate-pulse" />
+            <div key={i} className="bg-muted rounded-xl h-36 animate-pulse" />
           ))}
         </div>
       ) : projetos.length === 0 ? (
@@ -160,8 +160,8 @@ export default function ProjetosPage() {
                 onDeletar={handleDeletar}
               />
               {confirmandoDeletar === projeto.id && (
-                <div className="absolute inset-0 bg-red-50 border border-red-300 rounded-xl flex items-center justify-center gap-3 text-sm">
-                  <span className="text-red-700 font-medium">Confirmar exclusão?</span>
+                <div className="absolute inset-0 bg-erro/10 border border-erro/30 rounded-xl flex items-center justify-center gap-3 text-sm">
+                  <span className="text-erro font-medium">Confirmar exclusão?</span>
                   <button
                     onClick={() => handleDeletar(projeto.id)}
                     className="bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700"
@@ -170,7 +170,7 @@ export default function ProjetosPage() {
                   </button>
                   <button
                     onClick={() => setConfirmandoDeletar(null)}
-                    className="bg-gray-200 text-gray-700 px-3 py-1 rounded-lg hover:bg-gray-300"
+                    className="bg-muted text-foreground-suave px-3 py-1 rounded-lg hover:bg-superficie-forte"
                   >
                     Cancelar
                   </button>

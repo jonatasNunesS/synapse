@@ -106,7 +106,7 @@ export default function RecorrenciasPage() {
         </div>
       ) : recorrencias.length === 0 ? (
         <div className="rounded-xl border border-border bg-white/[0.03] p-10 text-center">
-          <Repeat className="h-8 w-8 text-zinc-600 mx-auto mb-2" />
+          <Repeat className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
           <p className="text-sm text-muted-foreground">
             Nenhuma recorrência ainda. Crie a primeira (ex.: salário, aluguel).
           </p>

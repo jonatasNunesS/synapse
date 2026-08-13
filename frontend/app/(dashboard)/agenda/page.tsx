@@ -126,7 +126,7 @@ export default function AgendaPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <CalendarDays className="h-6 w-6 text-primary" />
+            <CalendarDays className="h-6 w-6 text-brand-accent" />
             Agenda
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">

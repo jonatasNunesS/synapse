@@ -71,11 +71,11 @@ export function TarefaModal({ tarefa, onFechar, onEditar, onRecarregar }: Tarefa
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+      <div className="bg-card rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-start justify-between px-6 py-4 border-b gap-3">
           <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-semibold text-gray-900 leading-snug">
+            <h2 className="text-lg font-semibold text-foreground leading-snug">
               {tarefa.titulo}
             </h2>
             <div className="flex items-center gap-2 mt-1">
@@ -94,21 +94,21 @@ export function TarefaModal({ tarefa, onFechar, onEditar, onRecarregar }: Tarefa
                 {PRIORIDADE_LABELS[tarefa.prioridade]}
               </span>
               {tarefa.esta_atrasada && (
-                <span className="text-xs text-red-600 font-medium">⚠ Atrasada</span>
+                <span className="text-xs text-erro font-medium">⚠ Atrasada</span>
               )}
             </div>
           </div>
           <div className="flex gap-2 flex-shrink-0">
             <button
               onClick={onEditar}
-              className="text-gray-400 hover:text-brand-600 transition-colors p-1"
+              className="text-muted-foreground hover:text-brand-accent transition-colors p-1"
               title="Editar tarefa"
             >
               <Pencil size={16} />
             </button>
             <button
               onClick={onFechar}
-              className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+              className="text-muted-foreground hover:text-muted-foreground transition-colors p-1"
             >
               <X size={18} />
             </button>
@@ -120,10 +120,10 @@ export function TarefaModal({ tarefa, onFechar, onEditar, onRecarregar }: Tarefa
           {/* Descrição */}
           {tarefa.descricao && (
             <div>
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              <h3 className="text-xs font-semibold text-muted-suave uppercase tracking-wide mb-1">
                 Descrição
               </h3>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{tarefa.descricao}</p>
+              <p className="text-sm text-foreground-suave whitespace-pre-wrap">{tarefa.descricao}</p>
             </div>
           )}
 
@@ -131,28 +131,28 @@ export function TarefaModal({ tarefa, onFechar, onEditar, onRecarregar }: Tarefa
           <div className="grid grid-cols-2 gap-3 text-sm">
             {tarefa.responsavel_nome && (
               <div>
-                <span className="text-xs text-gray-500">Responsável</span>
-                <p className="font-medium text-gray-800">{tarefa.responsavel_nome}</p>
+                <span className="text-xs text-muted-suave">Responsável</span>
+                <p className="font-medium text-foreground">{tarefa.responsavel_nome}</p>
               </div>
             )}
             {tarefa.data_prazo && (
               <div>
-                <span className="text-xs text-gray-500">Prazo</span>
-                <p className={`font-medium ${tarefa.esta_atrasada ? "text-red-600" : "text-gray-800"}`}>
+                <span className="text-xs text-muted-suave">Prazo</span>
+                <p className={`font-medium ${tarefa.esta_atrasada ? "text-erro" : "text-foreground"}`}>
                   {new Date(tarefa.data_prazo).toLocaleDateString("pt-BR")}
                 </p>
               </div>
             )}
             {tarefa.estimativa_horas && (
               <div>
-                <span className="text-xs text-gray-500">Estimativa</span>
-                <p className="font-medium text-gray-800">{tarefa.estimativa_horas}h</p>
+                <span className="text-xs text-muted-suave">Estimativa</span>
+                <p className="font-medium text-foreground">{tarefa.estimativa_horas}h</p>
               </div>
             )}
             {tarefa.horas_gastas && tarefa.horas_gastas !== "0.00" && (
               <div>
-                <span className="text-xs text-gray-500">Horas Gastas</span>
-                <p className="font-medium text-gray-800">{tarefa.horas_gastas}h</p>
+                <span className="text-xs text-muted-suave">Horas Gastas</span>
+                <p className="font-medium text-foreground">{tarefa.horas_gastas}h</p>
               </div>
             )}
           </div>
@@ -160,17 +160,17 @@ export function TarefaModal({ tarefa, onFechar, onEditar, onRecarregar }: Tarefa
           {/* Checklist */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <h3 className="text-xs font-semibold text-muted-suave uppercase tracking-wide">
                 Checklist
               </h3>
               {checklist.length > 0 && (
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-muted-suave">
                   {concluidos}/{checklist.length} ({progressoChecklist}%)
                 </span>
               )}
             </div>
             {checklist.length > 0 && (
-              <div className="w-full bg-gray-100 rounded-full h-1 mb-3">
+              <div className="w-full bg-muted rounded-full h-1 mb-3">
                 <div
                   className="h-1 rounded-full bg-green-500 transition-all"
                   style={{ width: `${progressoChecklist}%` }}
@@ -182,24 +182,24 @@ export function TarefaModal({ tarefa, onFechar, onEditar, onRecarregar }: Tarefa
                 <div key={item.id} className="flex items-center gap-2 group">
                   <button
                     onClick={() => handleToggleItem(item.id)}
-                    className="text-gray-400 hover:text-green-600 transition-colors flex-shrink-0"
+                    className="text-muted-foreground hover:text-sucesso transition-colors flex-shrink-0"
                   >
                     {item.concluido ? (
-                      <CheckSquare size={16} className="text-green-500" />
+                      <CheckSquare size={16} className="text-sucesso" />
                     ) : (
                       <Square size={16} />
                     )}
                   </button>
                   <span
                     className={`text-sm flex-1 ${
-                      item.concluido ? "line-through text-gray-400" : "text-gray-700"
+                      item.concluido ? "line-through text-muted-foreground" : "text-foreground-suave"
                     }`}
                   >
                     {item.texto}
                   </span>
                   <button
                     onClick={() => handleDeletarItem(item.id)}
-                    className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                    className="text-foreground-suave hover:text-erro transition-colors opacity-0 group-hover:opacity-100"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -214,11 +214,11 @@ export function TarefaModal({ tarefa, onFechar, onEditar, onRecarregar }: Tarefa
                 onChange={(e) => setNovoItem(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAdicionarItem()}
                 placeholder="Adicionar item..."
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="flex-1 border border-border bg-superficie text-foreground rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
               <button
                 onClick={handleAdicionarItem}
-                className="text-sm text-brand-600 font-medium hover:text-brand-700 px-2"
+                className="text-sm text-brand-accent font-medium hover:text-brand-accent px-2"
               >
                 Adicionar
               </button>
@@ -227,21 +227,21 @@ export function TarefaModal({ tarefa, onFechar, onEditar, onRecarregar }: Tarefa
 
           {/* Comentários */}
           <div>
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            <h3 className="text-xs font-semibold text-muted-suave uppercase tracking-wide mb-3">
               Comentários ({comentarios.length})
             </h3>
             <div className="space-y-3 mb-3">
               {comentarios.map((com) => (
                 <div key={com.id} className="flex gap-3 group">
-                  <div className="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-xs font-bold flex-shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-brand-500/15 flex items-center justify-center text-brand-accent text-xs font-bold flex-shrink-0">
                     {com.autor_nome.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-gray-700">
+                      <span className="text-xs font-semibold text-foreground-suave">
                         {com.autor_nome}
                       </span>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-muted-foreground">
                         {new Date(com.criado_em).toLocaleString("pt-BR", {
                           day: "2-digit",
                           month: "short",
@@ -250,16 +250,16 @@ export function TarefaModal({ tarefa, onFechar, onEditar, onRecarregar }: Tarefa
                         })}
                       </span>
                       {com.editado && (
-                        <span className="text-xs text-gray-400 italic">(editado)</span>
+                        <span className="text-xs text-muted-foreground italic">(editado)</span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-700 mt-0.5 whitespace-pre-wrap">
+                    <p className="text-sm text-foreground-suave mt-0.5 whitespace-pre-wrap">
                       {com.texto}
                     </p>
                   </div>
                   <button
                     onClick={() => deletarComentario(com.id)}
-                    className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0"
+                    className="text-foreground-suave hover:text-erro transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -275,7 +275,7 @@ export function TarefaModal({ tarefa, onFechar, onEditar, onRecarregar }: Tarefa
                 onChange={(e) => setNovoComentario(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleEnviarComentario()}
                 placeholder="Escreva um comentário..."
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="flex-1 border border-border bg-superficie text-foreground rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
               <button
                 onClick={handleEnviarComentario}

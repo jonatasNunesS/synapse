@@ -82,7 +82,7 @@ export default function AIHubPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
+            <Sparkles className="h-6 w-6 text-brand-accent" />
             AI Hub
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -116,14 +116,14 @@ export default function AIHubPage() {
                 <div
                   className={`h-10 w-10 rounded-lg flex items-center justify-center ${
                     area.destaque
-                      ? "bg-primary/15 text-primary"
+                      ? "bg-primary/15 text-brand-accent"
                       : "bg-muted text-muted-foreground"
                   }`}
                 >
                   <Icon className="h-5 w-5" />
                 </div>
                 {area.badge && (
-                  <span className="text-[0.625rem] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-primary/15 text-primary">
+                  <span className="text-[0.625rem] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-primary/15 text-brand-accent">
                     {area.badge}
                   </span>
                 )}
@@ -138,7 +138,7 @@ export default function AIHubPage() {
               </h2>
               <p className="text-sm text-muted-foreground">{area.descricao}</p>
               {!area.emBreve && (
-                <div className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary">
+                <div className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-accent">
                   Abrir <ArrowRight className="h-3.5 w-3.5" />
                 </div>
               )}

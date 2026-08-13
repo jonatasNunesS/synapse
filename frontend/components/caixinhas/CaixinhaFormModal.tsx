@@ -79,20 +79,20 @@ export function CaixinhaFormModal({
   };
 
   const inputClass =
-    "w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors";
+    "w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-sm bg-[#0f1117] border border-white/10 rounded-2xl shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
-          <h2 className="text-lg font-semibold text-white">
+      <div className="relative w-full max-w-sm bg-card border border-border rounded-2xl shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="text-lg font-semibold text-foreground">
             {modoEdicao ? "Editar caixinha" : "Nova caixinha"}
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-superficie-forte transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -100,7 +100,7 @@ export function CaixinhaFormModal({
 
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">
               Nome *
             </label>
             <input
@@ -113,7 +113,7 @@ export function CaixinhaFormModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">
               Cor
             </label>
             <div className="flex flex-wrap gap-2">
@@ -133,7 +133,7 @@ export function CaixinhaFormModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">
               Ícone (opcional)
             </label>
             <div className="flex items-center gap-2">
@@ -150,7 +150,7 @@ export function CaixinhaFormModal({
                     key={e}
                     type="button"
                     onClick={() => setIcone(e)}
-                    className="w-7 h-7 rounded hover:bg-white/10 transition-colors"
+                    className="w-7 h-7 rounded hover:bg-superficie-forte transition-colors"
                   >
                     {e}
                   </button>
@@ -160,7 +160,7 @@ export function CaixinhaFormModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">
               Meta (opcional, R$)
             </label>
             <input
@@ -170,24 +170,24 @@ export function CaixinhaFormModal({
               inputMode="decimal"
               className={inputClass}
             />
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-muted-suave">
               Com meta definida, o card mostra a barra de progresso.
             </p>
           </div>
 
           {erro && (
-            <p className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-400">
+            <p className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-erro">
               {erro}
             </p>
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-2 px-6 py-4 border-t border-white/10">
+        <div className="flex items-center justify-between gap-2 px-6 py-4 border-t border-border">
           {modoEdicao && onDelete ? (
             <button
               onClick={excluir}
               disabled={excluindo || salvando}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-erro border border-red-500/20 hover:bg-red-500/10 transition-colors disabled:opacity-50"
               title="Excluir caixinha (precisa estar com saldo zerado)"
             >
               {excluindo ? (
@@ -204,7 +204,7 @@ export function CaixinhaFormModal({
             <button
               onClick={onClose}
               disabled={salvando || excluindo}
-              className="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 transition-colors disabled:opacity-50"
+              className="px-4 py-2.5 rounded-lg text-sm font-medium text-foreground-suave hover:bg-superficie transition-colors disabled:opacity-50"
             >
               Cancelar
             </button>

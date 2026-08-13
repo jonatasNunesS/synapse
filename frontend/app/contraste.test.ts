@@ -160,7 +160,17 @@ const PARES_DE_TEXTO: Array<[string, string, string]> = [
   ["texto secundário sobre o fundo", "--muted-foreground", "--background"],
   ["texto secundário sobre o card", "--muted-foreground", "--card"],
   ["texto terciário sobre o card", "--muted-suave", "--card"],
+  // As superfícies elevadas (o antigo bg-white/5 e bg-white/10) são mais
+  // claras que o card no escuro e mais escuras no claro: é nelas que o texto
+  // secundário chega mais perto do limite.
+  ["texto secundário sobre a superfície", "--muted-foreground", "--superficie"],
+  ["texto secundário sobre a superfície forte", "--muted-foreground", "--superficie-forte"],
+  ["texto terciário sobre a superfície", "--muted-suave", "--superficie"],
+  ["texto terciário sobre a superfície forte", "--muted-suave", "--superficie-forte"],
+  ["texto sobre a superfície forte", "--foreground", "--superficie-forte"],
+  ["texto suave sobre a superfície forte", "--foreground-suave", "--superficie-forte"],
   ["legenda do botão sobre o primary", "--primary-foreground", "--primary"],
+  ["legenda do botão destrutivo", "--destructive-foreground", "--destructive"],
   ["destaque da marca sobre o card", "--brand-accent", "--card"],
   ["sucesso sobre o card", "--sucesso", "--card"],
   ["erro sobre o card", "--erro", "--card"],

@@ -61,14 +61,14 @@ function KanbanColuna({
       {/* Cabeçalho */}
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-gray-700 text-sm">{col.label}</span>
-          <span className="bg-gray-200 text-gray-600 text-xs font-medium px-2 py-0.5 rounded-full">
+          <span className="font-semibold text-foreground-suave text-sm">{col.label}</span>
+          <span className="bg-muted text-muted-foreground text-xs font-medium px-2 py-0.5 rounded-full">
             {total}
           </span>
         </div>
         <button
           onClick={() => onNovaTarefa(col.key)}
-          className="text-gray-400 hover:text-brand-600 transition-colors text-lg leading-none"
+          className="text-muted-foreground hover:text-brand-accent transition-colors text-lg leading-none"
           title={`Nova tarefa em ${col.label}`}
         >
           +
@@ -79,7 +79,7 @@ function KanbanColuna({
       <div
         ref={setNodeRef}
         className={`flex flex-col gap-2 px-3 pb-3 flex-1 min-h-[100px] rounded-b-xl transition-colors ${
-          isOver ? "bg-brand-50" : "bg-gray-50"
+          isOver ? "bg-brand-500/10" : "bg-superficie"
         }`}
       >
         {tarefas.map((tarefa) => (
@@ -92,7 +92,7 @@ function KanbanColuna({
         ))}
 
         {tarefas.length === 0 && (
-          <div className="flex-1 flex items-center justify-center text-gray-400 text-xs py-8">
+          <div className="flex-1 flex items-center justify-center text-muted-foreground text-xs py-8">
             Nenhuma tarefa
           </div>
         )}
@@ -128,14 +128,14 @@ function KanbanCard({
       {...listeners}
       {...attributes}
       onClick={onClick}
-      className={`bg-white rounded-lg border border-gray-200 p-3 cursor-grab active:cursor-grabbing hover:shadow-sm transition-all select-none ${
+      className={`bg-card rounded-lg border border-border p-3 cursor-grab active:cursor-grabbing hover:shadow-sm transition-all select-none ${
         isDragging ? "opacity-40 scale-95" : ""
       }`}
     >
       {/* Grip + título */}
       <div className="flex items-start gap-2">
-        <GripVertical size={14} className="text-gray-300 mt-0.5 flex-shrink-0" />
-        <p className="text-sm font-medium text-gray-800 leading-snug line-clamp-2 flex-1">
+        <GripVertical size={14} className="text-foreground-suave mt-0.5 flex-shrink-0" />
+        <p className="text-sm font-medium text-foreground leading-snug line-clamp-2 flex-1">
           {tarefa.titulo}
         </p>
       </div>
@@ -152,12 +152,12 @@ function KanbanCard({
 
         <div className="flex items-center gap-2">
           {tarefa.esta_atrasada && (
-            <AlertCircle size={12} className="text-red-500" aria-label="Tarefa atrasada" />
+            <AlertCircle size={12} className="text-erro" aria-label="Tarefa atrasada" />
           )}
           {tarefa.data_prazo && (
             <span
               className={`flex items-center gap-0.5 text-xs ${
-                tarefa.esta_atrasada ? "text-red-500" : "text-gray-400"
+                tarefa.esta_atrasada ? "text-erro" : "text-muted-foreground"
               }`}
             >
               <Calendar size={10} />
@@ -169,7 +169,7 @@ function KanbanCard({
           )}
           {tarefa.responsavel_nome && (
             <div
-              className="w-5 h-5 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-xs font-bold"
+              className="w-5 h-5 rounded-full bg-brand-500/15 flex items-center justify-center text-brand-accent text-xs font-bold"
               title={tarefa.responsavel_nome}
             >
               {tarefa.responsavel_nome.charAt(0).toUpperCase()}

@@ -173,7 +173,7 @@ export function MetaForm({ meta, onSalvar, onFechar }: MetaFormProps) {
             />
           </div>
 
-          {erro && <p className="text-sm text-destructive">{erro}</p>}
+          {erro && <p className="text-sm text-erro">{erro}</p>}
 
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={onFechar}>

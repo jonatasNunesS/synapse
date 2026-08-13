@@ -224,7 +224,7 @@ export function CategoriaFinanceiroModal({ onClose }: CategoriaFinanceiroModalPr
                 </div>
               ) : categoriasFiltradas.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 text-center">
-                  <Tag className="h-8 w-8 text-slate-600 mb-2" />
+                  <Tag className="h-8 w-8 text-muted-foreground mb-2" />
                   <p className="text-sm text-muted-suave">Nenhuma categoria encontrada.</p>
                 </div>
               ) : (

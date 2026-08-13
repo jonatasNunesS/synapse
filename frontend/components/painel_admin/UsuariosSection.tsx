@@ -78,15 +78,15 @@ export function UsuariosSection({ empresaId, usuarios, onMutate }: Props) {
   };
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
-      <h2 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-        <Users className="h-4 w-4 text-amber-400" />
+    <div className="rounded-xl border border-border bg-card/50 p-5">
+      <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+        <Users className="h-4 w-4 text-alerta" />
         Usuários ({usuarios.length})
       </h2>
 
       <div className="space-y-2">
         {usuarios.length === 0 && (
-          <p className="text-sm text-slate-500">Sem usuários.</p>
+          <p className="text-sm text-muted-suave">Sem usuários.</p>
         )}
 
         {usuarios.map((u) => {
@@ -95,38 +95,38 @@ export function UsuariosSection({ empresaId, usuarios, onMutate }: Props) {
           return (
             <div
               key={u.id}
-              className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2.5 px-3 rounded-lg bg-slate-800/40 border border-slate-800"
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2.5 px-3 rounded-lg bg-secondary/40 border border-border"
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm text-slate-100 font-medium truncate">{u.nome}</span>
+                  <span className="text-sm text-foreground font-medium truncate">{u.nome}</span>
                   {u.is_staff_synapse && (
-                    <span className="inline-flex items-center gap-1 text-[0.625rem] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300">
+                    <span className="inline-flex items-center gap-1 text-[0.625rem] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/20 text-alerta">
                       <ShieldCheck className="h-3 w-3" />
                       Staff Synapse
                     </span>
                   )}
                   {inativo && (
-                    <span className="text-[0.625rem] font-medium px-1.5 py-0.5 rounded-full bg-slate-600/40 text-slate-300">
+                    <span className="text-[0.625rem] font-medium px-1.5 py-0.5 rounded-full bg-slate-600/40 text-foreground-suave">
                       Inativo
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-slate-500 truncate">
+                <p className="text-xs text-muted-suave truncate">
                   {u.email} · último acesso: {formatData(u.ultimo_acesso)}
                 </p>
               </div>
 
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 {u.is_staff_synapse ? (
-                  <span className="text-xs text-slate-500 italic">ações bloqueadas</span>
+                  <span className="text-xs text-muted-suave italic">ações bloqueadas</span>
                 ) : (
                   <>
                     <select
                       value={u.perfil}
                       disabled={ocupado}
                       onChange={(e) => mudarPerfil(u, e.target.value)}
-                      className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-50"
+                      className="rounded-lg border border-border bg-secondary px-2 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-50"
                     >
                       {PERFIS.map((p) => (
                         <option key={p.value} value={p.value}>
@@ -139,7 +139,7 @@ export function UsuariosSection({ empresaId, usuarios, onMutate }: Props) {
                       onClick={() => redefinir(u)}
                       disabled={ocupado}
                       title="Redefinir senha"
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-amber-300 hover:bg-slate-700/50 transition-colors disabled:opacity-50"
+                      className="p-1.5 rounded-lg text-muted-foreground hover:text-alerta hover:bg-slate-700/50 transition-colors disabled:opacity-50"
                     >
                       {ocupado ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
                     </button>
@@ -148,12 +148,12 @@ export function UsuariosSection({ empresaId, usuarios, onMutate }: Props) {
                       onClick={() => alternarAtivo(u)}
                       disabled={ocupado}
                       title={u.is_active ? "Desativar usuário" : "Reativar usuário"}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-colors disabled:opacity-50"
+                      className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-slate-700/50 transition-colors disabled:opacity-50"
                     >
                       {u.is_active ? (
                         <UserX className="h-3.5 w-3.5" />
                       ) : (
-                        <UserCheck className="h-3.5 w-3.5 text-emerald-400" />
+                        <UserCheck className="h-3.5 w-3.5 text-sucesso" />
                       )}
                     </button>
                   </>
@@ -200,27 +200,27 @@ function SenhaTemporariaModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-sm rounded-xl border border-slate-700 bg-slate-900 shadow-xl">
+      <div className="w-full max-w-sm rounded-xl border border-border bg-card shadow-xl">
         <div className="px-5 py-4">
-          <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-            <KeyRound className="h-4 w-4 text-amber-400" />
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <KeyRound className="h-4 w-4 text-alerta" />
             Senha temporária de {nome}
           </h3>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Copie e envie ao usuário agora — ela não será exibida novamente.
           </p>
-          <div className="mt-3 flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2">
-            <code className="flex-1 text-sm text-amber-300 font-mono break-all">{senha}</code>
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-border bg-secondary px-3 py-2">
+            <code className="flex-1 text-sm text-alerta font-mono break-all">{senha}</code>
             <button
               onClick={copiar}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-colors"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-slate-700/50 transition-colors"
               title="Copiar"
             >
-              {copiado ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+              {copiado ? <Check className="h-4 w-4 text-sucesso" /> : <Copy className="h-4 w-4" />}
             </button>
           </div>
         </div>
-        <div className="flex items-center justify-end px-5 py-3.5 border-t border-slate-800">
+        <div className="flex items-center justify-end px-5 py-3.5 border-t border-border">
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-lg bg-amber-500 text-slate-950 text-sm font-medium hover:bg-amber-400 transition-colors"

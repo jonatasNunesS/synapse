@@ -60,20 +60,20 @@ export function ExcluirEmpresaModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-md rounded-xl border border-red-500/40 bg-slate-900 shadow-xl">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800">
-          <h2 className="text-sm font-semibold text-red-300 flex items-center gap-2">
+      <div className="w-full max-w-md rounded-xl border border-red-500/40 bg-card shadow-xl">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
+          <h2 className="text-sm font-semibold text-erro flex items-center gap-2">
             <AlertTriangle className="h-4 w-4" />
             Excluir definitivamente
           </h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
             <X className="h-4 w-4" />
           </button>
         </div>
 
         <div className="p-5 space-y-4">
           <div className="rounded-lg border border-red-500/30 bg-red-950/30 p-3">
-            <p className="text-sm text-red-200">
+            <p className="text-sm text-erro">
               Isso apagará <span className="font-semibold">TODOS os dados</span> desta empresa
               (lançamentos, clientes, produtos, projetos, usuários…). Esta ação{" "}
               <span className="font-semibold">não pode ser desfeita</span>.
@@ -81,9 +81,9 @@ export function ExcluirEmpresaModal({
           </div>
 
           <div>
-            <label className="text-xs text-slate-400 block mb-1">
+            <label className="text-xs text-muted-foreground block mb-1">
               Digite o nome exato da empresa:{" "}
-              <span className="font-semibold text-slate-200">{empresaNome}</span>
+              <span className="font-semibold text-foreground-suave">{empresaNome}</span>
             </label>
             <input
               value={nomeConfirma}
@@ -94,7 +94,7 @@ export function ExcluirEmpresaModal({
           </div>
 
           <div>
-            <label className="text-xs text-slate-400 block mb-1">
+            <label className="text-xs text-muted-foreground block mb-1">
               Digite sua senha de staff para confirmar:
             </label>
             <input
@@ -107,10 +107,10 @@ export function ExcluirEmpresaModal({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-slate-800">
+        <div className="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-border">
           <button
             onClick={onClose}
-            className="px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800 transition-colors"
+            className="px-3 py-2 rounded-lg text-sm text-foreground-suave hover:bg-secondary transition-colors"
           >
             Cancelar
           </button>
@@ -129,4 +129,4 @@ export function ExcluirEmpresaModal({
 }
 
 const inputCls =
-  "w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-red-500";
+  "w-full rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-white placeholder:text-muted-suave focus:outline-none focus:ring-1 focus:ring-red-500";

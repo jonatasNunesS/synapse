@@ -13,8 +13,8 @@ export function CreditosBadge() {
 
   if (creditos.ilimitado) {
     return (
-      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card text-sm text-foreground">
-        <Sparkles className="h-4 w-4 text-primary" />
+      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card shadow-elevacao text-sm text-foreground">
+        <Sparkles className="h-4 w-4 text-brand-accent" />
         <span className="font-medium">Créditos ilimitados</span>
         <span className="text-muted-foreground">· plano {creditos.plano}</span>
       </div>
@@ -29,11 +29,11 @@ export function CreditosBadge() {
       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm ${
         zerado
           ? "border-destructive/40 bg-destructive/10 text-destructive"
-          : "border-border bg-card text-foreground"
+          : "border-border bg-card shadow-elevacao text-foreground"
       }`}
       title={`Plano ${creditos.plano}`}
     >
-      <Coins className={`h-4 w-4 ${zerado ? "text-destructive" : "text-primary"}`} />
+      <Coins className={`h-4 w-4 ${zerado ? "text-erro" : "text-brand-accent"}`} />
       {zerado ? (
         <span className="font-medium">Sem créditos hoje</span>
       ) : (

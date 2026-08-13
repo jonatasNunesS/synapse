@@ -91,19 +91,19 @@ export function MovimentacaoForm({
     entrada: {
       label: "Entrada",
       icon: ArrowDown,
-      cor: "text-emerald-400",
+      cor: "text-sucesso",
       bg: "bg-emerald-500/10 border-emerald-500/30",
     },
     saida: {
       label: "Saída",
       icon: ArrowUp,
-      cor: "text-red-400",
+      cor: "text-erro",
       bg: "bg-red-500/10 border-red-500/30",
     },
     ajuste: {
       label: "Ajuste",
       icon: RefreshCw,
-      cor: "text-blue-400",
+      cor: "text-info",
       bg: "bg-blue-500/10 border-blue-500/30",
     },
   };
@@ -114,16 +114,16 @@ export function MovimentacaoForm({
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onFechar}
       />
-      <div className="relative bg-[#0d1117] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
+      <div className="relative bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
+        <div className="flex items-center justify-between p-6 border-b border-border">
           <div>
-            <h2 className="text-lg font-semibold text-white">
+            <h2 className="text-lg font-semibold text-foreground">
               Registrar Movimentação
             </h2>
-            <p className="text-sm text-slate-400 mt-0.5">
+            <p className="text-sm text-muted-foreground mt-0.5">
               {produto.nome} · Estoque atual:{" "}
-              <span className="text-white font-medium">
+              <span className="text-foreground font-medium">
                 {Number(produto.estoque_atual).toLocaleString("pt-BR")}{" "}
                 {produto.unidade}
               </span>
@@ -131,7 +131,7 @@ export function MovimentacaoForm({
           </div>
           <button
             onClick={onFechar}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-superficie-forte transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -140,15 +140,15 @@ export function MovimentacaoForm({
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-5">
           {erro && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-erro">
               {erro}
             </div>
           )}
 
           {/* Tipo */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Tipo de Movimentação <span className="text-red-400">*</span>
+            <label className="block text-sm font-medium text-foreground-suave mb-2">
+              Tipo de Movimentação <span className="text-erro">*</span>
             </label>
             <div className="grid grid-cols-3 gap-2">
               {(["entrada", "saida", "ajuste"] as const).map((t) => {
@@ -160,7 +160,7 @@ export function MovimentacaoForm({
                     className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border cursor-pointer transition-all ${
                       tipo === t
                         ? config.bg
-                        : "border-white/10 hover:border-white/20"
+                        : "border-border hover:border-border"
                     }`}
                   >
                     <input
@@ -170,11 +170,11 @@ export function MovimentacaoForm({
                       className="sr-only"
                     />
                     <Icon
-                      className={`h-5 w-5 ${tipo === t ? config.cor : "text-slate-500"}`}
+                      className={`h-5 w-5 ${tipo === t ? config.cor : "text-muted-suave"}`}
                     />
                     <span
                       className={`text-xs font-medium ${
-                        tipo === t ? "text-white" : "text-slate-400"
+                        tipo === t ? "text-foreground" : "text-muted-foreground"
                       }`}
                     >
                       {config.label}
@@ -187,8 +187,8 @@ export function MovimentacaoForm({
 
           {/* Quantidade */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
-              Quantidade <span className="text-red-400">*</span>
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">
+              Quantidade <span className="text-erro">*</span>
             </label>
             <div className="relative">
               <input
@@ -197,14 +197,14 @@ export function MovimentacaoForm({
                 step="0.001"
                 min="0.001"
                 placeholder="0"
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm pr-16"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm pr-16"
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500">
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-suave">
                 {produto.unidade}
               </span>
             </div>
             {errors.quantidade && (
-              <p className="mt-1 text-xs text-red-400">
+              <p className="mt-1 text-xs text-erro">
                 {errors.quantidade.message}
               </p>
             )}
@@ -212,15 +212,15 @@ export function MovimentacaoForm({
 
           {/* Motivo */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
-              Motivo <span className="text-red-400">*</span>
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">
+              Motivo <span className="text-erro">*</span>
             </label>
             <select
               {...register("motivo")}
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-blue-500/50 transition-colors text-sm"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground focus:outline-none focus:border-blue-500/50 transition-colors text-sm"
             >
               {motivos.map((m) => (
-                <option key={m.value} value={m.value} className="bg-[#0d1117]">
+                <option key={m.value} value={m.value} className="bg-card">
                   {m.label}
                 </option>
               ))}
@@ -229,27 +229,27 @@ export function MovimentacaoForm({
 
           {/* Referência */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">
               Referência{" "}
-              <span className="text-slate-500 text-xs">(NF, pedido, etc.)</span>
+              <span className="text-muted-suave text-xs">(NF, pedido, etc.)</span>
             </label>
             <input
               {...register("referencia")}
               placeholder="Ex: NF-001, Pedido #123"
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm"
             />
           </div>
 
           {/* Observações */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">
               Observações
             </label>
             <textarea
               {...register("observacoes")}
               rows={2}
               placeholder="Observações adicionais..."
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm resize-none"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm resize-none"
             />
           </div>
 
@@ -258,7 +258,7 @@ export function MovimentacaoForm({
             <button
               type="button"
               onClick={onFechar}
-              className="flex-1 px-4 py-2.5 rounded-lg border border-white/10 text-slate-300 hover:text-white hover:bg-white/5 transition-colors text-sm font-medium"
+              className="flex-1 px-4 py-2.5 rounded-lg border border-border text-foreground-suave hover:text-foreground hover:bg-superficie transition-colors text-sm font-medium"
             >
               Cancelar
             </button>

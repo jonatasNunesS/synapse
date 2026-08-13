@@ -5,7 +5,7 @@ import { Users, Phone, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FollowUpItem } from "@/types/dashboard";
-import { STATUS_FUNIL_LABELS, STATUS_FUNIL_CORES } from "@/types/dashboard";
+import { STATUS_FUNIL_CLASSES, STATUS_FUNIL_LABELS } from "@/types/dashboard";
 
 interface FollowUpsWidgetProps {
   followups: FollowUpItem[];
@@ -63,8 +63,8 @@ export function FollowUpsWidget({ followups, isLoading }: FollowUpsWidgetProps) 
                 className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted transition-colors group"
               >
                 {/* Avatar */}
-                <div className="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-xs font-semibold text-brand-700">
+                <div className="h-8 w-8 rounded-full bg-brand-500/15 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-semibold text-brand-accent">
                     {f.nome.charAt(0).toUpperCase()}
                   </span>
                 </div>
@@ -76,11 +76,9 @@ export function FollowUpsWidget({ followups, isLoading }: FollowUpsWidgetProps) 
                   </p>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <span
-                      className="text-xs px-1.5 py-0.5 rounded font-medium"
-                      style={{
-                        backgroundColor: `${STATUS_FUNIL_CORES[f.status_funil]}20`,
-                        color: STATUS_FUNIL_CORES[f.status_funil],
-                      }}
+                      className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                        STATUS_FUNIL_CLASSES[f.status_funil] ?? "bg-muted text-muted-foreground"
+                      }`}
                     >
                       {STATUS_FUNIL_LABELS[f.status_funil] ?? f.status_funil}
                     </span>
@@ -89,7 +87,7 @@ export function FollowUpsWidget({ followups, isLoading }: FollowUpsWidgetProps) 
 
                 {/* Data */}
                 <div className="text-right flex-shrink-0">
-                  <p className={`text-sm font-medium ${f.dias_restantes === 0 ? "text-red-500" : f.dias_restantes === 1 ? "text-orange-500" : "text-foreground"}`}>
+                  <p className={`text-sm font-medium ${f.dias_restantes === 0 ? "text-erro" : f.dias_restantes === 1 ? "text-alerta" : "text-foreground"}`}>
                     {formatDate(f.proximo_followup)}
                   </p>
                   <p className="text-xs text-muted-foreground">

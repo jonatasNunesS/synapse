@@ -49,16 +49,16 @@ export function AvaliacaoModal({ fornecedor, onSuccess, onClose }: AvaliacaoModa
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <div className="flex items-center gap-2">
-            <Star className="h-5 w-5 text-amber-400" />
-            <h2 className="text-base font-semibold text-white">Avaliar Fornecedor</h2>
+            <Star className="h-5 w-5 text-alerta" />
+            <h2 className="text-base font-semibold text-foreground">Avaliar Fornecedor</h2>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-white/10 hover:text-white"
+            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-superficie-forte hover:text-foreground"
           >
             <X className="h-5 w-5" />
           </button>
@@ -66,49 +66,49 @@ export function AvaliacaoModal({ fornecedor, onSuccess, onClose }: AvaliacaoModa
 
         {/* Body */}
         <div className="p-6">
-          <p className="mb-5 text-sm text-zinc-400">
-            Avaliando: <span className="font-medium text-white">{fornecedor.nome}</span>
+          <p className="mb-5 text-sm text-muted-foreground">
+            Avaliando: <span className="font-medium text-foreground">{fornecedor.nome}</span>
           </p>
 
           {error && (
-            <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+            <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-erro">
               {error}
             </div>
           )}
 
           <div className="space-y-5">
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+            <div className="rounded-xl border border-border bg-superficie p-4">
               <AvaliacaoStars
                 value={qualidade || null}
                 onChange={setQualidade}
                 size="lg"
                 label="Qualidade dos Produtos/Serviços"
               />
-              <p className="mt-1 text-xs text-zinc-600">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Avalie a qualidade do que foi entregue
               </p>
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+            <div className="rounded-xl border border-border bg-superficie p-4">
               <AvaliacaoStars
                 value={prazo || null}
                 onChange={setPrazo}
                 size="lg"
                 label="Cumprimento de Prazos"
               />
-              <p className="mt-1 text-xs text-zinc-600">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Avalie a pontualidade nas entregas
               </p>
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+            <div className="rounded-xl border border-border bg-superficie p-4">
               <AvaliacaoStars
                 value={preco || null}
                 onChange={setPreco}
                 size="lg"
                 label="Competitividade de Preço"
               />
-              <p className="mt-1 text-xs text-zinc-600">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Avalie o custo-benefício oferecido
               </p>
             </div>
@@ -117,19 +117,19 @@ export function AvaliacaoModal({ fornecedor, onSuccess, onClose }: AvaliacaoModa
           {/* Média preview */}
           {media && (
             <div className="mt-4 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3">
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm text-muted-foreground">
                 Média geral:{" "}
-                <span className="font-bold text-amber-400">{media} / 5.0</span>
+                <span className="font-bold text-alerta">{media} / 5.0</span>
               </p>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 border-t border-white/10 px-6 py-4">
+        <div className="flex justify-end gap-3 border-t border-border px-6 py-4">
           <button
             onClick={onClose}
-            className="rounded-lg border border-white/10 px-4 py-2 text-sm text-zinc-400 transition-colors hover:bg-white/5 hover:text-white"
+            className="rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-superficie hover:text-foreground"
           >
             Cancelar
           </button>

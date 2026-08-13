@@ -36,7 +36,7 @@ export function CaixinhaCard({
 
   return (
     <div
-      className="rounded-xl border border-white/10 bg-white/[0.03] p-5 hover:border-white/20 transition-colors flex flex-col gap-3"
+      className="rounded-xl border border-border bg-white/[0.03] p-5 hover:border-border transition-colors flex flex-col gap-3"
       style={{ borderTopColor: caixinha.cor, borderTopWidth: 3 }}
     >
       {/* Corpo clicável: abre detalhe/histórico */}
@@ -52,19 +52,19 @@ export function CaixinhaCard({
           >
             {caixinha.icone || <PiggyBank className="w-4 h-4" style={{ color: caixinha.cor }} />}
           </span>
-          <h3 className="text-sm font-semibold text-white truncate">
+          <h3 className="text-sm font-semibold text-foreground truncate">
             {caixinha.nome}
           </h3>
         </div>
 
-        <p className="text-2xl font-bold text-white tabular-nums">
+        <p className="text-2xl font-bold text-foreground tabular-nums">
           {moedaCaixinha(caixinha.saldo)}
         </p>
 
         {temMeta && (
           <div className="space-y-1.5">
             <div
-              className="h-2 rounded-full bg-white/10 overflow-hidden"
+              className="h-2 rounded-full bg-superficie-forte overflow-hidden"
               role="progressbar"
               aria-valuenow={caixinha.progresso ?? 0}
               aria-valuemin={0}
@@ -79,15 +79,15 @@ export function CaixinhaCard({
               />
             </div>
             <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-400">
+              <span className="text-muted-foreground">
                 Meta: {moedaCaixinha(caixinha.meta!)}
               </span>
               {caixinha.meta_atingida ? (
-                <span className="text-emerald-400 font-medium">
+                <span className="text-sucesso font-medium">
                   Meta atingida! 🎉
                 </span>
               ) : (
-                <span className="text-slate-400 tabular-nums">
+                <span className="text-muted-foreground tabular-nums">
                   {caixinha.progresso}%
                 </span>
               )}
@@ -100,7 +100,7 @@ export function CaixinhaCard({
       <div className="grid grid-cols-2 gap-2 pt-1">
         <button
           onClick={() => onDepositar(caixinha)}
-          className="inline-flex items-center justify-center gap-1.5 py-2 rounded-lg bg-emerald-600/15 border border-emerald-500/25 text-xs font-medium text-emerald-400 hover:bg-emerald-600/25 transition-colors"
+          className="inline-flex items-center justify-center gap-1.5 py-2 rounded-lg bg-emerald-600/15 border border-emerald-500/25 text-xs font-medium text-sucesso hover:bg-emerald-600/25 transition-colors"
         >
           <ArrowDownToLine className="w-3.5 h-3.5" />
           Depositar
@@ -108,7 +108,7 @@ export function CaixinhaCard({
         <button
           onClick={() => onRetirar(caixinha)}
           disabled={saldoZero}
-          className="inline-flex items-center justify-center gap-1.5 py-2 rounded-lg bg-white/5 border border-white/10 text-xs font-medium text-slate-300 hover:bg-white/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="inline-flex items-center justify-center gap-1.5 py-2 rounded-lg bg-superficie border border-border text-xs font-medium text-foreground-suave hover:bg-superficie-forte transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           title={saldoZero ? "A caixinha está vazia" : "Retirar da caixinha"}
         >
           <ArrowUpFromLine className="w-3.5 h-3.5" />

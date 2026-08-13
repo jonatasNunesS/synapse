@@ -106,7 +106,7 @@ export function ProjetoForm({ aberto, projeto, onFechar, onSalvar }: ProjetoForm
           {/* Nome */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">
-              Nome <span className="text-destructive">*</span>
+              Nome <span className="text-erro">*</span>
             </label>
             <input
               type="text"

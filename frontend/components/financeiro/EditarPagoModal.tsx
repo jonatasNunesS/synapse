@@ -119,7 +119,7 @@ export function EditarPagoModal({
                   {i + 1}. {nome}
                 </span>
                 {i < ETAPAS.length - 1 && (
-                  <ChevronRight className="w-3 h-3 text-slate-600" />
+                  <ChevronRight className="w-3 h-3 text-muted-foreground" />
                 )}
               </div>
             ))}

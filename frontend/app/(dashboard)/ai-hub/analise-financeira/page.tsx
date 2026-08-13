@@ -128,7 +128,7 @@ export default function AnaliseFinanceiraPage() {
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-              <LineChart className="h-6 w-6 text-primary" />
+              <LineChart className="h-6 w-6 text-brand-accent" />
               Análise Financeira
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
@@ -227,7 +227,7 @@ export default function AnaliseFinanceiraPage() {
           <p className="text-sm text-muted-foreground mb-4">{mensagem}</p>
           <Link
             href="/financeiro"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-accent hover:underline"
           >
             Ir para o Financeiro
           </Link>
@@ -277,7 +277,7 @@ export default function AnaliseFinanceiraPage() {
           {/* Diagnóstico */}
           <div className="rounded-xl border border-border bg-card shadow-elevacao p-5">
             <h2 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
-              <FileText className="h-4 w-4 text-primary" />
+              <FileText className="h-4 w-4 text-brand-accent" />
               Diagnóstico comparativo
             </h2>
             <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
@@ -289,13 +289,13 @@ export default function AnaliseFinanceiraPage() {
           {analise.recomendacoes.length > 0 && (
             <div className="rounded-xl border border-primary/30 bg-primary/5 p-5">
               <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                <Lightbulb className="h-4 w-4 text-primary" />
+                <Lightbulb className="h-4 w-4 text-brand-accent" />
                 Recomendações
               </h2>
               <ul className="space-y-2.5">
                 {analise.recomendacoes.map((rec, i) => (
                   <li key={i} className="flex items-start gap-2.5 text-sm text-foreground/90">
-                    <span className="flex-shrink-0 h-5 w-5 rounded-full bg-primary/15 text-primary text-xs font-bold flex items-center justify-center mt-0.5">
+                    <span className="flex-shrink-0 h-5 w-5 rounded-full bg-primary/15 text-brand-accent text-xs font-bold flex items-center justify-center mt-0.5">
                       {i + 1}
                     </span>
                     <span className="leading-relaxed">{rec}</span>

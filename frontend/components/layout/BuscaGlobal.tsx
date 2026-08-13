@@ -127,13 +127,13 @@ export function BuscaGlobal() {
     <div ref={containerRef} className="relative flex-1 max-w-xl">
       {/* Input */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-600 pointer-events-none" />
+        <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
         {loading ? (
-          <Loader2 className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-600 animate-spin" />
+          <Loader2 className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground animate-spin" />
         ) : query.length > 0 ? (
           <button
             onClick={limpar}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-muted-foreground transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground transition-colors"
             aria-label="Limpar busca"
           >
             <X className="h-3.5 w-3.5" />
@@ -146,7 +146,7 @@ export function BuscaGlobal() {
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => resultados && setAberto(true)}
           placeholder="Buscar clientes, produtos, projetos..."
-          className="h-9 w-full rounded-lg border border-border bg-card/60 pl-9 pr-8 text-sm text-foreground-suave placeholder:text-slate-600
+          className="h-9 w-full rounded-lg border border-border bg-card/60 pl-9 pr-8 text-sm text-foreground-suave placeholder:text-muted-foreground
             focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500/40 transition-colors"
         />
       </div>
@@ -167,7 +167,7 @@ export function BuscaGlobal() {
                   <div key={cat} className="mb-1">
                     {/* Cabeçalho da categoria */}
                     <div className="flex items-center gap-1.5 px-3 py-1.5">
-                      <span className="text-slate-600">{ICONES[cat]}</span>
+                      <span className="text-muted-foreground">{ICONES[cat]}</span>
                       <span className="text-[0.6875rem] font-semibold text-muted-suave uppercase tracking-wider">
                         {LABELS[cat]}
                       </span>
@@ -195,7 +195,7 @@ export function BuscaGlobal() {
                               {label}
                             </span>
                             {sub && (
-                              <span className="block text-xs text-slate-600 truncate">
+                              <span className="block text-xs text-muted-foreground truncate">
                                 {sub}
                               </span>
                             )}

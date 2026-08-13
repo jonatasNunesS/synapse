@@ -114,7 +114,7 @@ function NotificacaoCard({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-destructive hover:text-destructive"
+              className="h-8 w-8 text-erro hover:text-erro"
               title="Excluir"
               onClick={() => onDeletar(notificacao.id)}
             >

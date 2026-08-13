@@ -29,8 +29,8 @@ export function ProdutoSelect({ value, onChange, disabled }: ProdutoSelectProps)
     return (
       <div className="flex items-center justify-between rounded-lg border border-brand-500/30 bg-brand-500/10 px-3 py-2.5">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-white">{value.nome}</p>
-          <p className="text-xs text-slate-400">
+          <p className="truncate text-sm font-medium text-foreground">{value.nome}</p>
+          <p className="text-xs text-muted-foreground">
             Estoque atual: {value.estoque_atual} {value.unidade}
           </p>
         </div>
@@ -38,7 +38,7 @@ export function ProdutoSelect({ value, onChange, disabled }: ProdutoSelectProps)
           <button
             type="button"
             onClick={() => onChange(null)}
-            className="ml-3 shrink-0 text-xs text-brand-300 hover:text-brand-200"
+            className="ml-3 shrink-0 text-xs text-brand-accent hover:text-brand-200"
           >
             Trocar
           </button>
@@ -50,38 +50,38 @@ export function ProdutoSelect({ value, onChange, disabled }: ProdutoSelectProps)
   return (
     <div>
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-suave" />
         <input
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
           placeholder="Buscar produto por nome ou SKU..."
           aria-label="Buscar produto"
-          className="w-full rounded-lg border border-white/10 bg-white/5 py-2 pl-9 pr-3 text-sm text-white placeholder-slate-500 outline-none focus:border-brand-500/50"
+          className="w-full rounded-lg border border-border bg-superficie py-2 pl-9 pr-3 text-sm text-foreground placeholder-slate-500 outline-none focus:border-brand-500/50"
         />
       </div>
 
-      <div className="mt-2 max-h-48 overflow-y-auto rounded-lg border border-white/10 bg-white/[0.02]">
+      <div className="mt-2 max-h-48 overflow-y-auto rounded-lg border border-border bg-white/[0.02]">
         {loading ? (
-          <div className="flex items-center justify-center gap-2 py-6 text-xs text-slate-500">
+          <div className="flex items-center justify-center gap-2 py-6 text-xs text-muted-suave">
             <Loader2 className="h-4 w-4 animate-spin" />
             Buscando...
           </div>
         ) : produtos.length === 0 ? (
-          <p className="py-6 text-center text-xs text-slate-500">
+          <p className="py-6 text-center text-xs text-muted-suave">
             Nenhum produto encontrado.
           </p>
         ) : (
-          <ul className="divide-y divide-white/5">
+          <ul className="divide-y divide-border">
             {produtos.map((p) => (
               <li key={p.id}>
                 <button
                   type="button"
                   onClick={() => onChange(p)}
-                  className="flex w-full items-center justify-between px-3 py-2 text-left transition-colors hover:bg-white/5"
+                  className="flex w-full items-center justify-between px-3 py-2 text-left transition-colors hover:bg-superficie"
                 >
                   <span className="min-w-0">
-                    <span className="block truncate text-sm text-white">{p.nome}</span>
-                    <span className="text-xs text-slate-500">
+                    <span className="block truncate text-sm text-foreground">{p.nome}</span>
+                    <span className="text-xs text-muted-suave">
                       {p.estoque_atual} {p.unidade} em estoque
                     </span>
                   </span>

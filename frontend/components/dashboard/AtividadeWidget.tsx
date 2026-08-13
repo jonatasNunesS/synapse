@@ -26,13 +26,13 @@ const ICONES: Record<AtividadeTipo, React.ReactNode> = {
 };
 
 const CORES: Record<AtividadeTipo, string> = {
-  lancamento: "text-green-600 bg-green-50",
-  movimentacao: "text-blue-600 bg-blue-50",
-  cliente: "text-brand-600 bg-brand-50",
-  interacao: "text-brand-600 bg-brand-50",
-  tarefa: "text-orange-600 bg-orange-50",
-  projeto: "text-cyan-600 bg-cyan-50",
-  documento: "text-gray-600 bg-gray-100",
+  lancamento: "text-sucesso bg-sucesso/10",
+  movimentacao: "text-info bg-info/10",
+  cliente: "text-brand-accent bg-brand-500/10",
+  interacao: "text-brand-accent bg-brand-500/10",
+  tarefa: "text-alerta bg-alerta/10",
+  projeto: "text-info bg-info/10",
+  documento: "text-muted-foreground bg-muted",
   membro: "text-pink-600 bg-pink-50",
 };
 
@@ -94,7 +94,7 @@ export function AtividadeWidget({ eventos, isLoading }: AtividadeWidgetProps) {
             {eventos.map((evento, index) => (
               <div key={index} className="flex items-start gap-3">
                 {/* Ícone */}
-                <div className={`p-1.5 rounded-full flex-shrink-0 ${CORES[evento.tipo] ?? "text-gray-600 bg-gray-100"}`}>
+                <div className={`p-1.5 rounded-full flex-shrink-0 ${CORES[evento.tipo] ?? "text-muted-foreground bg-muted"}`}>
                   {ICONES[evento.tipo]}
                 </div>
 

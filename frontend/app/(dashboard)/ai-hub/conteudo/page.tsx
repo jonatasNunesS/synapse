@@ -47,7 +47,7 @@ export default function AIHubPage() {
       {/* Cabeçalho */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Sparkles className="h-6 w-6 text-brand-500" />
             AI Hub
           </h1>
@@ -98,12 +98,12 @@ export default function AIHubPage() {
       </div>
 
       {/* Dicas de uso */}
-      <div className="rounded-xl border border-brand-100 bg-brand-50/50 p-4">
-        <h3 className="text-sm font-semibold text-brand-800 mb-2 flex items-center gap-2">
+      <div className="rounded-xl border border-brand-500/30 bg-brand-500/10 p-4">
+        <h3 className="text-sm font-semibold text-brand-accent mb-2 flex items-center gap-2">
           <Sparkles className="h-4 w-4" />
           Dicas para melhores resultados
         </h3>
-        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-brand-700">
+        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-brand-accent">
           <li className="flex items-start gap-1.5">
             <span className="text-brand-accent mt-0.5">→</span>
             Seja específico no nome do produto ou serviço

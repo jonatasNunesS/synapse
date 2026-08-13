@@ -176,7 +176,7 @@ export function DocumentoForm({ documento, onSalvar, onFechar }: DocumentoFormPr
                     <button
                       type="button"
                       onClick={() => removerTag(tag)}
-                      className="ml-1 hover:text-destructive"
+                      className="ml-1 hover:text-erro"
                     >
                       ×
                     </button>
@@ -186,7 +186,7 @@ export function DocumentoForm({ documento, onSalvar, onFechar }: DocumentoFormPr
             )}
           </div>
 
-          {erro && <p className="text-sm text-destructive">{erro}</p>}
+          {erro && <p className="text-sm text-erro">{erro}</p>}
 
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={onFechar}>

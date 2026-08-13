@@ -34,10 +34,10 @@ export default function PainelAdminLayout({
   // Carregando o usuário, ou ainda validando o acesso.
   if (loading || !autenticado || !usuario) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
-          <p className="text-sm text-slate-500">Verificando acesso…</p>
+          <Loader2 className="h-8 w-8 animate-spin text-alerta" />
+          <p className="text-sm text-muted-suave">Verificando acesso…</p>
         </div>
       </div>
     );
@@ -45,37 +45,37 @@ export default function PainelAdminLayout({
 
   if (!usuario.is_staff_synapse) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <p className="text-sm text-slate-400">Redirecionando…</p>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-sm text-muted-foreground">Redirecionando…</p>
       </div>
     );
   }
 
   return (
-    <div className="tema-app min-h-screen bg-slate-950 text-slate-100">
+    <div className="tema-app min-h-screen bg-background text-foreground">
       {/* Faixa de plataforma — deliberadamente distinta do dashboard do cliente */}
-      <header className="sticky top-0 z-10 border-b border-amber-500/30 bg-gradient-to-r from-amber-950/60 to-slate-950">
+      <header className="sticky top-0 z-10 border-b border-alerta/30 bg-alerta/10 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-lg bg-amber-500/20 text-alerta flex items-center justify-center">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-sm font-bold text-amber-300 leading-tight">
+              <p className="text-sm font-bold text-alerta leading-tight">
                 Plataforma Synapse
               </p>
-              <p className="text-[0.6875rem] text-amber-500/70 leading-tight">
+              <p className="text-[0.6875rem] text-alerta/80 leading-tight">
                 Painel Administrativo — visão interna
               </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="hidden sm:inline text-xs text-slate-400">
+            <span className="hidden sm:inline text-xs text-muted-foreground">
               {usuario.nome} · staff
             </span>
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-white transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-foreground-suave hover:text-foreground transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               Sair do painel

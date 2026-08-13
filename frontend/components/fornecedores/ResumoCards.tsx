@@ -24,17 +24,17 @@ interface CardProps {
 
 function KpiCard({ title, value, subtitle, icon, color, loading }: CardProps) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+    <div className="rounded-xl border border-border bg-superficie p-5 backdrop-blur-sm">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm text-zinc-400">{title}</p>
+          <p className="text-sm text-muted-foreground">{title}</p>
           {loading ? (
-            <div className="mt-2 h-8 w-24 animate-pulse rounded-md bg-white/10" />
+            <div className="mt-2 h-8 w-24 animate-pulse rounded-md bg-superficie-forte" />
           ) : (
-            <p className="mt-1 text-2xl font-bold text-white">{value}</p>
+            <p className="mt-1 text-2xl font-bold text-foreground">{value}</p>
           )}
           {subtitle && (
-            <p className="mt-1 text-xs text-zinc-500">{subtitle}</p>
+            <p className="mt-1 text-xs text-muted-suave">{subtitle}</p>
           )}
         </div>
         <div className={`rounded-lg p-2.5 ${color}`}>{icon}</div>
@@ -65,7 +65,7 @@ export function ResumoCards() {
             ? `${taxaAtivos}% ativos`
             : undefined
         }
-        icon={<Building2 className="h-5 w-5 text-blue-400" />}
+        icon={<Building2 className="h-5 w-5 text-info" />}
         color="bg-blue-500/10"
         loading={loading}
       />
@@ -73,7 +73,7 @@ export function ResumoCards() {
         title="Fornecedores Ativos"
         value={loading ? "—" : data?.fornecedores_ativos ?? 0}
         subtitle="em operação"
-        icon={<CheckCircle2 className="h-5 w-5 text-emerald-400" />}
+        icon={<CheckCircle2 className="h-5 w-5 text-sucesso" />}
         color="bg-emerald-500/10"
         loading={loading}
       />
@@ -81,7 +81,7 @@ export function ResumoCards() {
         title="Total Gasto"
         value={loading ? "—" : formatCurrency(data?.valor_total_gasto ?? "0")}
         subtitle="em compras registradas"
-        icon={<DollarSign className="h-5 w-5 text-brand-400" />}
+        icon={<DollarSign className="h-5 w-5 text-brand-accent" />}
         color="bg-brand-500/10"
         loading={loading}
       />
@@ -93,7 +93,7 @@ export function ResumoCards() {
             ? `Top: ${data.melhor_score.nome}`
             : "por compra"
         }
-        icon={<TrendingUp className="h-5 w-5 text-amber-400" />}
+        icon={<TrendingUp className="h-5 w-5 text-alerta" />}
         color="bg-amber-500/10"
         loading={loading}
       />

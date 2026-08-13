@@ -155,7 +155,7 @@ export function SaldoResumo({ saldo, loading, filtroAtivo, onFiltrar }: SaldoRes
                       </Link>
                     )}
                     {temCaixinhas && temEmprestimos && (
-                      <span aria-hidden className="text-slate-600">·</span>
+                      <span aria-hidden className="text-muted-foreground">·</span>
                     )}
                     {temEmprestimos && (
                       <Link

@@ -120,7 +120,7 @@ export function KanbanEquipeGeral() {
           <select
             value={prioridadeFiltro}
             onChange={(e) => setPrioridadeFiltro(e.target.value as PrioridadeTarefa | "")}
-            className="rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
+            className="rounded-lg border border-border bg-secondary px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-brand-500"
             aria-label="Filtrar por prioridade"
           >
             <option value="">Toda prioridade</option>
@@ -130,7 +130,7 @@ export function KanbanEquipeGeral() {
               </option>
             ))}
           </select>
-          <label className="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer">
+          <label className="flex items-center gap-1.5 text-xs text-foreground-suave cursor-pointer">
             <input
               type="checkbox"
               checked={mostrarProjeto}
@@ -142,7 +142,7 @@ export function KanbanEquipeGeral() {
           {isAdmin && (
             <button
               onClick={() => setEditarColunas(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 text-xs font-medium hover:bg-slate-800"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-foreground-suave text-xs font-medium hover:bg-secondary"
             >
               <Settings2 className="h-3.5 w-3.5" /> Editar colunas
             </button>
@@ -188,6 +188,6 @@ function chip(ativo: boolean): string {
   return `px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
     ativo
       ? "bg-brand-600 text-white"
-      : "bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700"
+      : "bg-secondary text-foreground-suave hover:bg-superficie-forte border border-border"
   }`;
 }

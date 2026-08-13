@@ -75,7 +75,7 @@ export default function DocumentoDetailPage() {
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="p-3 rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-accent flex-shrink-0">
+            <div className="p-3 rounded-xl bg-brand-500/15 text-brand-accent dark:bg-brand-900/30 dark:text-brand-accent flex-shrink-0">
               <FileText className="h-6 w-6" />
             </div>
             <div className="flex-1">
@@ -206,7 +206,7 @@ export default function DocumentoDetailPage() {
                   key={versao.id}
                   className="flex items-start gap-3 p-3 rounded-lg border"
                 >
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-accent text-xs font-bold flex-shrink-0">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-500/15 text-brand-accent dark:bg-brand-900/30 dark:text-brand-accent text-xs font-bold flex-shrink-0">
                     v{versao.numero_versao}
                   </div>
                   <div className="flex-1 min-w-0">

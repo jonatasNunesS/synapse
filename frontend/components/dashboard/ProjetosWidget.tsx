@@ -14,9 +14,9 @@ interface ProjetosWidgetProps {
 
 const PRIORIDADE_COR: Record<string, string> = {
   baixa: "text-muted-suave",
-  media: "text-blue-500",
-  alta: "text-yellow-500",
-  urgente: "text-red-500",
+  media: "text-info",
+  alta: "text-alerta",
+  urgente: "text-erro",
 };
 
 export function ProjetosWidget({ projetos, isLoading }: ProjetosWidgetProps) {
@@ -43,7 +43,7 @@ export function ProjetosWidget({ projetos, isLoading }: ProjetosWidgetProps) {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
-            <FolderOpen className="h-4 w-4 text-cyan-500" />
+            <FolderOpen className="h-4 w-4 text-info" />
             Projetos em Andamento
           </CardTitle>
           <Link
@@ -78,7 +78,7 @@ export function ProjetosWidget({ projetos, isLoading }: ProjetosWidgetProps) {
                       {p.nome}
                     </p>
                     {p.atrasado && (
-                      <AlertTriangle className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
+                      <AlertTriangle className="h-3.5 w-3.5 text-erro flex-shrink-0" />
                     )}
                   </div>
                   <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
@@ -100,7 +100,7 @@ export function ProjetosWidget({ projetos, isLoading }: ProjetosWidgetProps) {
                   <span className="text-xs text-muted-foreground">
                     {p.tarefas_concluidas}/{p.tarefas_total} tarefas
                     {p.data_prazo && (
-                      <span className={p.atrasado ? "text-red-500 ml-1" : "ml-1"}>
+                      <span className={p.atrasado ? "text-erro ml-1" : "ml-1"}>
                         · {p.atrasado ? "Atrasado" : `prazo: ${p.data_prazo.split("-").reverse().join("/")}`}
                       </span>
                     )}

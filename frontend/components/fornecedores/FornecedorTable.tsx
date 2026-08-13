@@ -16,14 +16,14 @@ import { ScoreSynapse } from "./ScoreSynapse";
 import type { FornecedorList } from "@/types/fornecedores";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  ativo: { label: "Ativo", color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" },
-  inativo: { label: "Inativo", color: "bg-zinc-500/15 text-zinc-400 border-zinc-500/30" },
-  suspenso: { label: "Suspenso", color: "bg-red-500/15 text-red-400 border-red-500/30" },
-  em_avaliacao: { label: "Em Avaliação", color: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
+  ativo: { label: "Ativo", color: "bg-emerald-500/15 text-sucesso border-emerald-500/30" },
+  inativo: { label: "Inativo", color: "bg-zinc-500/15 text-muted-foreground border-zinc-500/30" },
+  suspenso: { label: "Suspenso", color: "bg-red-500/15 text-erro border-red-500/30" },
+  em_avaliacao: { label: "Em Avaliação", color: "bg-amber-500/15 text-alerta border-amber-500/30" },
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_LABELS[status] ?? { label: status, color: "bg-zinc-500/15 text-zinc-400 border-zinc-500/30" };
+  const cfg = STATUS_LABELS[status] ?? { label: status, color: "bg-zinc-500/15 text-muted-foreground border-zinc-500/30" };
   return (
     <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${cfg.color}`}>
       {cfg.label}
@@ -65,30 +65,30 @@ export function FornecedorTable({ onNovo }: FornecedorTableProps) {
   const totalPages = Math.ceil(total / pageSize);
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm">
+    <div className="rounded-xl border border-border bg-superficie backdrop-blur-sm">
       {/* Header */}
-      <div className="flex flex-col gap-3 border-b border-white/10 p-4 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-base font-semibold text-white">Fornecedores</h2>
+      <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-base font-semibold text-foreground">Fornecedores</h2>
         <div className="flex flex-wrap items-center gap-2">
           {/* Search — o input tem largura própria (20 caracteres); sem o
               w-full ele cresce com a fonte e empurra a página para fora. */}
           <div className="relative min-w-0 flex-1 basis-full sm:basis-auto">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" />
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-suave" />
             <input
               type="text"
               placeholder="Buscar..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="h-8 w-full rounded-lg border border-white/10 bg-white/5 pl-8 pr-3 text-sm text-white placeholder-zinc-500 outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20"
+              className="h-8 w-full rounded-lg border border-border bg-superficie pl-8 pr-3 text-sm text-foreground placeholder-zinc-500 outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20"
             />
           </div>
           {/* Status filter */}
           <div className="relative">
-            <Filter className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" />
+            <Filter className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-suave" />
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="h-8 rounded-lg border border-white/10 bg-zinc-900 pl-8 pr-3 text-sm text-white outline-none focus:border-brand-500/50"
+              className="h-8 rounded-lg border border-border bg-card shadow-elevacao pl-8 pr-3 text-sm text-foreground outline-none focus:border-brand-500/50"
             >
               <option value="">Todos os status</option>
               <option value="ativo">Ativo</option>
@@ -102,7 +102,7 @@ export function FornecedorTable({ onNovo }: FornecedorTableProps) {
             <select
               value={categoriaFilter}
               onChange={(e) => { setCategoriaFilter(e.target.value); setPage(1); }}
-              className="h-8 rounded-lg border border-white/10 bg-zinc-900 px-3 text-sm text-white outline-none focus:border-brand-500/50"
+              className="h-8 rounded-lg border border-border bg-card shadow-elevacao px-3 text-sm text-foreground outline-none focus:border-brand-500/50"
             >
               <option value="">Todas as categorias</option>
               {categorias.map((c) => (
@@ -124,20 +124,20 @@ export function FornecedorTable({ onNovo }: FornecedorTableProps) {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-white/10">
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Fornecedor</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Score</th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-500">Total Gasto</th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-500">Pedidos</th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-500">Última Compra</th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-500">Ações</th>
+            <tr className="border-b border-border">
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-suave">Fornecedor</th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-suave">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-suave">Score</th>
+              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-suave">Total Gasto</th>
+              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-suave">Pedidos</th>
+              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-suave">Última Compra</th>
+              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-suave">Ações</th>
             </tr>
           </thead>
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-zinc-500">
+                <td colSpan={7} className="px-4 py-8 text-center text-muted-suave">
                   <div className="flex items-center justify-center gap-2">
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
                     Carregando...
@@ -147,12 +147,12 @@ export function FornecedorTable({ onNovo }: FornecedorTableProps) {
             )}
             {!loading && error && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-red-400">{error}</td>
+                <td colSpan={7} className="px-4 py-8 text-center text-erro">{error}</td>
               </tr>
             )}
             {!loading && !error && data.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-zinc-500">
+                <td colSpan={7} className="px-4 py-8 text-center text-muted-suave">
                   Nenhum fornecedor encontrado.
                 </td>
               </tr>
@@ -160,16 +160,16 @@ export function FornecedorTable({ onNovo }: FornecedorTableProps) {
             {!loading && data.map((f: FornecedorList) => (
               <tr
                 key={f.id}
-                className="border-b border-white/5 transition-colors hover:bg-white/5"
+                className="border-b border-border transition-colors hover:bg-superficie"
               >
                 <td className="px-4 py-3">
                   <div className="flex flex-col">
-                    <span className="font-medium text-white">{f.nome}</span>
+                    <span className="font-medium text-foreground">{f.nome}</span>
                     {f.categoria_nome && (
-                      <span className="text-xs text-zinc-500">{f.categoria_nome}</span>
+                      <span className="text-xs text-muted-suave">{f.categoria_nome}</span>
                     )}
                     {f.email && (
-                      <span className="text-xs text-zinc-600">{f.email}</span>
+                      <span className="text-xs text-muted-foreground">{f.email}</span>
                     )}
                   </div>
                 </td>
@@ -179,13 +179,13 @@ export function FornecedorTable({ onNovo }: FornecedorTableProps) {
                 <td className="px-4 py-3">
                   <ScoreSynapse score={f.score_synapse} size="sm" showLabel={false} />
                 </td>
-                <td className="px-4 py-3 text-right font-mono text-zinc-300">
+                <td className="px-4 py-3 text-right font-mono text-foreground-suave">
                   {formatCurrency(f.valor_total_compras)}
                 </td>
-                <td className="px-4 py-3 text-right text-zinc-400">
+                <td className="px-4 py-3 text-right text-muted-foreground">
                   {f.quantidade_pedidos}
                 </td>
-                <td className="px-4 py-3 text-right text-zinc-400">
+                <td className="px-4 py-3 text-right text-muted-foreground">
                   {f.ultima_compra
                     ? new Date(f.ultima_compra).toLocaleDateString("pt-BR")
                     : "—"}
@@ -197,7 +197,7 @@ export function FornecedorTable({ onNovo }: FornecedorTableProps) {
                         href={f.link_whatsapp}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded p-1 text-emerald-500 transition-colors hover:bg-emerald-500/10"
+                        className="rounded p-1 text-sucesso transition-colors hover:bg-emerald-500/10"
                         title="WhatsApp"
                       >
                         <MessageCircle className="h-4 w-4" />
@@ -205,7 +205,7 @@ export function FornecedorTable({ onNovo }: FornecedorTableProps) {
                     )}
                     <Link
                       href={`/fornecedores/${f.id}`}
-                      className="rounded p-1 text-zinc-400 transition-colors hover:bg-white/10 hover:text-white"
+                      className="rounded p-1 text-muted-foreground transition-colors hover:bg-superficie-forte hover:text-foreground"
                       title="Ver detalhes"
                     >
                       <ExternalLink className="h-4 w-4" />
@@ -220,25 +220,25 @@ export function FornecedorTable({ onNovo }: FornecedorTableProps) {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-white/10 px-4 py-3">
-          <span className="text-xs text-zinc-500">
+        <div className="flex items-center justify-between border-t border-border px-4 py-3">
+          <span className="text-xs text-muted-suave">
             {total} fornecedor{total !== 1 ? "es" : ""}
           </span>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="rounded p-1 text-zinc-400 transition-colors hover:bg-white/10 disabled:opacity-40"
+              className="rounded p-1 text-muted-foreground transition-colors hover:bg-superficie-forte disabled:opacity-40"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="text-xs text-zinc-400">
+            <span className="text-xs text-muted-foreground">
               {page} / {totalPages}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="rounded p-1 text-zinc-400 transition-colors hover:bg-white/10 disabled:opacity-40"
+              className="rounded p-1 text-muted-foreground transition-colors hover:bg-superficie-forte disabled:opacity-40"
             >
               <ChevronRight className="h-4 w-4" />
             </button>

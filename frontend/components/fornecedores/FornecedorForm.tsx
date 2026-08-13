@@ -117,30 +117,30 @@ export function FornecedorForm({ fornecedor, onSuccess, onClose }: FornecedorFor
     placeholder = ""
   ) => (
     <div>
-      <label className="mb-1 block text-xs font-medium text-zinc-400">{label}</label>
+      <label className="mb-1 block text-xs font-medium text-muted-foreground">{label}</label>
       <input
         {...register(name, type === "number" ? { valueAsNumber: true } : {})}
         type={type}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20"
+        className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground placeholder-zinc-600 outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20"
       />
       {errors[name] && (
-        <p className="mt-1 text-xs text-red-400">{errors[name]?.message as string}</p>
+        <p className="mt-1 text-xs text-erro">{errors[name]?.message as string}</p>
       )}
     </div>
   );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl">
+      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-          <h2 className="text-base font-semibold text-white">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <h2 className="text-base font-semibold text-foreground">
             {isEdit ? "Editar Fornecedor" : "Novo Fornecedor"}
           </h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-white/10 hover:text-white"
+            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-superficie-forte hover:text-foreground"
           >
             <X className="h-5 w-5" />
           </button>
@@ -149,7 +149,7 @@ export function FornecedorForm({ fornecedor, onSuccess, onClose }: FornecedorFor
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="max-h-[80vh] overflow-y-auto p-6">
           {serverError && (
-            <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+            <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-erro">
               {serverError}
             </div>
           )}
@@ -173,10 +173,10 @@ export function FornecedorForm({ fornecedor, onSuccess, onClose }: FornecedorFor
             {/* Localização */}
             {field("endereco_cidade", "Cidade", "text", "São Paulo")}
             <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-400">Estado</label>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Estado</label>
               <select
                 {...register("endereco_estado")}
-                className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-brand-500/50"
+                className="w-full rounded-lg border border-border bg-card shadow-elevacao px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500/50"
               >
                 <option value="">Selecionar</option>
                 {ESTADOS.map((uf) => (
@@ -187,10 +187,10 @@ export function FornecedorForm({ fornecedor, onSuccess, onClose }: FornecedorFor
 
             {/* Categoria */}
             <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-400">Categoria</label>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Categoria</label>
               <select
                 {...register("categoria")}
-                className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-brand-500/50"
+                className="w-full rounded-lg border border-border bg-card shadow-elevacao px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500/50"
               >
                 <option value="">Sem categoria</option>
                 {categorias.map((c) => (
@@ -201,10 +201,10 @@ export function FornecedorForm({ fornecedor, onSuccess, onClose }: FornecedorFor
 
             {/* Status */}
             <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-400">Status *</label>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Status *</label>
               <select
                 {...register("status")}
-                className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-brand-500/50"
+                className="w-full rounded-lg border border-border bg-card shadow-elevacao px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500/50"
               >
                 <option value="ativo">Ativo</option>
                 <option value="inativo">Inativo</option>
@@ -212,7 +212,7 @@ export function FornecedorForm({ fornecedor, onSuccess, onClose }: FornecedorFor
                 <option value="em_avaliacao">Em Avaliação</option>
               </select>
               {errors.status && (
-                <p className="mt-1 text-xs text-red-400">{errors.status.message}</p>
+                <p className="mt-1 text-xs text-erro">{errors.status.message}</p>
               )}
             </div>
 
@@ -222,12 +222,12 @@ export function FornecedorForm({ fornecedor, onSuccess, onClose }: FornecedorFor
 
             {/* Notas */}
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-medium text-zinc-400">Notas</label>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Notas</label>
               <textarea
                 {...register("notas")}
                 rows={3}
                 placeholder="Observações sobre o fornecedor..."
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20"
+                className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground placeholder-zinc-600 outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20"
               />
             </div>
           </div>
@@ -237,7 +237,7 @@ export function FornecedorForm({ fornecedor, onSuccess, onClose }: FornecedorFor
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-white/10 px-4 py-2 text-sm text-zinc-400 transition-colors hover:bg-white/5 hover:text-white"
+              className="rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-superficie hover:text-foreground"
             >
               Cancelar
             </button>

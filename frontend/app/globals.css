@@ -48,7 +48,7 @@
        aqui para a conversão não achatar a hierarquia que já existia:
        foreground > foreground-suave > muted-foreground > muted-suave. */
     --foreground-suave: 213 27% 84%;
-    --muted-suave: 215 16% 52%;
+    --muted-suave: 215 16% 58%;
 
     /* Superfície elevada sobre o card (o antigo bg-white/5). */
     --superficie: 240 20% 13%;
@@ -103,7 +103,7 @@
     --sidebar-accent-foreground: 0 0% 100%;
 
     --foreground-suave: 240 8% 28%;
-    --muted-suave: 240 5% 45%;
+    --muted-suave: 240 5% 42%;
 
     --superficie: 240 6% 96%;
     --superficie-forte: 240 6% 92%;

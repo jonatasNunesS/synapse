@@ -64,23 +64,23 @@ function Card({
       {...(projeto ? {} : attributes)}
       onClick={onClick}
       title={projeto ? "Mova esta tarefa no projeto" : undefined}
-      className={`rounded-lg border p-3 transition-all select-none bg-slate-800/70 border-slate-700 ${
+      className={`rounded-lg border p-3 transition-all select-none bg-secondary/70 border-border ${
         projeto ? "cursor-pointer" : "cursor-grab active:cursor-grabbing"
-      } hover:border-slate-600 ${dragging ? "opacity-40 scale-95" : ""}`}
+      } hover:border-muted-foreground/40 ${dragging ? "opacity-40 scale-95" : ""}`}
     >
       <div className="flex items-start gap-2">
         {projeto ? (
-          <Lock size={13} className="text-slate-500 mt-0.5 flex-shrink-0" />
+          <Lock size={13} className="text-muted-suave mt-0.5 flex-shrink-0" />
         ) : (
-          <GripVertical size={14} className="text-slate-600 mt-0.5 flex-shrink-0" />
+          <GripVertical size={14} className="text-muted-foreground mt-0.5 flex-shrink-0" />
         )}
-        <p className="text-sm font-medium text-slate-100 leading-snug line-clamp-2 flex-1">
+        <p className="text-sm font-medium text-foreground leading-snug line-clamp-2 flex-1">
           {tarefa.titulo}
         </p>
       </div>
 
       {projeto && tarefa.projeto_nome && (
-        <span className="inline-block mt-2 text-[0.625rem] font-medium px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-300">
+        <span className="inline-block mt-2 text-[0.625rem] font-medium px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-accent">
           Projeto {tarefa.projeto_nome}
         </span>
       )}
@@ -95,12 +95,12 @@ function Card({
         </span>
         <div className="flex items-center gap-2">
           {tarefa.esta_atrasada && (
-            <AlertCircle size={12} className="text-red-400" aria-label="Atrasada" />
+            <AlertCircle size={12} className="text-erro" aria-label="Atrasada" />
           )}
           {tarefa.prazo && (
             <span
               className={`flex items-center gap-0.5 text-[0.6875rem] ${
-                tarefa.esta_atrasada ? "text-red-400" : "text-slate-400"
+                tarefa.esta_atrasada ? "text-erro" : "text-muted-foreground"
               }`}
             >
               <Calendar size={10} />
@@ -147,15 +147,15 @@ function Coluna({
           {coluna.cor && (
             <span className="h-2.5 w-2.5 rounded-full" style={{ background: coluna.cor }} />
           )}
-          <span className="font-semibold text-slate-200 text-sm">{coluna.nome}</span>
-          <span className="bg-slate-700 text-slate-300 text-xs font-medium px-2 py-0.5 rounded-full">
+          <span className="font-semibold text-foreground-suave text-sm">{coluna.nome}</span>
+          <span className="bg-superficie-forte text-foreground-suave text-xs font-medium px-2 py-0.5 rounded-full">
             {coluna.tarefas.length}
           </span>
         </div>
         {permiteCriar && onNovaTarefa && (
           <button
             onClick={() => onNovaTarefa(coluna.id)}
-            className="text-slate-400 hover:text-brand-400 transition-colors"
+            className="text-muted-foreground hover:text-brand-accent transition-colors"
             title={`Nova tarefa em ${coluna.nome}`}
           >
             <Plus size={16} />
@@ -165,7 +165,7 @@ function Coluna({
       <div
         ref={setNodeRef}
         className={`flex flex-col gap-2 px-2 pb-3 pt-1 flex-1 min-h-[120px] rounded-xl border transition-colors ${
-          isOver ? "bg-brand-500/10 border-brand-500/40" : "bg-slate-900/40 border-slate-800"
+          isOver ? "bg-brand-500/10 border-brand-500/40" : "bg-card/40 border-border"
         }`}
       >
         {coluna.tarefas.map((t) => (
@@ -178,7 +178,7 @@ function Coluna({
           />
         ))}
         {coluna.tarefas.length === 0 && (
-          <div className="flex-1 flex items-center justify-center text-slate-600 text-xs py-8">
+          <div className="flex-1 flex items-center justify-center text-muted-foreground text-xs py-8">
             Nenhuma tarefa
           </div>
         )}
@@ -231,7 +231,7 @@ export function EquipeKanbanBoard({
           />
         ))}
         {colunas.length === 0 && (
-          <p className="text-sm text-slate-500 py-10">Nenhuma coluna configurada.</p>
+          <p className="text-sm text-muted-suave py-10">Nenhuma coluna configurada.</p>
         )}
       </div>
       <DragOverlay>

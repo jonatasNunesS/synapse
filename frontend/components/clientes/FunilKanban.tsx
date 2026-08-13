@@ -76,7 +76,7 @@ function KanbanColuna({
             <KanbanCard key={cliente.id} cliente={cliente} />
           ))}
           {clientes.length === 0 && (
-            <div className="flex items-center justify-center h-20 text-xs text-gray-600">
+            <div className="flex items-center justify-center h-20 text-xs text-muted-foreground">
               Arraste clientes aqui
             </div>
           )}

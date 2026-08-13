@@ -54,11 +54,11 @@ function Toggle({
       disabled={disabled}
       onClick={onClick}
       className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-        ativo ? "bg-brand-600" : "bg-slate-700"
+        ativo ? "bg-brand-600" : "bg-superficie-forte"
       } ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
     >
       <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+        className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${
           ativo ? "translate-x-6" : "translate-x-1"
         }`}
       />
@@ -167,7 +167,7 @@ export function ModulosSection() {
                     <p className="text-sm font-medium text-foreground">{info?.label ?? modulo}</p>
                     <p className="text-xs text-muted-suave mt-0.5">{info?.descricao}</p>
                     {qtd > 0 && (
-                      <p className="text-[0.6875rem] text-slate-600 mt-0.5">
+                      <p className="text-[0.6875rem] text-muted-foreground mt-0.5">
                         {qtd} {qtd === 1 ? "registro" : "registros"}
                       </p>
                     )}
@@ -197,7 +197,7 @@ export function ModulosSection() {
           })}
 
           {/* Obrigatórios — toggle travado */}
-          <p className="text-[0.6875rem] uppercase tracking-wide text-slate-600 pt-3 pb-1">
+          <p className="text-[0.6875rem] uppercase tracking-wide text-muted-foreground pt-3 pb-1">
             Essenciais
           </p>
           {(config?.obrigatorios ?? Object.keys(OBRIGATORIOS_INFO)).map((modulo) => {

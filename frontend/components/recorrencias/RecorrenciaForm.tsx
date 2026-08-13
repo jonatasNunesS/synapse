@@ -73,63 +73,63 @@ export function RecorrenciaForm({ inicial, onClose, onSubmit }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-lg rounded-xl border border-white/10 bg-zinc-900 shadow-xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/10 sticky top-0 bg-zinc-900">
-          <h2 className="text-sm font-semibold text-white">
+      <div className="w-full max-w-lg rounded-xl border border-border bg-card shadow-xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-border sticky top-0 bg-card">
+          <h2 className="text-sm font-semibold text-foreground">
             {inicial ? "Editar recorrência" : "Nova recorrência"}
           </h2>
-          <button onClick={onClose} className="text-zinc-400 hover:text-white">
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X className="h-4 w-4" />
           </button>
         </div>
 
         <form onSubmit={submit} className="p-5 space-y-4">
           <div>
-            <label className="text-xs text-zinc-400 block mb-1">Título *</label>
+            <label className="text-xs text-muted-foreground block mb-1">Título *</label>
             <input
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
               placeholder="Ex: Salário Patrícia"
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
+              className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground focus:outline-none focus:border-brand-500"
             />
-            {erros.titulo && <p className="text-xs text-red-400 mt-1">{erros.titulo}</p>}
+            {erros.titulo && <p className="text-xs text-erro mt-1">{erros.titulo}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-zinc-400 block mb-1">Tipo</label>
+              <label className="text-xs text-muted-foreground block mb-1">Tipo</label>
               <select
                 value={tipo}
                 onChange={(e) => {
                   setTipo(e.target.value as TipoRecorrencia);
                   setCategoria("");
                 }}
-                className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
+                className="w-full rounded-lg border border-border bg-card shadow-elevacao px-3 py-2 text-sm text-foreground focus:outline-none focus:border-brand-500"
               >
                 <option value="receita">Receita</option>
                 <option value="despesa">Despesa</option>
               </select>
             </div>
             <div>
-              <label className="text-xs text-zinc-400 block mb-1">Valor esperado *</label>
+              <label className="text-xs text-muted-foreground block mb-1">Valor esperado *</label>
               <input
                 type="number"
                 step="0.01"
                 value={valor}
                 onChange={(e) => setValor(e.target.value)}
                 placeholder="0,00"
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
+                className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground focus:outline-none focus:border-brand-500"
               />
-              {erros.valor && <p className="text-xs text-red-400 mt-1">{erros.valor}</p>}
+              {erros.valor && <p className="text-xs text-erro mt-1">{erros.valor}</p>}
             </div>
           </div>
 
           <div>
-            <label className="text-xs text-zinc-400 block mb-1">Categoria</label>
+            <label className="text-xs text-muted-foreground block mb-1">Categoria</label>
             <select
               value={categoria ?? ""}
               onChange={(e) => setCategoria(e.target.value)}
-              className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
+              className="w-full rounded-lg border border-border bg-card shadow-elevacao px-3 py-2 text-sm text-foreground focus:outline-none focus:border-brand-500"
             >
               <option value="">Sem categoria</option>
               {catsDoTipo.map((c) => (
@@ -142,11 +142,11 @@ export function RecorrenciaForm({ inicial, onClose, onSubmit }: Props) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-zinc-400 block mb-1">Frequência</label>
+              <label className="text-xs text-muted-foreground block mb-1">Frequência</label>
               <select
                 value={freq}
                 onChange={(e) => setFreq(e.target.value as FrequenciaTipo)}
-                className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
+                className="w-full rounded-lg border border-border bg-card shadow-elevacao px-3 py-2 text-sm text-foreground focus:outline-none focus:border-brand-500"
               >
                 <option value="mensal">Mensal</option>
                 <option value="semanal">Semanal</option>
@@ -155,25 +155,25 @@ export function RecorrenciaForm({ inicial, onClose, onSubmit }: Props) {
             </div>
             {freq === "mensal" && (
               <div>
-                <label className="text-xs text-zinc-400 block mb-1">Dia do mês</label>
+                <label className="text-xs text-muted-foreground block mb-1">Dia do mês</label>
                 <input
                   type="number"
                   min={1}
                   max={31}
                   value={diaRef}
                   onChange={(e) => setDiaRef(parseInt(e.target.value) || 1)}
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
+                  className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground focus:outline-none focus:border-brand-500"
                 />
-                {erros.dia && <p className="text-xs text-red-400 mt-1">{erros.dia}</p>}
+                {erros.dia && <p className="text-xs text-erro mt-1">{erros.dia}</p>}
               </div>
             )}
             {freq === "semanal" && (
               <div>
-                <label className="text-xs text-zinc-400 block mb-1">Dia da semana</label>
+                <label className="text-xs text-muted-foreground block mb-1">Dia da semana</label>
                 <select
                   value={diaRef}
                   onChange={(e) => setDiaRef(parseInt(e.target.value))}
-                  className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
+                  className="w-full rounded-lg border border-border bg-card shadow-elevacao px-3 py-2 text-sm text-foreground focus:outline-none focus:border-brand-500"
                 >
                   {DIAS_SEMANA.map((d) => (
                     <option key={d.value} value={d.value}>
@@ -186,35 +186,35 @@ export function RecorrenciaForm({ inicial, onClose, onSubmit }: Props) {
           </div>
 
           <div className="grid grid-cols-2 gap-3 items-center">
-            <label className="flex items-center gap-2 text-sm text-zinc-300">
+            <label className="flex items-center gap-2 text-sm text-foreground-suave">
               <input
                 type="checkbox"
                 checked={usaDiaUtil}
                 onChange={(e) => setUsaDiaUtil(e.target.checked)}
-                className="rounded border-white/20 bg-white/5"
+                className="rounded border-border bg-superficie"
               />
               Ajustar p/ dia útil
             </label>
             <div>
-              <label className="text-xs text-zinc-400 block mb-1">
+              <label className="text-xs text-muted-foreground block mb-1">
                 Avisar (dias; 0 = no dia)
               </label>
               <input
                 type="number"
                 value={aviso}
                 onChange={(e) => setAviso(parseInt(e.target.value) || 0)}
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
+                className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground focus:outline-none focus:border-brand-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-xs text-zinc-400 block mb-1">Descrição (opcional)</label>
+            <label className="text-xs text-muted-foreground block mb-1">Descrição (opcional)</label>
             <textarea
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
               rows={2}
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
+              className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground focus:outline-none focus:border-brand-500"
             />
           </div>
 
@@ -222,7 +222,7 @@ export function RecorrenciaForm({ inicial, onClose, onSubmit }: Props) {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg text-zinc-300 hover:bg-white/5 text-sm"
+              className="px-4 py-2 rounded-lg text-foreground-suave hover:bg-superficie text-sm"
             >
               Cancelar
             </button>

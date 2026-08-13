@@ -94,9 +94,9 @@ export function FormularioConteudo({ onSubmit, gerando, erro }: FormularioConteu
 
           {/* Campos dinâmicos por tipo */}
           {campos.length === 0 ? (
-            <div className="rounded-lg bg-brand-50 border border-brand-100 p-3 text-sm text-brand-700">
+            <div className="rounded-lg bg-brand-500/10 border border-brand-500/30 p-3 text-sm text-brand-accent">
               <p className="font-medium mb-1">Geração automática</p>
-              <p className="text-xs text-brand-600">
+              <p className="text-xs text-brand-accent">
                 Este tipo de conteúdo usa os dados do seu negócio automaticamente.
                 Clique em &quot;Gerar&quot; para criar.
               </p>
@@ -128,7 +128,7 @@ export function FormularioConteudo({ onSubmit, gerando, erro }: FormularioConteu
 
           {/* Erro */}
           {erro && (
-            <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+            <div className="rounded-lg bg-erro/10 border border-erro/30 p-3 text-sm text-erro">
               {erro}
             </div>
           )}

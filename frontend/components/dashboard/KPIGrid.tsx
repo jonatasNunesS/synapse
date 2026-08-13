@@ -47,7 +47,7 @@ function KPICard({ titulo, valor, subtitulo, icone, cor, tendencia, alerta }: KP
           <p className="flex-1 min-w-0 text-sm font-medium text-muted-foreground break-words">
             {titulo}
           </p>
-          <div className={`p-2.5 rounded-lg flex-shrink-0 ${alerta ? "bg-red-50" : "bg-muted"}`}>
+          <div className={`p-2.5 rounded-lg flex-shrink-0 ${alerta ? "bg-erro/10" : "bg-muted"}`}>
             {icone}
           </div>
         </div>
@@ -56,9 +56,9 @@ function KPICard({ titulo, valor, subtitulo, icone, cor, tendencia, alerta }: KP
         {tendencia && (
           <div className="flex items-center gap-1 mt-3">
             {tendencia === "positiva" ? (
-              <TrendingUp className="h-3.5 w-3.5 text-green-500" />
+              <TrendingUp className="h-3.5 w-3.5 text-sucesso" />
             ) : tendencia === "negativa" ? (
-              <TrendingDown className="h-3.5 w-3.5 text-red-500" />
+              <TrendingDown className="h-3.5 w-3.5 text-erro" />
             ) : null}
           </div>
         )}
@@ -116,7 +116,7 @@ export function KPIGrid({ resumo, isLoading }: KPIGridProps) {
       titulo: "Receitas do Mês",
       valor: formatCurrency(financeiro.total_receitas),
       subtitulo: `${financeiro.lancamentos_count} lançamentos`,
-      icone: <DollarSign className="h-5 w-5 text-green-600" />,
+      icone: <DollarSign className="h-5 w-5 text-sucesso" />,
       cor: "border-l-green-500",
       tendencia: financeiro.saldo_mes >= 0 ? "positiva" : "negativa",
     },
@@ -124,7 +124,7 @@ export function KPIGrid({ resumo, isLoading }: KPIGridProps) {
       titulo: "Despesas do Mês",
       valor: formatCurrency(financeiro.total_despesas),
       subtitulo: `Saldo: ${formatCurrency(financeiro.saldo_mes)}`,
-      icone: <TrendingDown className="h-5 w-5 text-red-600" />,
+      icone: <TrendingDown className="h-5 w-5 text-erro" />,
       cor: "border-l-red-500",
       tendencia: financeiro.saldo_mes >= 0 ? "positiva" : "negativa",
     },
@@ -134,7 +134,7 @@ export function KPIGrid({ resumo, isLoading }: KPIGridProps) {
       subtitulo: financeiro.total_atrasado > 0
         ? `${formatCurrency(financeiro.total_atrasado)} atrasado`
         : "Sem atrasos",
-      icone: <AlertTriangle className={`h-5 w-5 ${financeiro.total_atrasado > 0 ? "text-red-600" : "text-yellow-600"}`} />,
+      icone: <AlertTriangle className={`h-5 w-5 ${financeiro.total_atrasado > 0 ? "text-erro" : "text-alerta"}`} />,
       cor: financeiro.total_atrasado > 0 ? "border-l-red-400" : "border-l-yellow-500",
       alerta: financeiro.total_atrasado > 0,
     },
@@ -145,7 +145,7 @@ export function KPIGrid({ resumo, isLoading }: KPIGridProps) {
       subtitulo: estoque.produtos_abaixo_minimo > 0
         ? `${estoque.produtos_abaixo_minimo} abaixo do mínimo`
         : "Estoque saudável",
-      icone: <Package className={`h-5 w-5 ${estoque.produtos_abaixo_minimo > 0 ? "text-red-600" : "text-blue-600"}`} />,
+      icone: <Package className={`h-5 w-5 ${estoque.produtos_abaixo_minimo > 0 ? "text-erro" : "text-info"}`} />,
       cor: estoque.produtos_abaixo_minimo > 0 ? "border-l-red-400" : "border-l-blue-500",
       alerta: estoque.produtos_abaixo_minimo > 0,
     },
@@ -153,7 +153,7 @@ export function KPIGrid({ resumo, isLoading }: KPIGridProps) {
       titulo: "Total de Clientes",
       valor: crm.total_clientes.toString(),
       subtitulo: `${crm.novos_este_mes} novo${crm.novos_este_mes !== 1 ? "s" : ""} este mês`,
-      icone: <Users className="h-5 w-5 text-brand-600" />,
+      icone: <Users className="h-5 w-5 text-brand-accent" />,
       cor: "border-l-brand-500",
       tendencia: crm.novos_este_mes > 0 ? "positiva" : "neutra",
     },
@@ -161,7 +161,7 @@ export function KPIGrid({ resumo, isLoading }: KPIGridProps) {
       titulo: "Ticket Médio",
       valor: formatCurrency(crm.ticket_medio_geral),
       subtitulo: `Total gerado: ${formatCurrency(crm.valor_total_gerado)}`,
-      icone: <TrendingUp className="h-5 w-5 text-brand-600" />,
+      icone: <TrendingUp className="h-5 w-5 text-brand-accent" />,
       cor: "border-l-brand-500",
     },
     {
@@ -171,7 +171,7 @@ export function KPIGrid({ resumo, isLoading }: KPIGridProps) {
       subtitulo: projetos.projetos_atrasados > 0
         ? `${projetos.projetos_atrasados} atrasado${projetos.projetos_atrasados !== 1 ? "s" : ""}`
         : "Todos no prazo",
-      icone: <FolderOpen className={`h-5 w-5 ${projetos.projetos_atrasados > 0 ? "text-red-600" : "text-cyan-600"}`} />,
+      icone: <FolderOpen className={`h-5 w-5 ${projetos.projetos_atrasados > 0 ? "text-erro" : "text-info"}`} />,
       cor: projetos.projetos_atrasados > 0 ? "border-l-red-400" : "border-l-cyan-500",
       alerta: projetos.projetos_atrasados > 0,
     },
@@ -182,7 +182,7 @@ export function KPIGrid({ resumo, isLoading }: KPIGridProps) {
       subtitulo: projetos.tarefas_atrasadas > 0
         ? `${projetos.tarefas_atrasadas} atrasada${projetos.tarefas_atrasadas !== 1 ? "s" : ""}`
         : "Sem atrasos",
-      icone: <CheckSquare className={`h-5 w-5 ${projetos.tarefas_atrasadas > 0 ? "text-red-600" : "text-orange-600"}`} />,
+      icone: <CheckSquare className={`h-5 w-5 ${projetos.tarefas_atrasadas > 0 ? "text-erro" : "text-alerta"}`} />,
       cor: projetos.tarefas_atrasadas > 0 ? "border-l-red-400" : "border-l-orange-500",
       alerta: projetos.tarefas_atrasadas > 0,
     },

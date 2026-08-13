@@ -5,7 +5,7 @@ import { Package, AlertTriangle, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AlertaEstoqueItem } from "@/types/dashboard";
-import { ALERTA_ESTOQUE_LABELS, ALERTA_ESTOQUE_CORES } from "@/types/dashboard";
+import { ALERTA_ESTOQUE_CLASSES, ALERTA_ESTOQUE_LABELS } from "@/types/dashboard";
 
 interface AlertasEstoqueWidgetProps {
   alertas: AlertaEstoqueItem[];
@@ -33,10 +33,10 @@ export function AlertasEstoqueWidget({ alertas, isLoading }: AlertasEstoqueWidge
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-orange-500" />
+            <AlertTriangle className="h-4 w-4 text-alerta" />
             Alertas de Estoque
             {alertas.length > 0 && (
-              <span className="bg-red-100 text-red-700 text-xs font-semibold px-1.5 py-0.5 rounded-full">
+              <span className="bg-erro/10 text-erro text-xs font-semibold px-1.5 py-0.5 rounded-full">
                 {alertas.length}
               </span>
             )}
@@ -52,7 +52,7 @@ export function AlertasEstoqueWidget({ alertas, isLoading }: AlertasEstoqueWidge
       <CardContent>
         {alertas.length === 0 ? (
           <div className="py-6 text-center text-muted-foreground text-sm">
-            <Package className="h-8 w-8 mx-auto mb-2 text-green-500" />
+            <Package className="h-8 w-8 mx-auto mb-2 text-sucesso" />
             Estoque saudável! Nenhum alerta.
           </div>
         ) : (
@@ -64,13 +64,11 @@ export function AlertasEstoqueWidget({ alertas, isLoading }: AlertasEstoqueWidge
               >
                 {/* Ícone */}
                 <div
-                  className="p-1.5 rounded-md flex-shrink-0"
-                  style={{ backgroundColor: `${ALERTA_ESTOQUE_CORES[a.status_estoque]}15` }}
+                  className={`p-1.5 rounded-md flex-shrink-0 ${
+                    ALERTA_ESTOQUE_CLASSES[a.status_estoque] ?? "bg-muted text-muted-foreground"
+                  }`}
                 >
-                  <Package
-                    className="h-3.5 w-3.5"
-                    style={{ color: ALERTA_ESTOQUE_CORES[a.status_estoque] }}
-                  />
+                  <Package className="h-3.5 w-3.5" />
                 </div>
 
                 {/* Conteúdo */}
@@ -84,11 +82,9 @@ export function AlertasEstoqueWidget({ alertas, isLoading }: AlertasEstoqueWidge
                 {/* Status e estoque */}
                 <div className="text-right flex-shrink-0">
                   <span
-                    className="text-xs font-semibold px-1.5 py-0.5 rounded"
-                    style={{
-                      backgroundColor: `${ALERTA_ESTOQUE_CORES[a.status_estoque]}15`,
-                      color: ALERTA_ESTOQUE_CORES[a.status_estoque],
-                    }}
+                    className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
+                      ALERTA_ESTOQUE_CLASSES[a.status_estoque] ?? "bg-muted text-muted-foreground"
+                    }`}
                   >
                     {ALERTA_ESTOQUE_LABELS[a.status_estoque]}
                   </span>

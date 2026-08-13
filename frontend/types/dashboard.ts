@@ -261,6 +261,16 @@ export const STATUS_FUNIL_LABELS: Record<string, string> = {
   perdido: "Perdido",
 };
 
+/** Classes das pílulas do funil — ver a nota em ALERTA_ESTOQUE_CLASSES. */
+export const STATUS_FUNIL_CLASSES: Record<string, string> = {
+  lead: "bg-info/10 text-info",
+  contato: "bg-info/10 text-info",
+  proposta: "bg-alerta/10 text-alerta",
+  negociacao: "bg-sucesso/10 text-sucesso",
+  fechado: "bg-sucesso/10 text-sucesso",
+  perdido: "bg-erro/10 text-erro",
+};
+
 export const STATUS_FUNIL_CORES: Record<string, string> = {
   lead: "#6366f1",
   contato: "#3b82f6",
@@ -281,6 +291,17 @@ export const ALERTA_ESTOQUE_LABELS: Record<string, string> = {
   zerado: "Sem estoque",
   critico: "Crítico",
   baixo: "Abaixo do mínimo",
+};
+
+/**
+ * Classes das pílulas de alerta. Separadas do mapa de hex logo abaixo porque
+ * texto precisa acompanhar o modo (o âmbar #f59e0b sobre branco dá 2:1), e o
+ * hex só continua existindo para os gráficos, que pintam área e não texto.
+ */
+export const ALERTA_ESTOQUE_CLASSES: Record<string, string> = {
+  zerado: "bg-erro/10 text-erro",
+  critico: "bg-alerta/10 text-alerta",
+  baixo: "bg-alerta/10 text-alerta",
 };
 
 export const ALERTA_ESTOQUE_CORES: Record<string, string> = {

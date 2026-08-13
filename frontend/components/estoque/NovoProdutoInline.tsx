@@ -30,8 +30,8 @@ export function NovoProdutoInline({ nomeInicial, onCriado, onCancelar }: NovoPro
   const [salvando, setSalvando] = useState(false);
 
   const input =
-    "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-500/50";
-  const label = "mb-1 block text-xs font-medium text-slate-400";
+    "w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500/50";
+  const label = "mb-1 block text-xs font-medium text-muted-foreground";
 
   const salvar = async () => {
     if (!nome.trim() || salvando) return;
@@ -53,7 +53,7 @@ export function NovoProdutoInline({ nomeInicial, onCriado, onCancelar }: NovoPro
 
   return (
     <div className="rounded-lg border border-brand-500/30 bg-brand-500/5 p-4 space-y-3">
-      <p className="text-sm font-medium text-white">Novo produto</p>
+      <p className="text-sm font-medium text-foreground">Novo produto</p>
       <div>
         <label className={label}>Nome *</label>
         <input
@@ -73,7 +73,7 @@ export function NovoProdutoInline({ nomeInicial, onCriado, onCancelar }: NovoPro
             className={input}
           >
             {UNIDADES.map((u) => (
-              <option key={u} value={u} className="bg-slate-900">{u}</option>
+              <option key={u} value={u} className="bg-card">{u}</option>
             ))}
           </select>
         </div>
@@ -98,7 +98,7 @@ export function NovoProdutoInline({ nomeInicial, onCriado, onCancelar }: NovoPro
         <button
           type="button"
           onClick={onCancelar}
-          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-3.5 w-3.5" /> Voltar
         </button>

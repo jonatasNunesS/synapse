@@ -40,7 +40,7 @@ export default function FornecedoresPage() {
         {/* Botão Gerenciar Categorias */}
         <button
           onClick={() => setShowCategorias(true)}
-          className="flex items-center gap-2 rounded-lg border border-border bg-secondary/60 px-3 py-2 text-sm text-foreground-suave hover:bg-slate-700 hover:text-foreground transition-colors"
+          className="flex items-center gap-2 rounded-lg border border-border bg-secondary/60 px-3 py-2 text-sm text-foreground-suave hover:bg-superficie-forte hover:text-foreground transition-colors"
         >
           <Tag className="h-4 w-4 text-brand-accent" />
           Gerenciar Categorias

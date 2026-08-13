@@ -41,7 +41,7 @@ function NotificacaoItem({
     <div
       className={cn(
         "flex items-start gap-3 p-3 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors",
-        !notificacao.lida && "bg-blue-50/50 dark:bg-blue-950/20"
+        !notificacao.lida && "bg-info/10/50 dark:bg-blue-950/20"
       )}
       onClick={handleClick}
     >

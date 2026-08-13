@@ -175,7 +175,7 @@ export default function ProdutoDetailPage() {
                 )}
                 {produto.categoria_nome && (
                   <>
-                    <span className="text-slate-700">·</span>
+                    <span className="text-foreground-suave">·</span>
                     <div className="flex items-center gap-1">
                       <div
                         className="h-2 w-2 rounded-full"
@@ -187,7 +187,7 @@ export default function ProdutoDetailPage() {
                     </div>
                   </>
                 )}
-                <span className="text-slate-700">·</span>
+                <span className="text-foreground-suave">·</span>
                 <span className={`text-xs font-medium ${status.cor}`}>
                   {status.label}
                 </span>

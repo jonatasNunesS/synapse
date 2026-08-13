@@ -91,7 +91,7 @@ export function KanbanEquipeIndividual({ membroUsuarioId, membroNome }: Props) {
         {isAdmin && (
           <button
             onClick={() => setEditarColunas(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 text-xs font-medium hover:bg-slate-800"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-foreground-suave text-xs font-medium hover:bg-secondary"
           >
             <Settings2 className="h-3.5 w-3.5" /> Editar colunas
           </button>

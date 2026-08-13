@@ -18,34 +18,34 @@ function getScoreColor(score: number): {
 } {
   if (score >= 80)
     return {
-      text: "text-emerald-400",
+      text: "text-sucesso",
       bg: "bg-emerald-500/10 border-emerald-500/30",
       bar: "bg-emerald-500",
       label: "Excelente",
     };
   if (score >= 60)
     return {
-      text: "text-blue-400",
+      text: "text-info",
       bg: "bg-blue-500/10 border-blue-500/30",
       bar: "bg-blue-500",
       label: "Bom",
     };
   if (score >= 40)
     return {
-      text: "text-amber-400",
+      text: "text-alerta",
       bg: "bg-amber-500/10 border-amber-500/30",
       bar: "bg-amber-500",
       label: "Regular",
     };
   if (score >= 20)
     return {
-      text: "text-orange-400",
+      text: "text-alerta",
       bg: "bg-orange-500/10 border-orange-500/30",
       bar: "bg-orange-500",
       label: "Fraco",
     };
   return {
-    text: "text-red-400",
+    text: "text-erro",
     bg: "bg-red-500/10 border-red-500/30",
     bar: "bg-red-500",
     label: "Crítico",
@@ -74,12 +74,12 @@ export function ScoreSynapse({
     return (
       <div className={cn("w-full", className)}>
         <div className="mb-1 flex items-center justify-between">
-          <span className="text-xs text-zinc-400">Score Synapse</span>
+          <span className="text-xs text-muted-foreground">Score Synapse</span>
           <span className={cn("font-bold", colors.text, sizes.text)}>
             {safeScore.toFixed(0)}
           </span>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-superficie-forte">
           <div
             className={cn("h-full rounded-full transition-all duration-500", colors.bar)}
             style={{ width: `${safeScore}%` }}
@@ -153,7 +153,7 @@ export function ScoreSynapseCard({
         className
       )}
     >
-      <p className="mb-3 text-sm font-medium text-zinc-400">Score Synapse</p>
+      <p className="mb-3 text-sm font-medium text-muted-foreground">Score Synapse</p>
       <svg width="120" height="120" viewBox="0 0 120 120">
         {/* Arco de fundo */}
         <path

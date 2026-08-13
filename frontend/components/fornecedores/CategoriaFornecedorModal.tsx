@@ -101,18 +101,18 @@ export function CategoriaFornecedorModal({ onFechar }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onFechar} />
-      <div className="relative z-10 w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl shadow-black/50">
+      <div className="relative z-10 w-full max-w-lg rounded-2xl border border-border bg-card shadow-2xl shadow-black/50">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600/20">
-              <Tag className="h-4 w-4 text-brand-400" />
+              <Tag className="h-4 w-4 text-brand-accent" />
             </div>
-            <h2 className="text-base font-semibold text-slate-100">Categorias de Fornecedores</h2>
+            <h2 className="text-base font-semibold text-foreground">Categorias de Fornecedores</h2>
           </div>
           <button
             onClick={onFechar}
-            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-800 hover:text-slate-300 transition-colors"
+            className="rounded-lg p-1.5 text-muted-suave hover:bg-secondary hover:text-foreground-suave transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
@@ -121,7 +121,7 @@ export function CategoriaFornecedorModal({ onFechar }: Props) {
         <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
           {/* Erro global */}
           {erroGlobal && (
-            <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+            <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-erro">
               {erroGlobal}
             </div>
           )}
@@ -132,35 +132,35 @@ export function CategoriaFornecedorModal({ onFechar }: Props) {
               <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
             </div>
           ) : categorias.length === 0 && !showForm ? (
-            <div className="rounded-xl border border-dashed border-slate-700 py-8 text-center">
-              <Tag className="mx-auto h-8 w-8 text-slate-600 mb-2" />
-              <p className="text-sm text-slate-500">Nenhuma categoria cadastrada</p>
+            <div className="rounded-xl border border-dashed border-border py-8 text-center">
+              <Tag className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+              <p className="text-sm text-muted-suave">Nenhuma categoria cadastrada</p>
             </div>
           ) : (
             <div className="space-y-2">
               {categorias.map((cat) => (
                 <div
                   key={cat.id}
-                  className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-800/40 px-4 py-3"
+                  className="flex items-center justify-between rounded-lg border border-border bg-secondary/40 px-4 py-3"
                 >
                   <div className="flex items-center gap-3">
                     <span
                       className="h-3 w-3 rounded-full flex-shrink-0"
                       style={{ backgroundColor: cat.cor ?? "#6366f1" }}
                     />
-                    <span className="text-sm font-medium text-slate-200">{cat.nome}</span>
+                    <span className="text-sm font-medium text-foreground-suave">{cat.nome}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => { setEditando(cat); setShowForm(true); }}
-                      className="rounded-md p-1.5 text-slate-500 hover:bg-slate-700 hover:text-slate-300 transition-colors"
+                      className="rounded-md p-1.5 text-muted-suave hover:bg-superficie-forte hover:text-foreground-suave transition-colors"
                       title="Editar"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => setCategoriaParaExcluir(cat)}
-                      className="rounded-md p-1.5 text-slate-500 hover:bg-red-500/10 hover:text-red-400 transition-colors"
+                      className="rounded-md p-1.5 text-muted-suave hover:bg-red-500/10 hover:text-erro transition-colors"
                       title="Excluir"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -173,27 +173,27 @@ export function CategoriaFornecedorModal({ onFechar }: Props) {
 
           {/* Formulário de criação/edição */}
           {showForm && (
-            <form onSubmit={handleSubmit(onSubmit)} className="rounded-xl border border-slate-700 bg-slate-800/40 p-4 space-y-4">
-              <h3 className="text-sm font-semibold text-slate-200">
+            <form onSubmit={handleSubmit(onSubmit)} className="rounded-xl border border-border bg-secondary/40 p-4 space-y-4">
+              <h3 className="text-sm font-semibold text-foreground-suave">
                 {editando ? "Editar categoria" : "Nova categoria"}
               </h3>
 
               {/* Nome */}
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">Nome *</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">Nome *</label>
                 <input
                   {...register("nome", { required: "Nome é obrigatório" })}
                   placeholder="Ex: Matéria-prima"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500/40"
+                  className="w-full rounded-lg border border-border bg-card shadow-elevacao px-3 py-2 text-sm text-foreground-suave placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500/40"
                 />
                 {errors.nome && (
-                  <p className="mt-1 text-xs text-red-400">{errors.nome.message}</p>
+                  <p className="mt-1 text-xs text-erro">{errors.nome.message}</p>
                 )}
               </div>
 
               {/* Cor */}
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">Cor</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">Cor</label>
                 <div className="flex items-center gap-2 flex-wrap">
                   {CORES_PRESET.map((cor) => (
                     <button
@@ -224,7 +224,7 @@ export function CategoriaFornecedorModal({ onFechar }: Props) {
                 <button
                   type="button"
                   onClick={() => { setShowForm(false); setEditando(null); reset(); }}
-                  className="rounded-lg px-4 py-2 text-sm text-slate-400 hover:bg-slate-700 hover:text-slate-200 transition-colors"
+                  className="rounded-lg px-4 py-2 text-sm text-muted-foreground hover:bg-superficie-forte hover:text-foreground-suave transition-colors"
                 >
                   Cancelar
                 </button>
@@ -236,7 +236,7 @@ export function CategoriaFornecedorModal({ onFechar }: Props) {
           {!showForm && (
             <button
               onClick={handleNovaCategoria}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-slate-700 py-3 text-sm text-slate-500 hover:border-brand-500/40 hover:text-brand-400 hover:bg-brand-500/5 transition-colors"
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border py-3 text-sm text-muted-suave hover:border-brand-500/40 hover:text-brand-accent hover:bg-brand-500/5 transition-colors"
             >
               <Plus className="h-4 w-4" />
               Nova categoria
@@ -251,7 +251,7 @@ export function CategoriaFornecedorModal({ onFechar }: Props) {
         mensagem={
           <>
             Excluir a categoria{" "}
-            <span className="text-white font-medium">
+            <span className="text-foreground font-medium">
               {categoriaParaExcluir?.nome}
             </span>
             ? Fornecedores vinculados perderão a categoria.

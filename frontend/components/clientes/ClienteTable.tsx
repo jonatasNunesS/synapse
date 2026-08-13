@@ -253,7 +253,7 @@ export function ClienteTable({
                           <div className="text-muted-suave">{cliente.quantidade_compras} compras</div>
                         </>
                       ) : (
-                        <span className="text-gray-600">Sem compras</span>
+                        <span className="text-muted-foreground">Sem compras</span>
                       )}
                     </div>
                   </td>

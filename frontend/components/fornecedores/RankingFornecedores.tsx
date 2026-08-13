@@ -17,24 +17,24 @@ function PosicaoBadge({ posicao }: { posicao: number }) {
   if (posicao === 1)
     return (
       <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-500/20">
-        <Trophy className="h-4 w-4 text-amber-400" />
+        <Trophy className="h-4 w-4 text-alerta" />
       </div>
     );
   if (posicao === 2)
     return (
       <div className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-400/20">
-        <Medal className="h-4 w-4 text-zinc-300" />
+        <Medal className="h-4 w-4 text-foreground-suave" />
       </div>
     );
   if (posicao === 3)
     return (
       <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-700/20">
-        <Medal className="h-4 w-4 text-amber-700" />
+        <Medal className="h-4 w-4 text-alerta" />
       </div>
     );
   return (
-    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/5">
-      <span className="text-xs font-bold text-zinc-500">#{posicao}</span>
+    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-superficie">
+      <span className="text-xs font-bold text-muted-suave">#{posicao}</span>
     </div>
   );
 }
@@ -47,32 +47,32 @@ export function RankingFornecedores() {
   }, [fetch]);
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm">
+    <div className="rounded-xl border border-border bg-superficie backdrop-blur-sm">
       {/* Header */}
-      <div className="flex items-center gap-2 border-b border-white/10 px-5 py-4">
-        <Trophy className="h-4 w-4 text-amber-400" />
-        <h3 className="text-sm font-semibold text-white">Ranking de Fornecedores</h3>
-        <span className="ml-auto text-xs text-zinc-500">por Score Synapse</span>
+      <div className="flex items-center gap-2 border-b border-border px-5 py-4">
+        <Trophy className="h-4 w-4 text-alerta" />
+        <h3 className="text-sm font-semibold text-foreground">Ranking de Fornecedores</h3>
+        <span className="ml-auto text-xs text-muted-suave">por Score Synapse</span>
       </div>
 
       {/* List */}
-      <div className="divide-y divide-white/5">
+      <div className="divide-y divide-border">
         {loading && (
-          <div className="flex items-center justify-center gap-2 py-8 text-sm text-zinc-500">
+          <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-suave">
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
             Carregando ranking...
           </div>
         )}
         {!loading && error && (
-          <p className="py-6 text-center text-sm text-red-400">{error}</p>
+          <p className="py-6 text-center text-sm text-erro">{error}</p>
         )}
         {!loading && !error && data.length === 0 && (
           <div className="py-8 text-center">
-            <Trophy className="mx-auto mb-2 h-8 w-8 text-zinc-700" />
-            <p className="text-sm text-zinc-500">
+            <Trophy className="mx-auto mb-2 h-8 w-8 text-foreground-suave" />
+            <p className="text-sm text-muted-suave">
               Nenhum fornecedor avaliado ainda.
             </p>
-            <p className="mt-1 text-xs text-zinc-600">
+            <p className="mt-1 text-xs text-muted-foreground">
               Avalie fornecedores para ver o ranking.
             </p>
           </div>
@@ -81,16 +81,16 @@ export function RankingFornecedores() {
           data.map((f: RankingFornecedor) => (
             <div
               key={f.id}
-              className="flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-white/5"
+              className="flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-superficie"
             >
               {/* Posição */}
               <PosicaoBadge posicao={f.posicao} />
 
               {/* Info */}
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-white">{f.nome}</p>
+                <p className="truncate text-sm font-medium text-foreground">{f.nome}</p>
                 {f.categoria_nome && (
-                  <p className="text-xs text-zinc-500">{f.categoria_nome}</p>
+                  <p className="text-xs text-muted-suave">{f.categoria_nome}</p>
                 )}
                 {/* Avaliações inline */}
                 <div className="mt-1 flex flex-wrap gap-3">
@@ -109,10 +109,10 @@ export function RankingFornecedores() {
               {/* Score + Compras */}
               <div className="flex flex-col items-end gap-1.5">
                 <ScoreSynapse score={f.score_synapse} size="sm" />
-                <span className="text-xs text-zinc-500">
+                <span className="text-xs text-muted-suave">
                   {formatCurrency(f.valor_total_compras)}
                 </span>
-                <span className="text-xs text-zinc-600">
+                <span className="text-xs text-muted-foreground">
                   {f.quantidade_pedidos} pedido{f.quantidade_pedidos !== 1 ? "s" : ""}
                 </span>
               </div>

@@ -198,7 +198,7 @@ export function Sidebar() {
         </span>
       )}
       {item.disabled && (
-        <span className="text-[0.625rem] text-slate-600 font-normal">breve</span>
+        <span className="text-[0.625rem] text-muted-foreground font-normal">breve</span>
       )}
     </>
   )}
@@ -234,7 +234,7 @@ export function Sidebar() {
               {/* Logout */}
               <button
                 onClick={() => logout()}
-                className="opacity-0 group-hover:opacity-100 flex h-6 w-6 items-center justify-center rounded-md text-slate-600 hover:text-erro hover:bg-red-500/10 transition-all"
+                className="opacity-0 group-hover:opacity-100 flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:text-erro hover:bg-red-500/10 transition-all"
                 title="Sair"
               >
                 <LogOut className="h-3.5 w-3.5" />
@@ -252,7 +252,7 @@ export function Sidebar() {
             </div>
           )}
           {sidebarOpen && (
-            <p className="mt-1 px-3 pb-0.5 text-[0.625rem] tabular-nums text-slate-600 select-none">
+            <p className="mt-1 px-3 pb-0.5 text-[0.625rem] tabular-nums text-muted-foreground select-none">
               Synapse {VERSION_LABEL}
             </p>
           )}

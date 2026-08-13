@@ -58,31 +58,31 @@ export function ResumoEquipeCards() {
         icon={Users}
         label="Total de Membros"
         value={resumo.total_membros}
-        color="bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400"
+        color="bg-brand-500/15 text-brand-accent dark:bg-brand-900/30 dark:text-brand-accent"
       />
       <StatCard
         icon={UserCheck}
         label="Ativos"
         value={resumo.membros_ativos}
-        color="bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+        color="bg-sucesso/10 text-sucesso dark:bg-green-900/30 dark:text-sucesso"
       />
       <StatCard
         icon={UserX}
         label="Inativos"
         value={resumo.membros_inativos}
-        color="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+        color="bg-muted text-muted-foreground dark:bg-secondary dark:text-muted-foreground"
       />
       <StatCard
         icon={Target}
         label="Metas Ativas"
         value={resumo.metas_ativas}
-        color="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+        color="bg-info/10 text-info dark:bg-blue-900/30 dark:text-info"
       />
       <StatCard
         icon={Trophy}
         label="Metas Atingidas"
         value={`${resumo.metas_atingidas} (${taxaMetas}%)`}
-        color="bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+        color="bg-alerta/10 text-alerta dark:bg-amber-900/30 dark:text-alerta"
       />
     </div>
   );

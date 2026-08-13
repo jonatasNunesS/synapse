@@ -156,7 +156,7 @@ export function EventoForm({ evento, slotInicial, onSalvar, onFechar }: EventoFo
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">
-              Título <span className="text-destructive">*</span>
+              Título <span className="text-erro">*</span>
             </label>
             <input
               type="text"

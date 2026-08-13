@@ -17,7 +17,7 @@ export default function AIHubHistoricoPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Sparkles className="h-6 w-6 text-brand-500" />
             Histórico de Conteúdos
           </h1>

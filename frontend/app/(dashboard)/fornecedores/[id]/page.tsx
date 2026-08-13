@@ -125,7 +125,7 @@ export default function FornecedorDetailPage() {
             <ArrowLeft className="h-4 w-4" />
             Fornecedores
           </Link>
-          <span className="text-zinc-700">/</span>
+          <span className="text-foreground-suave">/</span>
           <span className="text-sm text-foreground">{localData.nome}</span>
         </div>
         <div className="flex items-center gap-2">

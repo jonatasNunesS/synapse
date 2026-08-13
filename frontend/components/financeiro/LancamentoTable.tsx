@@ -276,7 +276,7 @@ export function LancamentoTable({
                       <button
                         disabled
                         aria-disabled="true"
-                        className="p-1.5 rounded text-slate-600 cursor-not-allowed"
+                        className="p-1.5 rounded text-muted-foreground cursor-not-allowed"
                         title="Só administradores podem editar pagamentos"
                       >
                         <Pencil className="w-4 h-4" />
@@ -301,7 +301,7 @@ export function LancamentoTable({
                       <button
                         disabled
                         aria-disabled="true"
-                        className="p-1.5 rounded text-slate-600 cursor-not-allowed"
+                        className="p-1.5 rounded text-muted-foreground cursor-not-allowed"
                         title="Só administradores podem excluir pagamentos"
                       >
                         <Trash2 className="w-4 h-4" />

@@ -22,10 +22,10 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_CORES: Record<string, string> = {
-  pendente: "bg-slate-100 text-slate-600",
-  processando: "bg-blue-100 text-blue-700",
-  concluido: "bg-emerald-100 text-emerald-700",
-  erro: "bg-red-100 text-red-700",
+  pendente: "bg-muted text-muted-foreground",
+  processando: "bg-info/10 text-info",
+  concluido: "bg-sucesso/10 text-sucesso",
+  erro: "bg-erro/10 text-erro",
 };
 
 export function ResultadoIA({ taskAtual, resultado, gerando, onFavoritar }: ResultadoIAProps) {
@@ -43,8 +43,8 @@ export function ResultadoIA({ taskAtual, resultado, gerando, onFavoritar }: Resu
     return (
       <Card className="border-dashed">
         <CardContent className="p-8 text-center">
-          <Cpu className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-sm text-slate-400">
+          <Cpu className="h-12 w-12 text-foreground-suave mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">
             O resultado da geração aparecerá aqui
           </p>
         </CardContent>
@@ -58,10 +58,10 @@ export function ResultadoIA({ taskAtual, resultado, gerando, onFavoritar }: Resu
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium text-slate-600">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               Resultado
             </CardTitle>
-            <Badge className={STATUS_CORES[taskAtual.status] || "bg-slate-100 text-slate-600"}>
+            <Badge className={STATUS_CORES[taskAtual.status] || "bg-muted text-muted-foreground"}>
               <Loader2 className="h-3 w-3 mr-1 animate-spin" />
               {STATUS_LABELS[taskAtual.status] || taskAtual.status}
             </Badge>
@@ -72,12 +72,12 @@ export function ResultadoIA({ taskAtual, resultado, gerando, onFavoritar }: Resu
             {[...Array(4)].map((_, i) => (
               <div
                 key={i}
-                className="h-4 bg-slate-100 rounded animate-pulse"
+                className="h-4 bg-muted rounded animate-pulse"
                 style={{ width: `${85 - i * 10}%` }}
               />
             ))}
           </div>
-          <p className="text-xs text-slate-400 mt-4 text-center">
+          <p className="text-xs text-muted-foreground mt-4 text-center">
             A IA está trabalhando no seu conteúdo...
           </p>
         </CardContent>
@@ -88,11 +88,11 @@ export function ResultadoIA({ taskAtual, resultado, gerando, onFavoritar }: Resu
   // Resultado disponível
   if (resultado) {
     return (
-      <Card className="border-emerald-200">
+      <Card className="border-sucesso/30">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium text-slate-700 flex items-center gap-2">
-              <Check className="h-4 w-4 text-emerald-500" />
+            <CardTitle className="text-sm font-medium text-foreground-suave flex items-center gap-2">
+              <Check className="h-4 w-4 text-sucesso" />
               Conteúdo Gerado
             </CardTitle>
             <div className="flex items-center gap-2">
@@ -101,7 +101,7 @@ export function ResultadoIA({ taskAtual, resultado, gerando, onFavoritar }: Resu
                   variant="ghost"
                   size="sm"
                   onClick={onFavoritar}
-                  className="h-8 px-2 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+                  className="h-8 px-2 text-alerta hover:text-alerta hover:bg-alerta/10"
                   aria-label="Favoritar conteúdo"
                 >
                   <Star className="h-4 w-4" />
@@ -114,7 +114,7 @@ export function ResultadoIA({ taskAtual, resultado, gerando, onFavoritar }: Resu
                 className="h-8 px-2"
               >
                 {copiado ? (
-                  <Check className="h-4 w-4 text-emerald-500" />
+                  <Check className="h-4 w-4 text-sucesso" />
                 ) : (
                   <Copy className="h-4 w-4" />
                 )}
@@ -124,11 +124,11 @@ export function ResultadoIA({ taskAtual, resultado, gerando, onFavoritar }: Resu
           </div>
         </CardHeader>
         <CardContent>
-          <div className="bg-slate-50 rounded-lg p-4 text-sm text-slate-800 whitespace-pre-wrap leading-relaxed border border-slate-100">
+          <div className="bg-superficie rounded-lg p-4 text-sm text-foreground whitespace-pre-wrap leading-relaxed border border-slate-100">
             {resultado}
           </div>
           {taskAtual && (
-            <p className="text-xs text-slate-400 mt-2">
+            <p className="text-xs text-muted-foreground mt-2">
               Modelo: {taskAtual.resultado ? "concluído" : "—"} ·{" "}
               {taskAtual.concluido_em
                 ? new Date(taskAtual.concluido_em).toLocaleTimeString("pt-BR")

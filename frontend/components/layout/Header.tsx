@@ -93,12 +93,12 @@ export function Header() {
                 {empresa && (
                   <div className="px-3 py-2 border-b border-border mb-1.5">
                     <div className="flex items-center gap-2">
-                      <Building2 className="h-3.5 w-3.5 text-slate-600" />
+                      <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
                       <div>
                         <p className="text-xs font-medium text-foreground-suave truncate max-w-[160px]">
                           {empresa.nome}
                         </p>
-                        <p className="text-[0.6875rem] text-slate-600">Plano {planoLabel}</p>
+                        <p className="text-[0.6875rem] text-muted-foreground">Plano {planoLabel}</p>
                       </div>
                     </div>
                   </div>

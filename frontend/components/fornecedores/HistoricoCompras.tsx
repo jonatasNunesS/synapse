@@ -16,9 +16,9 @@ import type { ApiError } from "@/types/api";
 import { useModulos } from "@/hooks/useModulos";
 
 const STATUS_COMPRA: Record<string, { label: string; color: string }> = {
-  pendente: { label: "Pendente", color: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
-  pago: { label: "Pago", color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" },
-  cancelado: { label: "Cancelado", color: "bg-red-500/15 text-red-400 border-red-500/30" },
+  pendente: { label: "Pendente", color: "bg-amber-500/15 text-alerta border-amber-500/30" },
+  pago: { label: "Pago", color: "bg-emerald-500/15 text-sucesso border-emerald-500/30" },
+  cancelado: { label: "Cancelado", color: "bg-red-500/15 text-erro border-red-500/30" },
 };
 
 function formatCurrency(value: string | number) {
@@ -89,42 +89,42 @@ function NovaCompraForm({ fornecedorId, onSuccess, onClose, compraId, initialDat
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-          <h3 className="text-base font-semibold text-white">{isEdit ? "Editar Compra" : "Registrar Compra"}</h3>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-zinc-400 hover:bg-white/10 hover:text-white">
+      <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <h3 className="text-base font-semibold text-foreground">{isEdit ? "Editar Compra" : "Registrar Compra"}</h3>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-superficie-forte hover:text-foreground">
             <X className="h-5 w-5" />
           </button>
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="p-6">
           {serverError && (
-            <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+            <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-erro">
               {serverError}
             </div>
           )}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-medium text-zinc-400">Descrição *</label>
-              <input {...register("descricao")} placeholder="Descrição da compra" className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-brand-500/50" />
-              {errors.descricao && <p className="mt-1 text-xs text-red-400">{errors.descricao.message}</p>}
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Descrição *</label>
+              <input {...register("descricao")} placeholder="Descrição da compra" className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground placeholder-zinc-600 outline-none focus:border-brand-500/50" />
+              {errors.descricao && <p className="mt-1 text-xs text-erro">{errors.descricao.message}</p>}
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-400">Valor *</label>
-              <input {...register("valor", { valueAsNumber: true })} type="number" step="0.01" placeholder="0,00" className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-brand-500/50" />
-              {errors.valor && <p className="mt-1 text-xs text-red-400">{errors.valor.message}</p>}
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Valor *</label>
+              <input {...register("valor", { valueAsNumber: true })} type="number" step="0.01" placeholder="0,00" className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground placeholder-zinc-600 outline-none focus:border-brand-500/50" />
+              {errors.valor && <p className="mt-1 text-xs text-erro">{errors.valor.message}</p>}
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-400">Data da Compra *</label>
-              <input {...register("data_compra")} type="date" className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-brand-500/50" />
-              {errors.data_compra && <p className="mt-1 text-xs text-red-400">{errors.data_compra.message}</p>}
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Data da Compra *</label>
+              <input {...register("data_compra")} type="date" className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500/50" />
+              {errors.data_compra && <p className="mt-1 text-xs text-erro">{errors.data_compra.message}</p>}
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-400">Nº Nota Fiscal</label>
-              <input {...register("numero_nf")} placeholder="NF-001" className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-brand-500/50" />
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Nº Nota Fiscal</label>
+              <input {...register("numero_nf")} placeholder="NF-001" className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground placeholder-zinc-600 outline-none focus:border-brand-500/50" />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-400">Status</label>
-              <select {...register("status")} className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-brand-500/50">
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Status</label>
+              <select {...register("status")} className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500/50">
                 <option value="pendente">Pendente</option>
                 <option value="pago">Pago</option>
                 <option value="cancelado">Cancelado</option>
@@ -132,17 +132,17 @@ function NovaCompraForm({ fornecedorId, onSuccess, onClose, compraId, initialDat
             </div>
             {statusWatch === "pago" && (
               <div>
-                <label className="mb-1 block text-xs font-medium text-zinc-400">Data de Pagamento</label>
-                <input {...register("data_pagamento")} type="date" className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-brand-500/50" />
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Data de Pagamento</label>
+                <input {...register("data_pagamento")} type="date" className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500/50" />
               </div>
             )}
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-medium text-zinc-400">Observações</label>
-              <textarea {...register("observacoes")} rows={2} placeholder="Observações adicionais..." className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-brand-500/50" />
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Observações</label>
+              <textarea {...register("observacoes")} rows={2} placeholder="Observações adicionais..." className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground placeholder-zinc-600 outline-none focus:border-brand-500/50" />
             </div>
           </div>
           <div className="mt-5 flex justify-end gap-3">
-            <button type="button" onClick={onClose} className="rounded-lg border border-white/10 px-4 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-white">
+            <button type="button" onClick={onClose} className="rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-superficie hover:text-foreground">
               Cancelar
             </button>
             <button type="submit" disabled={isSubmitting} className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 disabled:opacity-60">
@@ -248,23 +248,23 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
   };
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm">
+    <div className="rounded-xl border border-border bg-superficie backdrop-blur-sm">
 
 
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+      <div className="flex items-center justify-between border-b border-border px-5 py-4">
         <div className="flex items-center gap-2">
-          <ShoppingCart className="h-4 w-4 text-brand-400" />
-          <h3 className="text-sm font-semibold text-white">Histórico de Compras</h3>
+          <ShoppingCart className="h-4 w-4 text-brand-accent" />
+          <h3 className="text-sm font-semibold text-foreground">Histórico de Compras</h3>
           {total > 0 && (
-            <span className="rounded-full bg-brand-500/20 px-2 py-0.5 text-xs text-brand-400">
+            <span className="rounded-full bg-brand-500/20 px-2 py-0.5 text-xs text-brand-accent">
               {total}
             </span>
           )}
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-brand-600/20 px-3 py-1.5 text-xs font-medium text-brand-400 transition-colors hover:bg-brand-600/30"
+          className="flex items-center gap-1.5 rounded-lg bg-brand-600/20 px-3 py-1.5 text-xs font-medium text-brand-accent transition-colors hover:bg-brand-600/30"
         >
           <Plus className="h-3.5 w-3.5" />
           Registrar Compra
@@ -272,45 +272,45 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
       </div>
 
       {/* List */}
-      <div className="divide-y divide-white/5">
+      <div className="divide-y divide-border">
         {loading && (
-          <div className="flex items-center justify-center gap-2 py-8 text-sm text-zinc-500">
+          <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-suave">
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
             Carregando...
           </div>
         )}
         {!loading && error && (
-          <p className="py-6 text-center text-sm text-red-400">{error}</p>
+          <p className="py-6 text-center text-sm text-erro">{error}</p>
         )}
         {!loading && !error && data.length === 0 && (
           <div className="py-10 text-center">
-            <ShoppingCart className="mx-auto mb-2 h-8 w-8 text-zinc-700" />
-            <p className="text-sm text-zinc-500">Nenhuma compra registrada.</p>
+            <ShoppingCart className="mx-auto mb-2 h-8 w-8 text-foreground-suave" />
+            <p className="text-sm text-muted-suave">Nenhuma compra registrada.</p>
             <button
               onClick={() => setShowForm(true)}
-              className="mt-3 text-xs text-brand-400 hover:text-brand-300"
+              className="mt-3 text-xs text-brand-accent hover:text-brand-accent"
             >
               Registrar primeira compra
             </button>
           </div>
         )}
         {!loading && data.map((c: CompraFornecedor) => {
-          const status = STATUS_COMPRA[c.status] ?? { label: c.status, color: "bg-zinc-500/15 text-zinc-400 border-zinc-500/30" };
+          const status = STATUS_COMPRA[c.status] ?? { label: c.status, color: "bg-zinc-500/15 text-muted-foreground border-zinc-500/30" };
           return (
-            <div key={c.id} className="flex items-start justify-between px-5 py-3.5 transition-colors hover:bg-white/5">
+            <div key={c.id} className="flex items-start justify-between px-5 py-3.5 transition-colors hover:bg-superficie">
               <div className="flex-1">
-                <p className="text-sm font-medium text-white">{c.descricao}</p>
-                <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+                <p className="text-sm font-medium text-foreground">{c.descricao}</p>
+                <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-suave">
                   <span>{new Date(c.data_compra).toLocaleDateString("pt-BR")}</span>
                   {c.numero_nf && <span>NF: {c.numero_nf}</span>}
                   {c.criado_por_nome && <span>por {c.criado_por_nome}</span>}
                 </div>
                 {c.observacoes && (
-                  <p className="mt-1 text-xs text-zinc-600">{c.observacoes}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{c.observacoes}</p>
                 )}
               </div>
               <div className="ml-4 flex flex-col items-end gap-1.5">
-                <span className="font-mono text-sm font-semibold text-white">
+                <span className="font-mono text-sm font-semibold text-foreground">
                   {formatCurrency(c.valor)}
                 </span>
                 <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${status.color}`}>
@@ -319,7 +319,7 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
                 <div className="flex items-center gap-1 mt-0.5">
                   <button
                     onClick={() => setEditando(c)}
-                    className="p-1 rounded text-zinc-500 hover:text-brand-400 hover:bg-brand-500/10 transition-colors"
+                    className="p-1 rounded text-muted-suave hover:text-brand-accent hover:bg-brand-500/10 transition-colors"
                     title="Editar compra"
                   >
                     <Pencil className="h-3 w-3" />
@@ -329,7 +329,7 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
                       <button
                         onClick={() => confirmarDelete(c)}
                         disabled={excluindo}
-                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-red-500/20 text-erro hover:bg-red-500/30 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         {excluindo && <Loader2 className="h-3 w-3 animate-spin" />}
                         Sim
@@ -337,7 +337,7 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
                       <button
                         onClick={() => setConfirmandoDelete(null)}
                         disabled={excluindo}
-                        className="px-1.5 py-0.5 rounded text-xs text-zinc-400 hover:text-white transition-colors disabled:opacity-50"
+                        className="px-1.5 py-0.5 rounded text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
                       >
                         Não
                       </button>
@@ -345,7 +345,7 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
                   ) : (
                     <button
                       onClick={() => setConfirmandoDelete(c.id)}
-                      className="p-1 rounded text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                      className="p-1 rounded text-muted-suave hover:text-erro hover:bg-red-500/10 transition-colors"
                       title="Excluir compra"
                     >
                       <Trash2 className="h-3 w-3" />
@@ -360,14 +360,14 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-white/10 px-5 py-3">
-          <span className="text-xs text-zinc-500">{total} compra{total !== 1 ? "s" : ""}</span>
+        <div className="flex items-center justify-between border-t border-border px-5 py-3">
+          <span className="text-xs text-muted-suave">{total} compra{total !== 1 ? "s" : ""}</span>
           <div className="flex items-center gap-1">
-            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="rounded p-1 text-zinc-400 hover:bg-white/10 disabled:opacity-40">
+            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="rounded p-1 text-muted-foreground hover:bg-superficie-forte disabled:opacity-40">
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="text-xs text-zinc-400">{page} / {totalPages}</span>
-            <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="rounded p-1 text-zinc-400 hover:bg-white/10 disabled:opacity-40">
+            <span className="text-xs text-muted-foreground">{page} / {totalPages}</span>
+            <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="rounded p-1 text-muted-foreground hover:bg-superficie-forte disabled:opacity-40">
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>

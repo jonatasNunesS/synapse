@@ -34,7 +34,7 @@ export function AvaliacaoStars({
   return (
     <div className={cn("flex flex-col gap-1", className)}>
       {label && (
-        <span className="text-xs text-zinc-400">{label}</span>
+        <span className="text-xs text-muted-foreground">{label}</span>
       )}
       <div className="flex items-center gap-0.5">
         {[1, 2, 3, 4, 5].map((star) => (
@@ -56,14 +56,14 @@ export function AvaliacaoStars({
                 iconSize,
                 "transition-colors duration-150",
                 star <= current
-                  ? "fill-amber-400 text-amber-400"
-                  : "fill-transparent text-zinc-600"
+                  ? "fill-amber-400 text-alerta"
+                  : "fill-transparent text-muted-foreground"
               )}
             />
           </button>
         ))}
         {value !== null && value !== undefined && (
-          <span className="ml-1.5 text-xs text-zinc-400">
+          <span className="ml-1.5 text-xs text-muted-foreground">
             {value.toFixed(1)}
           </span>
         )}

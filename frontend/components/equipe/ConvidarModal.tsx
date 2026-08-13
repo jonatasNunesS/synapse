@@ -69,16 +69,16 @@ export function ConvidarModal({ onFechar, onConvidado }: ConvidarModalProps) {
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onFechar}
       />
-      <div className="relative bg-[#0d1117] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
+      <div className="relative bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
+        <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center gap-2">
-            <UserPlus className="w-5 h-5 text-brand-400" />
-            <h2 className="text-lg font-semibold text-white">Convidar Membro</h2>
+            <UserPlus className="w-5 h-5 text-brand-accent" />
+            <h2 className="text-lg font-semibold text-foreground">Convidar Membro</h2>
           </div>
           <button
             onClick={onFechar}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-superficie-forte transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -87,78 +87,78 @@ export function ConvidarModal({ onFechar, onConvidado }: ConvidarModalProps) {
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
           {errors.root && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-erro">
               {errors.root.message}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
-              E-mail <span className="text-red-400">*</span>
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">
+              E-mail <span className="text-erro">*</span>
             </label>
             <input
               {...register("email")}
               type="email"
               placeholder="colaborador@empresa.com"
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
             />
             {errors.email && (
-              <p className="mt-1 text-xs text-red-400">{errors.email.message}</p>
+              <p className="mt-1 text-xs text-erro">{errors.email.message}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
-              Nome Completo <span className="text-red-400">*</span>
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">
+              Nome Completo <span className="text-erro">*</span>
             </label>
             <input
               {...register("nome")}
               placeholder="João da Silva"
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
             />
             {errors.nome && (
-              <p className="mt-1 text-xs text-red-400">{errors.nome.message}</p>
+              <p className="mt-1 text-xs text-erro">{errors.nome.message}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
-              Perfil de Acesso <span className="text-red-400">*</span>
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">
+              Perfil de Acesso <span className="text-erro">*</span>
             </label>
             <select
               {...register("perfil")}
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
             >
-              <option value="colaborador" className="bg-[#0d1117]">Colaborador</option>
-              <option value="gerente" className="bg-[#0d1117]">Gerente</option>
-              <option value="admin" className="bg-[#0d1117]">Administrador</option>
+              <option value="colaborador" className="bg-card">Colaborador</option>
+              <option value="gerente" className="bg-card">Gerente</option>
+              <option value="admin" className="bg-card">Administrador</option>
             </select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                Cargo <span className="text-slate-500 text-xs">(opcional)</span>
+              <label className="block text-sm font-medium text-foreground-suave mb-1.5">
+                Cargo <span className="text-muted-suave text-xs">(opcional)</span>
               </label>
               <input
                 {...register("cargo")}
                 placeholder="Ex: Analista"
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                Departamento <span className="text-slate-500 text-xs">(opcional)</span>
+              <label className="block text-sm font-medium text-foreground-suave mb-1.5">
+                Departamento <span className="text-muted-suave text-xs">(opcional)</span>
               </label>
               <input
                 {...register("departamento")}
                 placeholder="Ex: Vendas"
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
               />
             </div>
           </div>
 
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-suave">
             Um e-mail de acesso será enviado ao novo membro com as credenciais de entrada.
           </p>
 
@@ -166,7 +166,7 @@ export function ConvidarModal({ onFechar, onConvidado }: ConvidarModalProps) {
             <button
               type="button"
               onClick={onFechar}
-              className="flex-1 px-4 py-2.5 rounded-lg border border-white/10 text-slate-300 hover:text-white hover:bg-white/5 transition-colors text-sm font-medium"
+              className="flex-1 px-4 py-2.5 rounded-lg border border-border text-foreground-suave hover:text-foreground hover:bg-superficie transition-colors text-sm font-medium"
             >
               Cancelar
             </button>

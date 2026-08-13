@@ -140,7 +140,7 @@ export default function CaixinhasPage() {
         </div>
       ) : caixinhas.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <PiggyBank className="w-12 h-12 text-slate-600 mb-3" />
+          <PiggyBank className="w-12 h-12 text-muted-foreground mb-3" />
           <p className="text-muted-foreground">
             Nenhuma caixinha ainda. Separe dinheiro do seu saldo para
             reservas e metas.

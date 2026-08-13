@@ -152,26 +152,26 @@ export default function AnalyticsPage() {
             {
               label: "Receitas",
               valor: formatCurrencyFull(resumo.resumo.financeiro.total_receitas),
-              cor: "text-green-600",
-              bg: "bg-green-50",
+              cor: "text-sucesso",
+              bg: "bg-sucesso/10",
             },
             {
               label: "Despesas",
               valor: formatCurrencyFull(resumo.resumo.financeiro.total_despesas),
-              cor: "text-red-600",
-              bg: "bg-red-50",
+              cor: "text-erro",
+              bg: "bg-erro/10",
             },
             {
               label: "Saldo",
               valor: formatCurrencyFull(resumo.resumo.financeiro.saldo_mes),
-              cor: resumo.resumo.financeiro.saldo_mes >= 0 ? "text-green-600" : "text-red-600",
-              bg: resumo.resumo.financeiro.saldo_mes >= 0 ? "bg-green-50" : "bg-red-50",
+              cor: resumo.resumo.financeiro.saldo_mes >= 0 ? "text-sucesso" : "text-erro",
+              bg: resumo.resumo.financeiro.saldo_mes >= 0 ? "bg-sucesso/10" : "bg-erro/10",
             },
             {
               label: "Clientes",
               valor: resumo.resumo.crm.total_clientes.toString(),
-              cor: "text-brand-600",
-              bg: "bg-brand-50",
+              cor: "text-brand-accent",
+              bg: "bg-brand-500/10",
             },
           ].map((kpi) => (
             <Card key={kpi.label} className={`${kpi.bg} border-0`}>

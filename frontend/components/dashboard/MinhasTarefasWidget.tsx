@@ -8,10 +8,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { TarefaDashboard } from "@/types/dashboard";
 
 const PRIORIDADE_BADGE: Record<string, string> = {
-  baixa: "bg-gray-100 text-gray-700",
-  media: "bg-blue-100 text-blue-700",
-  alta: "bg-yellow-100 text-yellow-700",
-  urgente: "bg-red-100 text-red-700",
+  baixa: "bg-muted text-foreground-suave",
+  media: "bg-info/10 text-info",
+  alta: "bg-alerta/10 text-alerta",
+  urgente: "bg-erro/10 text-erro",
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -47,7 +47,7 @@ export function MinhasTarefasWidget({ tarefas, isLoading }: MinhasTarefasWidgetP
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
-            <CheckSquare className="h-4 w-4 text-orange-500" />
+            <CheckSquare className="h-4 w-4 text-alerta" />
             Minhas Tarefas
           </CardTitle>
           <Link
@@ -74,7 +74,7 @@ export function MinhasTarefasWidget({ tarefas, isLoading }: MinhasTarefasWidgetP
                 {/* Ícone de alerta se atrasada */}
                 <div className="mt-0.5 flex-shrink-0">
                   {tarefa.atrasada ? (
-                    <AlertTriangle className="h-4 w-4 text-red-500" />
+                    <AlertTriangle className="h-4 w-4 text-erro" />
                   ) : (
                     <Clock className="h-4 w-4 text-muted-foreground" />
                   )}
@@ -82,13 +82,13 @@ export function MinhasTarefasWidget({ tarefas, isLoading }: MinhasTarefasWidgetP
 
                 {/* Conteúdo */}
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium truncate group-hover:text-foreground ${tarefa.atrasada ? "text-red-600" : "text-foreground"}`}>
+                  <p className={`text-sm font-medium truncate group-hover:text-foreground ${tarefa.atrasada ? "text-erro" : "text-foreground"}`}>
                     {tarefa.titulo}
                   </p>
                   <p className="text-xs text-muted-foreground truncate mt-0.5">
                     {tarefa.projeto_nome}
                     {tarefa.data_prazo && (
-                      <span className={tarefa.atrasada ? "text-red-500 ml-1" : "ml-1"}>
+                      <span className={tarefa.atrasada ? "text-erro ml-1" : "ml-1"}>
                         · {tarefa.atrasada ? "Atrasada" : `${tarefa.dias_restantes}d`}
                       </span>
                     )}
@@ -97,7 +97,7 @@ export function MinhasTarefasWidget({ tarefas, isLoading }: MinhasTarefasWidgetP
 
                 {/* Badges */}
                 <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                  <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${PRIORIDADE_BADGE[tarefa.prioridade] ?? "bg-gray-100 text-gray-700"}`}>
+                  <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${PRIORIDADE_BADGE[tarefa.prioridade] ?? "bg-muted text-foreground-suave"}`}>
                     {tarefa.prioridade}
                   </span>
                   <span className="text-xs text-muted-foreground">

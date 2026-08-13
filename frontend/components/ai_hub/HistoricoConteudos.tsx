@@ -49,7 +49,7 @@ function ConteudoCard({
   const temMais = conteudo.resultado.length > 150;
 
   return (
-    <Card className={`transition-all ${conteudo.favorito ? "border-amber-200 bg-amber-50/30" : ""}`}>
+    <Card className={`transition-all ${conteudo.favorito ? "border-alerta/30 bg-alerta/10/30" : ""}`}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-2 flex-wrap">
@@ -57,7 +57,7 @@ function ConteudoCard({
             <Badge variant="secondary" className="text-xs">
               {TIPO_CONTEUDO_LABELS[conteudo.tipo] || conteudo.tipo_display}
             </Badge>
-            <span className="flex items-center gap-1 text-xs text-slate-400">
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
               <Clock className="h-3 w-3" />
               {new Date(conteudo.criado_em).toLocaleDateString("pt-BR", {
                 day: "2-digit",
@@ -72,7 +72,7 @@ function ConteudoCard({
               variant="ghost"
               size="sm"
               onClick={() => onToggleFavorito(conteudo.id)}
-              className={`h-7 w-7 p-0 ${conteudo.favorito ? "text-amber-500" : "text-slate-400 hover:text-amber-500"}`}
+              className={`h-7 w-7 p-0 ${conteudo.favorito ? "text-alerta" : "text-muted-foreground hover:text-alerta"}`}
               aria-label={conteudo.favorito ? "Remover dos favoritos" : "Adicionar aos favoritos"}
             >
               <Star className={`h-4 w-4 ${conteudo.favorito ? "fill-current" : ""}`} />
@@ -81,11 +81,11 @@ function ConteudoCard({
               variant="ghost"
               size="sm"
               onClick={copiar}
-              className="h-7 w-7 p-0 text-slate-400 hover:text-slate-700"
+              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground-suave"
               aria-label="Copiar conteúdo"
             >
               {copiado ? (
-                <Check className="h-4 w-4 text-emerald-500" />
+                <Check className="h-4 w-4 text-sucesso" />
               ) : (
                 <Copy className="h-4 w-4" />
               )}
@@ -94,12 +94,12 @@ function ConteudoCard({
         </div>
 
         {conteudo.prompt_usuario && (
-          <p className="text-xs text-slate-500 mb-2 italic">
+          <p className="text-xs text-muted-suave mb-2 italic">
             &quot;{conteudo.prompt_usuario.slice(0, 80)}{conteudo.prompt_usuario.length > 80 ? "..." : ""}&quot;
           </p>
         )}
 
-        <div className="bg-white rounded border border-slate-100 p-3 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
+        <div className="bg-card rounded border border-slate-100 p-3 text-sm text-foreground-suave whitespace-pre-wrap leading-relaxed">
           {expandido ? conteudo.resultado : preview}
           {temMais && !expandido && "..."}
         </div>
@@ -107,13 +107,13 @@ function ConteudoCard({
         {temMais && (
           <button
             onClick={() => setExpandido(!expandido)}
-            className="text-xs text-brand-600 hover:text-brand-700 mt-1"
+            className="text-xs text-brand-accent hover:text-brand-accent mt-1"
           >
             {expandido ? "Ver menos" : "Ver mais"}
           </button>
         )}
 
-        <p className="text-xs text-slate-400 mt-2">
+        <p className="text-xs text-muted-foreground mt-2">
           {conteudo.modelo_usado} · {conteudo.tokens_usados} tokens
         </p>
       </CardContent>
@@ -134,7 +134,7 @@ export function HistoricoConteudos() {
     <div className="space-y-4">
       {/* Filtros */}
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-2 text-sm text-slate-500">
+        <div className="flex items-center gap-2 text-sm text-muted-suave">
           <Filter className="h-4 w-4" />
           <span>Filtrar:</span>
         </div>
@@ -170,8 +170,8 @@ export function HistoricoConteudos() {
           {[...Array(3)].map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardContent className="p-4">
-                <div className="h-4 bg-slate-100 rounded w-1/3 mb-3" />
-                <div className="h-16 bg-slate-100 rounded" />
+                <div className="h-4 bg-muted rounded w-1/3 mb-3" />
+                <div className="h-16 bg-muted rounded" />
               </CardContent>
             </Card>
           ))}
@@ -179,7 +179,7 @@ export function HistoricoConteudos() {
       ) : conteudos.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="p-8 text-center">
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-muted-foreground">
               {favoritoFiltro
                 ? "Nenhum conteúdo favorito encontrado."
                 : tipoFiltro

@@ -40,7 +40,7 @@ export function VencimentosWidget({ vencimentos, isLoading }: VencimentosWidgetP
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-yellow-500" />
+            <DollarSign className="h-4 w-4 text-alerta" />
             Vencimentos Próximos
           </CardTitle>
           <Link
@@ -64,11 +64,11 @@ export function VencimentosWidget({ vencimentos, isLoading }: VencimentosWidgetP
                 className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted transition-colors"
               >
                 {/* Ícone de tipo */}
-                <div className={`p-1.5 rounded-md flex-shrink-0 ${v.tipo === "receita" ? "bg-green-50" : "bg-red-50"}`}>
+                <div className={`p-1.5 rounded-md flex-shrink-0 ${v.tipo === "receita" ? "bg-sucesso/10" : "bg-erro/10"}`}>
                   {v.tipo === "receita" ? (
-                    <TrendingUp className="h-3.5 w-3.5 text-green-600" />
+                    <TrendingUp className="h-3.5 w-3.5 text-sucesso" />
                   ) : (
-                    <TrendingDown className="h-3.5 w-3.5 text-red-600" />
+                    <TrendingDown className="h-3.5 w-3.5 text-erro" />
                   )}
                 </div>
 
@@ -78,9 +78,9 @@ export function VencimentosWidget({ vencimentos, isLoading }: VencimentosWidgetP
                   <p className="text-xs text-muted-foreground">
                     {formatDate(v.data_vencimento)}
                     {v.dias_restantes === 0 ? (
-                      <span className="text-red-500 ml-1">· Hoje</span>
+                      <span className="text-erro ml-1">· Hoje</span>
                     ) : v.dias_restantes === 1 ? (
-                      <span className="text-orange-500 ml-1">· Amanhã</span>
+                      <span className="text-alerta ml-1">· Amanhã</span>
                     ) : (
                       <span className="ml-1">· em {v.dias_restantes} dias</span>
                     )}
@@ -88,7 +88,7 @@ export function VencimentosWidget({ vencimentos, isLoading }: VencimentosWidgetP
                 </div>
 
                 {/* Valor */}
-                <span className={`text-sm font-semibold flex-shrink-0 ${v.tipo === "receita" ? "text-green-600" : "text-red-600"}`}>
+                <span className={`text-sm font-semibold flex-shrink-0 ${v.tipo === "receita" ? "text-sucesso" : "text-erro"}`}>
                   {v.tipo === "receita" ? "+" : "-"}
                   {formatCurrency(v.valor)}
                 </span>

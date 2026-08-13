@@ -142,7 +142,7 @@ export default function ChatFinanceiroPage() {
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-              <MessageSquare className="h-6 w-6 text-primary" />
+              <MessageSquare className="h-6 w-6 text-brand-accent" />
               Chat Financeiro
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
@@ -235,7 +235,7 @@ export default function ChatFinanceiroPage() {
                           excluir(c.id);
                           if (c.id === conversaId) novaConversa();
                         }}
-                        className="p-1 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                        className="p-1 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-erro transition-opacity"
                         title="Excluir conversa"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -257,7 +257,7 @@ export default function ChatFinanceiroPage() {
           <div className="flex-1 p-4 sm:p-5 space-y-4 overflow-y-auto">
             {mensagens.length === 0 && !enviando && (
               <div className="h-full flex flex-col items-center justify-center text-center gap-3 py-10">
-                <div className="h-12 w-12 rounded-xl bg-primary/15 text-primary flex items-center justify-center">
+                <div className="h-12 w-12 rounded-xl bg-primary/15 text-brand-accent flex items-center justify-center">
                   <Sparkles className="h-6 w-6" />
                 </div>
                 <p className="text-sm text-muted-foreground max-w-sm">

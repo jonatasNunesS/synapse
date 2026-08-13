@@ -62,7 +62,7 @@ export function EventoDetalhe({ evento, onEditar, onExcluir, onFechar, excluindo
               <User size={15} />
               <Link
                 href={`/clientes/${evento.cliente}`}
-                className="text-primary hover:underline"
+                className="text-brand-accent hover:underline"
               >
                 {evento.cliente_nome ?? "Ver cliente"}
               </Link>

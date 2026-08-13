@@ -92,15 +92,15 @@ export function TarefaForm({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div className="bg-card rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold text-foreground">
             {tarefa ? "Editar Tarefa" : "Nova Tarefa"}
           </h2>
           <button
             onClick={onFechar}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-muted-foreground hover:text-muted-foreground transition-colors"
           >
             <X size={20} />
           </button>
@@ -109,22 +109,22 @@ export function TarefaForm({
         {/* Form */}
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           {erro && (
-            <div className="bg-red-50 text-red-700 text-sm px-4 py-2 rounded-lg border border-red-200">
+            <div className="bg-erro/10 text-erro text-sm px-4 py-2 rounded-lg border border-erro/30">
               {erro}
             </div>
           )}
 
           {/* Título */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Título <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground-suave mb-1">
+              Título <span className="text-erro">*</span>
             </label>
             <input
               type="text"
               value={dados.titulo}
               onChange={(e) => setDados({ ...dados, titulo: e.target.value })}
               placeholder="Ex: Criar wireframes da tela inicial"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full border border-border bg-superficie text-foreground rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               maxLength={300}
               autoFocus
             />
@@ -132,7 +132,7 @@ export function TarefaForm({
 
           {/* Descrição */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground-suave mb-1">
               Descrição
             </label>
             <textarea
@@ -140,14 +140,14 @@ export function TarefaForm({
               onChange={(e) => setDados({ ...dados, descricao: e.target.value })}
               placeholder="Detalhes da tarefa..."
               rows={3}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+              className="w-full border border-border bg-superficie text-foreground rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
             />
           </div>
 
           {/* Status + Prioridade */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground-suave mb-1">
                 Status
               </label>
               <select
@@ -155,7 +155,7 @@ export function TarefaForm({
                 onChange={(e) =>
                   setDados({ ...dados, status: e.target.value as TarefaStatus })
                 }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full border border-border bg-superficie text-foreground rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               >
                 <option value="a_fazer">A Fazer</option>
                 <option value="em_andamento">Em Andamento</option>
@@ -164,7 +164,7 @@ export function TarefaForm({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground-suave mb-1">
                 Prioridade
               </label>
               <select
@@ -175,7 +175,7 @@ export function TarefaForm({
                     prioridade: e.target.value as TarefaCreatePayload["prioridade"],
                   })
                 }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               >
                 <option value="baixa">Baixa</option>
                 <option value="media">Média</option>
@@ -188,18 +188,18 @@ export function TarefaForm({
           {/* Prazo + Estimativa */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground-suave mb-1">
                 Prazo
               </label>
               <input
                 type="date"
                 value={dados.data_prazo ?? ""}
                 onChange={(e) => setDados({ ...dados, data_prazo: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full border border-border bg-superficie text-foreground rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground-suave mb-1">
                 Estimativa (h)
               </label>
               <input
@@ -211,7 +211,7 @@ export function TarefaForm({
                   setDados({ ...dados, estimativa_horas: e.target.value || null })
                 }
                 placeholder="Ex: 4.5"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
           </div>
@@ -219,7 +219,7 @@ export function TarefaForm({
           {/* Coluna no Kanban da Equipe (só admin) */}
           {isAdmin && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground-suave mb-1">
                 Coluna no Kanban da Equipe
               </label>
               <select
@@ -227,7 +227,7 @@ export function TarefaForm({
                 onChange={(e) =>
                   setDados({ ...dados, coluna_kanban_equipe: e.target.value || null })
                 }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full border border-border bg-superficie text-foreground rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               >
                 <option value="">Não exibir no Kanban</option>
                 {colunas.map((c) => (
@@ -236,7 +236,7 @@ export function TarefaForm({
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Onde esta tarefa aparece no Kanban da equipe (read-only lá).
               </p>
             </div>
@@ -247,7 +247,7 @@ export function TarefaForm({
             <button
               type="button"
               onClick={onFechar}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-foreground-suave bg-muted rounded-lg hover:bg-muted transition-colors"
             >
               Cancelar
             </button>

@@ -67,13 +67,13 @@ export function CriarEmpresaModal({ onClose, onSuccess }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-lg rounded-xl border border-slate-700 bg-slate-900 shadow-xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 flex items-center justify-between px-5 py-3.5 border-b border-slate-800 bg-slate-900">
-          <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-amber-400" />
+      <div className="w-full max-w-lg rounded-xl border border-border bg-card shadow-xl max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 flex items-center justify-between px-5 py-3.5 border-b border-border bg-card">
+          <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-alerta" />
             Criar empresa
           </h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -117,8 +117,8 @@ export function CriarEmpresaModal({ onClose, onSuccess }: Props) {
             </Campo>
           </div>
 
-          <div className="pt-2 border-t border-slate-800">
-            <p className="text-[0.6875rem] uppercase tracking-wide text-slate-500 mb-3">
+          <div className="pt-2 border-t border-border">
+            <p className="text-[0.6875rem] uppercase tracking-wide text-muted-suave mb-3">
               Administrador da empresa
             </p>
             <div className="space-y-4">
@@ -151,7 +151,7 @@ export function CriarEmpresaModal({ onClose, onSuccess }: Props) {
                   <button
                     type="button"
                     onClick={() => setMostrarSenha((v) => !v)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     aria-label={mostrarSenha ? "Esconder senha" : "Mostrar senha"}
                   >
                     {mostrarSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -162,10 +162,10 @@ export function CriarEmpresaModal({ onClose, onSuccess }: Props) {
           </div>
         </div>
 
-        <div className="sticky bottom-0 flex items-center justify-end gap-2 px-5 py-3.5 border-t border-slate-800 bg-slate-900">
+        <div className="sticky bottom-0 flex items-center justify-end gap-2 px-5 py-3.5 border-t border-border bg-card">
           <button
             onClick={onClose}
-            className="px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800 transition-colors"
+            className="px-3 py-2 rounded-lg text-sm text-foreground-suave hover:bg-secondary transition-colors"
           >
             Cancelar
           </button>
@@ -184,7 +184,7 @@ export function CriarEmpresaModal({ onClose, onSuccess }: Props) {
 }
 
 const inputCls =
-  "w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500";
+  "w-full rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-white placeholder:text-muted-suave focus:outline-none focus:ring-1 focus:ring-amber-500";
 
 function Campo({
   label,
@@ -197,9 +197,9 @@ function Campo({
 }) {
   return (
     <div>
-      <label className="text-xs text-slate-400 block mb-1">{label}</label>
+      <label className="text-xs text-muted-foreground block mb-1">{label}</label>
       {children}
-      {erro && <p className="text-xs text-red-400 mt-1">{erro}</p>}
+      {erro && <p className="text-xs text-erro mt-1">{erro}</p>}
     </div>
   );
 }

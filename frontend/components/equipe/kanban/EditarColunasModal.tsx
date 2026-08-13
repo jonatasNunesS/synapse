@@ -98,26 +98,26 @@ export function EditarColunasModal({ onFechar, onMudou }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-lg rounded-xl border border-slate-700 bg-slate-900 shadow-xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 flex items-center justify-between px-5 py-3.5 border-b border-slate-800 bg-slate-900">
-          <h2 className="text-sm font-semibold text-white">Editar colunas</h2>
-          <button onClick={onFechar} className="text-slate-400 hover:text-white">
+      <div className="w-full max-w-lg rounded-xl border border-border bg-card shadow-xl max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 flex items-center justify-between px-5 py-3.5 border-b border-border bg-card">
+          <h2 className="text-sm font-semibold text-foreground">Editar colunas</h2>
+          <button onClick={onFechar} className="text-muted-foreground hover:text-foreground">
             <X className="h-4 w-4" />
           </button>
         </div>
 
         <div className="p-5 space-y-2">
-          {isLoading && <Loader2 className="h-5 w-5 animate-spin text-brand-400 mx-auto" />}
+          {isLoading && <Loader2 className="h-5 w-5 animate-spin text-brand-accent mx-auto" />}
           {locais.map((col, idx) => (
             <div
               key={col.id}
-              className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-800/40 px-2 py-2"
+              className="flex items-center gap-2 rounded-lg border border-border bg-secondary/40 px-2 py-2"
             >
               <div className="flex flex-col">
                 <button
                   onClick={() => mover(idx, -1)}
                   disabled={idx === 0}
-                  className="text-slate-500 hover:text-white disabled:opacity-30"
+                  className="text-muted-suave hover:text-foreground disabled:opacity-30"
                   title="Subir"
                 >
                   <ArrowUp className="h-3.5 w-3.5" />
@@ -125,7 +125,7 @@ export function EditarColunasModal({ onFechar, onMudou }: Props) {
                 <button
                   onClick={() => mover(idx, 1)}
                   disabled={idx === locais.length - 1}
-                  className="text-slate-500 hover:text-white disabled:opacity-30"
+                  className="text-muted-suave hover:text-foreground disabled:opacity-30"
                   title="Descer"
                 >
                   <ArrowDown className="h-3.5 w-3.5" />
@@ -144,11 +144,11 @@ export function EditarColunasModal({ onFechar, onMudou }: Props) {
                   if (e.target.value.trim() && e.target.value !== col.nome)
                     renomear(col, e.target.value.trim());
                 }}
-                className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="flex-1 rounded-lg border border-border bg-secondary px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
               <button
                 onClick={() => setExcluir(col)}
-                className="p-1.5 rounded text-slate-400 hover:text-red-400 hover:bg-slate-700/50"
+                className="p-1.5 rounded text-muted-foreground hover:text-erro hover:bg-slate-700/50"
                 title="Excluir coluna"
               >
                 <Trash2 className="h-4 w-4" />
@@ -163,7 +163,7 @@ export function EditarColunasModal({ onFechar, onMudou }: Props) {
               onChange={(e) => setNovaCol(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && adicionar()}
               placeholder="Nome da nova coluna"
-              className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="flex-1 rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-foreground placeholder:text-muted-suave focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
             <button
               onClick={adicionar}
@@ -179,20 +179,20 @@ export function EditarColunasModal({ onFechar, onMudou }: Props) {
       {/* Confirmação de exclusão com destino das tarefas */}
       {excluir && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-xl border border-red-500/30 bg-slate-900 shadow-xl p-5">
-            <h3 className="text-sm font-semibold text-white">
+          <div className="w-full max-w-sm rounded-xl border border-red-500/30 bg-card shadow-xl p-5">
+            <h3 className="text-sm font-semibold text-foreground">
               Excluir “{excluir.nome}”?
             </h3>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Se a coluna tiver tarefas, elas serão movidas para a coluna escolhida
               abaixo. Tarefas de projeto deixam de aparecer no Kanban da equipe até
               o admin reconfigurá-las.
             </p>
-            <label className="text-xs text-slate-400 block mt-3 mb-1">Mover tarefas para</label>
+            <label className="text-xs text-muted-foreground block mt-3 mb-1">Mover tarefas para</label>
             <select
               value={moverPara}
               onChange={(e) => setMoverPara(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-brand-500"
             >
               <option value="">— selecione —</option>
               {locais
@@ -209,7 +209,7 @@ export function EditarColunasModal({ onFechar, onMudou }: Props) {
                   setExcluir(null);
                   setMoverPara("");
                 }}
-                className="px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800"
+                className="px-3 py-2 rounded-lg text-sm text-foreground-suave hover:bg-secondary"
               >
                 Cancelar
               </button>

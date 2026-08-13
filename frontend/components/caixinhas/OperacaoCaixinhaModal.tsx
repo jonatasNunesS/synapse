@@ -73,26 +73,26 @@ export function OperacaoCaixinhaModal({
   };
 
   const inputClass =
-    "w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors";
+    "w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-sm bg-[#0f1117] border border-white/10 rounded-2xl shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+      <div className="relative w-full max-w-sm bg-card border border-border rounded-2xl shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
             {isDeposito ? (
-              <ArrowDownToLine className="w-5 h-5 text-emerald-400" />
+              <ArrowDownToLine className="w-5 h-5 text-sucesso" />
             ) : (
-              <ArrowUpFromLine className="w-5 h-5 text-brand-400" />
+              <ArrowUpFromLine className="w-5 h-5 text-brand-accent" />
             )}
             {isDeposito ? "Depositar em" : "Retirar de"} {caixinha.icone}{" "}
             {caixinha.nome}
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-superficie-forte transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -100,20 +100,20 @@ export function OperacaoCaixinhaModal({
 
         <div className="p-6 space-y-4">
           {/* Referência de saldo */}
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-muted-foreground">
             {isDeposito ? (
               saldoDisponivel != null ? (
-                <>Saldo disponível: <span className="text-white font-medium">{moedaCaixinha(saldoDisponivel)}</span></>
+                <>Saldo disponível: <span className="text-foreground font-medium">{moedaCaixinha(saldoDisponivel)}</span></>
               ) : (
                 <>O valor sai do seu saldo disponível.</>
               )
             ) : (
-              <>Saldo da caixinha: <span className="text-white font-medium">{moedaCaixinha(caixinha.saldo)}</span></>
+              <>Saldo da caixinha: <span className="text-foreground font-medium">{moedaCaixinha(caixinha.saldo)}</span></>
             )}
           </p>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">
               Valor (R$) *
             </label>
             <input
@@ -129,7 +129,7 @@ export function OperacaoCaixinhaModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">
               Descrição (opcional)
             </label>
             <input
@@ -145,11 +145,11 @@ export function OperacaoCaixinhaModal({
           {ofertaMaximo !== null && (
             <div
               role="alert"
-              className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200 space-y-2"
+              className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-alerta space-y-2"
             >
               <p>
                 A caixinha só tem{" "}
-                <span className="font-semibold text-amber-300">
+                <span className="font-semibold text-alerta">
                   {moedaCaixinha(ofertaMaximo)}
                 </span>
                 . Quer retirar {moedaCaixinha(ofertaMaximo)} (tudo que tem)?
@@ -165,7 +165,7 @@ export function OperacaoCaixinhaModal({
                 <button
                   onClick={() => setOfertaMaximo(null)}
                   disabled={processando}
-                  className="flex-1 py-1.5 rounded-lg border border-white/10 text-xs text-slate-300 hover:bg-white/5 transition-colors"
+                  className="flex-1 py-1.5 rounded-lg border border-border text-xs text-foreground-suave hover:bg-superficie transition-colors"
                 >
                   Cancelar
                 </button>
@@ -174,17 +174,17 @@ export function OperacaoCaixinhaModal({
           )}
 
           {erro && (
-            <p className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-400">
+            <p className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-erro">
               {erro}
             </p>
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-white/10">
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-border">
           <button
             onClick={onClose}
             disabled={processando}
-            className="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 transition-colors disabled:opacity-50"
+            className="px-4 py-2.5 rounded-lg text-sm font-medium text-foreground-suave hover:bg-superficie transition-colors disabled:opacity-50"
           >
             Cancelar
           </button>

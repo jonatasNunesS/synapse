@@ -105,19 +105,19 @@ export function TarefaPessoalModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-md rounded-xl border border-slate-700 bg-slate-900 shadow-xl">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800">
-          <h2 className="text-sm font-semibold text-white">
+      <div className="w-full max-w-md rounded-xl border border-border bg-card shadow-xl">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
+          <h2 className="text-sm font-semibold text-foreground">
             {editando ? "Editar tarefa" : "Nova tarefa"}
           </h2>
-          <button onClick={onFechar} className="text-slate-400 hover:text-white">
+          <button onClick={onFechar} className="text-muted-foreground hover:text-foreground">
             <X className="h-4 w-4" />
           </button>
         </div>
 
         <div className="p-5 space-y-4">
           <div>
-            <label className="text-xs text-slate-400 block mb-1">Título *</label>
+            <label className="text-xs text-muted-foreground block mb-1">Título *</label>
             <input
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
@@ -127,7 +127,7 @@ export function TarefaPessoalModal({
             />
           </div>
           <div>
-            <label className="text-xs text-slate-400 block mb-1">Descrição</label>
+            <label className="text-xs text-muted-foreground block mb-1">Descrição</label>
             <textarea
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
@@ -138,7 +138,7 @@ export function TarefaPessoalModal({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-slate-400 block mb-1">Prioridade</label>
+              <label className="text-xs text-muted-foreground block mb-1">Prioridade</label>
               <select
                 value={prioridade}
                 onChange={(e) => setPrioridade(e.target.value as "baixa" | "media" | "alta")}
@@ -150,7 +150,7 @@ export function TarefaPessoalModal({
               </select>
             </div>
             <div>
-              <label className="text-xs text-slate-400 block mb-1">Prazo</label>
+              <label className="text-xs text-muted-foreground block mb-1">Prazo</label>
               <input
                 type="date"
                 value={prazo}
@@ -161,7 +161,7 @@ export function TarefaPessoalModal({
           </div>
           {isAdmin && (
             <div>
-              <label className="text-xs text-slate-400 block mb-1">Responsável</label>
+              <label className="text-xs text-muted-foreground block mb-1">Responsável</label>
               <select
                 value={responsavel}
                 onChange={(e) => setResponsavel(e.target.value)}
@@ -177,12 +177,12 @@ export function TarefaPessoalModal({
           )}
         </div>
 
-        <div className="flex items-center justify-between px-5 py-3.5 border-t border-slate-800">
+        <div className="flex items-center justify-between px-5 py-3.5 border-t border-border">
           {editando && onApagar ? (
             <button
               onClick={apagar}
               disabled={salvando}
-              className="inline-flex items-center gap-1.5 text-sm text-red-400 hover:text-red-300 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 text-sm text-erro hover:text-erro disabled:opacity-50"
             >
               <Trash2 className="h-4 w-4" /> Apagar
             </button>
@@ -192,7 +192,7 @@ export function TarefaPessoalModal({
           <div className="flex items-center gap-2">
             <button
               onClick={onFechar}
-              className="px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800"
+              className="px-3 py-2 rounded-lg text-sm text-foreground-suave hover:bg-secondary"
             >
               Cancelar
             </button>
@@ -211,4 +211,4 @@ export function TarefaPessoalModal({
 }
 
 const inputCls =
-  "w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-brand-500";
+  "w-full rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-white placeholder:text-muted-suave focus:outline-none focus:ring-1 focus:ring-brand-500";

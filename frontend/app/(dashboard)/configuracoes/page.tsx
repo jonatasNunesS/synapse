@@ -225,7 +225,7 @@ export default function ConfiguracoesPage() {
               <input
                 type="checkbox"
                 defaultChecked
-                className="mt-0.5 w-4 h-4 rounded border-border bg-superficie text-brand-600 focus:ring-brand-500/50 cursor-pointer"
+                className="mt-0.5 w-4 h-4 rounded border-border bg-superficie text-brand-accent focus:ring-brand-500/50 cursor-pointer"
               />
               <div>
                 <p className="text-sm font-medium text-foreground">{item.label}</p>
@@ -234,7 +234,7 @@ export default function ConfiguracoesPage() {
             </label>
           ))}
         </div>
-        <p className="text-xs text-slate-600 mt-4">
+        <p className="text-xs text-muted-foreground mt-4">
           * As preferências de notificação serão salvas automaticamente em breve.
         </p>
       </section>

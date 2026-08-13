@@ -122,7 +122,7 @@ function EmprestimosConteudo() {
           ))
         ) : vazio ? (
           <div className="py-16 text-center text-muted-suave">
-            <HandCoins className="w-10 h-10 mx-auto mb-3 text-slate-600" />
+            <HandCoins className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
             <p>Nenhum empréstimo {filtro === "aberto" ? "aberto" : ""} por aqui.</p>
           </div>
         ) : (

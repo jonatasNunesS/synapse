@@ -56,17 +56,17 @@ export function AdicionarEstoqueModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div className="flex items-center gap-2">
-            <PackagePlus className="h-5 w-5 text-brand-400" />
-            <h3 className="text-base font-semibold text-white">
+            <PackagePlus className="h-5 w-5 text-brand-accent" />
+            <h3 className="text-base font-semibold text-foreground">
               Adicionar ao estoque
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white"
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-superficie-forte hover:text-foreground"
             aria-label="Fechar"
           >
             <X className="h-5 w-5" />
@@ -76,18 +76,18 @@ export function AdicionarEstoqueModal({
         <div className="p-5">
           {jaNoEstoque ? (
             <div className="flex items-start gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
-              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
-              <p className="text-sm text-emerald-300">
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-sucesso" />
+              <p className="text-sm text-sucesso">
                 Esta compra já foi adicionada ao estoque.
               </p>
             </div>
           ) : etapa === "pergunta" ? (
             <>
-              <p className="text-sm text-slate-300">Deseja adicionar ao estoque?</p>
-              <div className="mt-3 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3">
-                <p className="text-sm font-medium text-white">{compra.descricao}</p>
+              <p className="text-sm text-foreground-suave">Deseja adicionar ao estoque?</p>
+              <div className="mt-3 rounded-lg border border-border bg-white/[0.03] px-4 py-3">
+                <p className="text-sm font-medium text-foreground">{compra.descricao}</p>
                 {fornecedorNome && (
-                  <p className="mt-0.5 text-xs text-slate-500">
+                  <p className="mt-0.5 text-xs text-muted-suave">
                     Fornecedor: {fornecedorNome}
                   </p>
                 )}
@@ -108,7 +108,7 @@ export function AdicionarEstoqueModal({
               ) : (
                 <>
                   <div>
-                    <label className="mb-1.5 block text-xs font-medium text-slate-400">
+                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
                       Qual produto recebeu?
                     </label>
                     <ProdutoSelect value={produto} onChange={setProduto} />
@@ -117,14 +117,14 @@ export function AdicionarEstoqueModal({
                   {!produto && (
                     <div>
                       <div className="flex items-center gap-3 py-1">
-                        <span className="h-px flex-1 bg-white/10" />
-                        <span className="text-xs text-slate-500">ou</span>
-                        <span className="h-px flex-1 bg-white/10" />
+                        <span className="h-px flex-1 bg-superficie-forte" />
+                        <span className="text-xs text-muted-suave">ou</span>
+                        <span className="h-px flex-1 bg-superficie-forte" />
                       </div>
                       <button
                         type="button"
                         onClick={() => setCriandoProduto(true)}
-                        className="w-full rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-slate-300 hover:border-brand-500/50 hover:bg-brand-500/5 hover:text-white transition-colors"
+                        className="w-full rounded-lg border border-dashed border-border px-4 py-2.5 text-sm text-foreground-suave hover:border-brand-500/50 hover:bg-brand-500/5 hover:text-foreground transition-colors"
                       >
                         + Criar novo produto com base nessa compra
                       </button>
@@ -133,7 +133,7 @@ export function AdicionarEstoqueModal({
 
                   {produto && (
                     <div>
-                      <label className="mb-1.5 block text-xs font-medium text-slate-400">
+                      <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
                         Quantidade
                       </label>
                       <input
@@ -143,7 +143,7 @@ export function AdicionarEstoqueModal({
                         value={quantidade}
                         onChange={(e) => setQuantidade(e.target.value)}
                         aria-label="Quantidade"
-                        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-500/50"
+                        className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500/50"
                       />
                     </div>
                   )}
@@ -153,7 +153,7 @@ export function AdicionarEstoqueModal({
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-white/10 px-5 py-3.5">
+        <div className="flex items-center justify-end gap-2 border-t border-border px-5 py-3.5">
           {jaNoEstoque ? (
             <button
               onClick={onClose}
@@ -165,7 +165,7 @@ export function AdicionarEstoqueModal({
             <>
               <button
                 onClick={onClose}
-                className="rounded-lg px-4 py-2 text-sm text-slate-300 hover:bg-white/5"
+                className="rounded-lg px-4 py-2 text-sm text-foreground-suave hover:bg-superficie"
               >
                 Não agora
               </button>
@@ -181,7 +181,7 @@ export function AdicionarEstoqueModal({
             <button
               onClick={onClose}
               disabled={processando}
-              className="rounded-lg px-4 py-2 text-sm text-slate-300 hover:bg-white/5 disabled:opacity-50"
+              className="rounded-lg px-4 py-2 text-sm text-foreground-suave hover:bg-superficie disabled:opacity-50"
             >
               Cancelar
             </button>
@@ -190,7 +190,7 @@ export function AdicionarEstoqueModal({
               <button
                 onClick={onClose}
                 disabled={processando}
-                className="rounded-lg px-4 py-2 text-sm text-slate-300 hover:bg-white/5 disabled:opacity-50"
+                className="rounded-lg px-4 py-2 text-sm text-foreground-suave hover:bg-superficie disabled:opacity-50"
               >
                 Cancelar
               </button>

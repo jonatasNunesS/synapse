@@ -47,8 +47,8 @@ const ACAO_LABEL: Record<string, string> = {
 function Dado({ label, valor }: { label: string; valor: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[0.6875rem] uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="text-sm text-slate-200 mt-0.5">{valor}</p>
+      <p className="text-[0.6875rem] uppercase tracking-wide text-muted-suave">{label}</p>
+      <p className="text-sm text-foreground-suave mt-0.5">{valor}</p>
     </div>
   );
 }
@@ -76,7 +76,7 @@ export default function PainelAdminEmpresaDetalhePage() {
   if (isLoading || !empresa) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
+        <Loader2 className="h-6 w-6 animate-spin text-alerta" />
       </div>
     );
   }
@@ -108,7 +108,7 @@ export default function PainelAdminEmpresaDetalhePage() {
     <div className="space-y-5">
       <Link
         href="/painel-admin"
-        className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         Empresas
@@ -118,22 +118,22 @@ export default function PainelAdminEmpresaDetalhePage() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-xl font-bold text-white flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-amber-400" />
+            <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-alerta" />
               {empresa.nome}
             </h1>
             {suspensa ? (
-              <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-red-500/20 text-red-300">
+              <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-red-500/20 text-erro">
                 🔴 Suspensa
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
+              <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/20 text-sucesso">
                 🟢 Ativa
               </span>
             )}
           </div>
-          <p className="text-sm text-slate-400 mt-0.5">
-            Plano atual: <span className="text-slate-200 font-medium">{empresa.plano}</span>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Plano atual: <span className="text-foreground-suave font-medium">{empresa.plano}</span>
           </p>
         </div>
 
@@ -166,7 +166,7 @@ export default function PainelAdminEmpresaDetalhePage() {
           {excluivel && (
             <button
               onClick={() => setModalExcluir(true)}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-500/40 text-red-300 text-sm font-medium hover:bg-red-950/40 transition-colors"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-500/40 text-erro text-sm font-medium hover:bg-red-950/40 transition-colors"
             >
               <Trash2 className="h-4 w-4" />
               Excluir definitivamente
@@ -178,14 +178,14 @@ export default function PainelAdminEmpresaDetalhePage() {
       {/* Aviso de suspensão */}
       {suspensa && (
         <div className="rounded-xl border border-red-500/30 bg-red-950/30 p-4">
-          <p className="text-sm text-red-200">
+          <p className="text-sm text-erro">
             <span className="font-semibold">Empresa suspensa.</span>{" "}
             {empresa.motivo_suspensao && <>Motivo: “{empresa.motivo_suspensao}”. </>}
             Suspensa em {fmtData(empresa.data_suspensao)}
             {empresa.suspensa_por_nome && <> por {empresa.suspensa_por_nome}</>}.
           </p>
           {!excluivel && (
-            <p className="text-xs text-red-300/70 mt-1">
+            <p className="text-xs text-erro/70 mt-1">
               A exclusão definitiva fica disponível 30 dias após a suspensão.
             </p>
           )}
@@ -193,14 +193,14 @@ export default function PainelAdminEmpresaDetalhePage() {
       )}
 
       {/* Dados + métricas */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-5 grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="rounded-xl border border-border bg-card/50 p-5 grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Dado label="Segmento" valor={empresa.segmento} />
         <Dado label="CNPJ" valor={empresa.cnpj || "—"} />
         <Dado
           label="Usuários"
           valor={
             <span className="inline-flex items-center gap-1">
-              <Users className="h-3.5 w-3.5 text-slate-400" /> {empresa.total_usuarios}
+              <Users className="h-3.5 w-3.5 text-muted-foreground" /> {empresa.total_usuarios}
             </span>
           }
         />
@@ -208,7 +208,7 @@ export default function PainelAdminEmpresaDetalhePage() {
           label="Último acesso"
           valor={
             <span className="inline-flex items-center gap-1">
-              <CalendarClock className="h-3.5 w-3.5 text-slate-400" />{" "}
+              <CalendarClock className="h-3.5 w-3.5 text-muted-foreground" />{" "}
               {empresa.ultimo_acesso ? fmtData(empresa.ultimo_acesso) : "nunca"}
             </span>
           }
@@ -217,7 +217,7 @@ export default function PainelAdminEmpresaDetalhePage() {
           label="Créditos hoje"
           valor={
             <span className="inline-flex items-center gap-1">
-              <Coins className="h-3.5 w-3.5 text-slate-400" /> {empresa.creditos_usados_hoje}
+              <Coins className="h-3.5 w-3.5 text-muted-foreground" /> {empresa.creditos_usados_hoje}
             </span>
           }
         />
@@ -225,7 +225,7 @@ export default function PainelAdminEmpresaDetalhePage() {
           label="Créditos no mês"
           valor={
             <span className="inline-flex items-center gap-1">
-              <Coins className="h-3.5 w-3.5 text-slate-400" /> {empresa.creditos_usados_mes}
+              <Coins className="h-3.5 w-3.5 text-muted-foreground" /> {empresa.creditos_usados_mes}
             </span>
           }
         />
@@ -233,7 +233,7 @@ export default function PainelAdminEmpresaDetalhePage() {
           label="Lançamentos"
           valor={
             <span className="inline-flex items-center gap-1">
-              <FileText className="h-3.5 w-3.5 text-slate-400" /> {empresa.total_lancamentos}
+              <FileText className="h-3.5 w-3.5 text-muted-foreground" /> {empresa.total_lancamentos}
             </span>
           }
         />
@@ -241,7 +241,7 @@ export default function PainelAdminEmpresaDetalhePage() {
           label="Clientes"
           valor={
             <span className="inline-flex items-center gap-1">
-              <UserRound className="h-3.5 w-3.5 text-slate-400" /> {empresa.total_clientes}
+              <UserRound className="h-3.5 w-3.5 text-muted-foreground" /> {empresa.total_clientes}
             </span>
           }
         />
@@ -255,42 +255,42 @@ export default function PainelAdminEmpresaDetalhePage() {
       />
 
       {/* Histórico de eventos */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
-        <h2 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-          <History className="h-4 w-4 text-amber-400" />
+      <div className="rounded-xl border border-border bg-card/50 p-5">
+        <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+          <History className="h-4 w-4 text-alerta" />
           Histórico
         </h2>
         {historico.length === 0 ? (
-          <p className="text-sm text-slate-500">Nenhum evento registrado.</p>
+          <p className="text-sm text-muted-suave">Nenhum evento registrado.</p>
         ) : (
           <ul className="space-y-2">
             {historico.map((log) => (
               <li
                 key={log.id}
-                className="flex items-start gap-2.5 text-sm border-b border-slate-800/60 last:border-0 pb-2 last:pb-0"
+                className="flex items-start gap-2.5 text-sm border-b border-border/60 last:border-0 pb-2 last:pb-0"
               >
                 {log.status === "sucesso" ? (
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-4 w-4 text-sucesso flex-shrink-0 mt-0.5" />
                 ) : (
-                  <XCircle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
+                  <XCircle className="h-4 w-4 text-erro flex-shrink-0 mt-0.5" />
                 )}
                 <div className="flex-1">
-                  <p className="text-slate-200">
-                    <span className="text-slate-400">{ACAO_LABEL[log.acao] ?? "Evento"}:</span>{" "}
+                  <p className="text-foreground-suave">
+                    <span className="text-muted-foreground">{ACAO_LABEL[log.acao] ?? "Evento"}:</span>{" "}
                     {log.acao === "troca_plano"
                       ? `${log.plano_anterior} → ${log.plano_novo}`
                       : log.plano_novo}
-                    {log.status === "erro" && <span className="text-red-400"> (falhou)</span>}
+                    {log.status === "erro" && <span className="text-erro"> (falhou)</span>}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted-suave">
                     {new Date(log.alterado_em).toLocaleString("pt-BR")}
                     {log.alterado_por_nome && ` · ${log.alterado_por_nome}`}
                   </p>
                   {log.observacao && (
-                    <p className="text-xs text-slate-400 mt-0.5">“{log.observacao}”</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">“{log.observacao}”</p>
                   )}
                   {log.status === "erro" && log.erro && (
-                    <p className="text-xs text-red-400/80 mt-0.5">{log.erro}</p>
+                    <p className="text-xs text-erro/80 mt-0.5">{log.erro}</p>
                   )}
                 </div>
               </li>
@@ -343,7 +343,7 @@ export default function PainelAdminEmpresaDetalhePage() {
         titulo="Reativar empresa?"
         mensagem={
           <>
-            A empresa <span className="text-white font-medium">{empresa.nome}</span> volta a ter
+            A empresa <span className="text-foreground font-medium">{empresa.nome}</span> volta a ter
             acesso normal ao sistema.
           </>
         }
@@ -358,4 +358,4 @@ export default function PainelAdminEmpresaDetalhePage() {
 }
 
 const btnSecundario =
-  "inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 text-sm font-medium hover:bg-slate-700 transition-colors";
+  "inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary border border-border text-foreground-suave text-sm font-medium hover:bg-superficie-forte transition-colors";
