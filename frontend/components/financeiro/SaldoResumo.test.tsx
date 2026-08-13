@@ -45,7 +45,7 @@ describe("SaldoResumo", () => {
     const { rerender } = render(<SaldoResumo saldo={saldo} />);
     const acumulado = screen.getByText("Saldo acumulado").parentElement!
       .parentElement!;
-    expect(within(acumulado).getByText(/R\$/)).toHaveClass("text-emerald-400");
+    expect(within(acumulado).getByText(/R\$/)).toHaveClass("text-sucesso");
 
     // Mês deficitário → vermelho e com sinal negativo preservado
     const negativo: SaldoFinanceiro = {
@@ -55,7 +55,7 @@ describe("SaldoResumo", () => {
     rerender(<SaldoResumo saldo={negativo} />);
     const mesBox = screen.getByText(/Saldo do mês/).parentElement!.parentElement!;
     const valor = within(mesBox).getByText(/R\$/);
-    expect(valor).toHaveClass("text-red-400");
+    expect(valor).toHaveClass("text-erro");
   });
 
   it("clicar num card dispara onFiltrar com tipo+status; clicar de novo limpa", () => {

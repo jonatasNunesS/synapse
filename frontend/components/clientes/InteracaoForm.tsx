@@ -48,17 +48,17 @@ type FormData = z.infer<typeof schema>;
 // ─── Tipos de interação ───────────────────────────────────────────────────────
 
 const TIPOS: { value: TipoInteracao; label: string; icon: React.ElementType; color: string }[] = [
-  { value: "ligacao", label: "Ligação", icon: Phone, color: "text-blue-400 bg-blue-400/10" },
-  { value: "email", label: "E-mail", icon: Mail, color: "text-brand-400 bg-brand-400/10" },
-  { value: "reuniao", label: "Reunião", icon: Users, color: "text-yellow-400 bg-yellow-400/10" },
+  { value: "ligacao", label: "Ligação", icon: Phone, color: "text-info bg-blue-400/10" },
+  { value: "email", label: "E-mail", icon: Mail, color: "text-brand-accent bg-brand-400/10" },
+  { value: "reuniao", label: "Reunião", icon: Users, color: "text-alerta bg-yellow-400/10" },
   {
     value: "whatsapp",
     label: "WhatsApp",
     icon: MessageCircle,
-    color: "text-green-400 bg-green-400/10",
+    color: "text-sucesso bg-green-400/10",
   },
-  { value: "venda", label: "Venda", icon: DollarSign, color: "text-emerald-400 bg-emerald-400/10" },
-  { value: "outro", label: "Outro", icon: FileText, color: "text-gray-400 bg-gray-400/10" },
+  { value: "venda", label: "Venda", icon: DollarSign, color: "text-sucesso bg-emerald-400/10" },
+  { value: "outro", label: "Outro", icon: FileText, color: "text-muted-foreground bg-gray-400/10" },
 ];
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -124,21 +124,21 @@ export function InteracaoForm({ onSubmit, onClose, loading, interacao }: Interac
   const statusPagamento = watch("status_pagamento");
 
   const inputClass =
-    "w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 transition-colors";
-  const labelClass = "block text-xs font-medium text-gray-400 mb-1";
-  const errorClass = "text-xs text-red-400 mt-0.5";
+    "w-full px-3 py-2 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder-gray-500 focus:outline-none focus:border-brand-500 transition-colors";
+  const labelClass = "block text-xs font-medium text-muted-foreground mb-1";
+  const errorClass = "text-xs text-erro mt-0.5";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#0f1117] border border-white/10 rounded-2xl w-full max-w-lg">
+      <div className="bg-card shadow-elevacao border border-border rounded-2xl w-full max-w-lg">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
-          <h2 className="text-lg font-semibold text-white">
+        <div className="flex items-center justify-between p-6 border-b border-border">
+          <h2 className="text-lg font-semibold text-foreground">
             {modoEdicao ? "Editar Interação" : "Registrar Interação"}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-superficie-forte rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -146,7 +146,7 @@ export function InteracaoForm({ onSubmit, onClose, loading, interacao }: Interac
 
         <form onSubmit={handleSubmit(submit)} className="p-6 space-y-5">
           {serverError && (
-            <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-400">
+            <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-erro">
               {serverError}
             </div>
           )}
@@ -162,8 +162,8 @@ export function InteracaoForm({ onSubmit, onClose, loading, interacao }: Interac
                   onClick={() => setValue("tipo", value)}
                   className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all text-xs font-medium ${
                     tipoSelecionado === value
-                      ? "border-brand-500 bg-brand-500/10 text-white"
-                      : "border-white/10 bg-white/3 text-gray-400 hover:border-white/20"
+                      ? "border-brand-500 bg-brand-500/10 text-foreground"
+                      : "border-border bg-superficie text-muted-foreground hover:border-border"
                   }`}
                 >
                   <div className={`p-1.5 rounded-lg ${color}`}>
@@ -220,8 +220,8 @@ export function InteracaoForm({ onSubmit, onClose, loading, interacao }: Interac
                       onClick={() => setValue("status_pagamento", value)}
                       className={`px-3 py-2 rounded-lg border text-sm transition-colors ${
                         ativo
-                          ? "border-brand-500 bg-brand-500/10 text-white"
-                          : "border-white/10 bg-white/3 text-gray-400 hover:border-white/20"
+                          ? "border-brand-500 bg-brand-500/10 text-foreground"
+                          : "border-border bg-superficie text-muted-foreground hover:border-border"
                       }`}
                     >
                       {label}
@@ -283,7 +283,7 @@ export function InteracaoForm({ onSubmit, onClose, loading, interacao }: Interac
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-300 hover:bg-white/10 transition-colors"
+              className="flex-1 px-4 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground-suave hover:bg-superficie-forte transition-colors"
             >
               Cancelar
             </button>

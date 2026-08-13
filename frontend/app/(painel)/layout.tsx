@@ -8,9 +8,9 @@
 import React, { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Toaster } from "sonner";
 import { Loader2, ShieldCheck, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { ToasterTema } from "@/components/tema/ToasterTema";
 
 export default function PainelAdminLayout({
   children,
@@ -85,7 +85,7 @@ export default function PainelAdminLayout({
       </header>
 
       <main className="max-w-6xl mx-auto px-4 md:px-6 py-6">{children}</main>
-      <Toaster theme="dark" richColors position="top-right" />
+      <ToasterTema />
     </div>
   );
 }

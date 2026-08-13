@@ -29,20 +29,20 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { FornecedorDetail } from "@/types/fornecedores";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  ativo: { label: "Ativo", color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" },
-  inativo: { label: "Inativo", color: "bg-zinc-500/15 text-zinc-400 border-zinc-500/30" },
-  suspenso: { label: "Suspenso", color: "bg-red-500/15 text-red-400 border-red-500/30" },
-  em_avaliacao: { label: "Em Avaliação", color: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
+  ativo: { label: "Ativo", color: "bg-emerald-500/15 text-sucesso border-emerald-500/30" },
+  inativo: { label: "Inativo", color: "bg-zinc-500/15 text-muted-foreground border-zinc-500/30" },
+  suspenso: { label: "Suspenso", color: "bg-red-500/15 text-erro border-red-500/30" },
+  em_avaliacao: { label: "Em Avaliação", color: "bg-amber-500/15 text-alerta border-amber-500/30" },
 };
 
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | null | undefined }) {
   if (!value) return null;
   return (
     <div className="flex items-start gap-3">
-      <div className="mt-0.5 text-zinc-500">{icon}</div>
+      <div className="mt-0.5 text-muted-suave">{icon}</div>
       <div>
-        <p className="text-xs text-zinc-500">{label}</p>
-        <p className="text-sm text-white">{value}</p>
+        <p className="text-xs text-muted-suave">{label}</p>
+        <p className="text-sm text-foreground">{value}</p>
       </div>
     </div>
   );
@@ -92,7 +92,7 @@ export default function FornecedorDetailPage() {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="flex items-center gap-2 text-zinc-400">
+        <div className="flex items-center gap-2 text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin" />
           Carregando fornecedor...
         </div>
@@ -103,15 +103,15 @@ export default function FornecedorDetailPage() {
   if (error || !localData) {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-3">
-        <p className="text-red-400">{error ?? "Fornecedor não encontrado."}</p>
-        <Link href="/fornecedores" className="text-sm text-brand-400 hover:text-brand-300">
+        <p className="text-erro">{error ?? "Fornecedor não encontrado."}</p>
+        <Link href="/fornecedores" className="text-sm text-brand-accent hover:text-brand-accent">
           Voltar para Fornecedores
         </Link>
       </div>
     );
   }
 
-  const statusCfg = STATUS_LABELS[localData.status] ?? { label: localData.status, color: "bg-zinc-500/15 text-zinc-400 border-zinc-500/30" };
+  const statusCfg = STATUS_LABELS[localData.status] ?? { label: localData.status, color: "bg-zinc-500/15 text-muted-foreground border-zinc-500/30" };
 
   return (
     <div className="space-y-6 p-6">
@@ -120,13 +120,13 @@ export default function FornecedorDetailPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/fornecedores"
-            className="flex items-center gap-1.5 text-sm text-zinc-400 transition-colors hover:text-white"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
             Fornecedores
           </Link>
           <span className="text-zinc-700">/</span>
-          <span className="text-sm text-white">{localData.nome}</span>
+          <span className="text-sm text-foreground">{localData.nome}</span>
         </div>
         <div className="flex items-center gap-2">
           {localData.link_whatsapp && (
@@ -134,7 +134,7 @@ export default function FornecedorDetailPage() {
               href={localData.link_whatsapp}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-sm text-emerald-400 transition-colors hover:bg-emerald-500/20"
+              className="flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-sm text-sucesso transition-colors hover:bg-emerald-500/20"
             >
               <MessageCircle className="h-4 w-4" />
               WhatsApp
@@ -142,14 +142,14 @@ export default function FornecedorDetailPage() {
           )}
           <button
             onClick={() => setShowAvaliacao(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-sm text-amber-400 transition-colors hover:bg-amber-500/20"
+            className="flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-sm text-alerta transition-colors hover:bg-amber-500/20"
           >
             <Star className="h-4 w-4" />
             Avaliar
           </button>
           <button
             onClick={() => setShowEdit(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-zinc-300 transition-colors hover:bg-white/10"
+            className="flex items-center gap-1.5 rounded-lg border border-border bg-superficie px-3 py-1.5 text-sm text-foreground-suave transition-colors hover:bg-superficie-forte"
           >
             <Pencil className="h-4 w-4" />
             Editar
@@ -157,7 +157,7 @@ export default function FornecedorDetailPage() {
           <button
             onClick={() => setConfirmarExclusao(true)}
             disabled={deleting}
-            className="flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-sm text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-60"
+            className="flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-sm text-erro transition-colors hover:bg-red-500/20 disabled:opacity-60"
           >
             {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
             Remover
@@ -170,16 +170,16 @@ export default function FornecedorDetailPage() {
         {/* Left column: info + score */}
         <div className="space-y-5">
           {/* Header card */}
-          <div className="rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+          <div className="rounded-xl border border-border bg-superficie p-5 backdrop-blur-sm">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500/10">
-                  <Building2 className="h-6 w-6 text-brand-400" />
+                  <Building2 className="h-6 w-6 text-brand-accent" />
                 </div>
                 <div>
-                  <h1 className="text-lg font-bold text-white">{localData.nome}</h1>
+                  <h1 className="text-lg font-bold text-foreground">{localData.nome}</h1>
                   {localData.categoria_nome && (
-                    <p className="text-sm text-zinc-400">{localData.categoria_nome}</p>
+                    <p className="text-sm text-muted-foreground">{localData.categoria_nome}</p>
                   )}
                 </div>
               </div>
@@ -189,22 +189,22 @@ export default function FornecedorDetailPage() {
             </div>
 
             {/* Stats */}
-            <div className="mt-4 grid grid-cols-3 gap-3 border-t border-white/10 pt-4">
+            <div className="mt-4 grid grid-cols-3 gap-3 border-t border-border pt-4">
               <div className="text-center">
-                <p className="text-lg font-bold text-white">
+                <p className="text-lg font-bold text-foreground">
                   {formatCurrency(localData.valor_total_compras)}
                 </p>
-                <p className="text-xs text-zinc-500">Total Gasto</p>
+                <p className="text-xs text-muted-suave">Total Gasto</p>
               </div>
               <div className="text-center">
-                <p className="text-lg font-bold text-white">{localData.quantidade_pedidos}</p>
-                <p className="text-xs text-zinc-500">Pedidos</p>
+                <p className="text-lg font-bold text-foreground">{localData.quantidade_pedidos}</p>
+                <p className="text-xs text-muted-suave">Pedidos</p>
               </div>
               <div className="text-center">
-                <p className="text-lg font-bold text-white">
+                <p className="text-lg font-bold text-foreground">
                   {localData.prazo_entrega_dias ? `${localData.prazo_entrega_dias}d` : "—"}
                 </p>
-                <p className="text-xs text-zinc-500">Prazo</p>
+                <p className="text-xs text-muted-suave">Prazo</p>
               </div>
             </div>
           </div>
@@ -216,8 +216,8 @@ export default function FornecedorDetailPage() {
           {(localData.avaliacao_qualidade !== null ||
             localData.avaliacao_prazo !== null ||
             localData.avaliacao_preco !== null) && (
-            <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-              <h3 className="mb-3 text-sm font-semibold text-white">Avaliações</h3>
+            <div className="rounded-xl border border-border bg-superficie p-5">
+              <h3 className="mb-3 text-sm font-semibold text-foreground">Avaliações</h3>
               <AvaliacaoTripla
                 qualidade={localData.avaliacao_qualidade}
                 prazo={localData.avaliacao_prazo}
@@ -229,8 +229,8 @@ export default function FornecedorDetailPage() {
           )}
 
           {/* Contato */}
-          <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-            <h3 className="mb-3 text-sm font-semibold text-white">Contato</h3>
+          <div className="rounded-xl border border-border bg-superficie p-5">
+            <h3 className="mb-3 text-sm font-semibold text-foreground">Contato</h3>
             <div className="space-y-3">
               <InfoRow icon={<Mail className="h-4 w-4" />} label="E-mail" value={localData.email} />
               <InfoRow icon={<Phone className="h-4 w-4" />} label="Telefone" value={localData.telefone} />
@@ -248,8 +248,8 @@ export default function FornecedorDetailPage() {
 
           {/* Dados comerciais */}
           {(localData.cnpj || localData.condicoes_pagamento) && (
-            <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-              <h3 className="mb-3 text-sm font-semibold text-white">Dados Comerciais</h3>
+            <div className="rounded-xl border border-border bg-superficie p-5">
+              <h3 className="mb-3 text-sm font-semibold text-foreground">Dados Comerciais</h3>
               <div className="space-y-3">
                 <InfoRow icon={<FileText className="h-4 w-4" />} label="CNPJ" value={localData.cnpj} />
                 <InfoRow icon={<FileText className="h-4 w-4" />} label="Condições de Pagamento" value={localData.condicoes_pagamento} />
@@ -259,9 +259,9 @@ export default function FornecedorDetailPage() {
 
           {/* Notas */}
           {localData.notas && (
-            <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-              <h3 className="mb-2 text-sm font-semibold text-white">Notas</h3>
-              <p className="text-sm text-zinc-400 whitespace-pre-wrap">{localData.notas}</p>
+            <div className="rounded-xl border border-border bg-superficie p-5">
+              <h3 className="mb-2 text-sm font-semibold text-foreground">Notas</h3>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{localData.notas}</p>
             </div>
           )}
         </div>
@@ -300,7 +300,7 @@ export default function FornecedorDetailPage() {
         mensagem={
           <>
             Deseja remover o fornecedor{" "}
-            <span className="text-white font-medium">{localData?.nome}</span>? Esta
+            <span className="text-foreground font-medium">{localData?.nome}</span>? Esta
             ação não pode ser desfeita.
           </>
         }

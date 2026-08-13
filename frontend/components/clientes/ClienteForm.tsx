@@ -78,21 +78,21 @@ export function ClienteForm({ cliente, onSubmit, onClose, loading }: ClienteForm
   }, [cliente, reset]);
 
   const inputClass =
-    "w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 transition-colors";
-  const labelClass = "block text-xs font-medium text-gray-400 mb-1";
-  const errorClass = "text-xs text-red-400 mt-0.5";
+    "w-full px-3 py-2 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder-gray-500 focus:outline-none focus:border-brand-500 transition-colors";
+  const labelClass = "block text-xs font-medium text-muted-foreground mb-1";
+  const errorClass = "text-xs text-erro mt-0.5";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#0f1117] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-card shadow-elevacao border border-border rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
-          <h2 className="text-lg font-semibold text-white">
+        <div className="flex items-center justify-between p-6 border-b border-border">
+          <h2 className="text-lg font-semibold text-foreground">
             {cliente ? "Editar Cliente" : "Novo Cliente"}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-superficie-forte rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -110,10 +110,10 @@ export function ClienteForm({ cliente, onSubmit, onClose, loading }: ClienteForm
             <div>
               <label className={labelClass}>Tipo</label>
               <select {...register("tipo")} className={inputClass}>
-                <option value="pessoa_fisica" className="bg-[#0f1117]">
+                <option value="pessoa_fisica" className="bg-card">
                   Pessoa Física
                 </option>
-                <option value="pessoa_juridica" className="bg-[#0f1117]">
+                <option value="pessoa_juridica" className="bg-card">
                   Pessoa Jurídica
                 </option>
               </select>
@@ -167,24 +167,24 @@ export function ClienteForm({ cliente, onSubmit, onClose, loading }: ClienteForm
             <div>
               <label className={labelClass}>Status no Funil</label>
               <select {...register("status_funil")} className={inputClass}>
-                <option value="lead" className="bg-[#0f1117]">Lead</option>
-                <option value="contato" className="bg-[#0f1117]">Contato</option>
-                <option value="proposta" className="bg-[#0f1117]">Proposta</option>
-                <option value="negociacao" className="bg-[#0f1117]">Negociação</option>
-                <option value="fechado" className="bg-[#0f1117]">Fechado</option>
-                <option value="perdido" className="bg-[#0f1117]">Perdido</option>
+                <option value="lead" className="bg-card">Lead</option>
+                <option value="contato" className="bg-card">Contato</option>
+                <option value="proposta" className="bg-card">Proposta</option>
+                <option value="negociacao" className="bg-card">Negociação</option>
+                <option value="fechado" className="bg-card">Fechado</option>
+                <option value="perdido" className="bg-card">Perdido</option>
               </select>
             </div>
             <div>
               <label className={labelClass}>Origem</label>
               <select {...register("origem")} className={inputClass}>
-                <option value="indicacao" className="bg-[#0f1117]">Indicação</option>
-                <option value="instagram" className="bg-[#0f1117]">Instagram</option>
-                <option value="facebook" className="bg-[#0f1117]">Facebook</option>
-                <option value="google" className="bg-[#0f1117]">Google</option>
-                <option value="site" className="bg-[#0f1117]">Site</option>
-                <option value="whatsapp" className="bg-[#0f1117]">WhatsApp</option>
-                <option value="outro" className="bg-[#0f1117]">Outro</option>
+                <option value="indicacao" className="bg-card">Indicação</option>
+                <option value="instagram" className="bg-card">Instagram</option>
+                <option value="facebook" className="bg-card">Facebook</option>
+                <option value="google" className="bg-card">Google</option>
+                <option value="site" className="bg-card">Site</option>
+                <option value="whatsapp" className="bg-card">WhatsApp</option>
+                <option value="outro" className="bg-card">Outro</option>
               </select>
             </div>
           </div>
@@ -231,7 +231,7 @@ export function ClienteForm({ cliente, onSubmit, onClose, loading }: ClienteForm
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-300 hover:bg-white/10 transition-colors"
+              className="flex-1 px-4 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground-suave hover:bg-superficie-forte transition-colors"
             >
               Cancelar
             </button>

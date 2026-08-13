@@ -101,18 +101,18 @@ export function HistoricoLancamentoModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-lg bg-[#0f1117] border border-white/10 rounded-2xl shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+      <div className="relative w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div>
-            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              <History className="w-5 h-5 text-brand-400" />
+            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <History className="w-5 h-5 text-brand-accent" />
               Histórico de alterações
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">{lancamento.descricao}</p>
+            <p className="text-xs text-muted-suave mt-0.5">{lancamento.descricao}</p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-superficie-forte transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -120,19 +120,19 @@ export function HistoricoLancamentoModal({
 
         <div className="p-6 max-h-[65vh] overflow-y-auto">
           {loading ? (
-            <div className="flex items-center justify-center py-8 text-slate-400">
+            <div className="flex items-center justify-center py-8 text-muted-foreground">
               <Loader2 className="w-5 h-5 animate-spin mr-2" />
               Carregando histórico...
             </div>
           ) : error ? (
-            <p className="text-sm text-red-400 text-center py-6">{error}</p>
+            <p className="text-sm text-erro text-center py-6">{error}</p>
           ) : logs.length === 0 ? (
-            <p className="text-sm text-slate-500 text-center py-8">
+            <p className="text-sm text-muted-suave text-center py-8">
               Este lançamento nunca foi editado.
             </p>
           ) : (
             <div className="relative">
-              <div className="absolute left-4 top-2 bottom-2 w-px bg-white/10" />
+              <div className="absolute left-4 top-2 bottom-2 w-px bg-superficie-forte" />
               <div className="space-y-5">
                 {logs.map((log) => {
                   const alteracoes = camposAlterados(log);
@@ -141,8 +141,8 @@ export function HistoricoLancamentoModal({
                       <div
                         className={`w-8 h-8 rounded-full border flex items-center justify-center flex-shrink-0 z-10 ${
                           log.acao === "excluido"
-                            ? "bg-red-500/10 border-red-500/30 text-red-400"
-                            : "bg-brand-500/10 border-brand-500/30 text-brand-400"
+                            ? "bg-red-500/10 border-red-500/30 text-erro"
+                            : "bg-brand-500/10 border-brand-500/30 text-brand-accent"
                         }`}
                       >
                         {log.acao === "excluido" ? (
@@ -152,34 +152,34 @@ export function HistoricoLancamentoModal({
                         )}
                       </div>
 
-                      <div className="flex-1 bg-white/[0.03] border border-white/10 rounded-xl p-3 min-w-0">
-                        <p className="text-sm font-medium text-white">
+                      <div className="flex-1 bg-white/[0.03] border border-border rounded-xl p-3 min-w-0">
+                        <p className="text-sm font-medium text-foreground">
                           {log.acao_display} por {log.editado_por_nome ?? "—"}{" "}
-                          <span className="text-slate-400 font-normal">
+                          <span className="text-muted-foreground font-normal">
                             em {formatarDataHora(log.editado_em)}
                           </span>
                         </p>
-                        <p className="text-xs text-slate-400 mt-1">
+                        <p className="text-xs text-muted-foreground mt-1">
                           Motivo: &ldquo;{log.motivo}&rdquo;
                         </p>
 
                         {log.acao === "editado" && (
-                          <div className="mt-2 pt-2 border-t border-white/5">
-                            <p className="text-xs font-medium text-slate-400 mb-1">
+                          <div className="mt-2 pt-2 border-t border-border">
+                            <p className="text-xs font-medium text-muted-foreground mb-1">
                               Alterações:
                             </p>
                             {alteracoes.length === 0 ? (
-                              <p className="text-xs text-slate-500">
+                              <p className="text-xs text-muted-suave">
                                 Nenhum campo alterado.
                               </p>
                             ) : (
                               <ul className="space-y-0.5">
                                 {alteracoes.map((a) => (
-                                  <li key={a.campo} className="text-xs text-slate-300">
-                                    <span className="text-slate-500">{a.label}:</span>{" "}
+                                  <li key={a.campo} className="text-xs text-foreground-suave">
+                                    <span className="text-muted-suave">{a.label}:</span>{" "}
                                     {a.antes}{" "}
-                                    <span className="text-slate-500">→</span>{" "}
-                                    <span className="text-white">{a.depois}</span>
+                                    <span className="text-muted-suave">→</span>{" "}
+                                    <span className="text-foreground">{a.depois}</span>
                                   </li>
                                 ))}
                               </ul>

@@ -70,7 +70,7 @@ export function ApagarComAjustesFlow({
           <>
             {origem} {ehVenda ? "descontou do" : "adicionou ao"} estoque. Quer estornar
             a {ehVenda ? "saída" : "entrada"} de{" "}
-            <span className="text-white font-medium">
+            <span className="text-foreground font-medium">
               {movimentacaoInfo.quantidade} un. de {movimentacaoInfo.produto_nome}
             </span>
             ?
@@ -95,7 +95,7 @@ export function ApagarComAjustesFlow({
         mensagem={
           <>
             {origem} tem lançamento financeiro. Quer apagar {label} de{" "}
-            <span className="text-white font-medium">{moeda(lancamentoInfo.valor)}</span>{" "}
+            <span className="text-foreground font-medium">{moeda(lancamentoInfo.valor)}</span>{" "}
             também?
           </>
         }

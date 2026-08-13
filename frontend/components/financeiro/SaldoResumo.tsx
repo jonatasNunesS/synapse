@@ -34,7 +34,7 @@ function moeda(v: number): string {
 }
 
 function corSaldo(v: number): string {
-  return v > 0 ? "text-emerald-400" : v < 0 ? "text-red-400" : "text-slate-200";
+  return v > 0 ? "text-sucesso" : v < 0 ? "text-erro" : "text-foreground-suave";
 }
 
 function sinal(v: number): string {
@@ -62,7 +62,7 @@ interface SaldoResumoProps {
 }
 
 function SkeletonLinha() {
-  return <div className="h-7 w-32 bg-white/10 rounded animate-pulse" />;
+  return <div className="h-7 w-32 bg-superficie-forte rounded animate-pulse" />;
 }
 
 export function SaldoResumo({ saldo, loading, filtroAtivo, onFiltrar }: SaldoResumoProps) {
@@ -76,7 +76,7 @@ export function SaldoResumo({ saldo, loading, filtroAtivo, onFiltrar }: SaldoRes
       titulo: "Recebido",
       metrica: m?.recebido ?? { total: 0, count: 0 },
       filtro: { tipo: "receita", status: "pago" },
-      icon: <ArrowUpCircle className="h-4 w-4 text-emerald-400" />,
+      icon: <ArrowUpCircle className="h-4 w-4 text-sucesso" />,
       ring: "hover:border-emerald-500/40",
       chip: "bg-emerald-500/10 border-emerald-500/20",
     },
@@ -85,7 +85,7 @@ export function SaldoResumo({ saldo, loading, filtroAtivo, onFiltrar }: SaldoRes
       titulo: "A receber",
       metrica: m?.a_receber ?? { total: 0, count: 0 },
       filtro: { tipo: "receita", status: "pendente" },
-      icon: <Clock className="h-4 w-4 text-emerald-300" />,
+      icon: <Clock className="h-4 w-4 text-sucesso" />,
       ring: "hover:border-emerald-500/40",
       chip: "bg-emerald-500/[0.06] border-emerald-500/15",
     },
@@ -94,7 +94,7 @@ export function SaldoResumo({ saldo, loading, filtroAtivo, onFiltrar }: SaldoRes
       titulo: "Pago",
       metrica: m?.pago ?? { total: 0, count: 0 },
       filtro: { tipo: "despesa", status: "pago" },
-      icon: <ArrowDownCircle className="h-4 w-4 text-red-400" />,
+      icon: <ArrowDownCircle className="h-4 w-4 text-erro" />,
       ring: "hover:border-red-500/40",
       chip: "bg-red-500/10 border-red-500/20",
     },
@@ -103,7 +103,7 @@ export function SaldoResumo({ saldo, loading, filtroAtivo, onFiltrar }: SaldoRes
       titulo: "A pagar",
       metrica: m?.a_pagar ?? { total: 0, count: 0 },
       filtro: { tipo: "despesa", status: "pendente" },
-      icon: <Clock className="h-4 w-4 text-red-300" />,
+      icon: <Clock className="h-4 w-4 text-erro" />,
       ring: "hover:border-red-500/40",
       chip: "bg-red-500/[0.06] border-red-500/15",
     },
@@ -128,10 +128,10 @@ export function SaldoResumo({ saldo, loading, filtroAtivo, onFiltrar }: SaldoRes
           const temExtra = temCaixinhas || temEmprestimos;
           const disponivel = saldo?.saldo_disponivel ?? ac?.saldo ?? 0;
           return (
-            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
+            <div className="rounded-xl border border-border bg-white/[0.03] p-5">
               <div className="flex items-center gap-2 mb-1">
-                <Wallet className="h-4 w-4 text-slate-400" />
-                <p className="text-sm text-slate-400">
+                <Wallet className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
                   {temExtra ? "Saldo disponível" : "Saldo acumulado"}
                 </p>
               </div>
@@ -148,7 +148,7 @@ export function SaldoResumo({ saldo, loading, filtroAtivo, onFiltrar }: SaldoRes
                     {temCaixinhas && (
                       <Link
                         href="/financeiro/caixinhas"
-                        className="inline-flex items-center gap-1 text-brand-400 hover:text-brand-300 transition-colors"
+                        className="inline-flex items-center gap-1 text-brand-accent hover:text-brand-accent transition-colors"
                       >
                         <PiggyBank className="h-3.5 w-3.5" />
                         Em caixinhas: {moeda(saldo?.caixinhas?.total ?? 0)}
@@ -160,7 +160,7 @@ export function SaldoResumo({ saldo, loading, filtroAtivo, onFiltrar }: SaldoRes
                     {temEmprestimos && (
                       <Link
                         href="/financeiro/emprestimos"
-                        className="inline-flex flex-wrap items-center gap-x-1.5 text-amber-400/90 hover:text-amber-300 transition-colors"
+                        className="inline-flex flex-wrap items-center gap-x-1.5 text-alerta/90 hover:text-alerta transition-colors"
                       >
                         <HandCoins className="h-3.5 w-3.5" />
                         {(emp?.a_receber ?? 0) > 0 && (
@@ -176,13 +176,13 @@ export function SaldoResumo({ saldo, loading, filtroAtivo, onFiltrar }: SaldoRes
                     )}
                   </div>
                   {temCaixinhas && (
-                    <p className="text-slate-500">
+                    <p className="text-muted-suave">
                       Patrimônio total: {moeda(saldo?.patrimonio_total ?? 0)}
                     </p>
                   )}
                 </div>
               ) : (
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-muted-suave mt-1">
                   Dinheiro real disponível hoje (todo o histórico)
                 </p>
               )}
@@ -190,10 +190,10 @@ export function SaldoResumo({ saldo, loading, filtroAtivo, onFiltrar }: SaldoRes
           );
         })()}
 
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
+        <div className="rounded-xl border border-border bg-white/[0.03] p-5">
           <div className="flex items-center gap-2 mb-1">
-            <CalendarDays className="h-4 w-4 text-slate-400" />
-            <p className="text-sm text-slate-400 capitalize">
+            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground capitalize">
               Saldo do mês{nomeMes ? ` (${nomeMes})` : ""}
             </p>
           </div>
@@ -205,7 +205,7 @@ export function SaldoResumo({ saldo, loading, filtroAtivo, onFiltrar }: SaldoRes
               {moeda(m?.saldo ?? 0)}
             </p>
           )}
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-muted-suave mt-1">
             Resultado do período (recebido − pago)
           </p>
         </div>
@@ -228,17 +228,17 @@ export function SaldoResumo({ saldo, loading, filtroAtivo, onFiltrar }: SaldoRes
               } ${ativo ? "ring-2 ring-white/30" : ""}`}
             >
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-slate-400">{mt.titulo}</p>
+                <p className="text-xs text-muted-foreground">{mt.titulo}</p>
                 {mt.icon}
               </div>
               {loading ? (
-                <div className="h-6 w-20 bg-white/10 rounded animate-pulse" />
+                <div className="h-6 w-20 bg-superficie-forte rounded animate-pulse" />
               ) : (
-                <p className="text-lg font-bold text-white tabular-nums">
+                <p className="text-lg font-bold text-foreground tabular-nums">
                   {moeda(mt.metrica.total)}
                 </p>
               )}
-              <p className="text-[0.6875rem] text-slate-500 mt-0.5">
+              <p className="text-[0.6875rem] text-muted-suave mt-0.5">
                 {mt.metrica.count} lançamento{mt.metrica.count !== 1 ? "s" : ""}
               </p>
             </button>

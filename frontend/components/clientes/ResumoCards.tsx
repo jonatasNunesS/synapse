@@ -33,23 +33,23 @@ function Card({
   return (
     /* Ícone acima do texto: são seis KPIs em colunas estreitas, e com o texto
        grande o ícone ao lado não deixaria largura para o valor. */
-    <div className="bg-[#0f1117] border border-white/10 rounded-xl p-4 sm:p-5 flex flex-col gap-2">
+    <div className="bg-card shadow-elevacao border border-border rounded-xl p-4 sm:p-5 flex flex-col gap-2">
       <div className={`p-2.5 rounded-lg self-start ${color} bg-opacity-15`}>
         <Icon className={`w-5 h-5 ${color.replace("bg-", "text-")}`} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs text-gray-400 font-medium uppercase tracking-wide break-words">
+        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide break-words">
           {title}
         </p>
         {loading ? (
-          <div className="h-7 w-20 bg-white/5 rounded animate-pulse mt-1" />
+          <div className="h-7 w-20 bg-superficie rounded animate-pulse mt-1" />
         ) : (
-          <p className="text-xl sm:text-2xl font-bold text-white mt-0.5 break-words">
+          <p className="text-xl sm:text-2xl font-bold text-foreground mt-0.5 break-words">
             {value}
           </p>
         )}
         {subtitle && (
-          <p className="text-xs text-gray-500 mt-0.5 break-words">{subtitle}</p>
+          <p className="text-xs text-muted-suave mt-0.5 break-words">{subtitle}</p>
         )}
       </div>
     </div>
@@ -69,17 +69,17 @@ export function ResumoCards({ resumo, loading, periodoAtivo }: ResumoCardsProps)
     <div className="space-y-3">
       {emPeriodo && (
         <div className="flex items-center justify-between flex-wrap gap-2 rounded-lg border border-brand-500/20 bg-brand-500/5 px-4 py-2.5">
-          <span className="text-sm text-brand-300 font-medium capitalize">
+          <span className="text-sm text-brand-accent font-medium capitalize">
             {resumo!.periodo!.label}
           </span>
           {comparativoTxt && (
             <span
               className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                 diff > 0
-                  ? "bg-emerald-500/15 text-emerald-400"
+                  ? "bg-emerald-500/15 text-sucesso"
                   : diff < 0
-                  ? "bg-red-500/15 text-red-400"
-                  : "bg-white/10 text-gray-300"
+                  ? "bg-red-500/15 text-erro"
+                  : "bg-superficie-forte text-foreground-suave"
               }`}
             >
               {comparativoTxt}

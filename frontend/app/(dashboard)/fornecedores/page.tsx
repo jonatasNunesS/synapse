@@ -28,11 +28,11 @@ export default function FornecedoresPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10">
-            <Building2 className="h-5 w-5 text-brand-400" />
+            <Building2 className="h-5 w-5 text-brand-accent" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white">Fornecedores</h1>
-            <p className="text-sm text-zinc-500">
+            <h1 className="text-xl font-bold text-foreground">Fornecedores</h1>
+            <p className="text-sm text-muted-suave">
               Gerencie seus fornecedores e acompanhe o Score Synapse
             </p>
           </div>
@@ -40,9 +40,9 @@ export default function FornecedoresPage() {
         {/* Botão Gerenciar Categorias */}
         <button
           onClick={() => setShowCategorias(true)}
-          className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-slate-100 transition-colors"
+          className="flex items-center gap-2 rounded-lg border border-border bg-secondary/60 px-3 py-2 text-sm text-foreground-suave hover:bg-slate-700 hover:text-foreground transition-colors"
         >
-          <Tag className="h-4 w-4 text-brand-400" />
+          <Tag className="h-4 w-4 text-brand-accent" />
           Gerenciar Categorias
         </button>
       </div>

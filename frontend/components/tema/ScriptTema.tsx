@@ -1,20 +1,30 @@
 /**
- * Anti-flash da aparência (identidade visual da empresa + tamanho do texto
- * do usuário).
+ * Anti-flash da aparência: identidade visual da empresa (paleta + fonte) e
+ * preferências do usuário (tamanho do texto + modo claro/escuro).
  *
- * As duas configurações chegam no /auth/me — que só responde depois que o
- * React montou. Se fossem aplicadas aí, o usuário veria as cores padrão (e o
- * texto pequeno) por um instante, e a página trocaria na frente dele.
+ * Todas chegam no /auth/me — que só responde depois que o React montou. Se
+ * fossem aplicadas aí, o usuário veria as cores padrão por um instante, e a
+ * página trocaria na frente dele. No modo claro isso é pior ainda: um flash
+ * de tela preta antes do branco.
  *
  * Este script roda ANTES do primeiro paint: lê os cookies gravados no último
- * carregamento e escreve `data-tema` / `data-fonte` / `data-fonte-tamanho` no
- * <html>, então o CSS já vale no primeiro pixel desenhado. Quando o /auth/me
- * responde, o useAuth reescreve os mesmos atributos — normalmente com o mesmo
- * valor, sem nada piscando.
+ * carregamento e escreve `data-tema` / `data-fonte` / `data-fonte-tamanho` /
+ * `data-modo` no <html>, então o CSS já vale no primeiro pixel desenhado.
+ * Quando o /auth/me responde, o useAuth reescreve os mesmos atributos —
+ * normalmente com o mesmo valor, sem nada piscando.
+ *
+ * O modo tem um passo a mais: se o valor guardado for "sistema" (ou não
+ * houver cookie nenhum), ele consulta o prefers-color-scheme aqui mesmo,
+ * ainda antes do paint.
  *
  * Fica inline (não é um módulo carregado depois) justamente para ser síncrono.
  */
-import { COOKIE_TAMANHO, TAMANHOS_VALIDOS } from "@/lib/preferencias";
+import {
+  CONSULTA_SO,
+  COOKIE_MODO,
+  COOKIE_TAMANHO,
+  TAMANHOS_VALIDOS,
+} from "@/lib/preferencias";
 import { COOKIE_TEMA, FONTES_VALIDAS, PALETAS_VALIDAS } from "@/lib/tema";
 
 const SCRIPT = `
@@ -41,6 +51,22 @@ const SCRIPT = `
     }
   } catch (e) {
     /* sem preferência salva: fica o tamanho normal */
+  }
+  try {
+    var modo = cookie("${COOKIE_MODO}");
+    if (modo !== "claro" && modo !== "escuro") {
+      // "sistema", cookie ausente ou valor adulterado: pergunta ao SO. Se
+      // nem isso responder, fica escuro — o visual de sempre.
+      modo = window.matchMedia && window.matchMedia("${CONSULTA_SO}").matches
+        ? "escuro"
+        : (window.matchMedia ? "claro" : "escuro");
+    }
+    el.dataset.modo = modo;
+    if (modo === "escuro") el.classList.add("dark");
+    else el.classList.remove("dark");
+  } catch (e) {
+    el.dataset.modo = "escuro";
+    el.classList.add("dark");
   }
 })();
 `.trim();

@@ -30,6 +30,7 @@ import { PeriodoSelector } from "@/components/dashboard/PeriodoSelector";
 import { useAnalytics } from "@/hooks/useDashboard";
 import type { PeriodoAnalytics } from "@/types/dashboard";
 import { STATUS_FUNIL_LABELS, STATUS_FUNIL_CORES } from "@/types/dashboard";
+import { useCoresDoGrafico } from "@/lib/graficos";
 
 // ════════════════════════════════════════════════════════════
 // HELPERS
@@ -67,6 +68,9 @@ const CustomTooltipFinanceiro = ({ active, payload, label }: any) => {
 // ════════════════════════════════════════════════════════════
 
 export default function AnalyticsPage() {
+  // Cores do gráfico saem dos tokens do tema (funcionam nos dois modos).
+  const cores = useCoresDoGrafico();
+
   const { periodo, setPeriodo, fluxoCaixa, funil, resumo } = useAnalytics();
 
   const fluxoDados = fluxoCaixa.fluxo.map((d) => ({
@@ -211,9 +215,9 @@ export default function AnalyticsPage() {
                     <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="data" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={75} />
+                <CartesianGrid strokeDasharray="3 3" stroke={cores.grid} />
+                <XAxis dataKey="data" tick={{ fontSize: 11, fill: cores.eixo }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 11, fill: cores.eixo }} tickLine={false} axisLine={false} width={75} />
                 <Tooltip content={<CustomTooltipFinanceiro />} />
                 <Legend
                   formatter={(value: string) => {
@@ -223,12 +227,12 @@ export default function AnalyticsPage() {
                   }}
                   iconType="circle"
                   iconSize={8}
-                  wrapperStyle={{ fontSize: 12 }}
+                  wrapperStyle={{ fontSize: 12, color: cores.eixo }}
                 />
 
-                <Area type="monotone" dataKey="receitas" stroke="#22c55e" strokeWidth={2} fill="url(#gradReceitas)" />
-                <Area type="monotone" dataKey="despesas" stroke="#ef4444" strokeWidth={2} fill="url(#gradDespesas)" />
-                <Area type="monotone" dataKey="saldo_acumulado" name="saldo" stroke="#6366f1" strokeWidth={2} strokeDasharray="4 2" fill="url(#gradSaldo)" />
+                <Area type="monotone" dataKey="receitas" stroke={cores.receita} strokeWidth={2} fill="url(#gradReceitas)" />
+                <Area type="monotone" dataKey="despesas" stroke={cores.despesa} strokeWidth={2} fill="url(#gradDespesas)" />
+                <Area type="monotone" dataKey="saldo_acumulado" name="saldo" stroke={cores.neutro} strokeWidth={2} strokeDasharray="4 2" fill="url(#gradSaldo)" />
               </AreaChart>
             </ResponsiveContainer>
           )}
@@ -252,9 +256,9 @@ export default function AnalyticsPage() {
             ) : (
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={receitasDespesasAgrupadas} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="semana" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                  <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={70} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={cores.grid} />
+                  <XAxis dataKey="semana" tick={{ fontSize: 11, fill: cores.eixo }} tickLine={false} axisLine={false} />
+                  <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 11, fill: cores.eixo }} tickLine={false} axisLine={false} width={70} />
                   <Tooltip
                     formatter={(value, name) => [
                       formatCurrencyFull(Number(value ?? 0)),
@@ -268,10 +272,10 @@ export default function AnalyticsPage() {
                     }
                     iconType="circle"
                     iconSize={8}
-                    wrapperStyle={{ fontSize: 12 }}
+                    wrapperStyle={{ fontSize: 12, color: cores.eixo }}
                   />
-                  <Bar dataKey="receitas" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="despesas" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="receitas" fill={cores.receita} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="despesas" fill={cores.despesa} radius={[4, 4, 0, 0]} />
                 </BarChart>
 
               </ResponsiveContainer>
@@ -400,9 +404,9 @@ export default function AnalyticsPage() {
             ) : (
               <ResponsiveContainer width="100%" height={240}>
                 <LineChart data={fluxoDados} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="data" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                  <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={75} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={cores.grid} />
+                  <XAxis dataKey="data" tick={{ fontSize: 11, fill: cores.eixo }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                  <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 11, fill: cores.eixo }} tickLine={false} axisLine={false} width={75} />
                   <Tooltip
                     formatter={(value) => [formatCurrencyFull(Number(value ?? 0)), "Saldo Acumulado"]}
                   />
@@ -410,7 +414,7 @@ export default function AnalyticsPage() {
                     type="monotone"
                     dataKey="saldo_acumulado"
                     name="Saldo Acumulado"
-                    stroke="#6366f1"
+                    stroke={cores.neutro}
                     strokeWidth={2.5}
                     dot={false}
                     activeDot={{ r: 4 }}

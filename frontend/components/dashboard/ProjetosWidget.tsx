@@ -13,7 +13,7 @@ interface ProjetosWidgetProps {
 }
 
 const PRIORIDADE_COR: Record<string, string> = {
-  baixa: "text-gray-500",
+  baixa: "text-muted-suave",
   media: "text-blue-500",
   alta: "text-yellow-500",
   urgente: "text-red-500",
@@ -94,7 +94,7 @@ export function ProjetosWidget({ projetos, isLoading }: ProjetosWidgetProps) {
 
                 {/* Metadados */}
                 <div className="flex items-center justify-between mt-1">
-                  <span className={`text-xs ${PRIORIDADE_COR[p.prioridade] ?? "text-gray-500"}`}>
+                  <span className={`text-xs ${PRIORIDADE_COR[p.prioridade] ?? "text-muted-suave"}`}>
                     {p.prioridade}
                   </span>
                   <span className="text-xs text-muted-foreground">

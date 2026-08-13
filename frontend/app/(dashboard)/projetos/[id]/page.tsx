@@ -151,7 +151,7 @@ export default function ProjetoDetalhePage() {
   if (!projeto) {
     return (
       <div className="p-6 max-w-7xl mx-auto text-center py-20">
-        <p className="text-gray-500">Projeto não encontrado.</p>
+        <p className="text-muted-suave">Projeto não encontrado.</p>
         <Link href="/projetos" className="text-brand-600 hover:underline mt-2 block">
           Voltar para Projetos
         </Link>
@@ -162,7 +162,7 @@ export default function ProjetoDetalhePage() {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-5">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-500">
+      <div className="flex items-center gap-2 text-sm text-muted-suave">
         <Link href="/projetos" className="hover:text-brand-600 flex items-center gap-1">
           <ArrowLeft size={14} />
           Projetos
@@ -182,7 +182,7 @@ export default function ProjetoDetalhePage() {
             <div className="min-w-0">
               <h1 className="text-xl font-bold text-gray-900">{projeto.nome}</h1>
               {projeto.descricao && (
-                <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{projeto.descricao}</p>
+                <p className="text-sm text-muted-suave mt-0.5 line-clamp-2">{projeto.descricao}</p>
               )}
               <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <span
@@ -231,7 +231,7 @@ export default function ProjetoDetalhePage() {
         {/* Métricas */}
         <div className="flex items-center gap-6 mt-4 pt-4 border-t border-gray-100 text-sm text-gray-600 flex-wrap">
           <div>
-            <span className="text-xs text-gray-400 block">Progresso</span>
+            <span className="text-xs text-muted-foreground block">Progresso</span>
             <div className="flex items-center gap-2 mt-0.5">
               <div className="w-24 bg-gray-100 rounded-full h-1.5">
                 <div
@@ -246,20 +246,20 @@ export default function ProjetoDetalhePage() {
             </div>
           </div>
           <div>
-            <span className="text-xs text-gray-400 block">Tarefas</span>
+            <span className="text-xs text-muted-foreground block">Tarefas</span>
             <span className="font-medium">
               {projeto.tarefas_concluidas}/{projeto.total_tarefas}
             </span>
           </div>
           {projeto.responsavel_nome && (
             <div className="flex items-center gap-1.5">
-              <Users size={14} className="text-gray-400" />
+              <Users size={14} className="text-muted-foreground" />
               <span>{projeto.responsavel_nome}</span>
             </div>
           )}
           {projeto.data_prazo && (
             <div className="flex items-center gap-1.5">
-              <Calendar size={14} className="text-gray-400" />
+              <Calendar size={14} className="text-muted-foreground" />
               <span className={projeto.esta_atrasado ? "text-red-600 font-medium" : ""}>
                 {new Date(projeto.data_prazo).toLocaleDateString("pt-BR")}
               </span>
@@ -267,7 +267,7 @@ export default function ProjetoDetalhePage() {
           )}
           {projeto.membros && projeto.membros.length > 0 && (
             <div>
-              <span className="text-xs text-gray-400 block">Membros</span>
+              <span className="text-xs text-muted-foreground block">Membros</span>
               <div className="flex -space-x-1 mt-0.5">
                 {projeto.membros.slice(0, 5).map((m) => (
                   <div
@@ -297,7 +297,7 @@ export default function ProjetoDetalhePage() {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
               visao === "kanban"
                 ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
+                : "text-muted-suave hover:text-gray-700"
             }`}
           >
             <LayoutGrid size={14} />
@@ -308,7 +308,7 @@ export default function ProjetoDetalhePage() {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
               visao === "lista"
                 ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
+                : "text-muted-suave hover:text-gray-700"
             }`}
           >
             <List size={14} />
@@ -353,7 +353,7 @@ export default function ProjetoDetalhePage() {
               ))}
             </div>
           ) : tarefas.length === 0 ? (
-            <div className="py-16 text-center text-gray-400">
+            <div className="py-16 text-center text-muted-foreground">
               <p>Nenhuma tarefa neste projeto.</p>
             </div>
           ) : (
@@ -417,7 +417,7 @@ export default function ProjetoDetalhePage() {
                           e.stopPropagation();
                           setTarefaParaExcluir(tarefa);
                         }}
-                        className="text-gray-300 hover:text-red-500 transition-colors"
+                        className="text-foreground-suave hover:text-red-500 transition-colors"
                         title="Excluir tarefa"
                       >
                         <Trash2 size={14} />
@@ -475,7 +475,7 @@ export default function ProjetoDetalhePage() {
         mensagem={
           <>
             Excluir o projeto{" "}
-            <span className="text-white font-medium">{projeto.nome}</span>? Todas
+            <span className="text-foreground font-medium">{projeto.nome}</span>? Todas
             as tarefas vinculadas serão removidas. Esta ação não pode ser desfeita.
           </>
         }
@@ -492,7 +492,7 @@ export default function ProjetoDetalhePage() {
         mensagem={
           <>
             Excluir a tarefa{" "}
-            <span className="text-white font-medium">
+            <span className="text-foreground font-medium">
               {tarefaParaExcluir?.titulo}
             </span>
             ? Esta ação não pode ser desfeita.

@@ -145,8 +145,8 @@ export default function LancamentosPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Lançamentos</h1>
-          <p className="text-sm text-slate-400 mt-0.5">
+          <h1 className="text-2xl font-bold text-foreground">Lançamentos</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
             {total} lançamento{total !== 1 ? "s" : ""} encontrado
             {total !== 1 ? "s" : ""}
           </p>
@@ -161,16 +161,16 @@ export default function LancamentosPage() {
       </div>
 
       {/* Filtros */}
-      <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4">
+      <div className="bg-white/[0.03] border border-border rounded-xl p-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           {/* Busca */}
           <div className="relative lg:col-span-2">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-suave" />
             <input
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
               placeholder="Buscar por descrição..."
-              className="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors"
+              className="w-full pl-9 pr-3 py-2 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors"
             />
           </div>
 
@@ -180,7 +180,7 @@ export default function LancamentosPage() {
             onChange={(e) =>
               atualizarFiltro("tipo", e.target.value as TipoFinanceiro)
             }
-            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
+            className="px-3 py-2 bg-superficie border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-brand-500 transition-colors"
           >
             <option value="">Todos os tipos</option>
             <option value="receita">Receita</option>
@@ -193,7 +193,7 @@ export default function LancamentosPage() {
             onChange={(e) =>
               atualizarFiltro("status", e.target.value as StatusLancamento)
             }
-            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
+            className="px-3 py-2 bg-superficie border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-brand-500 transition-colors"
           >
             <option value="">Todos os status</option>
             <option value="pendente">Pendente</option>
@@ -206,7 +206,7 @@ export default function LancamentosPage() {
           <select
             value={filtros.categoria_id ?? ""}
             onChange={(e) => atualizarFiltro("categoria_id", e.target.value)}
-            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
+            className="px-3 py-2 bg-superficie border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-brand-500 transition-colors"
           >
             <option value="">Todas as categorias</option>
             {categorias.map((cat) => (
@@ -220,25 +220,25 @@ export default function LancamentosPage() {
         {/* Datas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
           <div className="flex items-center gap-2">
-            <label className="text-xs text-slate-400 whitespace-nowrap">
+            <label className="text-xs text-muted-foreground whitespace-nowrap">
               De:
             </label>
             <input
               type="date"
               value={filtros.data_inicio ?? ""}
               onChange={(e) => atualizarFiltro("data_inicio", e.target.value)}
-              className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
+              className="flex-1 px-3 py-2 bg-superficie border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-brand-500 transition-colors"
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-xs text-slate-400 whitespace-nowrap">
+            <label className="text-xs text-muted-foreground whitespace-nowrap">
               Até:
             </label>
             <input
               type="date"
               value={filtros.data_fim ?? ""}
               onChange={(e) => atualizarFiltro("data_fim", e.target.value)}
-              className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
+              className="flex-1 px-3 py-2 bg-superficie border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-brand-500 transition-colors"
             />
           </div>
         </div>
@@ -246,7 +246,7 @@ export default function LancamentosPage() {
         {temFiltros && (
           <button
             onClick={limparFiltros}
-            className="mt-3 flex items-center gap-1 text-xs text-slate-400 hover:text-white transition-colors"
+            className="mt-3 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             <X className="w-3 h-3" />
             Limpar filtros
@@ -255,7 +255,7 @@ export default function LancamentosPage() {
       </div>
 
       {/* Tabela */}
-      <div className="bg-white/[0.03] border border-white/10 rounded-xl">
+      <div className="bg-white/[0.03] border border-border rounded-xl">
         <LancamentoTable
           lancamentos={lancamentos}
           loading={loading}
@@ -268,8 +268,8 @@ export default function LancamentosPage() {
 
         {/* Paginação */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-5 py-4 border-t border-white/10">
-            <p className="text-xs text-slate-500">
+          <div className="flex items-center justify-between px-5 py-4 border-t border-border">
+            <p className="text-xs text-muted-suave">
               Página {filtros.page ?? 1} de {totalPages}
             </p>
             <div className="flex items-center gap-2">
@@ -278,7 +278,7 @@ export default function LancamentosPage() {
                   setFiltros((p) => ({ ...p, page: Math.max(1, (p.page ?? 1) - 1) }))
                 }
                 disabled={(filtros.page ?? 1) <= 1}
-                className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-superficie-forte disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -290,7 +290,7 @@ export default function LancamentosPage() {
                   }))
                 }
                 disabled={(filtros.page ?? 1) >= totalPages}
-                className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-superficie-forte disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -322,7 +322,7 @@ export default function LancamentosPage() {
         mensagem={
           <>
             Excluir{" "}
-            <span className="text-white font-medium">
+            <span className="text-foreground font-medium">
               {lancamentoParaExcluir?.descricao}
             </span>
             ? Esta ação não pode ser desfeita.

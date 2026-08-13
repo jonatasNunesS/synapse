@@ -121,7 +121,7 @@ def test_get_devolve_a_preferencia_atual(colaborador):
     CustomUser.objects.filter(id=colaborador.id).update(tamanho_fonte="medio")
     resp = _client(colaborador).get(URL)
     assert resp.status_code == 200
-    assert resp.json()["data"] == {"tamanho_fonte": "medio"}
+    assert resp.json()["data"] == {"tamanho_fonte": "medio", "tema_modo": "sistema"}
 
 
 # ── Fontes novas: continuam sendo da empresa ────────────────────────────────
@@ -149,3 +149,80 @@ def test_fonte_da_empresa_continua_so_para_admin(colaborador, empresa):
     assert resp.status_code == 403
     empresa.refresh_from_db()
     assert empresa.tema_fonte == "padrao"
+
+
+# ── Modo claro/escuro: também é do USUÁRIO ──────────────────────────────────
+
+@pytest.mark.django_db
+def test_modo_padrao_e_sistema(admin):
+    """Quem nunca escolheu segue o SO — não fica preso no escuro de antes."""
+    assert admin.tema_modo == "sistema"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("modo", ["claro", "escuro", "sistema"])
+def test_patch_aceita_os_tres_modos(colaborador, modo):
+    resp = _client(colaborador).patch(URL, {"tema_modo": modo}, format="json")
+    assert resp.status_code == 200
+    assert resp.json()["data"]["tema_modo"] == modo
+    colaborador.refresh_from_db()
+    assert colaborador.tema_modo == modo
+
+
+@pytest.mark.django_db
+def test_modo_invalido_400(colaborador):
+    resp = _client(colaborador).patch(URL, {"tema_modo": "sepia"}, format="json")
+    assert resp.status_code == 400
+    colaborador.refresh_from_db()
+    assert colaborador.tema_modo == "sistema"
+
+
+@pytest.mark.django_db
+def test_sem_token_401():
+    assert APIClient().patch(URL, {"tema_modo": "claro"}, format="json").status_code == 401
+
+
+@pytest.mark.django_db
+def test_auth_me_devolve_o_modo(colaborador):
+    colaborador.tema_modo = "claro"
+    colaborador.save()
+    resp = _client(colaborador).get("/api/auth/me/")
+    assert resp.status_code == 200
+    assert resp.json()["data"]["tema_modo"] == "claro"
+
+
+@pytest.mark.django_db
+def test_um_usuario_nao_muda_o_modo_do_outro(admin, colaborador):
+    """O alvo do PATCH é sempre request.user — não há como apontar para outro."""
+    _client(admin).patch(URL, {"tema_modo": "claro"}, format="json")
+
+    admin.refresh_from_db()
+    colaborador.refresh_from_db()
+    assert admin.tema_modo == "claro"
+    assert colaborador.tema_modo == "sistema"
+
+
+@pytest.mark.django_db
+def test_modo_nao_vaza_para_a_empresa(colaborador, empresa):
+    """Modo é pessoal; paleta e fonte é que são da empresa."""
+    _client(colaborador).patch(URL, {"tema_modo": "escuro"}, format="json")
+    empresa.refresh_from_db()
+    assert not hasattr(empresa, "tema_modo")
+
+
+@pytest.mark.django_db
+def test_patch_parcial_nao_zera_a_outra_preferencia(colaborador):
+    """Mandar só o modo preserva o tamanho do texto, e vice-versa."""
+    _client(colaborador).patch(URL, {"tamanho_fonte": "grande"}, format="json")
+    _client(colaborador).patch(URL, {"tema_modo": "claro"}, format="json")
+
+    colaborador.refresh_from_db()
+    assert colaborador.tamanho_fonte == "grande"
+    assert colaborador.tema_modo == "claro"
+
+
+@pytest.mark.django_db
+def test_qualquer_perfil_ajusta_o_proprio_modo(admin, colaborador):
+    for user in (admin, colaborador):
+        resp = _client(user).patch(URL, {"tema_modo": "claro"}, format="json")
+        assert resp.status_code == 200

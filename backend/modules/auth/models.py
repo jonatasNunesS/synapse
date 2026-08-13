@@ -74,6 +74,16 @@ TAMANHO_FONTE_CHOICES = [
     ("maior", "Maior"),
 ]
 
+# ── Modo claro/escuro ────────────────────────────────────────────────────────
+# Também é preferência de CADA USUÁRIO (a paleta da marca é que é da empresa).
+# "sistema" delega ao prefers-color-scheme do SO e é o padrão: quem nunca
+# escolheu nada segue o aparelho, que é o comportamento que a pessoa espera.
+TEMA_MODO_CHOICES = [
+    ("claro", "Claro"),
+    ("escuro", "Escuro"),
+    ("sistema", "Seguir o sistema"),
+]
+
 
 # ════════════════════════════════════════════════════════════
 # MODEL: EMPRESA
@@ -236,6 +246,14 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         max_length=10,
         choices=TAMANHO_FONTE_CHOICES,
         default="normal",
+    )
+
+    # Modo claro/escuro. Quem já existe entra em "sistema": passa a seguir o
+    # SO, em vez de ficar preso no escuro que era a única opção até aqui.
+    tema_modo = models.CharField(
+        max_length=10,
+        choices=TEMA_MODO_CHOICES,
+        default="sistema",
     )
 
     criado_em = models.DateTimeField(auto_now_add=True)

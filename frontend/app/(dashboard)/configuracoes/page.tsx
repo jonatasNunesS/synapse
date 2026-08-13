@@ -70,37 +70,37 @@ export default function ConfiguracoesPage() {
     <div className="p-6 max-w-2xl mx-auto space-y-8">
       {/* Cabeçalho */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Configurações</h1>
-        <p className="text-slate-400 text-sm mt-1">
+        <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
+        <p className="text-muted-foreground text-sm mt-1">
           Gerencie as configurações da sua empresa e conta.
         </p>
       </div>
 
       {/* Plano atual */}
       {empresa && (
-        <div className="flex items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-xl">
+        <div className="flex items-center gap-4 p-4 bg-superficie border border-border rounded-xl">
           <div className="p-2.5 rounded-lg bg-brand-600/20 border border-brand-500/30">
-            <CreditCard className="w-5 h-5 text-brand-400" />
+            <CreditCard className="w-5 h-5 text-brand-accent" />
           </div>
           <div className="flex-1">
-            <p className="text-sm text-slate-400">Plano atual</p>
+            <p className="text-sm text-muted-foreground">Plano atual</p>
             <div className="flex items-center gap-2 mt-0.5">
               <span
-                className={`text-xs px-2 py-0.5 rounded-full text-white font-medium ${PLANO_CORES[empresa.plano]}`}
+                className={`text-xs px-2 py-0.5 rounded-full text-foreground font-medium ${PLANO_CORES[empresa.plano]}`}
               >
                 {PLANO_LABELS[empresa.plano]}
               </span>
               {empresa.plano_ativo ? (
-                <span className="text-xs text-green-400 flex items-center gap-1">
+                <span className="text-xs text-sucesso flex items-center gap-1">
                   <ShieldCheck className="w-3 h-3" /> Ativo
                 </span>
               ) : (
-                <span className="text-xs text-red-400">Inativo</span>
+                <span className="text-xs text-erro">Inativo</span>
               )}
             </div>
           </div>
           {empresa.plano_validade && (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-suave">
               Válido até{" "}
               {new Date(empresa.plano_validade).toLocaleDateString("pt-BR")}
             </p>
@@ -117,71 +117,71 @@ export default function ConfiguracoesPage() {
       <IdentidadeVisualSection />
 
       {/* Dados da empresa */}
-      <section className="bg-[#0d1117] border border-white/10 rounded-xl p-6">
-        <h2 className="text-base font-semibold text-white mb-5 flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-brand-400" />
+      <section className="bg-card shadow-elevacao border border-border rounded-xl p-6">
+        <h2 className="text-base font-semibold text-foreground mb-5 flex items-center gap-2">
+          <Building2 className="w-4 h-4 text-brand-accent" />
           Dados da Empresa
         </h2>
 
         {!isAdmin && (
-          <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-sm text-amber-400">
+          <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-sm text-alerta">
             Apenas administradores podem editar os dados da empresa.
           </div>
         )}
 
         <form onSubmit={handleSubmit(onSalvarEmpresa)} className="space-y-4">
           {empresaErro && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-erro">
               {empresaErro}
             </div>
           )}
           {empresaOk && (
-            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-sm text-green-400 flex items-center gap-2">
+            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-sm text-sucesso flex items-center gap-2">
               <CheckCircle className="w-4 h-4" />
               Configurações salvas com sucesso!
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">
               Nome da Empresa
             </label>
             <input
               {...register("nome")}
               disabled={!isAdmin}
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            {errors.nome && <p className="mt-1 text-xs text-red-400">{errors.nome.message}</p>}
+            {errors.nome && <p className="mt-1 text-xs text-erro">{errors.nome.message}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                 Segmento
               </label>
               <select
                 {...register("segmento")}
                 disabled={!isAdmin}
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-brand-500/50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground focus:outline-none focus:border-brand-500/50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <option value="" className="bg-[#0d1117]">Selecione...</option>
+                <option value="" className="bg-card">Selecione...</option>
                 {SEGMENTOS.map((s) => (
-                  <option key={s.value} value={s.value} className="bg-[#0d1117]">
+                  <option key={s.value} value={s.value} className="bg-card">
                     {s.label}
                   </option>
                 ))}
               </select>
-              {errors.segmento && <p className="mt-1 text-xs text-red-400">{errors.segmento.message}</p>}
+              {errors.segmento && <p className="mt-1 text-xs text-erro">{errors.segmento.message}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                CNPJ <span className="text-slate-500 text-xs">(opcional)</span>
+              <label className="block text-sm font-medium text-foreground-suave mb-1.5">
+                CNPJ <span className="text-muted-suave text-xs">(opcional)</span>
               </label>
               <input
                 {...register("cnpj")}
                 disabled={!isAdmin}
                 placeholder="00.000.000/0001-00"
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
           </div>
@@ -206,9 +206,9 @@ export default function ConfiguracoesPage() {
       </section>
 
       {/* Notificações */}
-      <section className="bg-[#0d1117] border border-white/10 rounded-xl p-6">
-        <h2 className="text-base font-semibold text-white mb-5 flex items-center gap-2">
-          <Bell className="w-4 h-4 text-brand-400" />
+      <section className="bg-card shadow-elevacao border border-border rounded-xl p-6">
+        <h2 className="text-base font-semibold text-foreground mb-5 flex items-center gap-2">
+          <Bell className="w-4 h-4 text-brand-accent" />
           Preferências de Notificação
         </h2>
         <div className="space-y-3">
@@ -220,16 +220,16 @@ export default function ConfiguracoesPage() {
           ].map((item) => (
             <label
               key={item.label}
-              className="flex items-start gap-3 p-3 rounded-lg hover:bg-white/3 cursor-pointer transition-colors"
+              className="flex items-start gap-3 p-3 rounded-lg hover:bg-superficie cursor-pointer transition-colors"
             >
               <input
                 type="checkbox"
                 defaultChecked
-                className="mt-0.5 w-4 h-4 rounded border-white/20 bg-white/5 text-brand-600 focus:ring-brand-500/50 cursor-pointer"
+                className="mt-0.5 w-4 h-4 rounded border-border bg-superficie text-brand-600 focus:ring-brand-500/50 cursor-pointer"
               />
               <div>
-                <p className="text-sm font-medium text-white">{item.label}</p>
-                <p className="text-xs text-slate-500 mt-0.5">{item.desc}</p>
+                <p className="text-sm font-medium text-foreground">{item.label}</p>
+                <p className="text-xs text-muted-suave mt-0.5">{item.desc}</p>
               </div>
             </label>
           ))}

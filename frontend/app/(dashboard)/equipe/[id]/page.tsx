@@ -186,7 +186,7 @@ export default function MembroDetailPage() {
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row items-start gap-5">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-600/20 text-brand-400 text-xl font-bold border border-brand-600/30 flex-shrink-0">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-600/20 text-brand-accent text-xl font-bold border border-brand-600/30 flex-shrink-0">
               {iniciais}
             </div>
             <div className="flex-1">

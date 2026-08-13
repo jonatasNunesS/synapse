@@ -110,20 +110,20 @@ export default function ClientesPage() {
           descem de linha em vez de empurrar a página. */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">CRM — Clientes</h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">CRM — Clientes</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Gerencie seus clientes e acompanhe o funil de vendas
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {/* Toggle de view */}
-          <div className="flex bg-white/5 border border-white/10 rounded-lg p-1">
+          <div className="flex bg-superficie border border-border rounded-lg p-1">
             <button
               onClick={() => setViewMode("lista")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                 viewMode === "lista"
                   ? "bg-brand-600 text-white"
-                  : "text-gray-400 hover:text-white"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <List className="w-3.5 h-3.5" />
@@ -134,7 +134,7 @@ export default function ClientesPage() {
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                 viewMode === "kanban"
                   ? "bg-brand-600 text-white"
-                  : "text-gray-400 hover:text-white"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <Kanban className="w-3.5 h-3.5" />
@@ -160,7 +160,7 @@ export default function ClientesPage() {
 
           <button
             onClick={carregarTudo}
-            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-superficie-forte rounded-lg transition-colors"
             title="Atualizar"
           >
             <RefreshCw className="w-4 h-4" />
@@ -197,7 +197,7 @@ export default function ClientesPage() {
       ) : (
         <div>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-medium text-gray-400">
+            <h2 className="text-sm font-medium text-muted-foreground">
               Arraste os cards para mover clientes entre etapas do funil
             </h2>
             <button

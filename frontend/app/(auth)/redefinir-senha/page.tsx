@@ -67,9 +67,9 @@ function RedefinirSenhaContent() {
   };
 
   const inputClass = (hasError: boolean) =>
-    `w-full px-3.5 py-2.5 pr-10 rounded-lg bg-slate-900/60 border text-white placeholder-slate-500 text-sm
+    `w-full px-3.5 py-2.5 pr-10 rounded-lg bg-card/60 border text-white placeholder-slate-500 text-sm
     focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-colors
-    ${hasError ? "border-red-500/60" : "border-slate-700/60 focus:border-brand-500/60"}`;
+    ${hasError ? "border-red-500/60" : "border-border/60 focus:border-brand-500/60"}`;
 
   return (
     <div className="w-full max-w-md">
@@ -78,25 +78,25 @@ function RedefinirSenhaContent() {
         <div className="w-9 h-9 rounded-lg bg-brand-600 flex items-center justify-center">
           <Zap className="w-5 h-5 text-white" />
         </div>
-        <span className="text-2xl font-bold text-white tracking-tight">Synapse</span>
+        <span className="text-2xl font-bold text-foreground tracking-tight">Synapse</span>
       </div>
 
-      <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
+      <div className="bg-secondary/60 border border-border/50 rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
         {/* Token inválido */}
         {!token ? (
           <div className="text-center">
             <div className="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-7 h-7 text-amber-400" />
+              <AlertTriangle className="w-7 h-7 text-alerta" />
             </div>
-            <h1 className="text-xl font-semibold text-white mb-2">Link inválido</h1>
-            <p className="text-sm text-slate-400 mb-6">
+            <h1 className="text-xl font-semibold text-foreground mb-2">Link inválido</h1>
+            <p className="text-sm text-muted-foreground mb-6">
               {isConvite
                 ? "O link de convite é inválido ou expirou. Peça ao administrador para reenviar o convite."
                 : "O link de redefinição de senha é inválido ou expirou."}
             </p>
             <Link
               href={isConvite ? "/login" : "/recuperar-senha"}
-              className="inline-flex items-center gap-2 text-sm text-brand-400 hover:text-brand-300 transition-colors"
+              className="inline-flex items-center gap-2 text-sm text-brand-accent hover:text-brand-accent transition-colors"
             >
               {isConvite ? "Ir para o login" : "Solicitar novo link"}
             </Link>
@@ -105,30 +105,30 @@ function RedefinirSenhaContent() {
           <>
             <Link
               href="/login"
-              className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-300 transition-colors mb-5"
+              className="inline-flex items-center gap-1.5 text-sm text-muted-suave hover:text-foreground-suave transition-colors mb-5"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Voltar
             </Link>
 
-            <h1 className="text-xl font-semibold text-white mb-1">
+            <h1 className="text-xl font-semibold text-foreground mb-1">
               {isConvite ? "Bem-vindo(a) ao Synapse!" : "Nova senha"}
             </h1>
-            <p className="text-sm text-slate-400 mb-6">
+            <p className="text-sm text-muted-foreground mb-6">
               {isConvite
                 ? "Defina sua senha para acessar sua conta."
                 : "Escolha uma senha forte para sua conta."}
             </p>
 
             {serverError && (
-              <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+              <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-erro text-sm">
                 {serverError}
               </div>
             )}
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                   Nova senha
                 </label>
                 <div className="relative">
@@ -142,18 +142,18 @@ function RedefinirSenhaContent() {
                   <button
                     type="button"
                     onClick={() => setShowNova(!showNova)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-suave hover:text-foreground-suave"
                   >
                     {showNova ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
                 {errors.nova_senha && (
-                  <p className="mt-1 text-xs text-red-400">{errors.nova_senha.message}</p>
+                  <p className="mt-1 text-xs text-erro">{errors.nova_senha.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                   Confirmar nova senha
                 </label>
                 <div className="relative">
@@ -167,20 +167,20 @@ function RedefinirSenhaContent() {
                   <button
                     type="button"
                     onClick={() => setShowConfirm(!showConfirm)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-suave hover:text-foreground-suave"
                   >
                     {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
                 {errors.confirmar_senha && (
-                  <p className="mt-1 text-xs text-red-400">{errors.confirmar_senha.message}</p>
+                  <p className="mt-1 text-xs text-erro">{errors.confirmar_senha.message}</p>
                 )}
               </div>
 
               {/* Dicas de senha */}
-              <div className="p-3 rounded-lg bg-slate-900/40 border border-slate-700/30">
-                <p className="text-xs text-slate-500 mb-1.5 font-medium">Requisitos:</p>
-                <ul className="space-y-0.5 text-xs text-slate-500">
+              <div className="p-3 rounded-lg bg-card/40 border border-border/30">
+                <p className="text-xs text-muted-suave mb-1.5 font-medium">Requisitos:</p>
+                <ul className="space-y-0.5 text-xs text-muted-suave">
                   <li>• Mínimo de 8 caracteres</li>
                   <li>• Pelo menos uma letra maiúscula</li>
                   <li>• Pelo menos um número</li>

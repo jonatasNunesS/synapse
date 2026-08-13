@@ -78,15 +78,15 @@ export function BaixarEstoqueModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div className="flex items-center gap-2">
-            <PackageMinus className="h-5 w-5 text-amber-400" />
-            <h3 className="text-base font-semibold text-white">Baixar do estoque</h3>
+            <PackageMinus className="h-5 w-5 text-alerta" />
+            <h3 className="text-base font-semibold text-foreground">Baixar do estoque</h3>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white"
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-superficie-forte hover:text-foreground"
             aria-label="Fechar"
           >
             <X className="h-5 w-5" />
@@ -97,22 +97,22 @@ export function BaixarEstoqueModal({
           {/* Soft block tem prioridade quando ativo */}
           {saldoInsuficiente !== null ? (
             <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
-              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
-              <p className="text-sm text-amber-200">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-alerta" />
+              <p className="text-sm text-alerta">
                 Estoque atual é <span className="font-semibold">{saldoInsuficiente}</span>.
                 Quer registrar saída de {saldoInsuficiente} (tudo que tem)?
               </p>
             </div>
           ) : etapa === "pergunta" ? (
             <>
-              <p className="text-sm text-slate-300">Deseja baixar do estoque?</p>
-              <div className="mt-3 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3">
-                <p className="text-sm text-white">
+              <p className="text-sm text-foreground-suave">Deseja baixar do estoque?</p>
+              <div className="mt-3 rounded-lg border border-border bg-white/[0.03] px-4 py-3">
+                <p className="text-sm text-foreground">
                   Venda para:{" "}
                   <span className="font-medium">{clienteNome}</span>
                 </p>
                 {formatCurrency(interacao.valor) && (
-                  <p className="mt-0.5 text-xs text-slate-400">
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     Valor: {formatCurrency(interacao.valor)}
                   </p>
                 )}
@@ -121,7 +121,7 @@ export function BaixarEstoqueModal({
           ) : (
             <div className="space-y-4">
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-slate-400">
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
                   Produto no estoque
                 </label>
                 <ProdutoSelect value={produto} onChange={setProduto} />
@@ -129,7 +129,7 @@ export function BaixarEstoqueModal({
               {produto && (
                 <>
                   <div>
-                    <label className="mb-1.5 block text-xs font-medium text-slate-400">
+                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
                       Quantidade
                     </label>
                     <input
@@ -139,15 +139,15 @@ export function BaixarEstoqueModal({
                       value={quantidade}
                       onChange={(e) => setQuantidade(e.target.value)}
                       aria-label="Quantidade"
-                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-500/50"
+                      className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500/50"
                     />
                   </div>
                   {qtd > 0 && (
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-muted-foreground">
                       Estoque atual: {estoqueAtual} → vai ficar:{" "}
                       <span
                         className={
-                          estoqueDepois < 0 ? "text-amber-400" : "text-white"
+                          estoqueDepois < 0 ? "text-alerta" : "text-white"
                         }
                       >
                         {estoqueDepois}
@@ -160,13 +160,13 @@ export function BaixarEstoqueModal({
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-white/10 px-5 py-3.5">
+        <div className="flex items-center justify-end gap-2 border-t border-border px-5 py-3.5">
           {saldoInsuficiente !== null ? (
             <>
               <button
                 onClick={onClose}
                 disabled={processando}
-                className="rounded-lg px-4 py-2 text-sm text-slate-300 hover:bg-white/5 disabled:opacity-50"
+                className="rounded-lg px-4 py-2 text-sm text-foreground-suave hover:bg-superficie disabled:opacity-50"
               >
                 Cancelar
               </button>
@@ -183,7 +183,7 @@ export function BaixarEstoqueModal({
             <>
               <button
                 onClick={onClose}
-                className="rounded-lg px-4 py-2 text-sm text-slate-300 hover:bg-white/5"
+                className="rounded-lg px-4 py-2 text-sm text-foreground-suave hover:bg-superficie"
               >
                 Não agora
               </button>
@@ -199,7 +199,7 @@ export function BaixarEstoqueModal({
               <button
                 onClick={onClose}
                 disabled={processando}
-                className="rounded-lg px-4 py-2 text-sm text-slate-300 hover:bg-white/5 disabled:opacity-50"
+                className="rounded-lg px-4 py-2 text-sm text-foreground-suave hover:bg-superficie disabled:opacity-50"
               >
                 Cancelar
               </button>

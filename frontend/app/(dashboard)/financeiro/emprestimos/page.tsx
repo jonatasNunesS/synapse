@@ -28,11 +28,11 @@ function data(d: string | null): string {
 }
 
 const STATUS_STYLE: Record<StatusEmprestimo, { label: string; cls: string }> = {
-  aberto: { label: "Aberto", cls: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-  atrasado: { label: "Atrasado", cls: "bg-red-500/10 text-red-400 border-red-500/20" },
-  quitado: { label: "Quitado", cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
-  perdoado: { label: "Perdoado", cls: "bg-slate-500/10 text-slate-400 border-slate-500/20" },
-  "": { label: "—", cls: "bg-slate-500/10 text-slate-400 border-slate-500/20" },
+  aberto: { label: "Aberto", cls: "bg-blue-500/10 text-info border-blue-500/20" },
+  atrasado: { label: "Atrasado", cls: "bg-red-500/10 text-erro border-red-500/20" },
+  quitado: { label: "Quitado", cls: "bg-emerald-500/10 text-sucesso border-emerald-500/20" },
+  perdoado: { label: "Perdoado", cls: "bg-slate-500/10 text-muted-foreground border-slate-500/20" },
+  "": { label: "—", cls: "bg-slate-500/10 text-muted-foreground border-slate-500/20" },
 };
 
 const FILTROS: { value: FiltroEmprestimo; label: string }[] = [
@@ -43,7 +43,7 @@ const FILTROS: { value: FiltroEmprestimo; label: string }[] = [
 
 export default function EmprestimosPage() {
   return (
-    <Suspense fallback={<div className="h-40 animate-pulse rounded-xl bg-white/5" />}>
+    <Suspense fallback={<div className="h-40 animate-pulse rounded-xl bg-superficie" />}>
       <EmprestimosConteudo />
     </Suspense>
   );
@@ -82,16 +82,16 @@ function EmprestimosConteudo() {
       <div className="flex items-center gap-3">
         <Link
           href="/financeiro"
-          className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          className="p-2 text-muted-foreground hover:text-foreground hover:bg-superficie-forte rounded-lg transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <HandCoins className="w-6 h-6 text-amber-400" />
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <HandCoins className="w-6 h-6 text-alerta" />
             Empréstimos
           </h1>
-          <p className="text-sm text-slate-400 mt-0.5">
+          <p className="text-sm text-muted-foreground mt-0.5">
             Dinheiro que você emprestou ou pegou emprestado, com data de retorno.
           </p>
         </div>
@@ -105,8 +105,8 @@ function EmprestimosConteudo() {
             onClick={() => setFiltro(f.value)}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               filtro === f.value
-                ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-                : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
+                ? "bg-amber-500/20 text-alerta border border-amber-500/40"
+                : "bg-superficie text-muted-foreground border border-border hover:bg-superficie-forte"
             }`}
           >
             {f.label}
@@ -115,13 +115,13 @@ function EmprestimosConteudo() {
       </div>
 
       {/* Lista */}
-      <div className="bg-white/[0.03] border border-white/10 rounded-xl divide-y divide-white/5">
+      <div className="bg-white/[0.03] border border-border rounded-xl divide-y divide-border">
         {loading ? (
           [...Array(3)].map((_, i) => (
             <div key={i} className="h-16 animate-pulse bg-white/[0.02]" />
           ))
         ) : vazio ? (
-          <div className="py-16 text-center text-slate-500">
+          <div className="py-16 text-center text-muted-suave">
             <HandCoins className="w-10 h-10 mx-auto mb-3 text-slate-600" />
             <p>Nenhum empréstimo {filtro === "aberto" ? "aberto" : ""} por aqui.</p>
           </div>
@@ -136,20 +136,20 @@ function EmprestimosConteudo() {
                 className={`flex items-center gap-4 p-4 ${atrasado ? "bg-red-500/[0.04]" : ""}`}
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {emp.pessoa_emprestimo || emp.descricao}
-                    <span className="ml-2 text-xs text-slate-500">
+                    <span className="ml-2 text-xs text-muted-suave">
                       {emprestei ? "você emprestou" : "você pegou emprestado"}
                     </span>
                   </p>
-                  <p className={`text-xs mt-0.5 ${atrasado ? "text-red-400" : "text-slate-500"}`}>
+                  <p className={`text-xs mt-0.5 ${atrasado ? "text-erro" : "text-muted-suave"}`}>
                     Retorno: {data(emp.data_retorno_esperado)}
                     {emp.emprestimo_quitado && emp.data_quitacao
                       ? ` · quitado em ${data(emp.data_quitacao)}`
                       : ""}
                   </p>
                 </div>
-                <span className={`text-sm font-semibold tabular-nums ${emprestei ? "text-amber-400" : "text-blue-300"}`}>
+                <span className={`text-sm font-semibold tabular-nums ${emprestei ? "text-alerta" : "text-info"}`}>
                   {moeda(emp.valor)}
                 </span>
                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${st.cls}`}>

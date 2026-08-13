@@ -10,7 +10,9 @@ import { useRouter } from "next/navigation";
 import { useAppStore } from "@/store/useAppStore";
 import api, { getErrorMessage } from "@/lib/api";
 import {
+  limparModoDoCookie,
   limparTamanhoDoCookie,
+  sincronizarModo,
   sincronizarTamanho,
 } from "@/lib/preferencias";
 import { limparTemaDoCookie, sincronizarTema } from "@/lib/tema";
@@ -48,8 +50,10 @@ export function useAuth() {
         // Identidade visual da empresa: reaplica e guarda no cookie, para o
         // próximo carregamento já nascer na cor certa (sem flash).
         sincronizarTema(response.data.empresa);
-        // Tamanho do texto é preferência de quem está logado, não da empresa.
+        // Tamanho do texto e modo claro/escuro são preferências de quem está
+        // logado, não da empresa.
         sincronizarTamanho(response.data.tamanho_fonte);
+        sincronizarModo(response.data.tema_modo);
         return true;
       }
       return false;
@@ -119,9 +123,10 @@ export function useAuth() {
     } finally {
       clearAuth();
       // Máquina compartilhada: o próximo login não herda a cor da outra
-      // empresa nem o tamanho de texto de outra pessoa.
+      // empresa, nem o tamanho de texto ou o modo de outra pessoa.
       limparTemaDoCookie();
       limparTamanhoDoCookie();
+      limparModoDoCookie();
       router.push("/login");
     }
   }, [clearAuth, router]);

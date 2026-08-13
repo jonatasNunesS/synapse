@@ -30,8 +30,8 @@ import type { NumeroChave, PeriodoSelecao } from "@/types/analise_financeira";
 
 function corVariacao(v: string | null): string {
   if (!v) return "text-muted-foreground";
-  if (v.startsWith("+")) return "text-emerald-400";
-  if (v.startsWith("-")) return "text-red-400";
+  if (v.startsWith("+")) return "text-sucesso";
+  if (v.startsWith("-")) return "text-erro";
   return "text-muted-foreground";
 }
 
@@ -141,7 +141,7 @@ export default function AnaliseFinanceiraPage() {
       </div>
 
       {/* Ação + seletores de período */}
-      <div className="rounded-xl border border-border bg-card p-6 flex flex-col items-center text-center gap-4">
+      <div className="rounded-xl border border-border bg-card shadow-elevacao p-6 flex flex-col items-center text-center gap-4">
         {meses.length === 0 ? (
           <p className="text-sm text-muted-foreground max-w-md">
             Ainda não há meses com lançamentos. Cadastre receitas e despesas no
@@ -208,7 +208,7 @@ export default function AnaliseFinanceiraPage() {
           )}
         </button>
         {mesmoPeriodo && (
-          <p className="text-xs text-red-400">
+          <p className="text-xs text-erro">
             Escolha dois meses diferentes para comparar.
           </p>
         )}
@@ -221,7 +221,7 @@ export default function AnaliseFinanceiraPage() {
 
       {/* Estado: sem dados */}
       {estado === "sem_dados" && (
-        <div className="rounded-xl border border-border bg-card p-6 text-center">
+        <div className="rounded-xl border border-border bg-card shadow-elevacao p-6 text-center">
           <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
           <p className="text-sm text-foreground font-medium mb-1">Sem dados suficientes</p>
           <p className="text-sm text-muted-foreground mb-4">{mensagem}</p>
@@ -275,7 +275,7 @@ export default function AnaliseFinanceiraPage() {
           </div>
 
           {/* Diagnóstico */}
-          <div className="rounded-xl border border-border bg-card p-5">
+          <div className="rounded-xl border border-border bg-card shadow-elevacao p-5">
             <h2 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
               <FileText className="h-4 w-4 text-primary" />
               Diagnóstico comparativo

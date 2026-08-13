@@ -102,7 +102,7 @@ export function Sidebar() {
       {/* ── Sidebar ─────────────────────────────────────────── */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-slate-800 bg-slate-900 transition-all duration-300",
+          "fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-border bg-card transition-all duration-300",
           // Desktop: colapsa para 64px quando fechado. Largura em px de
           // propósito: a moldura não escala com o tamanho do texto.
           // Mobile: some completamente (translate) quando fechado
@@ -112,13 +112,13 @@ export function Sidebar() {
         )}
       >
         {/* ── Logo ──────────────────────────────────────────── */}
-        <div className="flex h-[64px] items-center justify-between border-b border-slate-800 px-4">
+        <div className="flex h-[64px] items-center justify-between border-b border-border px-4">
           {sidebarOpen && (
             <Link href="/dashboard" className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600">
                 <Zap className="h-4 w-4 text-white" />
               </div>
-              <span className="text-lg font-bold text-white tracking-tight">Synapse</span>
+              <span className="text-lg font-bold text-foreground tracking-tight">Synapse</span>
             </Link>
           )}
           {!sidebarOpen && (
@@ -129,7 +129,7 @@ export function Sidebar() {
           {sidebarOpen && (
             <button
               onClick={toggleSidebar}
-              className="flex h-7 w-7 items-center justify-center rounded-md text-slate-500 hover:bg-slate-800 hover:text-slate-300 transition-colors"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-muted-suave hover:bg-secondary hover:text-foreground-suave transition-colors"
               aria-label="Recolher menu"
             >
               {/* Em mobile mostra X, em desktop mostra ChevronLeft */}
@@ -147,7 +147,7 @@ export function Sidebar() {
         {!sidebarOpen && (
           <button
             onClick={toggleSidebar}
-            className="absolute -right-3 top-[72px] hidden md:flex h-6 w-6 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-slate-500 hover:text-slate-300 transition-colors shadow-md"
+            className="absolute -right-3 top-[72px] hidden md:flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-muted-suave hover:text-foreground-suave transition-colors shadow-md"
             aria-label="Expandir menu"
           >
             <ChevronRight className="h-3 w-3" />
@@ -169,8 +169,8 @@ export function Sidebar() {
   className={cn(
     "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
     isActive
-      ? "bg-brand-600/15 text-brand-400 shadow-sm"
-      : "text-slate-400 hover:bg-slate-800 hover:text-slate-200",
+      ? "bg-brand-600/15 text-brand-accent shadow-sm"
+      : "text-muted-foreground hover:bg-secondary hover:text-foreground-suave",
     item.disabled && "cursor-not-allowed opacity-40",
     !sidebarOpen && "justify-center px-2"
   )}
@@ -186,7 +186,7 @@ export function Sidebar() {
   <Icon
     className={cn(
       "h-4 w-4 shrink-0",
-      isActive ? "text-brand-400" : "text-slate-500"
+      isActive ? "text-brand-accent" : "text-muted-suave"
     )}
   />
   {sidebarOpen && (
@@ -209,16 +209,16 @@ export function Sidebar() {
         </nav>
 
         {/* ── Footer: Usuário ────────────────────────────────── */}
-        <div className="border-t border-slate-800 p-3">
+        <div className="border-t border-border p-3">
           {sidebarOpen ? (
-            <div className="group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-800 transition-colors cursor-default">
+            <div className="group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-secondary transition-colors cursor-default">
               {/* Avatar */}
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600/20 text-brand-400 text-xs font-bold border border-brand-600/30">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600/20 text-brand-accent text-xs font-bold border border-brand-600/30">
                 {iniciais}
               </div>
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-200 truncate">
+                <p className="text-sm font-medium text-foreground-suave truncate">
                   {usuario?.nome ?? "Carregando..."}
                 </p>
                 <div className="flex items-center gap-1.5">
@@ -228,13 +228,13 @@ export function Sidebar() {
                       planoCor
                     )}
                   />
-                  <p className="text-xs text-slate-500 truncate">{planoLabel}</p>
+                  <p className="text-xs text-muted-suave truncate">{planoLabel}</p>
                 </div>
               </div>
               {/* Logout */}
               <button
                 onClick={() => logout()}
-                className="opacity-0 group-hover:opacity-100 flex h-6 w-6 items-center justify-center rounded-md text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                className="opacity-0 group-hover:opacity-100 flex h-6 w-6 items-center justify-center rounded-md text-slate-600 hover:text-erro hover:bg-red-500/10 transition-all"
                 title="Sair"
               >
                 <LogOut className="h-3.5 w-3.5" />
@@ -245,7 +245,7 @@ export function Sidebar() {
               <button
                 onClick={() => logout()}
                 title="Sair"
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-600/20 text-brand-400 text-xs font-bold border border-brand-600/30 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 transition-all"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-600/20 text-brand-accent text-xs font-bold border border-brand-600/30 hover:bg-red-500/10 hover:text-erro hover:border-red-500/30 transition-all"
               >
                 {iniciais}
               </button>

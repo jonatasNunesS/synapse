@@ -112,9 +112,9 @@ export default function RegistroPage() {
   };
 
   const inputClass = (hasError: boolean) =>
-    `w-full px-3.5 py-2.5 rounded-lg bg-slate-900/60 border text-white placeholder-slate-500 text-sm
+    `w-full px-3.5 py-2.5 rounded-lg bg-card/60 border text-white placeholder-slate-500 text-sm
     focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-colors
-    ${hasError ? "border-red-500/60" : "border-slate-700/60 focus:border-brand-500/60"}`;
+    ${hasError ? "border-red-500/60" : "border-border/60 focus:border-brand-500/60"}`;
 
   const TITULOS: Record<number, { titulo: string; sub: string }> = {
     1: { titulo: "Sua conta", sub: "Comece gratuitamente. Sem cartão de crédito." },
@@ -132,22 +132,22 @@ export default function RegistroPage() {
         <div className="w-9 h-9 rounded-lg bg-brand-600 flex items-center justify-center">
           <Zap className="w-5 h-5 text-white" />
         </div>
-        <span className="text-2xl font-bold text-white tracking-tight">Synapse</span>
+        <span className="text-2xl font-bold text-foreground tracking-tight">Synapse</span>
       </div>
 
       {/* Card */}
-      <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
+      <div className="bg-secondary/60 border border-border/50 rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
         {/* Progresso */}
         <div className="mb-5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-brand-400">
+            <span className="text-xs font-medium text-brand-accent">
               Etapa {etapa} de {TOTAL_ETAPAS}
             </span>
             {etapa > 1 && (
               <button
                 type="button"
                 onClick={() => setEtapa((e) => (e === 3 ? 2 : 1))}
-                className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 transition-colors"
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground-suave transition-colors"
               >
                 <ArrowLeft className="w-3 h-3" />
                 Voltar
@@ -162,11 +162,11 @@ export default function RegistroPage() {
           </div>
         </div>
 
-        <h1 className="text-xl font-semibold text-white mb-1">{TITULOS[etapa].titulo}</h1>
-        <p className="text-sm text-slate-400 mb-6">{TITULOS[etapa].sub}</p>
+        <h1 className="text-xl font-semibold text-foreground mb-1">{TITULOS[etapa].titulo}</h1>
+        <p className="text-sm text-muted-foreground mb-6">{TITULOS[etapa].sub}</p>
 
         {serverError && (
-          <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-erro text-sm">
             {serverError}
           </div>
         )}
@@ -175,7 +175,7 @@ export default function RegistroPage() {
           {/* ── ETAPA 1: Sua conta ───────────────────────────── */}
           <div className={etapa === 1 ? "space-y-4" : "hidden"}>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                 Seu nome completo
               </label>
               <input
@@ -186,12 +186,12 @@ export default function RegistroPage() {
                 className={inputClass(!!errors.nome_usuario)}
               />
               {errors.nome_usuario && (
-                <p className="mt-1 text-xs text-red-400">{errors.nome_usuario.message}</p>
+                <p className="mt-1 text-xs text-erro">{errors.nome_usuario.message}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                 E-mail
               </label>
               <input
@@ -202,13 +202,13 @@ export default function RegistroPage() {
                 className={inputClass(!!errors.email)}
               />
               {errors.email && (
-                <p className="mt-1 text-xs text-red-400">{errors.email.message}</p>
+                <p className="mt-1 text-xs text-erro">{errors.email.message}</p>
               )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                   Senha
                 </label>
                 <div className="relative">
@@ -222,19 +222,19 @@ export default function RegistroPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-suave hover:text-foreground-suave"
                     aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
                 {errors.senha && (
-                  <p className="mt-1 text-xs text-red-400">{errors.senha.message}</p>
+                  <p className="mt-1 text-xs text-erro">{errors.senha.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                   Confirmar senha
                 </label>
                 <div className="relative">
@@ -248,14 +248,14 @@ export default function RegistroPage() {
                   <button
                     type="button"
                     onClick={() => setShowConfirm(!showConfirm)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-suave hover:text-foreground-suave"
                     aria-label={showConfirm ? "Esconder senha" : "Mostrar senha"}
                   >
                     {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
                 {errors.confirmar_senha && (
-                  <p className="mt-1 text-xs text-red-400">{errors.confirmar_senha.message}</p>
+                  <p className="mt-1 text-xs text-erro">{errors.confirmar_senha.message}</p>
                 )}
               </div>
             </div>
@@ -264,7 +264,7 @@ export default function RegistroPage() {
           {/* ── ETAPA 2: Sua empresa ─────────────────────────── */}
           <div className={etapa === 2 ? "space-y-4" : "hidden"}>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                 Nome da empresa
               </label>
               <input
@@ -274,12 +274,12 @@ export default function RegistroPage() {
                 className={inputClass(!!errors.nome_empresa)}
               />
               {errors.nome_empresa && (
-                <p className="mt-1 text-xs text-red-400">{errors.nome_empresa.message}</p>
+                <p className="mt-1 text-xs text-erro">{errors.nome_empresa.message}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                 Segmento
               </label>
               <select
@@ -287,17 +287,17 @@ export default function RegistroPage() {
                 className={inputClass(!!errors.segmento) + " cursor-pointer"}
                 defaultValue=""
               >
-                <option value="" disabled className="bg-slate-900">
+                <option value="" disabled className="bg-card">
                   Selecione seu segmento...
                 </option>
                 {SEGMENTOS.map((s) => (
-                  <option key={s.value} value={s.value} className="bg-slate-900">
+                  <option key={s.value} value={s.value} className="bg-card">
                     {s.label}
                   </option>
                 ))}
               </select>
               {errors.segmento && (
-                <p className="mt-1 text-xs text-red-400">{errors.segmento.message}</p>
+                <p className="mt-1 text-xs text-erro">{errors.segmento.message}</p>
               )}
             </div>
           </div>
@@ -306,7 +306,7 @@ export default function RegistroPage() {
           <div className={etapa === 3 ? "block" : "hidden"}>
             <PerguntasModulos respostas={respostas} onResponder={responder} />
             {!todasRespondidas && (
-              <p className="mt-4 text-xs text-slate-500">
+              <p className="mt-4 text-xs text-muted-suave">
                 Responda todas as perguntas para continuar.
               </p>
             )}
@@ -341,18 +341,18 @@ export default function RegistroPage() {
             </button>
           )}
 
-          <p className="text-xs text-slate-500 text-center">
+          <p className="text-xs text-muted-suave text-center">
             Ao criar uma conta, você concorda com nossos{" "}
-            <span className="text-brand-400">Termos de Uso</span> e{" "}
-            <span className="text-brand-400">Política de Privacidade</span>.
+            <span className="text-brand-accent">Termos de Uso</span> e{" "}
+            <span className="text-brand-accent">Política de Privacidade</span>.
           </p>
         </form>
 
-        <p className="mt-5 text-center text-sm text-slate-500">
+        <p className="mt-5 text-center text-sm text-muted-suave">
           Já tem uma conta?{" "}
           <Link
             href="/login"
-            className="text-brand-400 hover:text-brand-300 font-medium transition-colors"
+            className="text-brand-accent hover:text-brand-accent font-medium transition-colors"
           >
             Fazer login
           </Link>

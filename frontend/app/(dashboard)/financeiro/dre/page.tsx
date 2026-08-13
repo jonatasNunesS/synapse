@@ -28,9 +28,9 @@ function PieTooltip({ active, payload }: PieTooltipProps) {
   if (!active || !payload?.length) return null;
   const item = payload[0];
   return (
-    <div className="bg-[#1a1f2e] border border-white/10 rounded-lg p-3 shadow-xl">
-      <p className="text-sm font-medium text-white">{item.name}</p>
-      <p className="text-sm text-slate-300">{formatarMoeda(item.value)}</p>
+    <div className="bg-[#1a1f2e] border border-border rounded-lg p-3 shadow-xl">
+      <p className="text-sm font-medium text-foreground">{item.name}</p>
+      <p className="text-sm text-foreground-suave">{formatarMoeda(item.value)}</p>
     </div>
   );
 }
@@ -44,14 +44,14 @@ interface CategoriaRowProps {
 function CategoriaRow({ item, total, tipo }: CategoriaRowProps) {
   const pct = total > 0 ? (item.total / total) * 100 : 0;
   return (
-    <div className="flex items-center gap-3 py-2.5 border-b border-white/5 last:border-0">
+    <div className="flex items-center gap-3 py-2.5 border-b border-border last:border-0">
       <span
         className="w-2.5 h-2.5 rounded-full flex-shrink-0"
         style={{ backgroundColor: item.cor || (tipo === "receita" ? "#16a34a" : "#dc2626") }}
       />
-      <span className="flex-1 text-sm text-slate-300 truncate">{item.categoria}</span>
+      <span className="flex-1 text-sm text-foreground-suave truncate">{item.categoria}</span>
       <div className="flex items-center gap-3">
-        <div className="hidden sm:flex w-24 bg-white/5 rounded-full h-1.5">
+        <div className="hidden sm:flex w-24 bg-superficie rounded-full h-1.5">
           <div
             className="h-1.5 rounded-full transition-all"
             style={{
@@ -60,12 +60,12 @@ function CategoriaRow({ item, total, tipo }: CategoriaRowProps) {
             }}
           />
         </div>
-        <span className="text-xs text-slate-500 w-12 text-right tabular-nums">
+        <span className="text-xs text-muted-suave w-12 text-right tabular-nums">
           {formatarPorcentagem(pct)}
         </span>
         <span
           className={`text-sm font-semibold tabular-nums w-28 text-right ${
-            tipo === "receita" ? "text-emerald-400" : "text-red-400"
+            tipo === "receita" ? "text-sucesso" : "text-erro"
           }`}
         >
           {formatarMoeda(item.total)}
@@ -109,27 +109,27 @@ export default function DREPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-2xl font-bold text-foreground">
             DRE — Demonstrativo de Resultado
           </h1>
-          <p className="text-sm text-slate-400 mt-0.5">
+          <p className="text-sm text-muted-foreground mt-0.5">
             Análise de receitas e despesas por categoria
           </p>
         </div>
 
-        <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+        <div className="flex items-center gap-2 bg-superficie border border-border rounded-lg px-3 py-2">
           <button
             onClick={() => navegarMes(-1)}
-            className="p-1 rounded hover:bg-white/10 transition-colors text-slate-400 hover:text-white"
+            className="p-1 rounded hover:bg-superficie-forte transition-colors text-muted-foreground hover:text-foreground"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <span className="text-sm font-medium text-white capitalize min-w-[120px] text-center">
+          <span className="text-sm font-medium text-foreground capitalize min-w-[120px] text-center">
             {mesPorExtenso}
           </span>
           <button
             onClick={() => navegarMes(1)}
-            className="p-1 rounded hover:bg-white/10 transition-colors text-slate-400 hover:text-white"
+            className="p-1 rounded hover:bg-superficie-forte transition-colors text-muted-foreground hover:text-foreground"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -140,13 +140,13 @@ export default function DREPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="w-4 h-4 text-emerald-400" />
-            <p className="text-sm text-slate-400">Total Receitas</p>
+            <TrendingUp className="w-4 h-4 text-sucesso" />
+            <p className="text-sm text-muted-foreground">Total Receitas</p>
           </div>
           {loading ? (
-            <div className="h-7 w-32 bg-white/10 rounded animate-pulse" />
+            <div className="h-7 w-32 bg-superficie-forte rounded animate-pulse" />
           ) : (
-            <p className="text-2xl font-bold text-emerald-400 tabular-nums">
+            <p className="text-2xl font-bold text-sucesso tabular-nums">
               {formatarMoeda(dre?.total_receitas ?? 0)}
             </p>
           )}
@@ -154,13 +154,13 @@ export default function DREPage() {
 
         <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2">
-            <TrendingDown className="w-4 h-4 text-red-400" />
-            <p className="text-sm text-slate-400">Total Despesas</p>
+            <TrendingDown className="w-4 h-4 text-erro" />
+            <p className="text-sm text-muted-foreground">Total Despesas</p>
           </div>
           {loading ? (
-            <div className="h-7 w-32 bg-white/10 rounded animate-pulse" />
+            <div className="h-7 w-32 bg-superficie-forte rounded animate-pulse" />
           ) : (
-            <p className="text-2xl font-bold text-red-400 tabular-nums">
+            <p className="text-2xl font-bold text-erro tabular-nums">
               {formatarMoeda(dre?.total_despesas ?? 0)}
             </p>
           )}
@@ -174,23 +174,23 @@ export default function DREPage() {
           }`}
         >
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-slate-400">Resultado Líquido</p>
+            <p className="text-sm text-muted-foreground">Resultado Líquido</p>
             <span
               className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                 (dre?.lucro_bruto ?? 0) >= 0
-                  ? "bg-brand-500/20 text-brand-400"
-                  : "bg-red-500/20 text-red-400"
+                  ? "bg-brand-500/20 text-brand-accent"
+                  : "bg-red-500/20 text-erro"
               }`}
             >
               Margem: {formatarPorcentagem(dre?.margem ?? 0)}
             </span>
           </div>
           {loading ? (
-            <div className="h-7 w-32 bg-white/10 rounded animate-pulse" />
+            <div className="h-7 w-32 bg-superficie-forte rounded animate-pulse" />
           ) : (
             <p
               className={`text-2xl font-bold tabular-nums ${
-                (dre?.lucro_bruto ?? 0) >= 0 ? "text-brand-400" : "text-red-400"
+                (dre?.lucro_bruto ?? 0) >= 0 ? "text-brand-accent" : "text-erro"
               }`}
             >
               {formatarMoeda(dre?.lucro_bruto ?? 0)}
@@ -202,19 +202,19 @@ export default function DREPage() {
       {/* Detalhamento por categoria */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Receitas */}
-        <div className="bg-white/[0.03] border border-white/10 rounded-xl p-5">
-          <h2 className="text-base font-semibold text-white mb-4">
+        <div className="bg-white/[0.03] border border-border rounded-xl p-5">
+          <h2 className="text-base font-semibold text-foreground mb-4">
             Receitas por Categoria
           </h2>
 
           {loading ? (
             <div className="space-y-3">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-8 bg-white/5 rounded animate-pulse" />
+                <div key={i} className="h-8 bg-superficie rounded animate-pulse" />
               ))}
             </div>
           ) : !dre?.receitas_por_categoria.length ? (
-            <p className="text-sm text-slate-500 py-4">
+            <p className="text-sm text-muted-suave py-4">
               Nenhuma receita no período.
             </p>
           ) : (
@@ -227,9 +227,9 @@ export default function DREPage() {
                   tipo="receita"
                 />
               ))}
-              <div className="flex justify-between pt-3 mt-1 border-t border-white/10">
-                <span className="text-sm font-semibold text-white">Total</span>
-                <span className="text-sm font-bold text-emerald-400 tabular-nums">
+              <div className="flex justify-between pt-3 mt-1 border-t border-border">
+                <span className="text-sm font-semibold text-foreground">Total</span>
+                <span className="text-sm font-bold text-sucesso tabular-nums">
                   {formatarMoeda(dre.total_receitas)}
                 </span>
               </div>
@@ -265,19 +265,19 @@ export default function DREPage() {
         </div>
 
         {/* Despesas */}
-        <div className="bg-white/[0.03] border border-white/10 rounded-xl p-5">
-          <h2 className="text-base font-semibold text-white mb-4">
+        <div className="bg-white/[0.03] border border-border rounded-xl p-5">
+          <h2 className="text-base font-semibold text-foreground mb-4">
             Despesas por Categoria
           </h2>
 
           {loading ? (
             <div className="space-y-3">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-8 bg-white/5 rounded animate-pulse" />
+                <div key={i} className="h-8 bg-superficie rounded animate-pulse" />
               ))}
             </div>
           ) : !dre?.despesas_por_categoria.length ? (
-            <p className="text-sm text-slate-500 py-4">
+            <p className="text-sm text-muted-suave py-4">
               Nenhuma despesa no período.
             </p>
           ) : (
@@ -290,9 +290,9 @@ export default function DREPage() {
                   tipo="despesa"
                 />
               ))}
-              <div className="flex justify-between pt-3 mt-1 border-t border-white/10">
-                <span className="text-sm font-semibold text-white">Total</span>
-                <span className="text-sm font-bold text-red-400 tabular-nums">
+              <div className="flex justify-between pt-3 mt-1 border-t border-border">
+                <span className="text-sm font-semibold text-foreground">Total</span>
+                <span className="text-sm font-bold text-erro tabular-nums">
                   {formatarMoeda(dre.total_despesas)}
                 </span>
               </div>

@@ -41,27 +41,27 @@ export function ConfirmDialog({
       onClick={() => !processando && onCancel()}
     >
       <div
-        className="w-full max-w-sm rounded-xl border border-white/10 bg-slate-900 shadow-xl"
+        className="w-full max-w-sm rounded-xl border border-border bg-card shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-5">
           <div className="flex items-start gap-3">
             {danger && (
-              <div className="h-9 w-9 rounded-lg bg-red-500/15 text-red-400 flex items-center justify-center flex-shrink-0">
+              <div className="h-9 w-9 rounded-lg bg-red-500/15 text-erro flex items-center justify-center flex-shrink-0">
                 <AlertTriangle className="h-5 w-5" />
               </div>
             )}
             <div className="min-w-0">
-              <h2 className="text-sm font-semibold text-white">{titulo}</h2>
-              <div className="text-sm text-slate-400 mt-1">{mensagem}</div>
+              <h2 className="text-sm font-semibold text-foreground">{titulo}</h2>
+              <div className="text-sm text-muted-foreground mt-1">{mensagem}</div>
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-white/10">
+        <div className="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-border">
           <button
             onClick={onCancel}
             disabled={processando}
-            className="px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-white/5 transition-colors disabled:opacity-50"
+            className="px-3 py-2 rounded-lg text-sm text-foreground-suave hover:bg-superficie transition-colors disabled:opacity-50"
           >
             {cancelLabel}
           </button>

@@ -52,15 +52,15 @@ function KanbanColuna({
           <span
             className={`w-2 h-2 rounded-full ${STATUS_FUNIL_COLORS[status]}`}
           />
-          <span className="text-sm font-medium text-white">
+          <span className="text-sm font-medium text-foreground">
             {STATUS_FUNIL_LABELS[status]}
           </span>
-          <span className="text-xs text-gray-500 bg-white/5 px-1.5 py-0.5 rounded-full">
+          <span className="text-xs text-muted-suave bg-superficie px-1.5 py-0.5 rounded-full">
             {totais.count}
           </span>
         </div>
         {parseFloat(totais.valor_total || "0") > 0 && (
-          <span className="text-xs text-gray-400">{valorTotal}</span>
+          <span className="text-xs text-muted-foreground">{valorTotal}</span>
         )}
       </div>
 
@@ -68,7 +68,7 @@ function KanbanColuna({
       <div
         ref={setNodeRef}
         className={`flex-1 min-h-[200px] rounded-xl p-2 transition-colors ${
-          isOver ? "bg-brand-500/10 border border-brand-500/30" : "bg-white/3 border border-white/5"
+          isOver ? "bg-brand-500/10 border border-brand-500/30" : "bg-superficie border border-border"
         }`}
       >
         <div className="flex flex-col gap-2">
@@ -104,19 +104,19 @@ function KanbanCard({ cliente, isDragging }: { cliente: ClienteList; isDragging?
       style={style}
       {...listeners}
       {...attributes}
-      className={`bg-[#0f1117] border border-white/10 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-all select-none ${
-        isDragging ? "opacity-50 shadow-2xl scale-105" : "hover:border-white/20"
+      className={`bg-card border border-border rounded-lg p-3 cursor-grab active:cursor-grabbing transition-all select-none ${
+        isDragging ? "opacity-50 shadow-2xl scale-105" : "hover:border-border"
       }`}
     >
       {/* Nome */}
       <div className="flex items-center gap-2 mb-2">
-        <div className="w-6 h-6 rounded-full bg-brand-600/20 flex items-center justify-center text-brand-400 text-xs font-semibold flex-shrink-0">
+        <div className="w-6 h-6 rounded-full bg-brand-600/20 flex items-center justify-center text-brand-accent text-xs font-semibold flex-shrink-0">
           {cliente.nome.charAt(0).toUpperCase()}
         </div>
         <Link
           href={`/clientes/${cliente.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="text-sm font-medium text-white hover:text-brand-400 transition-colors truncate"
+          className="text-sm font-medium text-foreground hover:text-brand-accent transition-colors truncate"
         >
           {cliente.nome}
         </Link>
@@ -125,11 +125,11 @@ function KanbanCard({ cliente, isDragging }: { cliente: ClienteList; isDragging?
       {/* Info */}
       <div className="space-y-1">
         {cliente.origem_display && (
-          <p className="text-xs text-gray-500">{cliente.origem_display}</p>
+          <p className="text-xs text-muted-suave">{cliente.origem_display}</p>
         )}
 
         {parseFloat(cliente.valor_total_compras) > 0 && (
-          <div className="flex items-center gap-1 text-xs text-green-400">
+          <div className="flex items-center gap-1 text-xs text-sucesso">
             <DollarSign className="w-3 h-3" />
             {new Intl.NumberFormat("pt-BR", {
               style: "currency",
@@ -139,14 +139,14 @@ function KanbanCard({ cliente, isDragging }: { cliente: ClienteList; isDragging?
         )}
 
         {cliente.followup_atrasado && (
-          <div className="flex items-center gap-1 text-xs text-red-400">
+          <div className="flex items-center gap-1 text-xs text-erro">
             <AlertCircle className="w-3 h-3" />
             Follow-up atrasado
           </div>
         )}
 
         {cliente.proximo_followup && !cliente.followup_atrasado && (
-          <div className="text-xs text-yellow-400">
+          <div className="text-xs text-alerta">
             Follow-up: {new Date(cliente.proximo_followup).toLocaleDateString("pt-BR")}
           </div>
         )}
@@ -154,13 +154,13 @@ function KanbanCard({ cliente, isDragging }: { cliente: ClienteList; isDragging?
 
       {/* Footer */}
       {cliente.link_whatsapp && (
-        <div className="mt-2 pt-2 border-t border-white/5">
+        <div className="mt-2 pt-2 border-t border-border">
           <a
             href={cliente.link_whatsapp}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="flex items-center gap-1 text-xs text-green-400 hover:text-green-300 transition-colors"
+            className="flex items-center gap-1 text-xs text-sucesso hover:text-sucesso transition-colors"
           >
             <MessageCircle className="w-3 h-3" />
             WhatsApp
@@ -213,9 +213,9 @@ export function FunilKanban({ funil, loading, onMover }: FunilKanbanProps) {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {COLUNAS.map((s) => (
           <div key={s} className="space-y-3">
-            <div className="h-6 bg-white/5 rounded animate-pulse" />
+            <div className="h-6 bg-superficie rounded animate-pulse" />
             {[...Array(2)].map((_, i) => (
-              <div key={i} className="h-24 bg-white/5 rounded-xl animate-pulse" />
+              <div key={i} className="h-24 bg-superficie rounded-xl animate-pulse" />
             ))}
           </div>
         ))}

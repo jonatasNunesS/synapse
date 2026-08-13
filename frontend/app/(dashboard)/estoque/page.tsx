@@ -118,22 +118,22 @@ export default function EstoquePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Estoque</h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">Estoque</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Gerencie seus produtos e movimentações
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => carregarTudo()}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-superficie-forte transition-colors"
             title="Atualizar"
           >
             <RefreshCw className="h-4 w-4" />
           </button>
           <button
             onClick={() => setMostrarCategorias(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 text-slate-300 hover:text-white hover:bg-white/5 text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-foreground-suave hover:text-foreground hover:bg-superficie text-sm font-medium transition-colors"
           >
             <Tag className="h-4 w-4" />
             Categorias
@@ -163,18 +163,18 @@ export default function EstoquePage() {
         </div>
 
         {/* Tabela de Produtos */}
-        <div className="xl:col-span-2 bg-[#0d1117] border border-white/10 rounded-xl overflow-hidden">
+        <div className="xl:col-span-2 bg-card shadow-elevacao border border-border rounded-xl overflow-hidden">
           {/* Filtros */}
-          <div className="flex items-center gap-3 p-4 border-b border-white/10">
+          <div className="flex items-center gap-3 p-4 border-b border-border">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-suave" />
               <input
                 type="text"
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && aplicarFiltros()}
                 placeholder="Buscar por nome, SKU ou código..."
-                className="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors"
+                className="w-full pl-9 pr-3 py-2 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors"
               />
             </div>
             <select
@@ -189,16 +189,16 @@ export default function EstoquePage() {
                 setFiltros(novosFiltros);
                 listar(novosFiltros);
               }}
-              className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+              className="px-3 py-2 bg-superficie border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-blue-500/50 transition-colors"
             >
-              <option value="" className="bg-[#0d1117]">Todos</option>
-              <option value="ok" className="bg-[#0d1117]">OK</option>
-              <option value="baixo" className="bg-[#0d1117]">Baixo</option>
-              <option value="zerado" className="bg-[#0d1117]">Zerado</option>
+              <option value="" className="bg-card">Todos</option>
+              <option value="ok" className="bg-card">OK</option>
+              <option value="baixo" className="bg-card">Baixo</option>
+              <option value="zerado" className="bg-card">Zerado</option>
             </select>
             <button
               onClick={aplicarFiltros}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-superficie border border-border text-sm text-foreground-suave hover:text-foreground hover:bg-superficie-forte transition-colors"
             >
               <Filter className="h-4 w-4" />
               Filtrar
@@ -242,7 +242,7 @@ export default function EstoquePage() {
         mensagem={
           <>
             Deseja excluir o produto{" "}
-            <span className="text-white font-medium">
+            <span className="text-foreground font-medium">
               {produtoParaExcluir?.nome}
             </span>
             ? Esta ação não pode ser desfeita.

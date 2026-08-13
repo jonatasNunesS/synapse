@@ -160,13 +160,13 @@ export function LancamentoForm({
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg bg-[#0f1117] border border-white/10 rounded-2xl shadow-2xl">
+      <div className="relative w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
-          <h2 className="text-lg font-semibold text-white">Novo Lançamento</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="text-lg font-semibold text-foreground">Novo Lançamento</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-superficie-forte transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -179,17 +179,17 @@ export function LancamentoForm({
         >
           {/* Tipo */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-foreground-suave mb-2">
               Tipo *
             </label>
             <div className="grid grid-cols-3 gap-2">
               {(["receita", "despesa", "emprestimo"] as const).map((t) => {
                 const ativoCls =
                   t === "receita"
-                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50"
+                    ? "bg-emerald-500/20 text-sucesso border border-emerald-500/50"
                     : t === "despesa"
-                      ? "bg-red-500/20 text-red-400 border border-red-500/50"
-                      : "bg-amber-500/20 text-amber-400 border border-amber-500/50";
+                      ? "bg-red-500/20 text-erro border border-red-500/50"
+                      : "bg-amber-500/20 text-alerta border border-amber-500/50";
                 const label =
                   t === "receita" ? "Receita" : t === "despesa" ? "Despesa" : "Empréstimo";
                 return (
@@ -200,7 +200,7 @@ export function LancamentoForm({
                     className={`py-2.5 rounded-lg text-sm font-medium transition-all ${
                       tipo === t
                         ? ativoCls
-                        : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
+                        : "bg-superficie text-muted-foreground border border-border hover:bg-superficie-forte"
                     }`}
                   >
                     {label}
@@ -209,47 +209,47 @@ export function LancamentoForm({
               })}
             </div>
             {errors.tipo && (
-              <p className="mt-1 text-xs text-red-400">{errors.tipo.message}</p>
+              <p className="mt-1 text-xs text-erro">{errors.tipo.message}</p>
             )}
           </div>
 
           {/* Descrição */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">
               Descrição *
             </label>
             <input
               {...register("descricao")}
               placeholder="Ex: Venda de produto, Aluguel..."
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors"
             />
             {errors.descricao && (
-              <p className="mt-1 text-xs text-red-400">{errors.descricao.message}</p>
+              <p className="mt-1 text-xs text-erro">{errors.descricao.message}</p>
             )}
           </div>
 
           {/* Valor e Categoria */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                 Valor (R$) *
               </label>
               <input
                 {...register("valor")}
                 placeholder="0,00"
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors"
               />
               {errors.valor && (
-                <p className="mt-1 text-xs text-red-400">{errors.valor.message}</p>
+                <p className="mt-1 text-xs text-erro">{errors.valor.message}</p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                 Categoria
               </label>
               <select
                 {...register("categoria")}
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-brand-500 transition-colors"
               >
                 <option value="">Sem categoria</option>
                 {categoriasFiltradas.map((cat) => (
@@ -265,7 +265,7 @@ export function LancamentoForm({
           {isEmprestimo && (
             <div className="space-y-4 rounded-lg border border-amber-500/25 bg-amber-500/[0.04] p-3">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-foreground-suave mb-2">
                   Direção *
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -281,8 +281,8 @@ export function LancamentoForm({
                       onClick={() => setValue("direcao_emprestimo", value)}
                       className={`py-2 rounded-lg text-xs font-medium transition-all ${
                         watch("direcao_emprestimo") === value
-                          ? "bg-amber-500/20 text-amber-300 border border-amber-500/50"
-                          : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
+                          ? "bg-amber-500/20 text-alerta border border-amber-500/50"
+                          : "bg-superficie text-muted-foreground border border-border hover:bg-superficie-forte"
                       }`}
                     >
                       {label}
@@ -290,13 +290,13 @@ export function LancamentoForm({
                   ))}
                 </div>
                 {errors.direcao_emprestimo && (
-                  <p className="mt-1 text-xs text-red-400">
+                  <p className="mt-1 text-xs text-erro">
                     {errors.direcao_emprestimo.message}
                   </p>
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                   {watch("direcao_emprestimo") === "peguei_emprestado"
                     ? "De quem? *"
                     : "Pra quem? *"}
@@ -304,25 +304,25 @@ export function LancamentoForm({
                 <input
                   {...register("pessoa_emprestimo")}
                   placeholder="Ex: João da padaria"
-                  className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-colors"
+                  className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-colors"
                 />
                 {errors.pessoa_emprestimo && (
-                  <p className="mt-1 text-xs text-red-400">
+                  <p className="mt-1 text-xs text-erro">
                     {errors.pessoa_emprestimo.message}
                   </p>
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                   Data de retorno esperado *
                 </label>
                 <input
                   type="date"
                   {...register("data_retorno_esperado")}
-                  className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-amber-500 transition-colors"
+                  className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-amber-500 transition-colors"
                 />
                 {errors.data_retorno_esperado && (
-                  <p className="mt-1 text-xs text-red-400">
+                  <p className="mt-1 text-xs text-erro">
                     {errors.data_retorno_esperado.message}
                   </p>
                 )}
@@ -334,27 +334,27 @@ export function LancamentoForm({
           {!isEmprestimo && (
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                 {tipo === "despesa" ? "Vencimento *" : "Data de recebimento (opcional)"}
               </label>
               <input
                 type="date"
                 {...register("data_vencimento")}
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-brand-500 transition-colors"
               />
               {errors.data_vencimento && (
-                <p className="mt-1 text-xs text-red-400">
+                <p className="mt-1 text-xs text-erro">
                   {errors.data_vencimento.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                 Status
               </label>
               <select
                 {...register("status")}
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-brand-500 transition-colors"
               >
                 <option value="pendente">Pendente</option>
                 <option value="pago">Pago</option>
@@ -367,16 +367,16 @@ export function LancamentoForm({
           {/* Data de Pagamento (condicional) */}
           {!isEmprestimo && status === "pago" && (
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                 Data de Pagamento *
               </label>
               <input
                 type="date"
                 {...register("data_pagamento")}
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-brand-500 transition-colors"
               />
               {errors.data_pagamento && (
-                <p className="mt-1 text-xs text-red-400">
+                <p className="mt-1 text-xs text-erro">
                   {errors.data_pagamento.message}
                 </p>
               )}
@@ -390,9 +390,9 @@ export function LancamentoForm({
               type="checkbox"
               id="recorrente"
               {...register("recorrente")}
-              className="w-4 h-4 rounded border-white/20 bg-white/5 text-brand-500 focus:ring-brand-500"
+              className="w-4 h-4 rounded border-border bg-superficie text-brand-500 focus:ring-brand-500"
             />
-            <label htmlFor="recorrente" className="text-sm text-slate-300">
+            <label htmlFor="recorrente" className="text-sm text-foreground-suave">
               Lançamento recorrente
             </label>
           </div>
@@ -400,12 +400,12 @@ export function LancamentoForm({
 
           {!isEmprestimo && recorrente && (
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                 Periodicidade *
               </label>
               <select
                 {...register("recorrencia")}
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-brand-500 transition-colors"
               >
                 <option value="">Selecione...</option>
                 <option value="semanal">Semanal</option>
@@ -413,7 +413,7 @@ export function LancamentoForm({
                 <option value="anual">Anual</option>
               </select>
               {errors.recorrencia && (
-                <p className="mt-1 text-xs text-red-400">
+                <p className="mt-1 text-xs text-erro">
                   {errors.recorrencia.message}
                 </p>
               )}
@@ -422,14 +422,14 @@ export function LancamentoForm({
 
           {/* Observações */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">
               Observações
             </label>
             <textarea
               {...register("observacoes")}
               rows={2}
               placeholder="Notas adicionais..."
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors resize-none"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors resize-none"
             />
           </div>
 
@@ -438,7 +438,7 @@ export function LancamentoForm({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2.5 px-4 rounded-lg border border-white/10 text-sm font-medium text-slate-400 hover:bg-white/5 transition-colors"
+              className="flex-1 py-2.5 px-4 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:bg-superficie transition-colors"
             >
               Cancelar
             </button>

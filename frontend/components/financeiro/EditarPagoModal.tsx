@@ -84,22 +84,22 @@ export function EditarPagoModal({
   };
 
   const inputClass =
-    "w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors";
+    "w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-lg bg-[#0f1117] border border-white/10 rounded-2xl shadow-2xl">
+      <div className="relative w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl">
         {/* Header + indicador de etapas */}
-        <div className="px-6 py-4 border-b border-white/10">
+        <div className="px-6 py-4 border-b border-border">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">
+            <h2 className="text-lg font-semibold text-foreground">
               Editar lançamento pago
             </h2>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-superficie-forte transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -110,10 +110,10 @@ export function EditarPagoModal({
                 <span
                   className={`flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full ${
                     i === etapa
-                      ? "bg-brand-600/20 text-brand-300 border border-brand-500/40"
+                      ? "bg-brand-600/20 text-brand-accent border border-brand-500/40"
                       : i < etapa
-                        ? "text-emerald-400"
-                        : "text-slate-500"
+                        ? "text-sucesso"
+                        : "text-muted-suave"
                   }`}
                 >
                   {i + 1}. {nome}
@@ -131,7 +131,7 @@ export function EditarPagoModal({
           {etapa === 0 && (
             <>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                   Descrição *
                 </label>
                 <input
@@ -142,7 +142,7 @@ export function EditarPagoModal({
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                     Valor (R$) *
                   </label>
                   <input
@@ -152,7 +152,7 @@ export function EditarPagoModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                     Categoria
                   </label>
                   <select
@@ -171,7 +171,7 @@ export function EditarPagoModal({
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                     Vencimento
                   </label>
                   <input
@@ -182,7 +182,7 @@ export function EditarPagoModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                     Data de pagamento *
                   </label>
                   <input
@@ -194,7 +194,7 @@ export function EditarPagoModal({
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                   Observações
                 </label>
                 <textarea
@@ -214,9 +214,9 @@ export function EditarPagoModal({
               className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4"
             >
               <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-amber-200 space-y-2">
-                  <p className="font-semibold text-amber-300">
+                <AlertTriangle className="w-5 h-5 text-alerta flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-alerta space-y-2">
+                  <p className="font-semibold text-alerta">
                     Editar um lançamento pago afeta:
                   </p>
                   <ul className="list-disc pl-4 space-y-1">
@@ -233,7 +233,7 @@ export function EditarPagoModal({
           {/* ── ETAPA 3: Motivo obrigatório ─────────────────── */}
           {etapa === 2 && (
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label className="block text-sm font-medium text-foreground-suave mb-1.5">
                 Por que está editando? (obrigatório)
               </label>
               <textarea
@@ -244,7 +244,7 @@ export function EditarPagoModal({
                 placeholder="Ex: corrigir valor digitado errado, conciliação bancária, ajuste após confirmação com fornecedor..."
                 className={`${inputClass} resize-none`}
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-muted-suave">
                 {motivo.trim().length < MOTIVO_MIN
                   ? `Mínimo ${MOTIVO_MIN} caracteres (${motivo.trim().length}/${MOTIVO_MIN}). `
                   : `${motivo.trim().length}/${MOTIVO_MAX} caracteres. `}
@@ -256,12 +256,12 @@ export function EditarPagoModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-white/10">
+        <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-border">
           <button
             type="button"
             onClick={() => (etapa === 0 ? onClose() : setEtapa(etapa - 1))}
             disabled={salvando}
-            className="inline-flex items-center gap-1.5 py-2.5 px-4 rounded-lg border border-white/10 text-sm font-medium text-slate-400 hover:bg-white/5 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 py-2.5 px-4 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:bg-superficie transition-colors disabled:opacity-50"
           >
             {etapa > 0 && <ChevronLeft className="w-4 h-4" />}
             {etapa === 0 ? "Cancelar" : "Voltar"}

@@ -31,12 +31,31 @@ const config: Config = {
           700: "rgb(var(--brand-700) / <alpha-value>)",
           800: "rgb(var(--brand-800) / <alpha-value>)",
           900: "rgb(var(--brand-900) / <alpha-value>)",
+          // Texto de destaque na cor da marca. É um PAPEL, não um degrau: no
+          // escuro aponta para o 400, no claro para o 700.
+          accent: "rgb(var(--brand-accent) / <alpha-value>)",
+        },
+        // Cores semânticas. Mudam de tom entre os modos, nunca de
+        // significado — sucesso é verde nos dois.
+        sucesso: "hsl(var(--sucesso) / <alpha-value>)",
+        erro: "hsl(var(--erro) / <alpha-value>)",
+        alerta: "hsl(var(--alerta) / <alpha-value>)",
+        info: "hsl(var(--info) / <alpha-value>)",
+        // Superfície elevada sobre o card (o antigo bg-white/5).
+        superficie: {
+          DEFAULT: "hsl(var(--superficie) / <alpha-value>)",
+          forte: "hsl(var(--superficie-forte) / <alpha-value>)",
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        foreground: {
+          DEFAULT: "hsl(var(--foreground))",
+          // Os dois níveis intermediários de texto (ver globals.css).
+          suave: "hsl(var(--foreground-suave))",
+        },
+        "muted-suave": "hsl(var(--muted-suave))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -77,6 +96,13 @@ const config: Config = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      // Sombras por modo: no escuro quase não aparecem (a hierarquia vem do
+      // contraste entre card e fundo); no claro são o que separa um do outro.
+      boxShadow: {
+        elevacao: "var(--shadow-sm)",
+        "elevacao-md": "var(--shadow-md)",
+        "elevacao-lg": "var(--shadow-lg)",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "Inter", "system-ui", "sans-serif"],

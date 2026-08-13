@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FunilEtapa } from "@/types/dashboard";
 import { STATUS_FUNIL_CORES, STATUS_FUNIL_LABELS } from "@/types/dashboard";
+import { useCoresDoGrafico } from "@/lib/graficos";
 
 interface FunilWidgetProps {
   etapas: FunilEtapa[];
@@ -40,6 +41,9 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 export function FunilWidget({ etapas, isLoading }: FunilWidgetProps) {
+  // Cores do gráfico saem dos tokens do tema (funcionam nos dois modos).
+  const cores = useCoresDoGrafico();
+
   if (isLoading) {
     return (
       <Card>
@@ -77,15 +81,15 @@ export function FunilWidget({ etapas, isLoading }: FunilWidgetProps) {
         ) : (
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={dados} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <CartesianGrid strokeDasharray="3 3" stroke={cores.grid} />
               <XAxis
                 dataKey="label"
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: 11, fill: cores.eixo }}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: 11, fill: cores.eixo }}
                 tickLine={false}
                 axisLine={false}
                 allowDecimals={false}

@@ -48,21 +48,21 @@ export function ExcluirPagoModal({
   };
 
   const inputClass =
-    "w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-red-500 transition-colors";
+    "w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-red-500 transition-colors";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-md bg-[#0f1117] border border-white/10 rounded-2xl shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-            <Trash2 className="w-5 h-5 text-red-400" />
+      <div className="relative w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <Trash2 className="w-5 h-5 text-erro" />
             Excluir lançamento pago
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-superficie-forte transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -75,9 +75,9 @@ export function ExcluirPagoModal({
             className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4"
           >
             <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-amber-200 space-y-1">
-                <p className="font-semibold text-amber-300">
+              <AlertTriangle className="w-5 h-5 text-alerta flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-alerta space-y-1">
+                <p className="font-semibold text-alerta">
                   Esta exclusão afeta saldos e análises já geradas.
                 </p>
                 <p>
@@ -91,10 +91,10 @@ export function ExcluirPagoModal({
 
           {/* Confirmação por digitação */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">
               Para confirmar, digite a descrição exata do lançamento:
             </label>
-            <p className="text-xs text-slate-500 mb-2 font-mono bg-white/5 rounded px-2 py-1 inline-block">
+            <p className="text-xs text-muted-suave mb-2 font-mono bg-superficie rounded px-2 py-1 inline-block">
               {lancamento.descricao}
             </p>
             <input
@@ -107,7 +107,7 @@ export function ExcluirPagoModal({
 
           {/* Motivo */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">
               Por que está excluindo? (obrigatório)
             </label>
             <textarea
@@ -118,7 +118,7 @@ export function ExcluirPagoModal({
               placeholder="Ex: lançamento duplicado, pagamento estornado pelo banco..."
               className={`${inputClass} resize-none`}
             />
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-muted-suave">
               {motivo.trim().length < MOTIVO_MIN
                 ? `Mínimo ${MOTIVO_MIN} caracteres (${motivo.trim().length}/${MOTIVO_MIN}).`
                 : `${motivo.trim().length}/${MOTIVO_MAX} caracteres.`}
@@ -126,11 +126,11 @@ export function ExcluirPagoModal({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-white/10">
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-border">
           <button
             onClick={onClose}
             disabled={excluindo}
-            className="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 transition-colors disabled:opacity-50"
+            className="px-4 py-2.5 rounded-lg text-sm font-medium text-foreground-suave hover:bg-superficie transition-colors disabled:opacity-50"
           >
             Cancelar
           </button>

@@ -28,28 +28,28 @@ export function AvisoMigracaoRecorrencias() {
 
   return (
     <div className="rounded-xl border border-brand-500/30 bg-brand-500/10 p-4 flex items-start gap-3">
-      <div className="h-9 w-9 rounded-lg bg-brand-500/20 text-brand-300 flex items-center justify-center flex-shrink-0">
+      <div className="h-9 w-9 rounded-lg bg-brand-500/20 text-brand-accent flex items-center justify-center flex-shrink-0">
         <Repeat className="h-5 w-5" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-white">
+        <p className="text-sm font-medium text-foreground">
           Suas recorrências passaram pro novo modelo
         </p>
-        <p className="text-xs text-zinc-300 mt-0.5">
+        <p className="text-xs text-foreground-suave mt-0.5">
           Agora você confirma cada uma pelo sino de notificações — nada vira
           lançamento antes de você dizer que aconteceu.
         </p>
         <Link
           href="/financeiro/recorrencias"
           onClick={dispensar}
-          className="inline-flex items-center gap-1 text-xs font-medium text-brand-300 hover:text-brand-200 mt-2"
+          className="inline-flex items-center gap-1 text-xs font-medium text-brand-accent hover:text-brand-200 mt-2"
         >
           Ver recorrências <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
       <button
         onClick={dispensar}
-        className="p-1 text-zinc-400 hover:text-white transition-colors flex-shrink-0"
+        className="p-1 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
         title="Dispensar"
       >
         <X className="h-4 w-4" />

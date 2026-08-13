@@ -2,7 +2,7 @@
  * Synapse — M1: Tipos de Autenticação
  */
 
-import type { TamanhoFonte } from "@/lib/preferencias";
+import type { TamanhoFonte, TemaModo } from "@/lib/preferencias";
 import type { FonteTema, Paleta } from "@/lib/tema";
 
 export interface Empresa {
@@ -53,6 +53,7 @@ export interface Usuario {
   viu_aviso_recorrencias: boolean;
   /** Preferência PESSOAL de tamanho do texto (não é da empresa). */
   tamanho_fonte: TamanhoFonte;
+  tema_modo: TemaModo;
   empresa: Empresa | null;
   /** Config de módulos da empresa (vem do /auth/me e do login). */
   modulos?: ModulosEmpresa;

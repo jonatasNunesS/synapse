@@ -115,8 +115,8 @@ export default function FinanceiroPage() {
       {/* Header da página */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Financeiro</h1>
-          <p className="text-sm text-slate-400 mt-0.5">
+          <h1 className="text-2xl font-bold text-foreground">Financeiro</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
             Gestão de receitas, despesas e fluxo de caixa
           </p>
         </div>
@@ -125,19 +125,19 @@ export default function FinanceiroPage() {
             tamanho "Maior") elas descem de linha em vez de empurrar a página. */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Navegação de mês */}
-          <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+          <div className="flex items-center gap-2 bg-superficie border border-border rounded-lg px-3 py-2">
             <button
               onClick={() => navegarMes(-1)}
-              className="p-1 rounded hover:bg-white/10 transition-colors text-slate-400 hover:text-white"
+              className="p-1 rounded hover:bg-superficie-forte transition-colors text-muted-foreground hover:text-foreground"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-sm font-medium text-white capitalize min-w-[120px] text-center">
+            <span className="text-sm font-medium text-foreground capitalize min-w-[120px] text-center">
               {mesPorExtenso}
             </span>
             <button
               onClick={() => navegarMes(1)}
-              className="p-1 rounded hover:bg-white/10 transition-colors text-slate-400 hover:text-white"
+              className="p-1 rounded hover:bg-superficie-forte transition-colors text-muted-foreground hover:text-foreground"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -153,28 +153,28 @@ export default function FinanceiroPage() {
           </button>
           <button
             onClick={() => setMostrarCategorias(true)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-medium text-slate-300 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-superficie hover:bg-superficie-forte border border-border text-sm font-medium text-foreground-suave transition-colors"
           >
             <Tag className="w-4 h-4" />
             <span className="hidden sm:inline">Gerenciar Categorias</span>
           </button>
           <Link
             href="/financeiro/recorrencias"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-medium text-slate-300 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-superficie hover:bg-superficie-forte border border-border text-sm font-medium text-foreground-suave transition-colors"
           >
             <Repeat className="w-4 h-4" />
             <span className="hidden sm:inline">Recorrências</span>
           </Link>
           <Link
             href="/financeiro/caixinhas"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-medium text-slate-300 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-superficie hover:bg-superficie-forte border border-border text-sm font-medium text-foreground-suave transition-colors"
           >
             <PiggyBank className="w-4 h-4" />
             <span className="hidden sm:inline">Caixinhas</span>
           </Link>
           <Link
             href="/financeiro/emprestimos"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-medium text-slate-300 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-superficie hover:bg-superficie-forte border border-border text-sm font-medium text-foreground-suave transition-colors"
           >
             <HandCoins className="w-4 h-4" />
             <span className="hidden sm:inline">Empréstimos</span>
@@ -191,26 +191,26 @@ export default function FinanceiroPage() {
       />
 
       {/* Fluxo de caixa */}
-      <div className="bg-white/[0.03] border border-white/10 rounded-xl p-5">
-        <h2 className="text-base font-semibold text-white mb-4">
+      <div className="bg-white/[0.03] border border-border rounded-xl p-5">
+        <h2 className="text-base font-semibold text-foreground mb-4">
           Fluxo de Caixa — {mesPorExtenso}
         </h2>
         <FluxoCaixaChart dados={fluxo} loading={loadingFluxo} />
       </div>
 
       {/* Tabela de lançamentos */}
-      <div className="bg-white/[0.03] border border-white/10 rounded-xl">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+      <div className="bg-white/[0.03] border border-border rounded-xl">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div>
-            <h2 className="text-base font-semibold text-white">Lançamentos</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h2 className="text-base font-semibold text-foreground">Lançamentos</h2>
+            <p className="text-xs text-muted-suave mt-0.5">
               {total} lançamento{total !== 1 ? "s" : ""} no período
               {filtroMetrica && (
                 <>
                   {" · "}
                   <button
                     onClick={() => setFiltroMetrica(null)}
-                    className="text-brand-400 hover:text-brand-300 transition-colors"
+                    className="text-brand-accent hover:text-brand-accent transition-colors"
                   >
                     filtrado ({filtroMetrica.tipo}/{filtroMetrica.status}) — limpar
                   </button>
@@ -220,7 +220,7 @@ export default function FinanceiroPage() {
           </div>
           <a
             href="/financeiro/lancamentos"
-            className="text-xs text-brand-400 hover:text-brand-300 transition-colors"
+            className="text-xs text-brand-accent hover:text-brand-accent transition-colors"
           >
             Ver todos →
           </a>
@@ -260,7 +260,7 @@ export default function FinanceiroPage() {
         mensagem={
           <>
             Excluir{" "}
-            <span className="text-white font-medium">
+            <span className="text-foreground font-medium">
               {lancamentoParaExcluir?.descricao}
             </span>
             ? Esta ação não pode ser desfeita.

@@ -51,7 +51,7 @@ export default function AIHubPage() {
             <Sparkles className="h-6 w-6 text-brand-500" />
             AI Hub
           </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <p className="text-sm text-muted-suave mt-0.5">
             Gere conteúdo de marketing e insights para o seu negócio com inteligência artificial
           </p>
         </div>
@@ -105,27 +105,27 @@ export default function AIHubPage() {
         </h3>
         <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-brand-700">
           <li className="flex items-start gap-1.5">
-            <span className="text-brand-400 mt-0.5">→</span>
+            <span className="text-brand-accent mt-0.5">→</span>
             Seja específico no nome do produto ou serviço
           </li>
           <li className="flex items-start gap-1.5">
-            <span className="text-brand-400 mt-0.5">→</span>
+            <span className="text-brand-accent mt-0.5">→</span>
             Informe o tom desejado (urgente, descontraído, profissional)
           </li>
           <li className="flex items-start gap-1.5">
-            <span className="text-brand-400 mt-0.5">→</span>
+            <span className="text-brand-accent mt-0.5">→</span>
             Use o Relatório do Negócio para análises mensais completas
           </li>
           <li className="flex items-start gap-1.5">
-            <span className="text-brand-400 mt-0.5">→</span>
+            <span className="text-brand-accent mt-0.5">→</span>
             Salve os melhores conteúdos como favoritos para reutilizar
           </li>
           <li className="flex items-start gap-1.5">
-            <span className="text-brand-400 mt-0.5">→</span>
+            <span className="text-brand-accent mt-0.5">→</span>
             O insight semanal usa dados reais do seu negócio
           </li>
           <li className="flex items-start gap-1.5">
-            <span className="text-brand-400 mt-0.5">→</span>
+            <span className="text-brand-accent mt-0.5">→</span>
             Use o Pedido Livre para qualquer conteúdo fora dos tipos prontos
           </li>
         </ul>

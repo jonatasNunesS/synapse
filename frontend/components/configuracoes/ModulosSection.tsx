@@ -129,25 +129,25 @@ export function ModulosSection() {
   const qtdConfirmando = confirmar ? config?.contagens[confirmar] ?? 0 : 0;
 
   return (
-    <section className="bg-[#0d1117] border border-white/10 rounded-xl p-6">
-      <h2 className="text-base font-semibold text-white mb-1 flex items-center gap-2">
-        <Blocks className="w-4 h-4 text-brand-400" />
+    <section className="bg-card shadow-elevacao border border-border rounded-xl p-6">
+      <h2 className="text-base font-semibold text-foreground mb-1 flex items-center gap-2">
+        <Blocks className="w-4 h-4 text-brand-accent" />
         Módulos
       </h2>
-      <p className="text-xs text-slate-500 mb-5">
+      <p className="text-xs text-muted-suave mb-5">
         Escolha o que sua empresa usa. Desativar apenas oculta o módulo —{" "}
-        <strong className="text-slate-400">nenhum dado é apagado</strong>.
+        <strong className="text-muted-foreground">nenhum dado é apagado</strong>.
       </p>
 
       {!isAdmin && (
-        <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-sm text-amber-400">
+        <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-sm text-alerta">
           Apenas administradores podem ativar ou desativar módulos.
         </div>
       )}
 
       {carregando ? (
         <div className="flex justify-center py-8">
-          <Loader2 className="w-5 h-5 animate-spin text-brand-400" />
+          <Loader2 className="w-5 h-5 animate-spin text-brand-accent" />
         </div>
       ) : (
         <div className="space-y-2">
@@ -159,13 +159,13 @@ export function ModulosSection() {
             return (
               <div
                 key={modulo}
-                className="flex items-center justify-between gap-3 p-3 rounded-lg border border-white/5 bg-white/3"
+                className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-superficie"
               >
                 <div className="flex items-start gap-3 min-w-0">
                   <span className="text-lg leading-none mt-0.5">{info?.icone ?? "🔹"}</span>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-white">{info?.label ?? modulo}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">{info?.descricao}</p>
+                    <p className="text-sm font-medium text-foreground">{info?.label ?? modulo}</p>
+                    <p className="text-xs text-muted-suave mt-0.5">{info?.descricao}</p>
                     {qtd > 0 && (
                       <p className="text-[0.6875rem] text-slate-600 mt-0.5">
                         {qtd} {qtd === 1 ? "registro" : "registros"}
@@ -176,13 +176,13 @@ export function ModulosSection() {
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span
                     className={`text-xs font-medium ${
-                      ativo ? "text-emerald-400" : "text-slate-500"
+                      ativo ? "text-sucesso" : "text-muted-suave"
                     }`}
                   >
                     {ativo ? "Ativo" : "Inativo"}
                   </span>
                   {salvando === modulo ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-brand-400" />
+                    <Loader2 className="w-4 h-4 animate-spin text-brand-accent" />
                   ) : (
                     <Toggle
                       ativo={ativo}
@@ -209,21 +209,21 @@ export function ModulosSection() {
             return (
               <div
                 key={modulo}
-                className="flex items-center justify-between gap-3 p-3 rounded-lg border border-white/5 bg-white/3 opacity-80"
+                className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-superficie opacity-80"
                 title="Módulo essencial, não pode ser desativado"
               >
                 <div className="flex items-start gap-3 min-w-0">
                   <span className="text-lg leading-none mt-0.5">{info.icone}</span>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-white flex items-center gap-1.5">
+                    <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
                       {info.label}
-                      <Lock className="w-3 h-3 text-slate-500" />
+                      <Lock className="w-3 h-3 text-muted-suave" />
                     </p>
-                    <p className="text-xs text-slate-500 mt-0.5">{info.descricao}</p>
+                    <p className="text-xs text-muted-suave mt-0.5">{info.descricao}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="text-xs font-medium text-emerald-400">Ativo</span>
+                  <span className="text-xs font-medium text-sucesso">Ativo</span>
                   <Toggle ativo disabled label={`${info.label} (essencial)`} />
                 </div>
               </div>
@@ -235,25 +235,25 @@ export function ModulosSection() {
       {/* Confirmação ao desativar módulo com dados */}
       {confirmar && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-xl border border-white/10 bg-slate-900 shadow-xl">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card shadow-xl">
             <div className="p-5">
-              <h3 className="text-sm font-semibold text-white">
+              <h3 className="text-sm font-semibold text-foreground">
                 Desativar {moduloConfirmando?.label}?
               </h3>
-              <p className="text-sm text-slate-400 mt-2">
+              <p className="text-sm text-muted-foreground mt-2">
                 Você tem{" "}
-                <strong className="text-white">
+                <strong className="text-foreground">
                   {qtdConfirmando} {qtdConfirmando === 1 ? "registro" : "registros"}
                 </strong>{" "}
                 em {moduloConfirmando?.label}. Desativar o módulo vai ocultá-lo do
-                sistema, mas <strong className="text-white">nenhum dado será apagado</strong>.
+                sistema, mas <strong className="text-foreground">nenhum dado será apagado</strong>.
                 Você pode reativar quando quiser e tudo estará como antes.
               </p>
             </div>
-            <div className="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-white/10">
+            <div className="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-border">
               <button
                 onClick={() => setConfirmar(null)}
-                className="px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-white/5"
+                className="px-3 py-2 rounded-lg text-sm text-foreground-suave hover:bg-superficie"
               >
                 Cancelar
               </button>

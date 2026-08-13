@@ -61,28 +61,28 @@ export function EmprestimoAcaoModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-sm bg-[#0f1117] border border-white/10 rounded-2xl shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
-          <h2 className="text-base font-semibold text-white">Empréstimo</h2>
+      <div className="relative w-full max-w-sm bg-card border border-border rounded-2xl shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="text-base font-semibold text-foreground">Empréstimo</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-superficie-forte transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-6 space-y-4">
-          <p className="text-sm text-slate-200">
+          <p className="text-sm text-foreground-suave">
             {emprestei ? (
               <>
                 <span className="font-medium">{pessoa}</span> ficou de te devolver{" "}
-                <span className="font-semibold text-amber-400">{moeda(emprestimo.valor)}</span>.
+                <span className="font-semibold text-alerta">{moeda(emprestimo.valor)}</span>.
               </>
             ) : (
               <>
                 Você ficou de devolver{" "}
-                <span className="font-semibold text-amber-400">{moeda(emprestimo.valor)}</span>{" "}
+                <span className="font-semibold text-alerta">{moeda(emprestimo.valor)}</span>{" "}
                 pro/pra <span className="font-medium">{pessoa}</span>.
               </>
             )}
@@ -101,7 +101,7 @@ export function EmprestimoAcaoModal({
               <button
                 onClick={() => setModoAdiar(true)}
                 disabled={processando}
-                className="inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-white/5 border border-white/10 text-sm font-medium text-slate-300 hover:bg-white/10 transition-colors disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-superficie border border-border text-sm font-medium text-foreground-suave hover:bg-superficie-forte transition-colors disabled:opacity-50"
               >
                 <CalendarClock className="w-4 h-4" />
                 Adiar prazo
@@ -109,14 +109,14 @@ export function EmprestimoAcaoModal({
               <button
                 onClick={() => run(() => onQuitar(emprestimo.id, true))}
                 disabled={processando}
-                className="inline-flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-superficie transition-colors disabled:opacity-50"
               >
                 {emprestei ? "Perdoar dívida" : "Dívida cancelada"}
               </button>
             </div>
           ) : (
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-slate-300">
+              <label className="block text-sm font-medium text-foreground-suave">
                 Adiar em quantos dias?
               </label>
               <input
@@ -124,13 +124,13 @@ export function EmprestimoAcaoModal({
                 min={1}
                 value={dias}
                 onChange={(e) => setDias(e.target.value)}
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-amber-500 transition-colors"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-amber-500 transition-colors"
               />
               <div className="flex gap-2">
                 <button
                   onClick={() => setModoAdiar(false)}
                   disabled={processando}
-                  className="flex-1 py-2.5 rounded-lg border border-white/10 text-sm text-slate-300 hover:bg-white/5 transition-colors disabled:opacity-50"
+                  className="flex-1 py-2.5 rounded-lg border border-border text-sm text-foreground-suave hover:bg-superficie transition-colors disabled:opacity-50"
                 >
                   Voltar
                 </button>
@@ -147,7 +147,7 @@ export function EmprestimoAcaoModal({
           )}
 
           {erro && (
-            <p className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-400">
+            <p className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-erro">
               {erro}
             </p>
           )}

@@ -84,7 +84,7 @@ export function AgendaCalendario({
   );
 
   return (
-    <div className="rbc-synapse h-[75vh] rounded-xl border border-border bg-card p-3">
+    <div className="rbc-synapse h-[75vh] rounded-xl border border-border bg-card shadow-elevacao p-3">
       <Calendar<CalendarioEvento>
         localizer={localizer}
         culture="pt-BR"

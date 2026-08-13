@@ -46,12 +46,12 @@ export function PagarModal({ lancamento, onConfirmar, onClose }: PagarModalProps
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-sm bg-[#0f1117] border border-white/10 rounded-2xl shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
-          <h2 className="text-lg font-semibold text-white">Confirmar Pagamento</h2>
+      <div className="relative w-full max-w-sm bg-card border border-border rounded-2xl shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="text-lg font-semibold text-foreground">Confirmar Pagamento</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-superficie-forte transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -59,21 +59,21 @@ export function PagarModal({ lancamento, onConfirmar, onClose }: PagarModalProps
 
         <form onSubmit={handleSubmit(handleFormSubmit)} className="p-6 space-y-4">
           <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-            <p className="text-sm text-slate-300 mb-1">{lancamento.descricao}</p>
-            <p className="text-xl font-bold text-emerald-400">{valorFormatado}</p>
+            <p className="text-sm text-foreground-suave mb-1">{lancamento.descricao}</p>
+            <p className="text-xl font-bold text-sucesso">{valorFormatado}</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">
               Data de Pagamento *
             </label>
             <input
               type="date"
               {...register("data_pagamento")}
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-brand-500 transition-colors"
             />
             {errors.data_pagamento && (
-              <p className="mt-1 text-xs text-red-400">
+              <p className="mt-1 text-xs text-erro">
                 {errors.data_pagamento.message}
               </p>
             )}
@@ -83,7 +83,7 @@ export function PagarModal({ lancamento, onConfirmar, onClose }: PagarModalProps
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2.5 px-4 rounded-lg border border-white/10 text-sm font-medium text-slate-400 hover:bg-white/5 transition-colors"
+              className="flex-1 py-2.5 px-4 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:bg-superficie transition-colors"
             >
               Cancelar
             </button>

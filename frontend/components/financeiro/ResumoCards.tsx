@@ -32,18 +32,18 @@ interface CardProps {
 
 function Card({ titulo, valor, icon, cor, descricao, loading }: CardProps) {
   return (
-    <div className="bg-white/[0.03] border border-white/10 rounded-xl p-5 hover:bg-white/[0.05] transition-colors">
+    <div className="bg-white/[0.03] border border-border rounded-xl p-5 hover:bg-white/[0.05] transition-colors">
       <div className="flex items-start justify-between mb-3">
-        <p className="text-sm text-slate-400">{titulo}</p>
+        <p className="text-sm text-muted-foreground">{titulo}</p>
         <div className={`p-2 rounded-lg ${cor}`}>{icon}</div>
       </div>
       {loading ? (
-        <div className="h-7 w-32 bg-white/10 rounded animate-pulse" />
+        <div className="h-7 w-32 bg-superficie-forte rounded animate-pulse" />
       ) : (
-        <p className="text-2xl font-bold text-white tabular-nums">{valor}</p>
+        <p className="text-2xl font-bold text-foreground tabular-nums">{valor}</p>
       )}
       {descricao && (
-        <p className="text-xs text-slate-500 mt-1">{descricao}</p>
+        <p className="text-xs text-muted-suave mt-1">{descricao}</p>
       )}
     </div>
   );
@@ -57,7 +57,7 @@ export function ResumoCards({ resumo, loading }: ResumoCardsProps) {
       <Card
         titulo="Total Receitas"
         valor={formatarMoeda(resumo?.total_receitas ?? 0)}
-        icon={<ArrowUpCircle className="w-4 h-4 text-emerald-400" />}
+        icon={<ArrowUpCircle className="w-4 h-4 text-sucesso" />}
         cor="bg-emerald-400/10"
         descricao="Receitas pagas no mês"
         loading={loading}
@@ -65,7 +65,7 @@ export function ResumoCards({ resumo, loading }: ResumoCardsProps) {
       <Card
         titulo="Total Despesas"
         valor={formatarMoeda(resumo?.total_despesas ?? 0)}
-        icon={<ArrowDownCircle className="w-4 h-4 text-red-400" />}
+        icon={<ArrowDownCircle className="w-4 h-4 text-erro" />}
         cor="bg-red-400/10"
         descricao="Despesas pagas no mês"
         loading={loading}
@@ -75,7 +75,7 @@ export function ResumoCards({ resumo, loading }: ResumoCardsProps) {
         valor={formatarMoeda(resumo?.saldo ?? 0)}
         icon={
           <TrendingUp
-            className={`w-4 h-4 ${saldoPositivo ? "text-brand-400" : "text-red-400"}`}
+            className={`w-4 h-4 ${saldoPositivo ? "text-brand-accent" : "text-erro"}`}
           />
         }
         cor={saldoPositivo ? "bg-brand-400/10" : "bg-red-400/10"}
@@ -87,7 +87,7 @@ export function ResumoCards({ resumo, loading }: ResumoCardsProps) {
         valor={formatarMoeda(
           (resumo?.total_pendente ?? 0) + (resumo?.total_atrasado ?? 0)
         )}
-        icon={<AlertCircle className="w-4 h-4 text-amber-400" />}
+        icon={<AlertCircle className="w-4 h-4 text-alerta" />}
         cor="bg-amber-400/10"
         descricao={
           resumo?.total_atrasado

@@ -34,12 +34,12 @@ export function PeriodoSelector({ periodo, onChange }: Props) {
 
   return (
     <div className="flex items-center gap-2">
-      <CalendarRange className="w-4 h-4 text-gray-500 flex-shrink-0" />
+      <CalendarRange className="w-4 h-4 text-muted-suave flex-shrink-0" />
       <select
         aria-label="Mês"
         value={mes || ""}
         onChange={(e) => aplicar(Number(e.target.value), ano || anoAtual)}
-        className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-2 text-sm text-white focus:outline-none focus:border-brand-500/50"
+        className="rounded-lg border border-border bg-superficie px-2.5 py-2 text-sm text-foreground focus:outline-none focus:border-brand-500/50"
       >
         <option value="">Mês</option>
         {MESES.map((m, i) => (
@@ -52,7 +52,7 @@ export function PeriodoSelector({ periodo, onChange }: Props) {
         aria-label="Ano"
         value={ano || ""}
         onChange={(e) => aplicar(mes || new Date().getMonth() + 1, Number(e.target.value))}
-        className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-2 text-sm text-white focus:outline-none focus:border-brand-500/50"
+        className="rounded-lg border border-border bg-superficie px-2.5 py-2 text-sm text-foreground focus:outline-none focus:border-brand-500/50"
       >
         <option value="">Ano</option>
         {anos.map((a) => (
@@ -64,7 +64,7 @@ export function PeriodoSelector({ periodo, onChange }: Props) {
       {periodo && (
         <button
           onClick={() => onChange(null)}
-          className="inline-flex items-center gap-1 px-2.5 py-2 rounded-lg text-xs text-gray-300 hover:bg-white/10 transition-colors"
+          className="inline-flex items-center gap-1 px-2.5 py-2 rounded-lg text-xs text-foreground-suave hover:bg-superficie-forte transition-colors"
           title="Limpar filtro de período"
         >
           <X className="w-3.5 h-3.5" />

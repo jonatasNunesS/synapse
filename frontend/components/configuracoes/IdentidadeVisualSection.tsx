@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Check, Loader2, Palette } from "lucide-react";
 import { api, getErrorMessage } from "@/lib/api";
+import { useModoEfetivo } from "@/hooks/useModoEfetivo";
 import { useAppStore } from "@/store/useAppStore";
 import type { Usuario } from "@/types/auth";
 import {
@@ -30,26 +31,33 @@ import {
 /** Mini-preview: card, botão, badge e texto na paleta/fonte selecionadas. */
 function Preview({ paleta, fonte }: { paleta: Paleta; fonte: FonteTema }) {
   const cores = infoDaPaleta(paleta);
+  const modo = useModoEfetivo();
   const familiaTitulo =
     FONTES.find((f) => f.id === fonte)?.familiaPreview ?? "inherit";
 
+  // O preview mostra a paleta que a pessoa está experimentando, então não dá
+  // para usar os tokens do tema ativo — a cor vem da rampa. E o degrau muda
+  // com o modo, igual ao --brand-accent: 400 no escuro, 700 no claro. Sem
+  // isso, o texto de destaque sairia lavado sobre o card branco.
+  const acento = modo === "claro" ? cores.rampa[700] : cores.rampa[400];
+
   return (
-    <div className="rounded-xl border border-white/10 bg-slate-900/60 p-4">
+    <div className="rounded-xl border border-border bg-card/60 p-4">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <p
-            className="text-base font-semibold text-white"
+            className="text-base font-semibold text-foreground"
             style={{ fontFamily: familiaTitulo }}
           >
             Resumo do mês
           </p>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Assim a equipe vê o sistema.
           </p>
         </div>
         <span
           className="inline-flex items-center rounded-full px-2.5 py-1 text-[0.6875rem] font-medium"
-          style={{ background: `${cores.primary}26`, color: cores.ring }}
+          style={{ background: `${cores.primary}26`, color: acento }}
         >
           Em dia
         </span>
@@ -64,14 +72,14 @@ function Preview({ paleta, fonte }: { paleta: Paleta; fonte: FonteTema }) {
         </span>
         <span
           className="inline-flex items-center rounded-lg border px-3.5 py-2 text-sm"
-          style={{ borderColor: `${cores.primary}66`, color: cores.ring }}
+          style={{ borderColor: `${cores.primary}66`, color: acento }}
         >
           Ver detalhes
         </span>
         {/* Cores semânticas NÃO mudam com a paleta — ficam aqui de propósito,
             para dar de cara que sucesso/erro seguem verde/vermelho. */}
-        <span className="text-sm font-medium text-emerald-400">+ R$ 2.800,92</span>
-        <span className="text-sm font-medium text-red-400">− R$ 320,00</span>
+        <span className="text-sm font-medium text-sucesso">+ R$ 2.800,92</span>
+        <span className="text-sm font-medium text-erro">− R$ 320,00</span>
       </div>
     </div>
   );
@@ -136,24 +144,24 @@ export function IdentidadeVisualSection() {
   };
 
   return (
-    <section className="bg-[#0d1117] border border-white/10 rounded-xl p-6">
-      <h2 className="text-base font-semibold text-white mb-1 flex items-center gap-2">
-        <Palette className="w-4 h-4 text-brand-400" />
+    <section className="bg-card shadow-elevacao border border-border rounded-xl p-6">
+      <h2 className="text-base font-semibold text-foreground mb-1 flex items-center gap-2">
+        <Palette className="w-4 h-4 text-brand-accent" />
         Identidade visual
       </h2>
-      <p className="text-xs text-slate-500 mb-5">
+      <p className="text-xs text-muted-suave mb-5">
         Escolha as cores e a fonte que sua equipe vê. Vale para todos os usuários
         da empresa.
       </p>
 
       {!isAdmin && (
-        <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-sm text-amber-400">
+        <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-sm text-alerta">
           Só administradores podem alterar a identidade visual.
         </div>
       )}
 
       {/* ── Paleta ─────────────────────────────────────────── */}
-      <p className="text-xs font-medium text-slate-400 mb-2">Paleta</p>
+      <p className="text-xs font-medium text-muted-foreground mb-2">Paleta</p>
       <div
         role="radiogroup"
         aria-label="Paleta de cores"
@@ -172,8 +180,8 @@ export function IdentidadeVisualSection() {
               onClick={() => setPaleta(p.id)}
               className={`relative rounded-lg border p-3 text-left transition-all ${
                 selecionada
-                  ? "border-brand-500 bg-white/5 ring-1 ring-brand-500/40"
-                  : "border-white/10 hover:border-white/25"
+                  ? "border-brand-500 bg-superficie ring-1 ring-brand-500/40"
+                  : "border-border hover:border-border"
               } ${isAdmin ? "cursor-pointer" : "opacity-60 cursor-not-allowed"}`}
             >
               <span className="flex items-center gap-1.5" aria-hidden>
@@ -191,10 +199,10 @@ export function IdentidadeVisualSection() {
                 />
               </span>
               <span className="mt-2 flex items-center gap-1.5">
-                <span className="text-sm font-medium text-white">{p.nome}</span>
-                {selecionada && <Check className="w-3.5 h-3.5 text-brand-400" />}
+                <span className="text-sm font-medium text-foreground">{p.nome}</span>
+                {selecionada && <Check className="w-3.5 h-3.5 text-brand-accent" />}
               </span>
-              <span className="block text-[0.6875rem] text-slate-500">
+              <span className="block text-[0.6875rem] text-muted-suave">
                 {p.descricao}
               </span>
             </button>
@@ -203,7 +211,7 @@ export function IdentidadeVisualSection() {
       </div>
 
       {/* ── Fonte ──────────────────────────────────────────── */}
-      <p className="text-xs font-medium text-slate-400 mt-6 mb-2">
+      <p className="text-xs font-medium text-muted-foreground mt-6 mb-2">
         Fonte dos títulos
       </p>
       <div role="radiogroup" aria-label="Fonte dos títulos" className="space-y-2">
@@ -220,21 +228,21 @@ export function IdentidadeVisualSection() {
               onClick={() => setFonte(f.id)}
               className={`w-full flex items-center justify-between gap-3 rounded-lg border p-3 text-left transition-all ${
                 selecionada
-                  ? "border-brand-500 bg-white/5"
-                  : "border-white/10 hover:border-white/25"
+                  ? "border-brand-500 bg-superficie"
+                  : "border-border hover:border-border"
               } ${isAdmin ? "cursor-pointer" : "opacity-60 cursor-not-allowed"}`}
             >
               <span className="min-w-0">
                 <span className="flex items-center gap-1.5">
-                  <span className="text-sm font-medium text-white">{f.nome}</span>
-                  {selecionada && <Check className="w-3.5 h-3.5 text-brand-400" />}
+                  <span className="text-sm font-medium text-foreground">{f.nome}</span>
+                  {selecionada && <Check className="w-3.5 h-3.5 text-brand-accent" />}
                 </span>
-                <span className="block text-[0.6875rem] text-slate-500">
+                <span className="block text-[0.6875rem] text-muted-suave">
                   {f.descricao}
                 </span>
               </span>
               <span
-                className="text-lg text-slate-200 flex-shrink-0"
+                className="text-lg text-foreground-suave flex-shrink-0"
                 style={{ fontFamily: f.familiaPreview }}
               >
                 Aa<span className="hidden sm:inline"> — Resumo do mês</span>
@@ -245,7 +253,7 @@ export function IdentidadeVisualSection() {
       </div>
 
       {/* ── Preview ao vivo ────────────────────────────────── */}
-      <p className="text-xs font-medium text-slate-400 mt-6 mb-2">
+      <p className="text-xs font-medium text-muted-foreground mt-6 mb-2">
         Pré-visualização
       </p>
       <Preview paleta={paleta} fonte={fonte} />
@@ -260,7 +268,7 @@ export function IdentidadeVisualSection() {
           Salvar
         </button>
         {mudou && isAdmin && (
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-muted-suave">
             A pré-visualização já mostra a mudança; salve para aplicar para a
             equipe.
           </span>

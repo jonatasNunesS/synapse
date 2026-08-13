@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FluxoCaixaDia } from "@/types/dashboard";
+import { useCoresDoGrafico } from "@/lib/graficos";
 
 interface FluxoCaixaWidgetProps {
   fluxo: FluxoCaixaDia[];
@@ -46,6 +47,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export function FluxoCaixaWidget({ fluxo, isLoading, titulo = "Fluxo de Caixa" }: FluxoCaixaWidgetProps) {
+  // Cores do gráfico saem dos tokens do tema (funcionam nos dois modos).
+  const cores = useCoresDoGrafico();
+
   if (isLoading) {
     return (
       <Card>
@@ -101,17 +105,17 @@ export function FluxoCaixaWidget({ fluxo, isLoading, titulo = "Fluxo de Caixa" }
                 <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+            <CartesianGrid strokeDasharray="3 3" stroke={cores.grid} />
             <XAxis
               dataKey="data"
-              tick={{ fontSize: 11 }}
+              tick={{ fontSize: 11, fill: cores.eixo }}
               tickLine={false}
               axisLine={false}
               interval="preserveStartEnd"
             />
             <YAxis
               tickFormatter={formatCurrency}
-              tick={{ fontSize: 11 }}
+              tick={{ fontSize: 11, fill: cores.eixo }}
               tickLine={false}
               axisLine={false}
               width={70}
@@ -123,19 +127,19 @@ export function FluxoCaixaWidget({ fluxo, isLoading, titulo = "Fluxo de Caixa" }
               }
               iconType="circle"
               iconSize={8}
-              wrapperStyle={{ fontSize: 12 }}
+              wrapperStyle={{ fontSize: 12, color: cores.eixo }}
             />
             <Area
               type="monotone"
               dataKey="receitas"
-              stroke="#22c55e"
+              stroke={cores.receita}
               strokeWidth={2}
               fill="url(#colorReceitas)"
             />
             <Area
               type="monotone"
               dataKey="despesas"
-              stroke="#ef4444"
+              stroke={cores.despesa}
               strokeWidth={2}
               fill="url(#colorDespesas)"
             />
@@ -143,7 +147,7 @@ export function FluxoCaixaWidget({ fluxo, isLoading, titulo = "Fluxo de Caixa" }
               type="monotone"
               dataKey="saldo_acumulado"
               name="saldo"
-              stroke="#6366f1"
+              stroke={cores.neutro}
               strokeWidth={2}
               strokeDasharray="4 2"
               fill="url(#colorSaldo)"

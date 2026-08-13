@@ -181,7 +181,7 @@ export default function AgendaPage() {
         mensagem={
           <>
             Excluir o evento{" "}
-            <span className="text-white font-medium">{detalhe?.titulo}</span>?
+            <span className="text-foreground font-medium">{detalhe?.titulo}</span>?
           </>
         }
         confirmLabel="Excluir"

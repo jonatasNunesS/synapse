@@ -92,19 +92,19 @@ export function NovaInteracaoRapidaModal({ clienteInicial, onClose, onCriada }: 
   if (!cliente) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-        <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
-          <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-            <h3 className="text-base font-semibold text-white">Nova interação</h3>
+        <div className="w-full max-w-md rounded-2xl border border-border bg-card shadow-2xl">
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <h3 className="text-base font-semibold text-foreground">Nova interação</h3>
             <button
               onClick={onClose}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white"
+              className="rounded-lg p-1.5 text-muted-foreground hover:bg-superficie-forte hover:text-foreground"
               aria-label="Fechar"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
           <div className="p-5">
-            <label className="mb-1.5 block text-xs font-medium text-slate-400">
+            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
               Para qual cliente?
             </label>
             <ClienteSelect onSelect={setCliente} />

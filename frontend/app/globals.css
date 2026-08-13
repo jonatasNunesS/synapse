@@ -2,33 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────────────────────
+   MODO CLARO / ESCURO — tokens NEUTROS
+
+   O modo é preferência de cada USUÁRIO (a paleta da marca é da empresa), e
+   entra no <html> como `data-modo`. A classe `.dark` acompanha o atributo,
+   porque a variante `dark:` do Tailwind ainda é usada em alguns componentes.
+
+   O escuro fica no `:root` de propósito: se o atributo faltar (JS desligado,
+   cookie ausente, SO não detectável), a regra de precedência manda cair no
+   escuro — que é o visual que o sistema sempre teve.
+
+   As cores da MARCA não estão aqui: vivem nos blocos [data-tema] mais abaixo,
+   porque dependem da paleta escolhida pela empresa.
+   ───────────────────────────────────────────────────────────── */
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
     --radius: 0.5rem;
-    --sidebar: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-  }
 
-  .dark {
+    /* ── Escuro (padrão) ── */
     --background: 240 33% 6%;
     --foreground: 0 0% 95%;
     --card: 240 33% 8%;
@@ -50,6 +43,92 @@
     --sidebar-foreground: 240 5% 64.9%;
     --sidebar-border: 240 20% 12%;
     --sidebar-accent-foreground: 0 0% 98%;
+
+    /* O sistema usa QUATRO níveis de texto, não dois. Os dois do meio ficam
+       aqui para a conversão não achatar a hierarquia que já existia:
+       foreground > foreground-suave > muted-foreground > muted-suave. */
+    --foreground-suave: 213 27% 84%;
+    --muted-suave: 215 16% 52%;
+
+    /* Superfície elevada sobre o card (o antigo bg-white/5). */
+    --superficie: 240 20% 13%;
+    --superficie-forte: 240 20% 18%;
+
+    /* Sombras: no escuro a hierarquia vem do contraste entre card e fundo,
+       então a sombra é quase decorativa. */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+    --shadow-md: 0 4px 10px -2px rgb(0 0 0 / 0.55);
+    --shadow-lg: 0 12px 32px -8px rgb(0 0 0 / 0.65);
+
+    /* Cores SEMÂNTICAS: mudam de tom entre os modos, nunca de significado —
+       verde continua verde. No escuro ficam nos tons claros (rung 400). */
+    --sucesso: 158 64% 52%;
+    --erro: 0 91% 71%;
+    --alerta: 43 96% 56%;
+    --info: 213 94% 68%;
+
+    /* Gráficos: eixo, grade e tooltip do Recharts. */
+    --grafico-grid: 240 20% 18%;
+    --grafico-eixo: 240 5% 64.9%;
+    --grafico-tooltip-bg: 240 33% 10%;
+    --grafico-tooltip-borda: 240 20% 20%;
+
+    /* Brilho de fundo das telas de login. */
+    --glow-opacidade: 0.1;
+  }
+
+  [data-modo="claro"] {
+    /* Página levemente cinza e card branco: a separação entre os dois não
+       depende só da sombra, do mesmo jeito que no escuro. */
+    --background: 240 20% 98%;
+    --foreground: 240 10% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 12%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 6% 95%;
+    --secondary-foreground: 240 10% 18%;
+    --muted: 240 6% 95%;
+    --muted-foreground: 240 5% 40%;
+    --accent: 240 6% 95%;
+    --accent-foreground: 240 10% 18%;
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 8% 85%;
+    --input: 240 8% 85%;
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 240 5% 40%;
+    --sidebar-border: 240 8% 90%;
+    --sidebar-accent-foreground: 0 0% 100%;
+
+    --foreground-suave: 240 8% 28%;
+    --muted-suave: 240 5% 45%;
+
+    --superficie: 240 6% 96%;
+    --superficie-forte: 240 6% 92%;
+
+    /* Aqui a sombra é o que separa o card do fundo — sem ela, a tela vira
+       uma folha lisa. Por isso é bem mais presente que no escuro. */
+    --shadow-sm: 0 1px 2px 0 rgb(16 16 26 / 0.06);
+    --shadow-md: 0 2px 8px -1px rgb(16 16 26 / 0.10);
+    --shadow-lg: 0 10px 28px -6px rgb(16 16 26 / 0.14);
+
+    /* Os mesmos significados, nos tons escuros (rung 700): o verde claro do
+       modo escuro sobre branco dá 2:1 e some. */
+    --sucesso: 142 72% 29%;
+    --erro: 0 74% 42%;
+    --alerta: 43 96% 29%;
+    --info: 224 76% 48%;
+
+    --grafico-grid: 240 8% 90%;
+    --grafico-eixo: 240 5% 40%;
+    --grafico-tooltip-bg: 0 0% 100%;
+    --grafico-tooltip-borda: 240 8% 85%;
+
+    /* O glow da paleta sobre fundo branco quase não aparece e, quando
+       aparece, suja. Fica praticamente desligado. */
+    --glow-opacidade: 0.05;
   }
 }
 
@@ -72,12 +151,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(240 20% 20%);
+  background: hsl(var(--superficie-forte));
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(240 20% 30%);
+  background: hsl(var(--muted-foreground) / 0.5);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -301,6 +380,59 @@
   --primary: 215.3 25% 26.7%;
   --ring: 215 20.2% 65.1%;
   --sidebar-accent: 215.3 25% 26.7%;
+}
+
+/* ── Marca × modo ─────────────────────────────────────────────
+   A rampa --brand-50…900 acima é a mesma nos dois modos: é uma ESCALA, e
+   escala não muda de valor, muda de uso. O que muda por modo é qual degrau
+   cada papel ocupa.
+
+   --brand-accent (texto de destaque na cor da marca): no escuro é o degrau
+   400, claro o bastante para brilhar sobre o fundo escuro; no claro o mesmo
+   400 sobre branco dá cerca de 2:1 e some, então o papel desce para o 700.
+
+   --primary (preenchimento de botão) NÃO muda: foi escolhido na branch do
+   white-label com a regra "texto branco sobre ele ≥ 4.5:1", que vale igual
+   nos dois modos — o botão é uma superfície própria, não depende do fundo.
+
+   --ring (foco) muda: no escuro é um tom claro da marca, que sobre branco
+   desaparece. Por isso os cinco blocos abaixo.
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  --brand-accent: var(--brand-400);
+}
+
+[data-modo="claro"] {
+  --brand-accent: var(--brand-700);
+}
+
+[data-tema="synapse"][data-modo="claro"] {
+  --ring: 262.1 83.3% 57.8%;
+  --brand-ring: #7C3AED;
+}
+[data-tema="oceano"][data-modo="claro"] {
+  --ring: 200.6 98% 39.4%;
+  --brand-ring: #027BBA;
+}
+[data-tema="floresta"][data-modo="claro"] {
+  --ring: 163 94% 26.7%;
+  --brand-ring: #04845E;
+}
+[data-tema="ambar"][data-modo="claro"] {
+  --ring: 26.5 91.1% 38.2%;
+  --brand-ring: #BA5809;
+}
+[data-tema="grafite"][data-modo="claro"] {
+  --ring: 215.3 19.3% 34.5%;
+  --brand-ring: #475569;
+}
+
+/* A paleta padrão responde tanto por [data-tema="synapse"] quanto pela
+   ausência do atributo — o mesmo par que o bloco :root faz lá em cima. */
+:root[data-modo="claro"]:not([data-tema]) {
+  --ring: 262.1 83.3% 57.8%;
+  --brand-ring: #7C3AED;
 }
 
 /* ── Fonte dos títulos ────────────────────────────────────────

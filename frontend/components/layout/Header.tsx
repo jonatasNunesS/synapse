@@ -29,7 +29,7 @@ export function Header() {
   return (
     <header
       className={cn(
-        "fixed top-0 right-0 z-30 flex h-[64px] items-center justify-between border-b border-slate-800 bg-slate-950/80 backdrop-blur-sm px-4 md:px-6 transition-all duration-300",
+        "fixed top-0 right-0 z-30 flex h-[64px] items-center justify-between border-b border-border bg-background/80 backdrop-blur-sm px-4 md:px-6 transition-all duration-300",
         // Mobile: sempre left-0 (sidebar é overlay)
         // Desktop: ajusta conforme estado da sidebar
         "left-0",
@@ -39,7 +39,7 @@ export function Header() {
       {/* ── Hamburger (mobile only) ────────────────────────── */}
       <button
         onClick={toggleSidebar}
-        className="flex md:hidden h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors mr-2"
+        className="flex md:hidden h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground-suave transition-colors mr-2"
         aria-label="Abrir menu"
       >
         <Menu className="h-5 w-5" />
@@ -59,17 +59,17 @@ export function Header() {
         <div className="relative ml-1">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 hover:bg-slate-800 transition-colors"
+            className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 hover:bg-secondary transition-colors"
           >
             {/* Avatar */}
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-600/20 text-brand-400 text-xs font-bold border border-brand-600/30">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-600/20 text-brand-accent text-xs font-bold border border-brand-600/30">
               {iniciais}
             </div>
             <div className="hidden md:block text-left">
-              <p className="text-sm font-medium text-slate-200 leading-none">
+              <p className="text-sm font-medium text-foreground-suave leading-none">
                 {usuario?.nome?.split(" ")[0] ?? "Usuário"}
               </p>
-              <p className="text-xs text-slate-500 leading-none mt-0.5">{planoLabel}</p>
+              <p className="text-xs text-muted-suave leading-none mt-0.5">{planoLabel}</p>
             </div>
           </button>
 
@@ -80,22 +80,22 @@ export function Header() {
                 className="fixed inset-0 z-40"
                 onClick={() => setShowUserMenu(false)}
               />
-              <div className="absolute right-0 top-full z-50 mt-2 w-60 rounded-xl border border-slate-800 bg-slate-900 p-1.5 shadow-2xl shadow-black/40">
+              <div className="absolute right-0 top-full z-50 mt-2 w-60 rounded-xl border border-border bg-card p-1.5 shadow-2xl shadow-black/40">
                 {/* Info do usuário */}
-                <div className="px-3 py-2.5 border-b border-slate-800 mb-1.5">
-                  <p className="text-sm font-semibold text-slate-200">
+                <div className="px-3 py-2.5 border-b border-border mb-1.5">
+                  <p className="text-sm font-semibold text-foreground-suave">
                     {usuario?.nome ?? "Usuário"}
                   </p>
-                  <p className="text-xs text-slate-500 mt-0.5">{usuario?.email}</p>
+                  <p className="text-xs text-muted-suave mt-0.5">{usuario?.email}</p>
                 </div>
 
                 {/* Info da empresa */}
                 {empresa && (
-                  <div className="px-3 py-2 border-b border-slate-800 mb-1.5">
+                  <div className="px-3 py-2 border-b border-border mb-1.5">
                     <div className="flex items-center gap-2">
                       <Building2 className="h-3.5 w-3.5 text-slate-600" />
                       <div>
-                        <p className="text-xs font-medium text-slate-300 truncate max-w-[160px]">
+                        <p className="text-xs font-medium text-foreground-suave truncate max-w-[160px]">
                           {empresa.nome}
                         </p>
                         <p className="text-[0.6875rem] text-slate-600">Plano {planoLabel}</p>
@@ -108,7 +108,7 @@ export function Header() {
                 <Link
                   href="/perfil"
                   onClick={() => setShowUserMenu(false)}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors"
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground-suave transition-colors"
                 >
                   <User className="h-4 w-4" />
                   Meu Perfil
@@ -116,19 +116,19 @@ export function Header() {
                 <Link
                   href="/configuracoes"
                   onClick={() => setShowUserMenu(false)}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors"
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground-suave transition-colors"
                 >
                   <Settings className="h-4 w-4" />
                   Configurações
                 </Link>
 
-                <div className="border-t border-slate-800 mt-1.5 pt-1.5">
+                <div className="border-t border-border mt-1.5 pt-1.5">
                   <button
                     onClick={() => {
                       setShowUserMenu(false);
                       logout();
                     }}
-                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-erro hover:bg-red-500/10 transition-colors"
                   >
                     <LogOut className="h-4 w-4" />
                     Sair da conta

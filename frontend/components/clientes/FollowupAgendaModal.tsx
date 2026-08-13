@@ -84,8 +84,8 @@ export function FollowupAgendaModal({
         mensagem={
           <>
             Já existe um evento de follow-up com{" "}
-            <span className="text-white font-medium">{clienteNome}</span> na
-            Agenda. Quer atualizá-lo para <span className="text-white font-medium">{dataFmt}</span>?
+            <span className="text-foreground font-medium">{clienteNome}</span> na
+            Agenda. Quer atualizá-lo para <span className="text-foreground font-medium">{dataFmt}</span>?
           </>
         }
         confirmLabel="Sim, atualizar"
@@ -104,8 +104,8 @@ export function FollowupAgendaModal({
       titulo="Adicionar à Agenda?"
       mensagem={
         <>
-          Follow-up com <span className="text-white font-medium">{clienteNome}</span>{" "}
-          agendado para <span className="text-white font-medium">{dataFmt}</span>. Quer
+          Follow-up com <span className="text-foreground font-medium">{clienteNome}</span>{" "}
+          agendado para <span className="text-foreground font-medium">{dataFmt}</span>. Quer
           adicionar à sua Agenda?
         </>
       }

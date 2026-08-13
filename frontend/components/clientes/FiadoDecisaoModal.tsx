@@ -108,20 +108,20 @@ export function FiadoDecisaoModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-md rounded-xl border border-white/10 bg-zinc-900 shadow-xl">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/10">
-          <h2 className="text-sm font-semibold text-white">
+      <div className="w-full max-w-md rounded-xl border border-border bg-card shadow-xl">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
+          <h2 className="text-sm font-semibold text-foreground">
             {clienteNome} ficou de pagar {moeda(valorOriginal)} hoje
           </h2>
-          <button onClick={onClose} className="text-zinc-400 hover:text-white" aria-label="Fechar">
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground" aria-label="Fechar">
             <X className="h-4 w-4" />
           </button>
         </div>
 
         <div className="p-5 space-y-4">
-          <div className="rounded-lg bg-white/5 border border-white/10 p-3 text-sm">
-            <p className="text-zinc-400">
-              Referente a: <span className="text-white">{interacao.titulo}</span>
+          <div className="rounded-lg bg-superficie border border-border p-3 text-sm">
+            <p className="text-muted-foreground">
+              Referente a: <span className="text-foreground">{interacao.titulo}</span>
             </p>
           </div>
 
@@ -139,14 +139,14 @@ export function FiadoDecisaoModal({
                 <button
                   onClick={() => setModo("adiar")}
                   disabled={processando}
-                  className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-white/10 text-zinc-200 hover:bg-white/5 text-sm transition-colors disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border text-foreground-suave hover:bg-superficie text-sm transition-colors disabled:opacity-60"
                 >
                   <Clock className="h-3.5 w-3.5" /> Adiar
                 </button>
                 <button
                   onClick={cancelar}
                   disabled={processando}
-                  className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 text-sm transition-colors disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-red-500/30 text-erro hover:bg-red-500/10 text-sm transition-colors disabled:opacity-60"
                 >
                   {processando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Ban className="h-3.5 w-3.5" />}
                   Cancelar
@@ -158,19 +158,19 @@ export function FiadoDecisaoModal({
           {/* CONFIRMAR: valor recebido (pode ser parcial/diferente) */}
           {modo === "confirmar" && (
             <div className="space-y-3">
-              <label className="text-xs text-zinc-400 block">Valor recebido</label>
+              <label className="text-xs text-muted-foreground block">Valor recebido</label>
               <input
                 type="number"
                 step="0.01"
                 value={valorRecebido}
                 onChange={(e) => setValorRecebido(e.target.value)}
                 aria-label="Valor recebido"
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
+                className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground focus:outline-none focus:border-brand-500"
               />
               <div className="flex gap-2">
                 <button
                   onClick={() => setModo("menu")}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-zinc-400 hover:text-white text-sm"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground text-sm"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" /> Voltar
                 </button>
@@ -189,11 +189,11 @@ export function FiadoDecisaoModal({
           {/* RESTANTE: recebido parcial → registrar o saldo devedor? */}
           {modo === "restante" && (
             <div className="space-y-3">
-              <p className="text-sm text-zinc-300">
-                Faltou <span className="text-white font-semibold">{moeda(restante)}</span>.
+              <p className="text-sm text-foreground-suave">
+                Faltou <span className="text-foreground font-semibold">{moeda(restante)}</span>.
                 Quer registrar o restante como nova interação pendente?
               </p>
-              <label className="text-xs text-zinc-400 block">
+              <label className="text-xs text-muted-foreground block">
                 Previsão de pagamento do restante
               </label>
               <input
@@ -201,13 +201,13 @@ export function FiadoDecisaoModal({
                 value={dataRestante}
                 onChange={(e) => setDataRestante(e.target.value)}
                 aria-label="Previsão do restante"
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
+                className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground focus:outline-none focus:border-brand-500"
               />
               <div className="flex gap-2">
                 <button
                   onClick={() => efetivarConfirmacao(false)}
                   disabled={processando}
-                  className="flex-1 px-4 py-2 rounded-lg border border-white/10 text-zinc-200 hover:bg-white/5 text-sm disabled:opacity-60"
+                  className="flex-1 px-4 py-2 rounded-lg border border-border text-foreground-suave hover:bg-superficie text-sm disabled:opacity-60"
                 >
                   Não, só confirmar
                 </button>
@@ -226,19 +226,19 @@ export function FiadoDecisaoModal({
           {/* ADIAR */}
           {modo === "adiar" && (
             <div className="space-y-3">
-              <label className="text-xs text-zinc-400 block">Adiar por quantos dias?</label>
+              <label className="text-xs text-muted-foreground block">Adiar por quantos dias?</label>
               <input
                 type="number"
                 min={1}
                 value={dias}
                 onChange={(e) => setDias(Math.max(1, parseInt(e.target.value) || 1))}
                 aria-label="Dias para adiar"
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
+                className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground focus:outline-none focus:border-brand-500"
               />
               <div className="flex gap-2">
                 <button
                   onClick={() => setModo("menu")}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-zinc-400 hover:text-white text-sm"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground text-sm"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" /> Voltar
                 </button>

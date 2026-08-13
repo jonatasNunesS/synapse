@@ -53,6 +53,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "is_staff_synapse",
             "viu_aviso_recorrencias",
             "tamanho_fonte",
+            "tema_modo",
             "empresa",
             "modulos",
             "criado_em",
@@ -251,10 +252,12 @@ class TemaEmpresaSerializer(serializers.ModelSerializer):
 
 class PreferenciasUsuarioSerializer(serializers.ModelSerializer):
     """
-    Preferências que valem só para o próprio usuário. Hoje: tamanho do texto.
-    Valor fora das opções é 400 (os choices do model validam).
+    Preferências que valem só para o próprio usuário: tamanho do texto e modo
+    claro/escuro. Valor fora das opções é 400 (os choices do model validam).
+
+    O PATCH é parcial: mandar só um dos campos não zera o outro.
     """
 
     class Meta:
         model = CustomUser
-        fields = ["tamanho_fonte"]
+        fields = ["tamanho_fonte", "tema_modo"]

@@ -7,7 +7,12 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { PreferenciasSection } from "./PreferenciasSection";
 import { useAppStore } from "@/store/useAppStore";
 import type { Usuario } from "@/types/auth";
-import { COOKIE_TAMANHO, limparTamanhoDoCookie } from "@/lib/preferencias";
+import {
+  COOKIE_MODO,
+  COOKIE_TAMANHO,
+  limparModoDoCookie,
+  limparTamanhoDoCookie,
+} from "@/lib/preferencias";
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
@@ -19,7 +24,8 @@ vi.mock("@/lib/api", async () => {
 
 function montarStore(
   tamanho: Usuario["tamanho_fonte"] = "normal",
-  perfil: Usuario["perfil"] = "colaborador"
+  perfil: Usuario["perfil"] = "colaborador",
+  modo: Usuario["tema_modo"] = "sistema"
 ) {
   useAppStore.setState({
     usuario: {
@@ -27,6 +33,7 @@ function montarStore(
       nome: "Fulano",
       perfil,
       tamanho_fonte: tamanho,
+      tema_modo: modo,
     } as unknown as Usuario,
   });
 }
@@ -37,7 +44,16 @@ beforeEach(() => {
     Promise.resolve({ success: true, data: body })
   );
   delete document.documentElement.dataset.fonteTamanho;
+  delete document.documentElement.dataset.modo;
+  document.documentElement.classList.remove("dark");
   limparTamanhoDoCookie();
+  limparModoDoCookie();
+  window.matchMedia = ((consulta: string) => ({
+    matches: consulta.includes("dark"),
+    media: consulta,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  })) as unknown as typeof window.matchMedia;
   montarStore();
 });
 
@@ -134,5 +150,86 @@ describe("Suas preferências", () => {
     fireEvent.click(screen.getByRole("radio", { name: "Grande" }));
     fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
     await waitFor(() => expect(patch).toHaveBeenCalled());
+  });
+});
+
+
+describe("Aparência", () => {
+  it("mostra as três opções", () => {
+    render(<PreferenciasSection />);
+
+    const grupo = screen.getByRole("radiogroup", { name: "Aparência" });
+    expect(grupo.querySelectorAll('[role="radio"]')).toHaveLength(3);
+    ["Claro", "Escuro", "Sistema"].forEach((nome) =>
+      expect(screen.getByRole("radio", { name: nome })).toBeInTheDocument()
+    );
+  });
+
+  it("começa marcando a preferência que o usuário já tem", () => {
+    montarStore("normal", "colaborador", "claro");
+    render(<PreferenciasSection />);
+
+    expect(screen.getByRole("radio", { name: "Claro" })).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+    expect(screen.getByRole("radio", { name: "Escuro" })).toHaveAttribute(
+      "aria-checked",
+      "false"
+    );
+  });
+
+  it("aplica na hora ao clicar, sem passar pelo Salvar", async () => {
+    render(<PreferenciasSection />);
+
+    fireEvent.click(screen.getByRole("radio", { name: "Claro" }));
+
+    await waitFor(() =>
+      expect(patch).toHaveBeenCalledWith("/auth/me/preferencias/", {
+        tema_modo: "claro",
+      })
+    );
+    expect(document.documentElement.dataset.modo).toBe("claro");
+    expect(document.documentElement.classList.contains("dark")).toBe(false);
+    expect(document.cookie).toContain(`${COOKIE_MODO}=claro`);
+    expect(useAppStore.getState().usuario?.tema_modo).toBe("claro");
+  });
+
+  it("'sistema' consulta o SO para decidir o que pintar", async () => {
+    montarStore("normal", "colaborador", "claro");
+    render(<PreferenciasSection />);
+
+    // O matchMedia do beforeEach responde "escuro" para o SO.
+    fireEvent.click(screen.getByRole("radio", { name: "Sistema" }));
+
+    await waitFor(() =>
+      expect(document.documentElement.dataset.modo).toBe("escuro")
+    );
+    // No cookie fica a ESCOLHA, não o resultado.
+    expect(document.cookie).toContain(`${COOKIE_MODO}=sistema`);
+  });
+
+  it("se o servidor recusar, desfaz o que já tinha aplicado", async () => {
+    patch.mockReset();
+    patch.mockRejectedValue(new Error("sem rede"));
+    montarStore("normal", "colaborador", "escuro");
+    render(<PreferenciasSection />);
+
+    fireEvent.click(screen.getByRole("radio", { name: "Claro" }));
+
+    await waitFor(() =>
+      expect(document.documentElement.dataset.modo).toBe("escuro")
+    );
+    expect(useAppStore.getState().usuario?.tema_modo).toBe("escuro");
+  });
+
+  it("qualquer perfil ajusta a própria aparência", () => {
+    montarStore("normal", "colaborador");
+    render(<PreferenciasSection />);
+
+    screen
+      .getByRole("radiogroup", { name: "Aparência" })
+      .querySelectorAll('[role="radio"]')
+      .forEach((b) => expect(b).not.toBeDisabled());
   });
 });

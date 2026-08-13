@@ -75,7 +75,7 @@ export function PerguntasModulos({ respostas, onResponder }: Props) {
         const resposta = respostas[p.modulo];
         return (
           <div key={p.modulo}>
-            <p className="text-sm font-medium text-slate-200 mb-2 flex items-start gap-2">
+            <p className="text-sm font-medium text-foreground-suave mb-2 flex items-start gap-2">
               <span aria-hidden>{p.icone}</span>
               <span>{p.pergunta}</span>
             </p>
@@ -90,8 +90,8 @@ export function PerguntasModulos({ respostas, onResponder }: Props) {
                     onClick={() => onResponder(p.modulo, valor)}
                     className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition-all ${
                       selecionado
-                        ? "border-brand-500 bg-brand-600/20 text-white shadow-sm"
-                        : "border-slate-700/60 bg-slate-900/60 text-slate-300 hover:border-slate-600 hover:bg-slate-900"
+                        ? "border-brand-500 bg-brand-600/20 text-foreground shadow-sm"
+                        : "border-border/60 bg-card/60 text-foreground-suave hover:border-muted-foreground/40 hover:bg-card"
                     }`}
                   >
                     {valor ? p.sim : p.nao}

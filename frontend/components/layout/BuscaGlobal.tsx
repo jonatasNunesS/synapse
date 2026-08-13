@@ -133,7 +133,7 @@ export function BuscaGlobal() {
         ) : query.length > 0 ? (
           <button
             onClick={limpar}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400 transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-muted-foreground transition-colors"
             aria-label="Limpar busca"
           >
             <X className="h-3.5 w-3.5" />
@@ -146,16 +146,16 @@ export function BuscaGlobal() {
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => resultados && setAberto(true)}
           placeholder="Buscar clientes, produtos, projetos..."
-          className="h-9 w-full rounded-lg border border-slate-800 bg-slate-900/60 pl-9 pr-8 text-sm text-slate-300 placeholder:text-slate-600
+          className="h-9 w-full rounded-lg border border-border bg-card/60 pl-9 pr-8 text-sm text-foreground-suave placeholder:text-slate-600
             focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500/40 transition-colors"
         />
       </div>
 
       {/* Dropdown */}
       {aberto && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1.5 rounded-xl border border-slate-800 bg-slate-900 shadow-2xl shadow-black/50 overflow-hidden">
+        <div className="absolute top-full left-0 right-0 z-50 mt-1.5 rounded-xl border border-border bg-card shadow-2xl shadow-black/50 overflow-hidden">
           {!temResultados ? (
-            <p className="px-4 py-3 text-sm text-slate-500 text-center">
+            <p className="px-4 py-3 text-sm text-muted-suave text-center">
               Nenhum resultado para &ldquo;{query}&rdquo;
             </p>
           ) : (
@@ -168,7 +168,7 @@ export function BuscaGlobal() {
                     {/* Cabeçalho da categoria */}
                     <div className="flex items-center gap-1.5 px-3 py-1.5">
                       <span className="text-slate-600">{ICONES[cat]}</span>
-                      <span className="text-[0.6875rem] font-semibold text-slate-500 uppercase tracking-wider">
+                      <span className="text-[0.6875rem] font-semibold text-muted-suave uppercase tracking-wider">
                         {LABELS[cat]}
                       </span>
                     </div>
@@ -188,10 +188,10 @@ export function BuscaGlobal() {
                         <button
                           key={item.id}
                           onClick={() => irPara(`${ROTAS[cat]}?id=${item.id}`)}
-                          className="flex w-full items-center gap-2 px-4 py-2 text-left hover:bg-slate-800 transition-colors group"
+                          className="flex w-full items-center gap-2 px-4 py-2 text-left hover:bg-secondary transition-colors group"
                         >
                           <span className="flex-1 min-w-0">
-                            <span className="block text-sm text-slate-300 truncate group-hover:text-slate-100">
+                            <span className="block text-sm text-foreground-suave truncate group-hover:text-foreground">
                               {label}
                             </span>
                             {sub && (

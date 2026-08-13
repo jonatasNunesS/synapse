@@ -33,6 +33,10 @@ export function BoasVindasCard({ resumo, nomeUsuario, isLoading }: BoasVindasCar
   const saldoPositivo = saldoMes >= 0;
 
   return (
+    // Ilha sempre escura: o card é um gradiente da marca nos DOIS modos, então
+    // o interior dele não segue os tokens de tema — segue o próprio fundo. Por
+    // isso aqui continua branco sobre branco-alfa, e as cores semânticas ficam
+    // nos tons claros (300), que são os que leem sobre roxo.
     <Card className="bg-gradient-to-r from-brand-600 to-brand-800 text-white border-0 shadow-lg">
       <CardContent className="p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

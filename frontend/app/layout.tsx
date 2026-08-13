@@ -7,6 +7,7 @@ import {
   Outfit,
 } from "next/font/google";
 import "./globals.css";
+import { ObservadorModo } from "@/components/tema/ObservadorModo";
 import { ScriptTema } from "@/components/tema/ScriptTema";
 
 // Fonte de leitura: sempre carregada (corpo de texto, tabelas e números).
@@ -59,14 +60,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    // A classe `dark` saiu daqui: quem decide o modo agora é o ScriptTema,
+    // antes do primeiro paint (cookie do usuário ou prefers-color-scheme).
+    // Como ele mexe no <html> antes da hidratação, o suppressHydrationWarning
+    // evita o aviso de divergência entre o HTML do servidor e o do cliente.
     <html
       lang="pt-BR"
-      className={`dark ${inter.variable} ${instrumentSerif.variable} ${outfit.variable} ${plex.variable} ${figtree.variable}`}
+      suppressHydrationWarning
+      className={`${inter.variable} ${instrumentSerif.variable} ${outfit.variable} ${plex.variable} ${figtree.variable}`}
     >
       <head>
         <ScriptTema />
       </head>
-      <body className="font-sans">{children}</body>
+      <body className="font-sans">
+        <ObservadorModo />
+        {children}
+      </body>
     </html>
   );
 }

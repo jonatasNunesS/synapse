@@ -45,22 +45,22 @@ const STATUS_CONFIG: Record<
 > = {
   pago: {
     label: "Pago",
-    color: "text-emerald-400 bg-emerald-400/10",
+    color: "text-sucesso bg-emerald-400/10",
     icon: <CheckCircle2 className="w-3 h-3" />,
   },
   pendente: {
     label: "Pendente",
-    color: "text-amber-400 bg-amber-400/10",
+    color: "text-alerta bg-amber-400/10",
     icon: <Clock className="w-3 h-3" />,
   },
   atrasado: {
     label: "Atrasado",
-    color: "text-red-400 bg-red-400/10",
+    color: "text-erro bg-red-400/10",
     icon: <AlertCircle className="w-3 h-3" />,
   },
   cancelado: {
     label: "Cancelado",
-    color: "text-slate-400 bg-slate-400/10",
+    color: "text-muted-foreground bg-slate-400/10",
     icon: <XCircle className="w-3 h-3" />,
   },
 };
@@ -79,10 +79,10 @@ function StatusBadge({ status }: { status: StatusLancamento }) {
 
 function SkeletonRow() {
   return (
-    <tr className="border-b border-white/5">
+    <tr className="border-b border-border">
       {[...Array(6)].map((_, i) => (
         <td key={i} className="px-4 py-3">
-          <div className="h-4 bg-white/5 rounded animate-pulse" />
+          <div className="h-4 bg-superficie rounded animate-pulse" />
         </td>
       ))}
     </tr>
@@ -103,12 +103,12 @@ export function LancamentoTable({
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-white/10">
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Descrição</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Tipo</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Valor</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Vencimento</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Status</th>
+            <tr className="border-b border-border">
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Descrição</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Tipo</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Valor</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Vencimento</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -124,7 +124,7 @@ export function LancamentoTable({
 
   if (!lancamentos.length) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-slate-500">
+      <div className="flex flex-col items-center justify-center py-16 text-muted-suave">
         <p className="text-sm">Nenhum lançamento encontrado.</p>
         <p className="text-xs mt-1">Crie o primeiro lançamento para começar.</p>
       </div>
@@ -135,26 +135,26 @@ export function LancamentoTable({
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-white/10">
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+          <tr className="border-b border-border">
+            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Descrição
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Tipo
             </th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Valor
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Vencimento
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Status
             </th>
             <th className="px-4 py-3 w-10" />
           </tr>
         </thead>
-        <tbody className="divide-y divide-white/5">
+        <tbody className="divide-y divide-border">
           {lancamentos.map((lancamento) => (
             <tr
               key={lancamento.id}
@@ -170,16 +170,16 @@ export function LancamentoTable({
                     />
                   )}
                   <div>
-                    <p className="font-medium text-slate-200 truncate max-w-[200px] flex items-center gap-1.5">
+                    <p className="font-medium text-foreground-suave truncate max-w-[200px] flex items-center gap-1.5">
                       {lancamento.descricao}
                       {lancamento.tipo === "emprestimo" && (
-                        <span className="text-[0.625rem] font-medium px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/25 flex-shrink-0">
+                        <span className="text-[0.625rem] font-medium px-1.5 py-0.5 rounded bg-amber-500/15 text-alerta border border-amber-500/25 flex-shrink-0">
                           Empréstimo
                         </span>
                       )}
                     </p>
                     {lancamento.tipo === "emprestimo" && lancamento.pessoa_emprestimo ? (
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-muted-suave">
                         {lancamento.direcao_emprestimo === "peguei_emprestado"
                           ? "de "
                           : "para "}
@@ -187,7 +187,7 @@ export function LancamentoTable({
                       </p>
                     ) : (
                       lancamento.categoria_nome && (
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-muted-suave">
                           {lancamento.categoria_nome}
                         </p>
                       )
@@ -201,10 +201,10 @@ export function LancamentoTable({
                 <span
                   className={`text-xs font-medium ${
                     lancamento.tipo === "receita"
-                      ? "text-emerald-400"
+                      ? "text-sucesso"
                       : lancamento.tipo === "emprestimo"
-                        ? "text-amber-400"
-                        : "text-red-400"
+                        ? "text-alerta"
+                        : "text-erro"
                   }`}
                 >
                   {lancamento.tipo === "receita"
@@ -220,10 +220,10 @@ export function LancamentoTable({
                 <span
                   className={`font-semibold tabular-nums ${
                     lancamento.tipo === "receita"
-                      ? "text-emerald-400"
+                      ? "text-sucesso"
                       : lancamento.tipo === "emprestimo"
-                        ? "text-amber-400"
-                        : "text-red-400"
+                        ? "text-alerta"
+                        : "text-erro"
                   }`}
                 >
                   {lancamento.tipo === "receita"
@@ -236,7 +236,7 @@ export function LancamentoTable({
               </td>
 
               {/* Vencimento */}
-              <td className="px-4 py-3 text-slate-400 tabular-nums">
+              <td className="px-4 py-3 text-muted-foreground tabular-nums">
                 {formatarData(lancamento.data_vencimento)}
               </td>
 
@@ -253,7 +253,7 @@ export function LancamentoTable({
                     onPagar && (
                       <button
                         onClick={() => onPagar(lancamento)}
-                        className="p-1.5 rounded text-emerald-400 hover:bg-emerald-400/10 transition-colors"
+                        className="p-1.5 rounded text-sucesso hover:bg-emerald-400/10 transition-colors"
                         title="Marcar como pago"
                       >
                         <CheckCircle2 className="w-4 h-4" />
@@ -267,7 +267,7 @@ export function LancamentoTable({
                     (isAdmin ? (
                       <button
                         onClick={() => onEditar(lancamento)}
-                        className="p-1.5 rounded text-brand-400 hover:bg-brand-400/10 transition-colors"
+                        className="p-1.5 rounded text-brand-accent hover:bg-brand-400/10 transition-colors"
                         title="Editar pagamento (com auditoria)"
                       >
                         <Pencil className="w-4 h-4" />
@@ -288,7 +288,7 @@ export function LancamentoTable({
                     (lancamento.status !== "pago" || isAdmin ? (
                       <button
                         onClick={() => onDeletar(lancamento)}
-                        className="p-1.5 rounded text-red-400 hover:bg-red-400/10 transition-colors"
+                        className="p-1.5 rounded text-erro hover:bg-red-400/10 transition-colors"
                         title={
                           lancamento.status === "pago"
                             ? "Excluir pagamento (com auditoria)"
@@ -311,7 +311,7 @@ export function LancamentoTable({
                   {onHistorico && (
                     <button
                       onClick={() => onHistorico(lancamento)}
-                      className="p-1.5 rounded text-slate-400 hover:bg-white/10 transition-colors"
+                      className="p-1.5 rounded text-muted-foreground hover:bg-superficie-forte transition-colors"
                       title="Histórico de alterações"
                     >
                       <History className="w-4 h-4" />

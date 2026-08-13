@@ -58,32 +58,32 @@ function LoginContent() {
         <div className="w-9 h-9 rounded-lg bg-brand-600 flex items-center justify-center">
           <Zap className="w-5 h-5 text-white" />
         </div>
-        <span className="text-2xl font-bold text-white tracking-tight">Synapse</span>
+        <span className="text-2xl font-bold text-foreground tracking-tight">Synapse</span>
       </div>
 
       {/* Card */}
-      <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
-        <h1 className="text-xl font-semibold text-white mb-1">Bem-vindo de volta</h1>
-        <p className="text-sm text-slate-400 mb-6">
+      <div className="bg-secondary/60 border border-border/50 rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
+        <h1 className="text-xl font-semibold text-foreground mb-1">Bem-vindo de volta</h1>
+        <p className="text-sm text-muted-foreground mb-6">
           Acesse sua conta para continuar.
         </p>
 
         {/* Mensagem de senha redefinida */}
         {senhaRedefinida && (
-          <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm">
+          <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-sucesso text-sm">
             Senha redefinida com sucesso! Faça login com a nova senha.
           </div>
         )}
 
         {primeiroAcesso && (
-          <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm">
+          <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-sucesso text-sm">
             Senha definida com sucesso! Faça login para acessar sua conta.
           </div>
         )}
 
         {/* Erro do servidor */}
         {serverError && (
-          <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-erro text-sm">
             {serverError}
           </div>
         )}
@@ -91,7 +91,7 @@ function LoginContent() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* E-mail */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">
               E-mail
             </label>
             <input
@@ -99,24 +99,24 @@ function LoginContent() {
               type="email"
               autoComplete="email"
               placeholder="seu@email.com"
-              className={`w-full px-3.5 py-2.5 rounded-lg bg-slate-900/60 border text-white placeholder-slate-500 text-sm
+              className={`w-full px-3.5 py-2.5 rounded-lg bg-card/60 border text-foreground placeholder-slate-500 text-sm
                 focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-colors
-                ${errors.email ? "border-red-500/60" : "border-slate-700/60 focus:border-brand-500/60"}`}
+                ${errors.email ? "border-red-500/60" : "border-border/60 focus:border-brand-500/60"}`}
             />
             {errors.email && (
-              <p className="mt-1 text-xs text-red-400">{errors.email.message}</p>
+              <p className="mt-1 text-xs text-erro">{errors.email.message}</p>
             )}
           </div>
 
           {/* Senha */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-sm font-medium text-slate-300">
+              <label className="block text-sm font-medium text-foreground-suave">
                 Senha
               </label>
               <Link
                 href="/recuperar-senha"
-                className="text-xs text-brand-400 hover:text-brand-300 transition-colors"
+                className="text-xs text-brand-accent hover:text-brand-accent transition-colors"
               >
                 Esqueci minha senha
               </Link>
@@ -127,14 +127,14 @@ function LoginContent() {
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
                 placeholder="••••••••"
-                className={`w-full px-3.5 py-2.5 pr-10 rounded-lg bg-slate-900/60 border text-white placeholder-slate-500 text-sm
+                className={`w-full px-3.5 py-2.5 pr-10 rounded-lg bg-card/60 border text-foreground placeholder-slate-500 text-sm
                   focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-colors
-                  ${errors.senha ? "border-red-500/60" : "border-slate-700/60 focus:border-brand-500/60"}`}
+                  ${errors.senha ? "border-red-500/60" : "border-border/60 focus:border-brand-500/60"}`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-suave hover:text-foreground-suave transition-colors"
               >
                 {showPassword ? (
                   <EyeOff className="w-4 h-4" />
@@ -144,7 +144,7 @@ function LoginContent() {
               </button>
             </div>
             {errors.senha && (
-              <p className="mt-1 text-xs text-red-400">{errors.senha.message}</p>
+              <p className="mt-1 text-xs text-erro">{errors.senha.message}</p>
             )}
           </div>
 
@@ -167,11 +167,11 @@ function LoginContent() {
         </form>
 
         {/* Link para registro */}
-        <p className="mt-5 text-center text-sm text-slate-500">
+        <p className="mt-5 text-center text-sm text-muted-suave">
           Não tem uma conta?{" "}
           <Link
             href="/registro"
-            className="text-brand-400 hover:text-brand-300 font-medium transition-colors"
+            className="text-brand-accent hover:text-brand-accent font-medium transition-colors"
           >
             Criar conta grátis
           </Link>

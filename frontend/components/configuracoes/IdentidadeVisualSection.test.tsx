@@ -115,8 +115,8 @@ describe("Identidade visual", () => {
     fireEvent.click(screen.getByRole("radio", { name: "Floresta" }));
 
     // Sucesso continua verde e erro continua vermelho, com paleta verde.
-    expect(screen.getByText("+ R$ 2.800,92").className).toContain("text-emerald-400");
-    expect(screen.getByText("− R$ 320,00").className).toContain("text-red-400");
+    expect(screen.getByText("+ R$ 2.800,92").className).toContain("text-sucesso");
+    expect(screen.getByText("− R$ 320,00").className).toContain("text-erro");
   });
 
   it("salvar manda a escolha e aplica no <html> sem reload", async () => {

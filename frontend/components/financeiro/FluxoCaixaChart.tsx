@@ -12,6 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useCoresDoGrafico } from "@/lib/graficos";
 import type { FluxoCaixaDia } from "@/types/financeiro";
 
 interface FluxoCaixaChartProps {
@@ -44,16 +45,16 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
 
   return (
-    <div className="bg-[#1a1f2e] border border-white/10 rounded-lg p-3 shadow-xl">
-      <p className="text-xs text-slate-400 mb-2">{label}</p>
+    <div className="bg-popover border border-border rounded-lg p-3 shadow-xl">
+      <p className="text-xs text-muted-foreground mb-2">{label}</p>
       {payload.map((entry) => (
         <div key={entry.name} className="flex items-center gap-2 text-sm">
           <span
             className="w-2 h-2 rounded-full"
             style={{ backgroundColor: entry.color }}
           />
-          <span className="text-slate-300">{entry.name}:</span>
-          <span className="font-semibold text-white">
+          <span className="text-foreground-suave">{entry.name}:</span>
+          <span className="font-semibold text-foreground">
             {formatarMoeda(entry.value)}
           </span>
         </div>
@@ -63,6 +64,10 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 }
 
 export function FluxoCaixaChart({ dados, loading }: FluxoCaixaChartProps) {
+  // Eixo, grade e barras saem dos tokens: as cores antigas (cinza-claro
+  // sobre fundo escuro) ficariam invisíveis no modo claro.
+  const cores = useCoresDoGrafico();
+
   if (loading) {
     return (
       <div className="h-64 flex items-center justify-center">
@@ -73,7 +78,7 @@ export function FluxoCaixaChart({ dados, loading }: FluxoCaixaChartProps) {
 
   if (!dados.length) {
     return (
-      <div className="h-64 flex flex-col items-center justify-center text-slate-500">
+      <div className="h-64 flex flex-col items-center justify-center text-muted-suave">
         <p className="text-sm">Nenhum lançamento pago no período.</p>
       </div>
     );
@@ -96,37 +101,37 @@ export function FluxoCaixaChart({ dados, loading }: FluxoCaixaChartProps) {
       >
         <CartesianGrid
           strokeDasharray="3 3"
-          stroke="rgba(255,255,255,0.06)"
+          stroke={cores.grid}
           vertical={false}
         />
         <XAxis
           dataKey="dataFormatada"
-          tick={{ fill: "#94a3b8", fontSize: 11 }}
+          tick={{ fill: cores.eixo, fontSize: 11 }}
           axisLine={false}
           tickLine={false}
         />
         <YAxis
           tickFormatter={(v) => formatarMoeda(v)}
-          tick={{ fill: "#94a3b8", fontSize: 11 }}
+          tick={{ fill: cores.eixo, fontSize: 11 }}
           axisLine={false}
           tickLine={false}
           width={80}
         />
-        <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: cores.cursor }} />
         <Legend
-          wrapperStyle={{ fontSize: 12, color: "#94a3b8", paddingTop: 8 }}
+          wrapperStyle={{ fontSize: 12, color: cores.eixo, paddingTop: 8 }}
         />
         <Bar
           dataKey="receitas"
           name="Receitas"
-          fill="#16a34a"
+          fill={cores.receita}
           radius={[4, 4, 0, 0]}
           maxBarSize={40}
         />
         <Bar
           dataKey="despesas"
           name="Despesas"
-          fill="#dc2626"
+          fill={cores.despesa}
           radius={[4, 4, 0, 0]}
           maxBarSize={40}
         />

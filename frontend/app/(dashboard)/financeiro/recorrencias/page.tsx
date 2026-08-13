@@ -34,11 +34,11 @@ function moeda(v: string): string {
 }
 
 const STATUS_ICON: Record<string, React.ReactNode> = {
-  confirmada: <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />,
-  cancelada: <XCircle className="h-3.5 w-3.5 text-red-400" />,
-  adiada: <Clock className="h-3.5 w-3.5 text-amber-400" />,
-  pendente: <Clock className="h-3.5 w-3.5 text-brand-400" />,
-  encerrada: <XCircle className="h-3.5 w-3.5 text-zinc-500" />,
+  confirmada: <CheckCircle2 className="h-3.5 w-3.5 text-sucesso" />,
+  cancelada: <XCircle className="h-3.5 w-3.5 text-erro" />,
+  adiada: <Clock className="h-3.5 w-3.5 text-alerta" />,
+  pendente: <Clock className="h-3.5 w-3.5 text-brand-accent" />,
+  encerrada: <XCircle className="h-3.5 w-3.5 text-muted-suave" />,
 };
 
 export default function RecorrenciasPage() {
@@ -75,18 +75,18 @@ export default function RecorrenciasPage() {
       <div>
         <Link
           href="/financeiro"
-          className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors mb-3"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Financeiro
         </Link>
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Repeat className="h-6 w-6 text-brand-400" />
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <Repeat className="h-6 w-6 text-brand-accent" />
               Recorrências
             </h1>
-            <p className="text-sm text-slate-400 mt-0.5">
+            <p className="text-sm text-muted-foreground mt-0.5">
               Modelos que geram perguntas no sino. Nada vira lançamento sem você confirmar.
             </p>
           </div>
@@ -105,9 +105,9 @@ export default function RecorrenciasPage() {
           <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
         </div>
       ) : recorrencias.length === 0 ? (
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-10 text-center">
+        <div className="rounded-xl border border-border bg-white/[0.03] p-10 text-center">
           <Repeat className="h-8 w-8 text-zinc-600 mx-auto mb-2" />
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-muted-foreground">
             Nenhuma recorrência ainda. Crie a primeira (ex.: salário, aluguel).
           </p>
         </div>
@@ -117,34 +117,34 @@ export default function RecorrenciasPage() {
             <div
               key={r.id}
               className={`rounded-xl border p-4 ${
-                r.ativa ? "border-white/10 bg-white/[0.03]" : "border-white/10 bg-white/[0.01] opacity-70"
+                r.ativa ? "border-border bg-white/[0.03]" : "border-border bg-white/[0.01] opacity-70"
               }`}
             >
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-white">{r.titulo}</span>
+                    <span className="font-medium text-foreground">{r.titulo}</span>
                     <span
                       className={`text-xs px-2 py-0.5 rounded-full ${
                         r.tipo === "receita"
-                          ? "bg-emerald-500/15 text-emerald-400"
-                          : "bg-red-500/15 text-red-400"
+                          ? "bg-emerald-500/15 text-sucesso"
+                          : "bg-red-500/15 text-erro"
                       }`}
                     >
                       {r.tipo}
                     </span>
                     {!r.ativa && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-500/20 text-zinc-400">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-500/20 text-muted-foreground">
                         pausada
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-zinc-400 mt-0.5">
+                  <p className="text-sm text-muted-foreground mt-0.5">
                     {moeda(r.valor_padrao)} · {descreverFrequencia(r)}
                     {r.categoria_nome ? ` · ${r.categoria_nome}` : ""}
                   </p>
                   {r.ativa && r.proxima_prevista && (
-                    <p className="text-xs text-zinc-500 mt-0.5">
+                    <p className="text-xs text-muted-suave mt-0.5">
                       Próxima prevista:{" "}
                       {new Date(r.proxima_prevista + "T00:00:00").toLocaleDateString("pt-BR")}
                     </p>
@@ -155,7 +155,7 @@ export default function RecorrenciasPage() {
                       {r.ultimas_ocorrencias.map((oc) => (
                         <span
                           key={oc.id}
-                          className="inline-flex items-center gap-1 text-[0.6875rem] text-zinc-500"
+                          className="inline-flex items-center gap-1 text-[0.6875rem] text-muted-suave"
                           title={oc.status}
                         >
                           {STATUS_ICON[oc.status]}
@@ -168,7 +168,7 @@ export default function RecorrenciasPage() {
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => abrirEditar(r)}
-                    className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
+                    className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-superficie transition-colors"
                     title="Editar"
                   >
                     <Pencil className="h-4 w-4" />
@@ -179,7 +179,7 @@ export default function RecorrenciasPage() {
                         await pausar(r.id);
                         toast.success("Recorrência pausada.");
                       }}
-                      className="p-2 rounded-lg text-zinc-400 hover:text-amber-400 hover:bg-white/5 transition-colors"
+                      className="p-2 rounded-lg text-muted-foreground hover:text-alerta hover:bg-superficie transition-colors"
                       title="Pausar"
                     >
                       <Pause className="h-4 w-4" />
@@ -190,7 +190,7 @@ export default function RecorrenciasPage() {
                         await reativar(r.id);
                         toast.success("Recorrência reativada.");
                       }}
-                      className="p-2 rounded-lg text-zinc-400 hover:text-emerald-400 hover:bg-white/5 transition-colors"
+                      className="p-2 rounded-lg text-muted-foreground hover:text-sucesso hover:bg-superficie transition-colors"
                       title="Reativar"
                     >
                       <Play className="h-4 w-4" />
@@ -201,7 +201,7 @@ export default function RecorrenciasPage() {
                       await encerrar(r.id);
                       toast.success("Recorrência encerrada.");
                     }}
-                    className="p-2 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-white/5 transition-colors"
+                    className="p-2 rounded-lg text-muted-foreground hover:text-erro hover:bg-superficie transition-colors"
                     title="Encerrar"
                   >
                     <Trash2 className="h-4 w-4" />

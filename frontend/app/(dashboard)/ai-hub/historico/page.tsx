@@ -21,7 +21,7 @@ export default function AIHubHistoricoPage() {
             <Sparkles className="h-6 w-6 text-brand-500" />
             Histórico de Conteúdos
           </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <p className="text-sm text-muted-suave mt-0.5">
             Todos os conteúdos gerados pela IA para o seu negócio
           </p>
         </div>

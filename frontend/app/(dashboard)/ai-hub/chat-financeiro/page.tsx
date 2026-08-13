@@ -156,7 +156,7 @@ export default function ChatFinanceiroPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
         {/* Painel lateral: conversas anteriores */}
-        <aside className="rounded-xl border border-border bg-card flex flex-col max-h-[520px]">
+        <aside className="rounded-xl border border-border bg-card shadow-elevacao flex flex-col max-h-[520px]">
           <div className="p-3 border-b border-border">
             <button
               onClick={novaConversa}
@@ -199,7 +199,7 @@ export default function ChatFinanceiroPage() {
                           e.stopPropagation();
                           salvarTitulo(c.id);
                         }}
-                        className="p-1 text-emerald-400 hover:text-emerald-300"
+                        className="p-1 text-sucesso hover:text-sucesso"
                         title="Salvar"
                       >
                         <Check className="h-3.5 w-3.5" />
@@ -253,7 +253,7 @@ export default function ChatFinanceiroPage() {
         </aside>
 
         {/* Janela da conversa */}
-        <div className="rounded-xl border border-border bg-card flex flex-col min-h-[420px]">
+        <div className="rounded-xl border border-border bg-card shadow-elevacao flex flex-col min-h-[420px]">
           <div className="flex-1 p-4 sm:p-5 space-y-4 overflow-y-auto">
             {mensagens.length === 0 && !enviando && (
               <div className="h-full flex flex-col items-center justify-center text-center gap-3 py-10">

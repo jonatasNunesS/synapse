@@ -101,33 +101,33 @@ export default function PerfilPage() {
     <div className="p-6 max-w-2xl mx-auto space-y-8">
       {/* Cabeçalho */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Meu Perfil</h1>
-        <p className="text-slate-400 text-sm mt-1">
+        <h1 className="text-2xl font-bold text-foreground">Meu Perfil</h1>
+        <p className="text-muted-foreground text-sm mt-1">
           Gerencie suas informações pessoais e senha de acesso.
         </p>
       </div>
 
       {/* Avatar + info */}
-      <div className="flex flex-wrap items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-xl">
+      <div className="flex flex-wrap items-center gap-4 p-4 bg-superficie border border-border rounded-xl">
         <div className="w-16 h-16 rounded-full bg-brand-600/30 border border-brand-500/40 flex items-center justify-center overflow-hidden flex-shrink-0">
           {usuario?.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={usuario.avatar_url} alt="avatar" className="w-full h-full object-cover" />
           ) : (
-            <User className="w-8 h-8 text-brand-400" />
+            <User className="w-8 h-8 text-brand-accent" />
           )}
         </div>
         <div>
-          <p className="font-semibold text-white">{usuario?.nome}</p>
-          <p className="text-sm text-slate-400">{usuario?.email}</p>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-brand-600/20 text-brand-400 border border-brand-500/30 mt-1 inline-block capitalize">
+          <p className="font-semibold text-foreground">{usuario?.nome}</p>
+          <p className="text-sm text-muted-foreground">{usuario?.email}</p>
+          <span className="text-xs px-2 py-0.5 rounded-full bg-brand-600/20 text-brand-accent border border-brand-500/30 mt-1 inline-block capitalize">
             {usuario?.perfil}
           </span>
         </div>
         {empresa && (
           <div className="ml-auto text-right">
-            <p className="text-sm font-medium text-white">{empresa.nome}</p>
-            <p className="text-xs text-slate-500 capitalize">{empresa.segmento}</p>
+            <p className="text-sm font-medium text-foreground">{empresa.nome}</p>
+            <p className="text-xs text-muted-suave capitalize">{empresa.segmento}</p>
           </div>
         )}
       </div>
@@ -136,55 +136,55 @@ export default function PerfilPage() {
       <PreferenciasSection />
 
       {/* Formulário de perfil */}
-      <section className="bg-[#0d1117] border border-white/10 rounded-xl p-6">
-        <h2 className="text-base font-semibold text-white mb-5 flex items-center gap-2">
-          <User className="w-4 h-4 text-brand-400" />
+      <section className="bg-card shadow-elevacao border border-border rounded-xl p-6">
+        <h2 className="text-base font-semibold text-foreground mb-5 flex items-center gap-2">
+          <User className="w-4 h-4 text-brand-accent" />
           Informações Pessoais
         </h2>
 
         <form onSubmit={handlePerfil(onSalvarPerfil)} className="space-y-4">
           {perfilErro && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-erro">
               {perfilErro}
             </div>
           )}
           {perfilOk && (
-            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-sm text-green-400 flex items-center gap-2">
+            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-sm text-sucesso flex items-center gap-2">
               <CheckCircle className="w-4 h-4" />
               Perfil atualizado com sucesso!
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Nome</label>
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">Nome</label>
             <input
               {...regPerfil("nome")}
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
             />
-            {errPerfil.nome && <p className="mt-1 text-xs text-red-400">{errPerfil.nome.message}</p>}
+            {errPerfil.nome && <p className="mt-1 text-xs text-erro">{errPerfil.nome.message}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
-              URL do Avatar <span className="text-slate-500 text-xs">(opcional)</span>
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">
+              URL do Avatar <span className="text-muted-suave text-xs">(opcional)</span>
             </label>
             <input
               {...regPerfil("avatar_url")}
               type="url"
               placeholder="https://..."
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
             />
-            {errPerfil.avatar_url && <p className="mt-1 text-xs text-red-400">{errPerfil.avatar_url.message}</p>}
+            {errPerfil.avatar_url && <p className="mt-1 text-xs text-erro">{errPerfil.avatar_url.message}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">E-mail</label>
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">E-mail</label>
             <input
               value={usuario?.email ?? ""}
               disabled
-              className="w-full px-3 py-2.5 bg-white/3 border border-white/5 rounded-lg text-slate-500 text-sm cursor-not-allowed"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-muted-suave text-sm cursor-not-allowed"
             />
-            <p className="mt-1 text-xs text-slate-500">O e-mail não pode ser alterado.</p>
+            <p className="mt-1 text-xs text-muted-suave">O e-mail não pode ser alterado.</p>
           </div>
 
           <div className="flex justify-end pt-2">
@@ -201,56 +201,56 @@ export default function PerfilPage() {
       </section>
 
       {/* Formulário de senha */}
-      <section className="bg-[#0d1117] border border-white/10 rounded-xl p-6">
-        <h2 className="text-base font-semibold text-white mb-5 flex items-center gap-2">
-          <Lock className="w-4 h-4 text-brand-400" />
+      <section className="bg-card shadow-elevacao border border-border rounded-xl p-6">
+        <h2 className="text-base font-semibold text-foreground mb-5 flex items-center gap-2">
+          <Lock className="w-4 h-4 text-brand-accent" />
           Alterar Senha
         </h2>
 
         <form onSubmit={handleSenha(onTrocarSenha)} className="space-y-4">
           {senhaErro && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-erro">
               {senhaErro}
             </div>
           )}
           {senhaOk && (
-            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-sm text-green-400 flex items-center gap-2">
+            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-sm text-sucesso flex items-center gap-2">
               <CheckCircle className="w-4 h-4" />
               Senha alterada com sucesso!
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Senha Atual</label>
+            <label className="block text-sm font-medium text-foreground-suave mb-1.5">Senha Atual</label>
             <input
               {...regSenha("senha_atual")}
               type="password"
               autoComplete="current-password"
-              className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
             />
-            {errSenha.senha_atual && <p className="mt-1 text-xs text-red-400">{errSenha.senha_atual.message}</p>}
+            {errSenha.senha_atual && <p className="mt-1 text-xs text-erro">{errSenha.senha_atual.message}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Nova Senha</label>
+              <label className="block text-sm font-medium text-foreground-suave mb-1.5">Nova Senha</label>
               <input
                 {...regSenha("nova_senha")}
                 type="password"
                 autoComplete="new-password"
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
               />
-              {errSenha.nova_senha && <p className="mt-1 text-xs text-red-400">{errSenha.nova_senha.message}</p>}
+              {errSenha.nova_senha && <p className="mt-1 text-xs text-erro">{errSenha.nova_senha.message}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Confirmar Nova Senha</label>
+              <label className="block text-sm font-medium text-foreground-suave mb-1.5">Confirmar Nova Senha</label>
               <input
                 {...regSenha("confirmar_senha")}
                 type="password"
                 autoComplete="new-password"
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
               />
-              {errSenha.confirmar_senha && <p className="mt-1 text-xs text-red-400">{errSenha.confirmar_senha.message}</p>}
+              {errSenha.confirmar_senha && <p className="mt-1 text-xs text-erro">{errSenha.confirmar_senha.message}</p>}
             </div>
           </div>
 

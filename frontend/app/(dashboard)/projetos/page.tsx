@@ -65,7 +65,7 @@ export default function ProjetosPage() {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Projetos</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p className="text-sm text-muted-suave mt-0.5">
             {loading ? "Carregando..." : `${total} projeto${total !== 1 ? "s" : ""} encontrado${total !== 1 ? "s" : ""}`}
           </p>
         </div>
@@ -94,7 +94,7 @@ export default function ProjetosPage() {
       {/* Filtros */}
       <div className="flex gap-3 flex-wrap items-center">
         <div className="relative flex-1 min-w-[200px]">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
             value={busca}
@@ -106,7 +106,7 @@ export default function ProjetosPage() {
         {/* flex-wrap + min-w-0: com o texto grande os filtros descem de linha
             em vez de esticar a página para fora da tela. */}
         <div className="flex flex-wrap items-center gap-2">
-          <Filter size={15} className="text-gray-400 flex-shrink-0" />
+          <Filter size={15} className="text-muted-foreground flex-shrink-0" />
           <select
             value={filtroStatus}
             onChange={(e) => setFiltroStatus(e.target.value as ProjetoStatus | "")}
@@ -141,7 +141,7 @@ export default function ProjetosPage() {
           ))}
         </div>
       ) : projetos.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
           <FolderOpen size={48} className="mb-3 opacity-40" />
           <p className="text-lg font-medium">Nenhum projeto encontrado</p>
           <p className="text-sm mt-1">

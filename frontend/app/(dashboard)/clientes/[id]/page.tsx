@@ -42,8 +42,8 @@ function InfoRow({ label, value }: { label: string; value: string | null | undef
   if (!value) return null;
   return (
     <div className="flex items-start gap-2 text-sm">
-      <span className="text-gray-500 w-28 flex-shrink-0">{label}</span>
-      <span className="text-white">{value}</span>
+      <span className="text-muted-suave w-28 flex-shrink-0">{label}</span>
+      <span className="text-foreground">{value}</span>
     </div>
   );
 }
@@ -232,9 +232,9 @@ export default function ClienteDetalhePage() {
   if (loading && !cliente) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-8 bg-white/5 rounded w-48" />
-        <div className="h-48 bg-white/5 rounded-xl" />
-        <div className="h-64 bg-white/5 rounded-xl" />
+        <div className="h-8 bg-superficie rounded w-48" />
+        <div className="h-48 bg-superficie rounded-xl" />
+        <div className="h-64 bg-superficie rounded-xl" />
       </div>
     );
   }
@@ -242,8 +242,8 @@ export default function ClienteDetalhePage() {
   if (!cliente) {
     return (
       <div className="text-center py-20">
-        <p className="text-gray-500">Cliente não encontrado.</p>
-        <Link href="/clientes" className="text-brand-400 hover:text-brand-300 mt-2 inline-block">
+        <p className="text-muted-suave">Cliente não encontrado.</p>
+        <Link href="/clientes" className="text-brand-accent hover:text-brand-accent mt-2 inline-block">
           Voltar para Clientes
         </Link>
       </div>
@@ -257,13 +257,13 @@ export default function ClienteDetalhePage() {
         <div className="flex items-center gap-3">
           <Link
             href="/clientes"
-            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-superficie-forte rounded-lg transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-white">{cliente.nome}</h1>
-            <p className="text-xs text-gray-500">{cliente.tipo_display}</p>
+            <h1 className="text-xl font-bold text-foreground">{cliente.nome}</h1>
+            <p className="text-xs text-muted-suave">{cliente.tipo_display}</p>
           </div>
         </div>
 
@@ -273,7 +273,7 @@ export default function ClienteDetalhePage() {
               href={cliente.link_whatsapp}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-2 bg-green-600/20 hover:bg-green-600/30 border border-green-600/30 rounded-lg text-xs text-green-400 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 bg-green-600/20 hover:bg-green-600/30 border border-green-600/30 rounded-lg text-xs text-sucesso transition-colors"
             >
               <MessageCircle className="w-3.5 h-3.5" />
               WhatsApp
@@ -281,14 +281,14 @@ export default function ClienteDetalhePage() {
           )}
           <button
             onClick={() => setShowEditForm(true)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs text-gray-300 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 bg-superficie hover:bg-superficie-forte border border-border rounded-lg text-xs text-foreground-suave transition-colors"
           >
             <Pencil className="w-3.5 h-3.5" />
             Editar
           </button>
           <button
             onClick={() => setConfirmarExclusaoCliente(true)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-red-600/10 hover:bg-red-600/20 border border-red-600/20 rounded-lg text-xs text-red-400 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 bg-red-600/10 hover:bg-red-600/20 border border-red-600/20 rounded-lg text-xs text-erro transition-colors"
           >
             <Trash2 className="w-3.5 h-3.5" />
             Excluir
@@ -300,38 +300,38 @@ export default function ClienteDetalhePage() {
         {/* Coluna esquerda: Perfil */}
         <div className="lg:col-span-1 space-y-4">
           {/* Card de perfil */}
-          <div className="bg-[#0f1117] border border-white/10 rounded-xl p-5">
+          <div className="bg-card shadow-elevacao border border-border rounded-xl p-5">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-brand-600/20 flex items-center justify-center text-brand-400 text-xl font-bold">
+              <div className="w-12 h-12 rounded-full bg-brand-600/20 flex items-center justify-center text-brand-accent text-xl font-bold">
                 {cliente.nome.charAt(0).toUpperCase()}
               </div>
               <div>
                 <span
-                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-white ${
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-foreground ${
                     STATUS_FUNIL_COLORS[cliente.status_funil as StatusFunil]
                   }`}
                 >
                   {STATUS_FUNIL_LABELS[cliente.status_funil as StatusFunil]}
                 </span>
-                <p className="text-xs text-gray-500 mt-0.5">{cliente.origem_display}</p>
+                <p className="text-xs text-muted-suave mt-0.5">{cliente.origem_display}</p>
               </div>
             </div>
 
             <div className="space-y-2">
               {cliente.email && (
-                <div className="flex items-center gap-2 text-sm text-gray-400">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Mail className="w-3.5 h-3.5 flex-shrink-0" />
                   <span className="truncate">{cliente.email}</span>
                 </div>
               )}
               {cliente.telefone && (
-                <div className="flex items-center gap-2 text-sm text-gray-400">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Phone className="w-3.5 h-3.5 flex-shrink-0" />
                   <span>{cliente.telefone}</span>
                 </div>
               )}
               {(cliente.cidade || cliente.estado) && (
-                <div className="flex items-center gap-2 text-sm text-gray-400">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                   <span>
                     {[cliente.cidade, cliente.estado].filter(Boolean).join(", ")}
@@ -341,49 +341,49 @@ export default function ClienteDetalhePage() {
             </div>
 
             {cliente.observacoes && (
-              <div className="mt-4 pt-4 border-t border-white/10">
-                <p className="text-xs text-gray-500 mb-1">Observações</p>
-                <p className="text-sm text-gray-300 leading-relaxed">{cliente.observacoes}</p>
+              <div className="mt-4 pt-4 border-t border-border">
+                <p className="text-xs text-muted-suave mb-1">Observações</p>
+                <p className="text-sm text-foreground-suave leading-relaxed">{cliente.observacoes}</p>
               </div>
             )}
           </div>
 
           {/* KPIs de compras */}
-          <div className="bg-[#0f1117] border border-white/10 rounded-xl p-5 space-y-3">
-            <h3 className="text-sm font-semibold text-white">Histórico de Compras</h3>
+          <div className="bg-card shadow-elevacao border border-border rounded-xl p-5 space-y-3">
+            <h3 className="text-sm font-semibold text-foreground">Histórico de Compras</h3>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white/3 rounded-lg p-3">
-                <div className="flex items-center gap-1.5 text-green-400 mb-1">
+              <div className="bg-superficie rounded-lg p-3">
+                <div className="flex items-center gap-1.5 text-sucesso mb-1">
                   <DollarSign className="w-3.5 h-3.5" />
                   <span className="text-xs font-medium">Total</span>
                 </div>
-                <p className="text-lg font-bold text-white">
+                <p className="text-lg font-bold text-foreground">
                   {formatCurrency(cliente.valor_total_compras)}
                 </p>
               </div>
-              <div className="bg-white/3 rounded-lg p-3">
-                <div className="flex items-center gap-1.5 text-blue-400 mb-1">
+              <div className="bg-superficie rounded-lg p-3">
+                <div className="flex items-center gap-1.5 text-info mb-1">
                   <ShoppingBag className="w-3.5 h-3.5" />
                   <span className="text-xs font-medium">Compras</span>
                 </div>
-                <p className="text-lg font-bold text-white">{cliente.quantidade_compras}</p>
+                <p className="text-lg font-bold text-foreground">{cliente.quantidade_compras}</p>
               </div>
-              <div className="bg-white/3 rounded-lg p-3">
-                <div className="flex items-center gap-1.5 text-brand-400 mb-1">
+              <div className="bg-superficie rounded-lg p-3">
+                <div className="flex items-center gap-1.5 text-brand-accent mb-1">
                   <DollarSign className="w-3.5 h-3.5" />
                   <span className="text-xs font-medium">Ticket Médio</span>
                 </div>
-                <p className="text-sm font-bold text-white">
+                <p className="text-sm font-bold text-foreground">
                   {formatCurrency(cliente.ticket_medio)}
                 </p>
               </div>
-              <div className="bg-white/3 rounded-lg p-3">
-                <div className="flex items-center gap-1.5 text-yellow-400 mb-1">
+              <div className="bg-superficie rounded-lg p-3">
+                <div className="flex items-center gap-1.5 text-alerta mb-1">
                   <Calendar className="w-3.5 h-3.5" />
                   <span className="text-xs font-medium">Sem Comprar</span>
                 </div>
-                <p className="text-sm font-bold text-white">
+                <p className="text-sm font-bold text-foreground">
                   {cliente.dias_sem_compra !== null ? `${cliente.dias_sem_compra}d` : "—"}
                 </p>
               </div>
@@ -392,21 +392,21 @@ export default function ClienteDetalhePage() {
             {/* Split recebido / a receber */}
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-3">
-                <span className="text-xs font-medium text-emerald-400">Recebido</span>
-                <p className="text-sm font-bold text-white mt-0.5">
+                <span className="text-xs font-medium text-sucesso">Recebido</span>
+                <p className="text-sm font-bold text-foreground mt-0.5">
                   {formatCurrency(cliente.valor_recebido)}
                 </p>
               </div>
               <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3">
-                <span className="text-xs font-medium text-amber-400">A receber</span>
-                <p className="text-sm font-bold text-white mt-0.5">
+                <span className="text-xs font-medium text-alerta">A receber</span>
+                <p className="text-sm font-bold text-foreground mt-0.5">
                   {formatCurrency(cliente.valor_a_receber)}
                 </p>
               </div>
             </div>
 
             {cliente.ultima_compra && (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-suave">
                 Última compra:{" "}
                 {new Date(cliente.ultima_compra).toLocaleDateString("pt-BR")}
               </p>
@@ -425,19 +425,19 @@ export default function ClienteDetalhePage() {
               <div className="flex items-center gap-2">
                 <AlertCircle
                   className={`w-4 h-4 ${
-                    cliente.followup_atrasado ? "text-red-400" : "text-yellow-400"
+                    cliente.followup_atrasado ? "text-erro" : "text-alerta"
                   }`}
                 />
                 <span
                   className={`text-sm font-medium ${
-                    cliente.followup_atrasado ? "text-red-400" : "text-yellow-400"
+                    cliente.followup_atrasado ? "text-erro" : "text-alerta"
                   }`}
                 >
                   {cliente.followup_atrasado ? "Follow-up Atrasado" : "Próximo Follow-up"}
                 </span>
               </div>
               {cliente.proximo_followup && (
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {new Date(cliente.proximo_followup).toLocaleDateString("pt-BR")}
                 </p>
               )}
@@ -445,8 +445,8 @@ export default function ClienteDetalhePage() {
           )}
 
           {/* Info adicional */}
-          <div className="bg-[#0f1117] border border-white/10 rounded-xl p-5 space-y-2">
-            <h3 className="text-sm font-semibold text-white mb-3">Informações</h3>
+          <div className="bg-card shadow-elevacao border border-border rounded-xl p-5 space-y-2">
+            <h3 className="text-sm font-semibold text-foreground mb-3">Informações</h3>
             <InfoRow label="CPF / CNPJ" value={cliente.cpf_cnpj} />
             <InfoRow label="Endereço" value={cliente.endereco} />
             <InfoRow label="CEP" value={cliente.cep} />
@@ -594,7 +594,7 @@ export default function ClienteDetalhePage() {
         mensagem={
           <>
             Excluir a interação{" "}
-            <span className="text-white font-medium">
+            <span className="text-foreground font-medium">
               {interacaoParaExcluir?.titulo}
             </span>
             ? Esta ação não pode ser desfeita.
@@ -613,7 +613,7 @@ export default function ClienteDetalhePage() {
         mensagem={
           <>
             Excluir o cliente{" "}
-            <span className="text-white font-medium">{cliente?.nome}</span>? Esta
+            <span className="text-foreground font-medium">{cliente?.nome}</span>? Esta
             ação não pode ser desfeita.
           </>
         }

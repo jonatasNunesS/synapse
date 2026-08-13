@@ -54,7 +54,7 @@ const ORIGEM_OPTIONS: { value: string; label: string }[] = [
 function StatusBadge({ status }: { status: StatusFunil }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium text-white ${STATUS_FUNIL_COLORS[status]}`}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium text-foreground ${STATUS_FUNIL_COLORS[status]}`}
     >
       {STATUS_FUNIL_LABELS[status]}
     </span>
@@ -63,10 +63,10 @@ function StatusBadge({ status }: { status: StatusFunil }) {
 
 function SkeletonRow() {
   return (
-    <tr className="border-b border-white/5">
+    <tr className="border-b border-border">
       {[...Array(6)].map((_, i) => (
         <td key={i} className="px-4 py-3">
-          <div className="h-4 bg-white/5 rounded animate-pulse" />
+          <div className="h-4 bg-superficie rounded animate-pulse" />
         </td>
       ))}
     </tr>
@@ -101,18 +101,18 @@ export function ClienteTable({
   const currentPage = pagination?.page ?? 1;
 
   return (
-    <div className="bg-[#0f1117] border border-white/10 rounded-xl overflow-hidden">
+    <div className="bg-card shadow-elevacao border border-border rounded-xl overflow-hidden">
       {/* Toolbar */}
-      <div className="p-4 border-b border-white/10 flex flex-col sm:flex-row gap-3">
+      <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
             placeholder="Buscar por nome, e-mail ou telefone..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand-500"
+            className="w-full pl-9 pr-3 py-2 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder-gray-500 focus:outline-none focus:border-brand-500"
           />
         </div>
 
@@ -125,10 +125,10 @@ export function ClienteTable({
               setStatusFunil(e.target.value);
               onFiltrar?.({ busca, status_funil: e.target.value, origem });
             }}
-            className="min-w-0 flex-1 sm:flex-none px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500"
+            className="min-w-0 flex-1 sm:flex-none px-3 py-2 bg-superficie border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-brand-500"
           >
             {STATUS_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value} className="bg-[#0f1117]">
+              <option key={o.value} value={o.value} className="bg-card">
                 {o.label}
               </option>
             ))}
@@ -140,10 +140,10 @@ export function ClienteTable({
               setOrigem(e.target.value);
               onFiltrar?.({ busca, status_funil: statusFunil, origem: e.target.value });
             }}
-            className="min-w-0 flex-1 sm:flex-none px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500"
+            className="min-w-0 flex-1 sm:flex-none px-3 py-2 bg-superficie border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-brand-500"
           >
             {ORIGEM_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value} className="bg-[#0f1117]">
+              <option key={o.value} value={o.value} className="bg-card">
                 {o.label}
               </option>
             ))}
@@ -151,7 +151,7 @@ export function ClienteTable({
 
           <button
             onClick={handleFiltrar}
-            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-300 hover:bg-white/10 transition-colors flex items-center gap-2"
+            className="px-3 py-2 bg-superficie border border-border rounded-lg text-sm text-foreground-suave hover:bg-superficie-forte transition-colors flex items-center gap-2"
           >
             <Filter className="w-4 h-4" />
             <span className="hidden sm:inline">Filtrar</span>
@@ -171,23 +171,23 @@ export function ClienteTable({
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-white/10 text-left">
-              <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wide">
+            <tr className="border-b border-border text-left">
+              <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Cliente
               </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wide hidden md:table-cell">
+              <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide hidden md:table-cell">
                 Contato
               </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wide">
+              <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Status
               </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wide hidden lg:table-cell">
+              <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide hidden lg:table-cell">
                 Origem
               </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wide hidden lg:table-cell">
+              <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide hidden lg:table-cell">
                 Compras
               </th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wide">
+              <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Ações
               </th>
             </tr>
@@ -197,7 +197,7 @@ export function ClienteTable({
               [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
             ) : clientes.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
+                <td colSpan={6} className="px-4 py-12 text-center text-muted-suave">
                   Nenhum cliente encontrado.
                 </td>
               </tr>
@@ -205,22 +205,22 @@ export function ClienteTable({
               clientes.map((cliente) => (
                 <tr
                   key={cliente.id}
-                  className="border-b border-white/5 hover:bg-white/3 transition-colors"
+                  className="border-b border-border hover:bg-superficie transition-colors"
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-brand-600/20 flex items-center justify-center text-brand-400 font-semibold text-sm flex-shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-brand-600/20 flex items-center justify-center text-brand-accent font-semibold text-sm flex-shrink-0">
                         {cliente.nome.charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <Link
                           href={`/clientes/${cliente.id}`}
-                          className="font-medium text-white hover:text-brand-400 transition-colors"
+                          className="font-medium text-foreground hover:text-brand-accent transition-colors"
                         >
                           {cliente.nome}
                         </Link>
                         {cliente.followup_atrasado && (
-                          <span className="ml-2 inline-flex items-center gap-1 text-xs text-red-400">
+                          <span className="ml-2 inline-flex items-center gap-1 text-xs text-erro">
                             <AlertCircle className="w-3 h-3" />
                             Follow-up atrasado
                           </span>
@@ -229,7 +229,7 @@ export function ClienteTable({
                     </div>
                   </td>
                   <td className="px-4 py-3 hidden md:table-cell">
-                    <div className="text-gray-400 text-xs">
+                    <div className="text-muted-foreground text-xs">
                       {cliente.email && <div>{cliente.email}</div>}
                       {cliente.telefone && <div>{cliente.telefone}</div>}
                     </div>
@@ -237,11 +237,11 @@ export function ClienteTable({
                   <td className="px-4 py-3">
                     <StatusBadge status={cliente.status_funil} />
                   </td>
-                  <td className="px-4 py-3 hidden lg:table-cell text-gray-400 text-xs">
+                  <td className="px-4 py-3 hidden lg:table-cell text-muted-foreground text-xs">
                     {cliente.origem_display}
                   </td>
                   <td className="px-4 py-3 hidden lg:table-cell">
-                    <div className="text-white text-xs">
+                    <div className="text-foreground text-xs">
                       {cliente.quantidade_compras > 0 ? (
                         <>
                           <div className="font-medium">
@@ -250,7 +250,7 @@ export function ClienteTable({
                               currency: "BRL",
                             }).format(parseFloat(cliente.valor_total_compras))}
                           </div>
-                          <div className="text-gray-500">{cliente.quantidade_compras} compras</div>
+                          <div className="text-muted-suave">{cliente.quantidade_compras} compras</div>
                         </>
                       ) : (
                         <span className="text-gray-600">Sem compras</span>
@@ -264,7 +264,7 @@ export function ClienteTable({
                           href={cliente.link_whatsapp}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-1.5 text-green-400 hover:bg-green-400/10 rounded transition-colors"
+                          className="p-1.5 text-sucesso hover:bg-green-400/10 rounded transition-colors"
                           title="WhatsApp"
                         >
                           <MessageCircle className="w-4 h-4" />
@@ -272,7 +272,7 @@ export function ClienteTable({
                       )}
                       <Link
                         href={`/clientes/${cliente.id}`}
-                        className="p-1.5 text-gray-400 hover:bg-white/10 rounded transition-colors"
+                        className="p-1.5 text-muted-foreground hover:bg-superficie-forte rounded transition-colors"
                         title="Ver detalhes"
                       >
                         <Eye className="w-4 h-4" />
@@ -283,7 +283,7 @@ export function ClienteTable({
                             onClick={() => onNovaInteracao(cliente)}
                             title="Nova interação"
                             aria-label={`Nova interação para ${cliente.nome}`}
-                            className="p-1.5 text-gray-400 hover:text-brand-400 hover:bg-brand-500/10 rounded transition-colors"
+                            className="p-1.5 text-muted-foreground hover:text-brand-accent hover:bg-brand-500/10 rounded transition-colors"
                           >
                             <Zap className="w-4 h-4" />
                           </button>
@@ -292,18 +292,18 @@ export function ClienteTable({
                           onClick={() =>
                             setOpenMenu(openMenu === cliente.id ? null : cliente.id)
                           }
-                          className="p-1.5 text-gray-400 hover:bg-white/10 rounded transition-colors"
+                          className="p-1.5 text-muted-foreground hover:bg-superficie-forte rounded transition-colors"
                         >
                           <MoreHorizontal className="w-4 h-4" />
                         </button>
                         {openMenu === cliente.id && (
-                          <div className="absolute right-0 top-8 z-10 w-40 bg-[#1a1d27] border border-white/10 rounded-lg shadow-xl py-1">
+                          <div className="absolute right-0 top-8 z-10 w-40 bg-[#1a1d27] border border-border rounded-lg shadow-xl py-1">
                             <button
                               onClick={() => {
                                 onEditar?.(cliente);
                                 setOpenMenu(null);
                               }}
-                              className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/5 flex items-center gap-2"
+                              className="w-full px-3 py-2 text-left text-sm text-foreground-suave hover:bg-superficie flex items-center gap-2"
                             >
                               <Pencil className="w-3.5 h-3.5" /> Editar
                             </button>
@@ -312,7 +312,7 @@ export function ClienteTable({
                                 onDeletar?.(cliente.id);
                                 setOpenMenu(null);
                               }}
-                              className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-red-400/10 flex items-center gap-2"
+                              className="w-full px-3 py-2 text-left text-sm text-erro hover:bg-red-400/10 flex items-center gap-2"
                             >
                               <Trash2 className="w-3.5 h-3.5" /> Excluir
                             </button>
@@ -330,7 +330,7 @@ export function ClienteTable({
 
       {/* Pagination */}
       {pagination && pagination.count > 25 && (
-        <div className="px-4 py-3 border-t border-white/10 flex items-center justify-between text-sm text-gray-400">
+        <div className="px-4 py-3 border-t border-border flex items-center justify-between text-sm text-muted-foreground">
           <span>
             {pagination.count} clientes • Página {currentPage} de {totalPages}
           </span>
@@ -338,14 +338,14 @@ export function ClienteTable({
             <button
               onClick={() => onPageChange?.(currentPage - 1)}
               disabled={currentPage === 1}
-              className="px-3 py-1 bg-white/5 rounded disabled:opacity-40 hover:bg-white/10 transition-colors"
+              className="px-3 py-1 bg-superficie rounded disabled:opacity-40 hover:bg-superficie-forte transition-colors"
             >
               Anterior
             </button>
             <button
               onClick={() => onPageChange?.(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 bg-white/5 rounded disabled:opacity-40 hover:bg-white/10 transition-colors"
+              className="px-3 py-1 bg-superficie rounded disabled:opacity-40 hover:bg-superficie-forte transition-colors"
             >
               Próxima
             </button>

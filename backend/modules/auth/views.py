@@ -450,7 +450,8 @@ class TemaEmpresaView(APIView):
 
 class PreferenciasUsuarioView(APIView):
     """
-    PATCH — preferências pessoais do usuário logado (hoje: tamanho do texto).
+    PATCH — preferências pessoais do usuário logado: tamanho do texto e modo
+    claro/escuro.
 
     Diferente do tema da empresa, aqui não há checagem de perfil: cada um
     ajusta o SEU. E também não há como mexer no de outra pessoa — o alvo é

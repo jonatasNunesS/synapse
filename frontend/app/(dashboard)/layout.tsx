@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Toaster, toast } from "sonner";
+import { toast } from "sonner";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { useAppStore } from "@/store/useAppStore";
@@ -11,6 +11,7 @@ import { useModulos, MODULO_LABEL } from "@/hooks/useModulos";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { EmpresaSuspensaAviso } from "@/components/layout/EmpresaSuspensaAviso";
+import { ToasterTema } from "@/components/tema/ToasterTema";
 
 export default function DashboardLayout({
   children,
@@ -45,10 +46,10 @@ export default function DashboardLayout({
   // Tela de loading enquanto busca o usuário
   if (loading && !autenticado) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
-          <p className="text-sm text-slate-500">Carregando...</p>
+          <p className="text-sm text-muted-suave">Carregando...</p>
         </div>
       </div>
     );
@@ -60,7 +61,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="tema-app min-h-screen bg-slate-950">
+    <div className="tema-app min-h-screen bg-background">
       <Sidebar />
       <Header />
       <main
@@ -73,7 +74,7 @@ export default function DashboardLayout({
       >
         <div className="p-4 md:p-6">{children}</div>
       </main>
-      <Toaster theme="dark" richColors position="top-right" />
+      <ToasterTema />
     </div>
   );
 }

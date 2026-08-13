@@ -97,23 +97,23 @@ export default function CaixinhasPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/financeiro"
-            className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-superficie-forte rounded-lg transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              <PiggyBank className="w-6 h-6 text-brand-400" />
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <PiggyBank className="w-6 h-6 text-brand-accent" />
               Caixinhas
             </h1>
-            <p className="text-sm text-slate-400 mt-0.5">
+            <p className="text-sm text-muted-foreground mt-0.5">
               Saldo disponível:{" "}
-              <span className="text-white font-medium">
+              <span className="text-foreground font-medium">
                 {moedaCaixinha(saldo?.saldo_disponivel ?? 0)}
               </span>
               <span className="mx-2">·</span>
               Total em caixinhas:{" "}
-              <span className="text-brand-300 font-medium">
+              <span className="text-brand-accent font-medium">
                 {moedaCaixinha(totalEmCaixinhas)}
               </span>
             </p>
@@ -134,20 +134,20 @@ export default function CaixinhasPage() {
           {[...Array(3)].map((_, i) => (
             <div
               key={i}
-              className="h-48 rounded-xl border border-white/10 bg-white/5 animate-pulse"
+              className="h-48 rounded-xl border border-border bg-superficie animate-pulse"
             />
           ))}
         </div>
       ) : caixinhas.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <PiggyBank className="w-12 h-12 text-slate-600 mb-3" />
-          <p className="text-slate-400">
+          <p className="text-muted-foreground">
             Nenhuma caixinha ainda. Separe dinheiro do seu saldo para
             reservas e metas.
           </p>
           <button
             onClick={() => setMostrarForm(true)}
-            className="mt-4 text-brand-400 hover:text-brand-300 text-sm transition-colors"
+            className="mt-4 text-brand-accent hover:text-brand-accent text-sm transition-colors"
           >
             Criar primeira caixinha
           </button>
