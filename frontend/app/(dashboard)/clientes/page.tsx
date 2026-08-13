@@ -106,14 +106,16 @@ export default function ClientesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* flex-wrap: com o texto no tamanho "Maior" num celular, as ações
+          descem de linha em vez de empurrar a página. */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">CRM — Clientes</h1>
           <p className="text-sm text-gray-400 mt-1">
             Gerencie seus clientes e acompanhe o funil de vendas
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Toggle de view */}
           <div className="flex bg-white/5 border border-white/10 rounded-lg p-1">
             <button

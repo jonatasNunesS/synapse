@@ -47,7 +47,7 @@ const ACAO_LABEL: Record<string, string> = {
 function Dado({ label, valor }: { label: string; valor: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[11px] uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="text-[0.6875rem] uppercase tracking-wide text-slate-500">{label}</p>
       <p className="text-sm text-slate-200 mt-0.5">{valor}</p>
     </div>
   );

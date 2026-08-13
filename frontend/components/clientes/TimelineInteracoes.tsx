@@ -173,7 +173,7 @@ export function TimelineInteracoes({
                             const badge = badgePagamento(interacao);
                             return badge ? (
                               <span
-                                className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${badge.className}`}
+                                className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[0.625rem] font-medium ${badge.className}`}
                               >
                                 {badge.label}
                               </span>
@@ -185,7 +185,7 @@ export function TimelineInteracoes({
                               : null;
                             if (estado === "descontado") {
                               return (
-                                <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium bg-emerald-500/15 text-emerald-400 border-emerald-500/30">
+                                <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.625rem] font-medium bg-emerald-500/15 text-emerald-400 border-emerald-500/30">
                                   <PackageCheck className="w-3 h-3" />
                                   Estoque descontado
                                 </span>
@@ -193,7 +193,7 @@ export function TimelineInteracoes({
                             }
                             if (estado === "pendente") {
                               return (
-                                <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium bg-amber-500/15 text-amber-400 border-amber-500/30">
+                                <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.625rem] font-medium bg-amber-500/15 text-amber-400 border-amber-500/30">
                                   <PackageX className="w-3 h-3" />
                                   Não descontado
                                 </span>
@@ -244,7 +244,7 @@ export function TimelineInteracoes({
                       onDescontarEstoque && (
                         <button
                           onClick={() => onDescontarEstoque(interacao)}
-                          className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg text-[11px] text-amber-300 font-medium transition-colors"
+                          className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg text-[0.6875rem] text-amber-300 font-medium transition-colors"
                         >
                           <PackageCheck className="w-3.5 h-3.5" />
                           Descontar do estoque agora

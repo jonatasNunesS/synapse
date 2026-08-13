@@ -52,6 +52,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "ativo",
             "is_staff_synapse",
             "viu_aviso_recorrencias",
+            "tamanho_fonte",
             "empresa",
             "modulos",
             "criado_em",
@@ -241,3 +242,19 @@ class TemaEmpresaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Empresa
         fields = ["tema_paleta", "tema_fonte"]
+
+
+# ════════════════════════════════════════════════════════════
+# SERIALIZER: PREFERÊNCIAS PESSOAIS (PATCH /me/preferencias/)
+# ════════════════════════════════════════════════════════════
+
+
+class PreferenciasUsuarioSerializer(serializers.ModelSerializer):
+    """
+    Preferências que valem só para o próprio usuário. Hoje: tamanho do texto.
+    Valor fora das opções é 400 (os choices do model validam).
+    """
+
+    class Meta:
+        model = CustomUser
+        fields = ["tamanho_fonte"]

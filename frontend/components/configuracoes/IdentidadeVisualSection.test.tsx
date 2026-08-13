@@ -46,7 +46,7 @@ beforeEach(() => {
 });
 
 describe("Identidade visual", () => {
-  it("mostra as cinco paletas e as três fontes", () => {
+  it("mostra as cinco paletas e as cinco fontes", () => {
     render(<IdentidadeVisualSection />);
 
     const paletas = screen.getByRole("radiogroup", { name: "Paleta de cores" });
@@ -56,7 +56,11 @@ describe("Identidade visual", () => {
     );
 
     const fontes = screen.getByRole("radiogroup", { name: "Fonte dos títulos" });
-    expect(fontes.querySelectorAll('[role="radio"]')).toHaveLength(3);
+    expect(fontes.querySelectorAll('[role="radio"]')).toHaveLength(5);
+    ["Padrão", "Serifada", "Geométrica", "IBM Plex Sans", "Figtree"].forEach(
+      (nome) =>
+        expect(screen.getByRole("radio", { name: nome })).toBeInTheDocument()
+    );
   });
 
   it("começa marcando o que a empresa já usa", () => {

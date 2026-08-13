@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
-import { Inter, Instrument_Serif, Outfit } from "next/font/google";
+import {
+  Figtree,
+  IBM_Plex_Sans,
+  Instrument_Serif,
+  Inter,
+  Outfit,
+} from "next/font/google";
 import "./globals.css";
 import { ScriptTema } from "@/components/tema/ScriptTema";
 
@@ -25,6 +31,22 @@ const outfit = Outfit({
   variable: "--font-geometrica",
 });
 
+const plex = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+  preload: false,
+  variable: "--font-plex",
+});
+
+const figtree = Figtree({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  preload: false,
+  variable: "--font-figtree",
+});
+
 export const metadata: Metadata = {
   title: "Synapse - Gestão Empresarial com IA",
   description:
@@ -39,7 +61,7 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={`dark ${inter.variable} ${instrumentSerif.variable} ${outfit.variable}`}
+      className={`dark ${inter.variable} ${instrumentSerif.variable} ${outfit.variable} ${plex.variable} ${figtree.variable}`}
     >
       <head>
         <ScriptTema />

@@ -246,7 +246,7 @@ export default function ChatFinanceiroPage() {
               ))
             )}
           </div>
-          <p className="text-[10px] text-muted-foreground p-2.5 border-t border-border leading-snug">
+          <p className="text-[0.625rem] text-muted-foreground p-2.5 border-t border-border leading-snug">
             As conversas ficam só neste navegador. Se limpar os dados do
             navegador ou abrir em outro dispositivo, elas não aparecem.
           </p>
@@ -354,7 +354,7 @@ export default function ChatFinanceiroPage() {
         </div>
       </div>
 
-      <p className="text-[11px] text-muted-foreground">
+      <p className="text-[0.6875rem] text-muted-foreground">
         Respostas geradas por IA (llama-3.3-70b) a partir dos seus dados reais.
         Use como apoio à decisão, não como aconselhamento financeiro definitivo.
       </p>

@@ -305,7 +305,7 @@ export default function AnaliseFinanceiraPage() {
             </div>
           )}
 
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-[0.6875rem] text-muted-foreground">
             Gerado por IA ({analise.modelo}) a partir dos seus dados. Use como apoio à decisão,
             não como aconselhamento financeiro definitivo.
           </p>

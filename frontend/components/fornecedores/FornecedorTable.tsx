@@ -70,15 +70,16 @@ export function FornecedorTable({ onNovo }: FornecedorTableProps) {
       <div className="flex flex-col gap-3 border-b border-white/10 p-4 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-base font-semibold text-white">Fornecedores</h2>
         <div className="flex flex-wrap items-center gap-2">
-          {/* Search */}
-          <div className="relative">
+          {/* Search — o input tem largura própria (20 caracteres); sem o
+              w-full ele cresce com a fonte e empurra a página para fora. */}
+          <div className="relative min-w-0 flex-1 basis-full sm:basis-auto">
             <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" />
             <input
               type="text"
               placeholder="Buscar..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="h-8 rounded-lg border border-white/10 bg-white/5 pl-8 pr-3 text-sm text-white placeholder-zinc-500 outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20"
+              className="h-8 w-full rounded-lg border border-white/10 bg-white/5 pl-8 pr-3 text-sm text-white placeholder-zinc-500 outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20"
             />
           </div>
           {/* Status filter */}

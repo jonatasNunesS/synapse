@@ -178,10 +178,17 @@ describe("Validação e aplicação", () => {
 
   afterEach(() => limparTemaDoCookie());
 
-  it("são cinco paletas e três fontes", () => {
+  it("são cinco paletas e cinco fontes", () => {
     expect(PALETAS).toHaveLength(5);
     expect(PALETAS.map((p) => p.id)).toEqual([...PALETAS_VALIDAS]);
-    expect(FONTES).toHaveLength(3);
+    expect(FONTES).toHaveLength(5);
+    expect(FONTES.map((f) => f.id)).toEqual([
+      "padrao",
+      "serifada",
+      "geometrica",
+      "plex",
+      "figtree",
+    ]);
   });
 
   it("valor inválido cai no padrão", () => {

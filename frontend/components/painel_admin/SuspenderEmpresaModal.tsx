@@ -68,7 +68,7 @@ export function SuspenderEmpresaModal({ empresaId, empresaNome, onClose, onSucce
               placeholder="Descreva o motivo (mínimo 10 caracteres)…"
               className="w-full resize-none rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-red-500"
             />
-            <p className="text-[11px] text-slate-500 mt-1">
+            <p className="text-[0.6875rem] text-slate-500 mt-1">
               {motivo.trim().length}/10 caracteres mínimos
             </p>
           </div>

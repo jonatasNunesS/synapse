@@ -238,7 +238,7 @@ export function SaldoResumo({ saldo, loading, filtroAtivo, onFiltrar }: SaldoRes
                   {moeda(mt.metrica.total)}
                 </p>
               )}
-              <p className="text-[11px] text-slate-500 mt-0.5">
+              <p className="text-[0.6875rem] text-slate-500 mt-0.5">
                 {mt.metrica.count} lançamento{mt.metrica.count !== 1 ? "s" : ""}
               </p>
             </button>

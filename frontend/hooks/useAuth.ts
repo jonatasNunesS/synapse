@@ -9,6 +9,10 @@ import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAppStore } from "@/store/useAppStore";
 import api, { getErrorMessage } from "@/lib/api";
+import {
+  limparTamanhoDoCookie,
+  sincronizarTamanho,
+} from "@/lib/preferencias";
 import { limparTemaDoCookie, sincronizarTema } from "@/lib/tema";
 import type {
   AtualizarPerfilPayload,
@@ -44,6 +48,8 @@ export function useAuth() {
         // Identidade visual da empresa: reaplica e guarda no cookie, para o
         // próximo carregamento já nascer na cor certa (sem flash).
         sincronizarTema(response.data.empresa);
+        // Tamanho do texto é preferência de quem está logado, não da empresa.
+        sincronizarTamanho(response.data.tamanho_fonte);
         return true;
       }
       return false;
@@ -112,8 +118,10 @@ export function useAuth() {
       // Silencioso — limpa estado mesmo se a API falhar
     } finally {
       clearAuth();
-      // Máquina compartilhada: o próximo login não herda a cor da outra empresa.
+      // Máquina compartilhada: o próximo login não herda a cor da outra
+      // empresa nem o tamanho de texto de outra pessoa.
       limparTemaDoCookie();
+      limparTamanhoDoCookie();
       router.push("/login");
     }
   }, [clearAuth, router]);

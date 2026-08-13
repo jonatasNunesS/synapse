@@ -101,13 +101,13 @@ export function UsuariosSection({ empresaId, usuarios, onMutate }: Props) {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm text-slate-100 font-medium truncate">{u.nome}</span>
                   {u.is_staff_synapse && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300">
+                    <span className="inline-flex items-center gap-1 text-[0.625rem] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300">
                       <ShieldCheck className="h-3 w-3" />
                       Staff Synapse
                     </span>
                   )}
                   {inativo && (
-                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-slate-600/40 text-slate-300">
+                    <span className="text-[0.625rem] font-medium px-1.5 py-0.5 rounded-full bg-slate-600/40 text-slate-300">
                       Inativo
                     </span>
                   )}

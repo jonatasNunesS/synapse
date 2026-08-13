@@ -77,8 +77,10 @@ const AREAS: AreaAI[] = [
 export default function AIHubPage() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      {/* flex-wrap: com o texto grande o badge de créditos e o link do
+          histórico descem em vez de esticar a página para fora da tela. */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Sparkles className="h-6 w-6 text-primary" />
             AI Hub
@@ -87,7 +89,7 @@ export default function AIHubPage() {
             Inteligência sobre os dados do seu negócio. Escolha uma área para começar.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <CreditosBadge />
           <Link
             href="/ai-hub/historico"
@@ -121,12 +123,12 @@ export default function AIHubPage() {
                   <Icon className="h-5 w-5" />
                 </div>
                 {area.badge && (
-                  <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-primary/15 text-primary">
+                  <span className="text-[0.625rem] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-primary/15 text-primary">
                     {area.badge}
                   </span>
                 )}
                 {area.emBreve && (
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                  <span className="text-[0.625rem] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                     em breve
                   </span>
                 )}

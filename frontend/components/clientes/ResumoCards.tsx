@@ -31,18 +31,26 @@ function Card({
   loading?: boolean;
 }) {
   return (
-    <div className="bg-[#0f1117] border border-white/10 rounded-xl p-5 flex items-start gap-4">
-      <div className={`p-2.5 rounded-lg ${color} bg-opacity-15`}>
+    /* Ícone acima do texto: são seis KPIs em colunas estreitas, e com o texto
+       grande o ícone ao lado não deixaria largura para o valor. */
+    <div className="bg-[#0f1117] border border-white/10 rounded-xl p-4 sm:p-5 flex flex-col gap-2">
+      <div className={`p-2.5 rounded-lg self-start ${color} bg-opacity-15`}>
         <Icon className={`w-5 h-5 ${color.replace("bg-", "text-")}`} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{title}</p>
+        <p className="text-xs text-gray-400 font-medium uppercase tracking-wide break-words">
+          {title}
+        </p>
         {loading ? (
           <div className="h-7 w-20 bg-white/5 rounded animate-pulse mt-1" />
         ) : (
-          <p className="text-2xl font-bold text-white mt-0.5">{value}</p>
+          <p className="text-xl sm:text-2xl font-bold text-white mt-0.5 break-words">
+            {value}
+          </p>
         )}
-        {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
+        {subtitle && (
+          <p className="text-xs text-gray-500 mt-0.5 break-words">{subtitle}</p>
+        )}
       </div>
     </div>
   );
@@ -80,7 +88,11 @@ export function ResumoCards({ resumo, loading, periodoAtivo }: ResumoCardsProps)
         </div>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      {/* Largura mínima da coluna em rem: cresce junto com a preferência de
+          tamanho de texto, então o navegador reduz o número de colunas
+          sozinho (6 no normal, como antes, e 4 no "maior") em vez de espremer
+          o valor. 9.3rem = 148px é 1/6 da área útil no nível normal. */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(9.3rem,1fr))] gap-4">
         <Card
           title="Total de Clientes"
           value={resumo?.total_clientes ?? 0}
