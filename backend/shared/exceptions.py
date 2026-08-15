@@ -20,6 +20,7 @@ from rest_framework.exceptions import (
     AuthenticationFailed,
     NotAuthenticated,
     PermissionDenied as DRFPermissionDenied,
+    Throttled,
     ValidationError as DRFValidationError,
 )
 from rest_framework.response import Response
@@ -96,6 +97,19 @@ def _build_error_response(exc, response):
             "AUTHENTICATION_ERROR",
             "Autenticação necessária ou credenciais inválidas.",
             {},
+        )
+
+    if isinstance(exc, Throttled):
+        # Mensagem fixa e genérica de propósito: nos fluxos de senha, um texto
+        # que variasse conforme o alvo transformaria o 429 num oráculo de
+        # "esta conta existe".
+        detalhes = {}
+        if exc.wait is not None:
+            detalhes["retry_after_segundos"] = int(exc.wait)
+        return _format_error(
+            "RATE_LIMIT_EXCEDIDO",
+            "Muitas tentativas em pouco tempo. Aguarde alguns instantes e tente novamente.",
+            detalhes,
         )
 
     if isinstance(exc, DRFPermissionDenied):

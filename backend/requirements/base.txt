@@ -3,15 +3,15 @@
 # ════════════════════════════════════════════════════════════
 
 # ── Django Core ────────────────────────────────────────────
-Django==5.1.5
+Django==5.2.17
 djangorestframework==3.15.2
 django-cors-headers==4.6.0
 django-filter==24.3
 django-celery-beat
 
 # ── Autenticação JWT ───────────────────────────────────────
-djangorestframework-simplejwt==5.4.0
-PyJWT==2.10.1
+djangorestframework-simplejwt==5.5.1
+PyJWT==2.13.0
 
 # ── Banco de Dados ─────────────────────────────────────────
 psycopg2-binary==2.9.10
@@ -29,7 +29,7 @@ python-decouple==3.8
 
 # ── Utilidades ─────────────────────────────────────────────
 python-dateutil==2.9.0
-pillow==11.1.0
+pillow==12.3.0
 
 # ── Logging ────────────────────────────────────────────────
 python-json-logger==3.2.1
