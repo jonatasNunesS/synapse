@@ -16,6 +16,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from shared.responses import created_response, error_response, success_response
+from shared.throttling import RecuperarSenhaEmailThrottle, ScopedIPThrottle
 
 from .exceptions import SynapseAuthError, TokenInvalidoError
 from .serializers import (
@@ -74,6 +75,9 @@ class RegistroView(APIView):
     """Cria nova empresa + usuário admin e retorna tokens em cookies."""
 
     permission_classes = [AllowAny]
+    # ALTO-03: 5 cadastros/hora por IP (trava criação automatizada de empresas)
+    throttle_scope = "registro"
+    throttle_classes = [ScopedIPThrottle]
 
     def post(self, request: Request) -> Response:
         serializer = RegistroSerializer(data=request.data)
@@ -228,6 +232,11 @@ class RecuperarSenhaView(APIView):
     """Solicita redefinição de senha. Sempre retorna sucesso."""
 
     permission_classes = [AllowAny]
+    # ALTO-03: dois limites somados — 5/hora por IP e 3/hora por e-mail.
+    # O limite por e-mail conta o endereço SUBMETIDO, sem consultar se
+    # existe, então não revela cadastro (ver shared/throttling.py).
+    throttle_scope = "recuperar_senha"
+    throttle_classes = [ScopedIPThrottle, RecuperarSenhaEmailThrottle]
 
     def post(self, request: Request) -> Response:
         serializer = RecuperarSenhaSerializer(data=request.data)
@@ -256,6 +265,9 @@ class RedefinirSenhaView(APIView):
     """Redefine a senha usando o token recebido por e-mail."""
 
     permission_classes = [AllowAny]
+    # ALTO-03: 10 tentativas/hora por IP
+    throttle_scope = "redefinir_senha"
+    throttle_classes = [ScopedIPThrottle]
 
     def post(self, request: Request) -> Response:
         serializer = RedefinirSenhaSerializer(data=request.data)

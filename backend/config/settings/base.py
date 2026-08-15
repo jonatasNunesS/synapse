@@ -181,6 +181,17 @@ REST_FRAMEWORK = {
         "ai_gerar": "10/minute",
         # painel_trocar_plano: 10 trocas de plano/minuto por staff da plataforma
         "painel_trocar_plano": "10/minute",
+        # ── Fluxos de conta e senha (ALTO-03) ────────────────────────────
+        # registro: trava a criação automatizada de empresas por IP.
+        "registro": "5/hour",
+        # recuperar_senha: dois limites somados. Por IP contém o disparo em
+        # massa; por e-mail protege a caixa de uma vítima específica de um
+        # atacante com IPs rotativos (e a quota do provedor de e-mail).
+        "recuperar_senha": "5/hour",
+        "recuperar_senha_email": "3/hour",
+        # redefinir_senha: o token tem entropia alta (48 bytes), mas
+        # tentativa ilimitada de token é antipadrão.
+        "redefinir_senha": "10/hour",
     },
 }
 
