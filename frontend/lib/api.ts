@@ -94,7 +94,22 @@ private buildUrl(
       credentials: "include",
     };
 
-    const response = await fetch(url, config);
+    let response: Response;
+    try {
+      response = await fetch(url, config);
+    } catch {
+      // Rede fora do ar: o fetch rejeita com um Error técnico e em inglês
+      // ("Failed to fetch"). Vira envelope aqui para a tela não exibir isso.
+      throw {
+        success: false,
+        error: {
+          code: "ERRO_REDE",
+          message:
+            "Não foi possível falar com o servidor. Verifique sua conexão e tente novamente.",
+          details: {},
+        },
+      } as ApiError;
+    }
 
     // ── Refresh automático em 401 ──────────────────────────
     const isAuthRoute =
@@ -143,7 +158,25 @@ private buildUrl(
       return { success: true, data: {} as T, message: "" } as ApiResponse<T>;
     }
 
-    const data = await response.json();
+    let data: unknown;
+    try {
+      data = await response.json();
+    } catch {
+      // Sem corpo JSON para ler: 5xx que devolveu HTML de gateway, resposta
+      // truncada, servidor derrubado no meio. É diferente de erro de
+      // validação, que sempre chega com envelope e mensagem — e a tela
+      // precisa poder dizer isso de forma distinta.
+      throw {
+        success: false,
+        error: {
+          code: response.ok ? "RESPOSTA_INVALIDA" : "ERRO_SERVIDOR",
+          message: response.ok
+            ? "O servidor devolveu uma resposta inválida."
+            : "Erro no servidor, tente novamente.",
+          details: { status: response.status },
+        },
+      } as ApiError;
+    }
 
     if (!response.ok) {
       throw data as ApiError;
@@ -201,9 +234,20 @@ export const api = new ApiClient(API_BASE_URL);
 export default api;
 
 // ── Helper: extrai mensagem de erro ───────────────────────────
+/**
+ * Extrai a mensagem que a pessoa deve ler.
+ *
+ * Trata tanto o envelope da API quanto um Error nativo, e por isso é
+ * IDEMPOTENTE: chamar duas vezes devolve a mesma mensagem. Isso importa
+ * porque quem chama nem sempre sabe se o erro já passou por aqui — era
+ * exatamente o caso do login e do cadastro, onde o hook extraía a mensagem
+ * certa, reembrulhava num Error, e a tela chamava de novo. Sem o segundo
+ * ramo, a mensagem real morria e sobrava o texto genérico.
+ */
 export function getErrorMessage(error: unknown): string {
   const e = error as ApiError;
   if (e?.error?.message) return e.error.message;
+  if (error instanceof Error && error.message) return error.message;
   return "Ocorreu um erro inesperado.";
 }
 

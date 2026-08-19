@@ -79,8 +79,8 @@ export function CategoriaEstoqueModal({ onFechar }: CategoriaEstoqueModalProps) 
       setCorSelecionada("#6366f1");
       setEditando(null);
       setShowForm(false);
-    } catch {
-      setErroGlobal("Erro ao salvar categoria. Tente novamente.");
+    } catch (err) {
+      setErroGlobal(getErrorMessage(err));
     }
   };
 

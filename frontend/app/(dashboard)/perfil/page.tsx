@@ -7,7 +7,7 @@ import { z } from "zod";
 import { User, Lock, Save, Loader2, CheckCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAppStore } from "@/store/useAppStore";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
 import type { AtualizarPerfilPayload } from "@/types/auth";
 import type { ApiError } from "@/types/api";
 import { PreferenciasSection } from "@/components/perfil/PreferenciasSection";
@@ -74,8 +74,8 @@ export default function PerfilPage() {
       await atualizarPerfil(payload);
       setPerfilOk(true);
       setTimeout(() => setPerfilOk(false), 3000);
-    } catch {
-      setPerfilErro("Erro ao salvar perfil. Tente novamente.");
+    } catch (err) {
+      setPerfilErro(getErrorMessage(err));
     }
   };
 
