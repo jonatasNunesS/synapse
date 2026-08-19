@@ -99,7 +99,7 @@ function LoginContent() {
               type="email"
               autoComplete="email"
               placeholder="seu@email.com"
-              className={`w-full px-3.5 py-2.5 rounded-lg bg-card/60 border text-foreground placeholder-slate-500 text-sm
+              className={`w-full px-3.5 py-2.5 rounded-lg bg-card/60 border text-foreground placeholder:text-muted-foreground text-sm
                 focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-colors
                 ${errors.email ? "border-red-500/60" : "border-border/60 focus:border-brand-500/60"}`}
             />
@@ -127,7 +127,7 @@ function LoginContent() {
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
                 placeholder="••••••••"
-                className={`w-full px-3.5 py-2.5 pr-10 rounded-lg bg-card/60 border text-foreground placeholder-slate-500 text-sm
+                className={`w-full px-3.5 py-2.5 pr-10 rounded-lg bg-card/60 border text-foreground placeholder:text-muted-foreground text-sm
                   focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-colors
                   ${errors.senha ? "border-red-500/60" : "border-border/60 focus:border-brand-500/60"}`}
               />

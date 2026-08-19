@@ -67,7 +67,7 @@ function RedefinirSenhaContent() {
   };
 
   const inputClass = (hasError: boolean) =>
-    `w-full px-3.5 py-2.5 pr-10 rounded-lg bg-card/60 border text-white placeholder-slate-500 text-sm
+    `w-full px-3.5 py-2.5 pr-10 rounded-lg bg-card/60 border text-foreground placeholder:text-muted-foreground text-sm
     focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-colors
     ${hasError ? "border-red-500/60" : "border-border/60 focus:border-brand-500/60"}`;
 
