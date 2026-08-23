@@ -32,7 +32,6 @@ export function useAgenda() {
       const acumulado: Evento[] = [];
       let page = 1;
       // Segue paginação até acabar (next === null)
-      // eslint-disable-next-line no-constant-condition
       while (true) {
         const resp = await api.get<Evento[]>("/agenda/", {
           inicio: inicio.toISOString(),

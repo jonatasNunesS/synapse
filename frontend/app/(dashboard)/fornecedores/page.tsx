@@ -14,7 +14,6 @@ export default function FornecedoresPage() {
   const [showCategorias, setShowCategorias] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleSuccess = (_fornecedor: FornecedorDetail) => {
     setShowForm(false);
     setRefreshKey((k) => k + 1);
