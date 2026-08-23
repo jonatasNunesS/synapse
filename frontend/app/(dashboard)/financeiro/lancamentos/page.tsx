@@ -3,15 +3,8 @@
 import { ChevronLeft, ChevronRight, Plus, Search, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { EditarPagoModal } from "@/components/financeiro/EditarPagoModal";
-import { ExcluirPagoModal } from "@/components/financeiro/ExcluirPagoModal";
-import { HistoricoLancamentoModal } from "@/components/financeiro/HistoricoLancamentoModal";
 import { LancamentoForm } from "@/components/financeiro/LancamentoForm";
-import { LancamentoTable } from "@/components/financeiro/LancamentoTable";
-import { PagarModal } from "@/components/financeiro/PagarModal";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { useAuth } from "@/hooks/useAuth";
-import { getErrorMessage } from "@/lib/api";
+import { SecaoLancamentos } from "@/components/financeiro/SecaoLancamentos";
 import {
   useCategorias,
   useLancamentos,
@@ -30,31 +23,13 @@ export default function LancamentosPage() {
   const [filtros, setFiltros] = useState<FiltrosLancamento>({ page: 1 });
   const [busca, setBusca] = useState("");
   const [mostrarForm, setMostrarForm] = useState(false);
-  const [lancamentoParaPagar, setLancamentoParaPagar] =
-    useState<Lancamento | null>(null);
-  const [lancamentoParaExcluir, setLancamentoParaExcluir] =
-    useState<Lancamento | null>(null);
-  const [excluindo, setExcluindo] = useState(false);
-
-  // Fluxo auditado de lançamentos PAGOS (admin + motivo + log)
-  const [pagoParaEditar, setPagoParaEditar] = useState<Lancamento | null>(null);
-  const [pagoParaExcluir, setPagoParaExcluir] = useState<Lancamento | null>(null);
-  const [lancamentoHistorico, setLancamentoHistorico] =
-    useState<Lancamento | null>(null);
-
-  const { usuario } = useAuth();
-  const isAdmin = usuario?.perfil === "admin";
-
   const { categorias } = useCategorias();
   const {
     lancamentos,
     total,
     loading,
     criar,
-    atualizar,
-    deletar,
-    excluirAuditado,
-    pagar,
+    ...acoes
   } = useLancamentos({ ...filtros, busca });
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -83,61 +58,6 @@ export default function LancamentosPage() {
   const handleCriar = async (dados: LancamentoCreate) => {
     await criar(dados);
     setMostrarForm(false);
-  };
-
-  const handlePagar = async (dataPagamento: string) => {
-    if (!lancamentoParaPagar) return;
-    await pagar(lancamentoParaPagar.id, { data_pagamento: dataPagamento });
-    setLancamentoParaPagar(null);
-  };
-
-  const handleConfirmarExclusao = async () => {
-    if (!lancamentoParaExcluir || excluindo) return; // evita duplo clique
-    setExcluindo(true);
-    try {
-      await deletar(lancamentoParaExcluir.id);
-      toast.success("Lançamento excluído.");
-      setLancamentoParaExcluir(null);
-    } catch (err) {
-      // Erro NUNCA calado: mostra a mensagem real do backend
-      toast.error(getErrorMessage(err), { duration: 7000 });
-    } finally {
-      setExcluindo(false);
-    }
-  };
-
-  // Exclusão: pago vai pro fluxo auditado; pendente segue o ConfirmDialog atual
-  const handleExcluirClick = (lancamento: Lancamento) => {
-    if (lancamento.status === "pago") {
-      setPagoParaExcluir(lancamento);
-    } else {
-      setLancamentoParaExcluir(lancamento);
-    }
-  };
-
-  const handleEditarPago = async (
-    dados: Parameters<typeof atualizar>[1],
-    motivo: string
-  ) => {
-    if (!pagoParaEditar) return;
-    try {
-      await atualizar(pagoParaEditar.id, dados, motivo);
-      toast.success("Lançamento pago atualizado. A alteração ficou registrada no histórico.");
-      setPagoParaEditar(null);
-    } catch (err) {
-      toast.error(getErrorMessage(err), { duration: 7000 });
-    }
-  };
-
-  const handleExcluirPago = async (motivo: string) => {
-    if (!pagoParaExcluir) return;
-    try {
-      await excluirAuditado(pagoParaExcluir.id, motivo);
-      toast.success("Lançamento pago excluído. A operação ficou registrada no histórico.");
-      setPagoParaExcluir(null);
-    } catch (err) {
-      toast.error(getErrorMessage(err), { duration: 7000 });
-    }
   };
 
   return (
@@ -256,15 +176,12 @@ export default function LancamentosPage() {
 
       {/* Tabela */}
       <div className="bg-white/[0.03] border border-border rounded-xl">
-        <LancamentoTable
+        <SecaoLancamentos
           lancamentos={lancamentos}
           loading={loading}
-          isAdmin={isAdmin}
-          onPagar={setLancamentoParaPagar}
-          onEditar={setPagoParaEditar}
-          onDeletar={handleExcluirClick}
-          onHistorico={setLancamentoHistorico}
-        />
+          categorias={categorias}
+          acoes={acoes}
+        >
 
         {/* Paginação */}
         {totalPages > 1 && (
@@ -297,6 +214,7 @@ export default function LancamentosPage() {
             </div>
           </div>
         )}
+        </SecaoLancamentos>
       </div>
 
       {/* Modals */}
@@ -308,56 +226,6 @@ export default function LancamentosPage() {
         />
       )}
 
-      {lancamentoParaPagar && (
-        <PagarModal
-          lancamento={lancamentoParaPagar}
-          onConfirmar={handlePagar}
-          onClose={() => setLancamentoParaPagar(null)}
-        />
-      )}
-
-      <ConfirmDialog
-        open={!!lancamentoParaExcluir}
-        titulo="Excluir lançamento"
-        mensagem={
-          <>
-            Excluir{" "}
-            <span className="text-foreground font-medium">
-              {lancamentoParaExcluir?.descricao}
-            </span>
-            ? Esta ação não pode ser desfeita.
-          </>
-        }
-        confirmLabel="Excluir"
-        processando={excluindo}
-        onConfirm={handleConfirmarExclusao}
-        onCancel={() => setLancamentoParaExcluir(null)}
-      />
-
-      {/* Fluxo auditado — lançamentos pagos */}
-      {pagoParaEditar && (
-        <EditarPagoModal
-          lancamento={pagoParaEditar}
-          categorias={categorias}
-          onSubmit={handleEditarPago}
-          onClose={() => setPagoParaEditar(null)}
-        />
-      )}
-
-      {pagoParaExcluir && (
-        <ExcluirPagoModal
-          lancamento={pagoParaExcluir}
-          onConfirm={handleExcluirPago}
-          onClose={() => setPagoParaExcluir(null)}
-        />
-      )}
-
-      {lancamentoHistorico && (
-        <HistoricoLancamentoModal
-          lancamento={lancamentoHistorico}
-          onClose={() => setLancamentoHistorico(null)}
-        />
-      )}
     </div>
   );
 }

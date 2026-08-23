@@ -16,8 +16,15 @@ import type { Lancamento, StatusLancamento } from "@/types/financeiro";
 interface LancamentoTableProps {
   lancamentos: Lancamento[];
   loading?: boolean;
-  /** Perfil admin habilita editar/excluir lançamentos PAGOS (fluxo auditado). */
-  isAdmin?: boolean;
+  /**
+   * Perfil admin habilita editar/excluir lançamentos PAGOS (fluxo auditado).
+   *
+   * Obrigatória de propósito: quando tinha default `false`, a tela que
+   * esquecia de passá-la bloqueava o admin com uma mensagem enganosa, e o
+   * esquecimento não aparecia em lugar nenhum. Sem default, o compilador
+   * cobra.
+   */
+  isAdmin: boolean;
   onPagar?: (lancamento: Lancamento) => void;
   onEditar?: (lancamento: Lancamento) => void;
   onDeletar?: (lancamento: Lancamento) => void;
@@ -92,7 +99,7 @@ function SkeletonRow() {
 export function LancamentoTable({
   lancamentos,
   loading,
-  isAdmin = false,
+  isAdmin,
   onPagar,
   onEditar,
   onDeletar,

@@ -15,12 +15,9 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { CategoriaFinanceiroModal } from "@/components/financeiro/CategoriaFinanceiroModal";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { getErrorMessage } from "@/lib/api";
 import { FluxoCaixaChart } from "@/components/financeiro/FluxoCaixaChart";
 import { LancamentoForm } from "@/components/financeiro/LancamentoForm";
-import { LancamentoTable } from "@/components/financeiro/LancamentoTable";
-import { PagarModal } from "@/components/financeiro/PagarModal";
+import { SecaoLancamentos } from "@/components/financeiro/SecaoLancamentos";
 import { SaldoResumo, type FiltroMetrica } from "@/components/financeiro/SaldoResumo";
 import {
   useCategorias,
@@ -36,11 +33,6 @@ export default function FinanceiroPage() {
   const [ano, setAno] = useState(hoje.getFullYear());
   const [mostrarForm, setMostrarForm] = useState(false);
   const [mostrarCategorias, setMostrarCategorias] = useState(false);
-  const [lancamentoParaPagar, setLancamentoParaPagar] =
-    useState<Lancamento | null>(null);
-  const [lancamentoParaExcluir, setLancamentoParaExcluir] =
-    useState<Lancamento | null>(null);
-  const [excluindo, setExcluindo] = useState(false);
   // Filtro por card de métrica (clicar em "A receber" mostra só esses).
   const [filtroMetrica, setFiltroMetrica] = useState<FiltroMetrica | null>(null);
 
@@ -58,8 +50,7 @@ export default function FinanceiroPage() {
     total,
     loading: loadingLancamentos,
     criar,
-    deletar,
-    pagar,
+    ...acoes
   } = useLancamentos({
     data_inicio: dataInicio,
     data_fim: dataFim,
@@ -81,33 +72,6 @@ export default function FinanceiroPage() {
     await criar(dados);
     setMostrarForm(false);
     recarregarSaldo();
-  };
-
-  const handlePagar = async (dataPagamento: string) => {
-    if (!lancamentoParaPagar) return;
-    await pagar(lancamentoParaPagar.id, { data_pagamento: dataPagamento });
-    setLancamentoParaPagar(null);
-    recarregarSaldo();
-  };
-
-  const handleDeletar = (lancamento: Lancamento) => {
-    setLancamentoParaExcluir(lancamento);
-  };
-
-  const handleConfirmarExclusao = async () => {
-    if (!lancamentoParaExcluir || excluindo) return; // evita duplo clique
-    setExcluindo(true);
-    try {
-      await deletar(lancamentoParaExcluir.id);
-      toast.success("Lançamento excluído.");
-      setLancamentoParaExcluir(null);
-      recarregarSaldo();
-    } catch (err) {
-      // Erro NUNCA calado: mostra a mensagem real do backend
-      toast.error(getErrorMessage(err), { duration: 7000 });
-    } finally {
-      setExcluindo(false);
-    }
   };
 
   return (
@@ -225,11 +189,12 @@ export default function FinanceiroPage() {
             Ver todos →
           </a>
         </div>
-        <LancamentoTable
+        <SecaoLancamentos
           lancamentos={lancamentos}
           loading={loadingLancamentos}
-          onPagar={setLancamentoParaPagar}
-          onDeletar={handleDeletar}
+          categorias={categorias}
+          acoes={acoes}
+          onMutacao={recarregarSaldo}
         />
       </div>
 
@@ -242,35 +207,10 @@ export default function FinanceiroPage() {
         />
       )}
 
-      {lancamentoParaPagar && (
-        <PagarModal
-          lancamento={lancamentoParaPagar}
-          onConfirmar={handlePagar}
-          onClose={() => setLancamentoParaPagar(null)}
-        />
-      )}
-
       {mostrarCategorias && (
         <CategoriaFinanceiroModal onClose={() => setMostrarCategorias(false)} />
       )}
 
-      <ConfirmDialog
-        open={!!lancamentoParaExcluir}
-        titulo="Excluir lançamento"
-        mensagem={
-          <>
-            Excluir{" "}
-            <span className="text-foreground font-medium">
-              {lancamentoParaExcluir?.descricao}
-            </span>
-            ? Esta ação não pode ser desfeita.
-          </>
-        }
-        confirmLabel="Excluir"
-        processando={excluindo}
-        onConfirm={handleConfirmarExclusao}
-        onCancel={() => setLancamentoParaExcluir(null)}
-      />
     </div>
   );
 }
