@@ -16,6 +16,7 @@ import { ProdutoSelect } from "@/components/estoque/ProdutoSelect";
 import type { InteracaoCliente } from "@/types/clientes";
 import type { ProdutoList } from "@/types/estoque";
 import type { ApiError } from "@/types/api";
+import { formatCurrencyOrNull } from "@/lib/utils";
 
 interface BaixarEstoqueModalProps {
   clienteId: string;
@@ -25,12 +26,6 @@ interface BaixarEstoqueModalProps {
   onSuccess?: () => void;
 }
 
-function formatCurrency(value: string | null): string | null {
-  if (!value) return null;
-  const num = parseFloat(value);
-  if (isNaN(num)) return null;
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(num);
-}
 
 export function BaixarEstoqueModal({
   clienteId,
@@ -111,9 +106,9 @@ export function BaixarEstoqueModal({
                   Venda para:{" "}
                   <span className="font-medium">{clienteNome}</span>
                 </p>
-                {formatCurrency(interacao.valor) && (
+                {formatCurrencyOrNull(interacao.valor) && (
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    Valor: {formatCurrency(interacao.valor)}
+                    Valor: {formatCurrencyOrNull(interacao.valor)}
                   </p>
                 )}
               </div>

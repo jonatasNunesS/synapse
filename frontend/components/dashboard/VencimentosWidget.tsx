@@ -5,14 +5,13 @@ import { DollarSign, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { VencimentoItem } from "@/types/dashboard";
+import { formatCurrency } from "@/lib/utils";
 
 interface VencimentosWidgetProps {
   vencimentos: VencimentoItem[];
   isLoading: boolean;
 }
 
-const formatCurrency = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 const formatDate = (dateStr: string) => {
   const [ano, mes, dia] = dateStr.split("-");

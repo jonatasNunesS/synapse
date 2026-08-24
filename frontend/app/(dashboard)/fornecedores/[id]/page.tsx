@@ -27,6 +27,7 @@ import { HistoricoCompras } from "@/components/fornecedores/HistoricoCompras";
 import { FornecedorForm } from "@/components/fornecedores/FornecedorForm";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { FornecedorDetail } from "@/types/fornecedores";
+import { formatCurrency } from "@/lib/utils";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   ativo: { label: "Ativo", color: "bg-emerald-500/15 text-sucesso border-emerald-500/30" },
@@ -48,11 +49,6 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
   );
 }
 
-function formatCurrency(value: string | number) {
-  const num = typeof value === "string" ? parseFloat(value) : value;
-  if (isNaN(num)) return "R$ 0,00";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(num);
-}
 
 export default function FornecedorDetailPage() {
   const params = useParams();

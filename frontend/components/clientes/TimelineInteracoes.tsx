@@ -4,6 +4,7 @@ import { Plus, Pencil, Trash2, PackageCheck, PackageX } from "lucide-react";
 import type { InteracaoCliente } from "@/types/clientes";
 import { TIPO_INTERACAO_LABELS, TIPO_INTERACAO_ICONS } from "@/types/clientes";
 import { useModulos } from "@/hooks/useModulos";
+import { formatCurrencyOrNull } from "@/lib/utils";
 
 /** Opções do filtro de controle de estoque (perfil do cliente). */
 export type FiltroEstoque = "" | "descontados" | "nao_descontados";
@@ -44,12 +45,6 @@ function formatDateTime(dt: string): string {
   });
 }
 
-function formatCurrency(value: string | null): string | null {
-  if (!value) return null;
-  const num = parseFloat(value);
-  if (isNaN(num)) return null;
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(num);
-}
 
 /** Badge de status de pagamento. Retorna null quando não se aplica. */
 function badgePagamento(
@@ -209,7 +204,7 @@ export function TimelineInteracoes({
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {interacao.valor && (
                           <span className="text-sm font-semibold text-sucesso">
-                            {formatCurrency(interacao.valor)}
+                            {formatCurrencyOrNull(interacao.valor)}
                           </span>
                         )}
                         {onEditar && (

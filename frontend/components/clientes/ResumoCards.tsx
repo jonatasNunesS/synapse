@@ -2,6 +2,7 @@
 
 import { Users, TrendingUp, DollarSign, Calendar, AlertCircle, UserPlus } from "lucide-react";
 import type { ResumoClientes } from "@/types/clientes";
+import { formatCurrency } from "@/lib/utils";
 
 interface ResumoCardsProps {
   resumo: ResumoClientes | null;
@@ -10,10 +11,6 @@ interface ResumoCardsProps {
   periodoAtivo?: boolean;
 }
 
-function formatCurrency(value: string | number): string {
-  const num = typeof value === "string" ? parseFloat(value) : value;
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(num || 0);
-}
 
 function Card({
   title,

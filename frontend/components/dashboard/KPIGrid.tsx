@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { DashboardResumo } from "@/types/dashboard";
 import type { ModuloOpcional } from "@/types/auth";
 import { useModulos } from "@/hooks/useModulos";
+import { formatCurrency } from "@/lib/utils";
 
 /**
  * A largura mínima da coluna está em rem, então ela cresce junto com a
@@ -108,8 +109,6 @@ export function KPIGrid({ resumo, isLoading }: KPIGridProps) {
 
   const { financeiro, estoque, crm, projetos } = resumo;
 
-  const formatCurrency = (v: number) =>
-    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   const kpis: (KPICardProps & { modulo?: ModuloOpcional })[] = [
     {

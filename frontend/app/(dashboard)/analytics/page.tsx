@@ -31,16 +31,11 @@ import { useAnalytics } from "@/hooks/useDashboard";
 import type { PeriodoAnalytics } from "@/types/dashboard";
 import { STATUS_FUNIL_LABELS, STATUS_FUNIL_CORES } from "@/types/dashboard";
 import { useCoresDoGrafico } from "@/lib/graficos";
+import { formatCurrency, formatCurrencyCompact } from "@/lib/utils";
 
 // ════════════════════════════════════════════════════════════
 // HELPERS
 // ════════════════════════════════════════════════════════════
-
-const formatCurrency = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", notation: "compact" });
-
-const formatCurrencyFull = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 const formatDate = (dateStr: string) => {
   const parts = dateStr.split("-");
@@ -56,7 +51,7 @@ const CustomTooltipFinanceiro = ({ active, payload, label }: any) => {
       {payload.map((entry: any) => (
         <p key={entry.name} style={{ color: entry.color }} className="flex justify-between gap-4">
           <span className="capitalize">{entry.name === "receitas" ? "Receitas" : entry.name === "despesas" ? "Despesas" : "Saldo Acum."}:</span>
-          <span className="font-medium">{formatCurrencyFull(entry.value)}</span>
+          <span className="font-medium">{formatCurrency(entry.value)}</span>
         </p>
       ))}
     </div>
@@ -151,19 +146,19 @@ export default function AnalyticsPage() {
           {[
             {
               label: "Receitas",
-              valor: formatCurrencyFull(resumo.resumo.financeiro.total_receitas),
+              valor: formatCurrency(resumo.resumo.financeiro.total_receitas),
               cor: "text-sucesso",
               bg: "bg-sucesso/10",
             },
             {
               label: "Despesas",
-              valor: formatCurrencyFull(resumo.resumo.financeiro.total_despesas),
+              valor: formatCurrency(resumo.resumo.financeiro.total_despesas),
               cor: "text-erro",
               bg: "bg-erro/10",
             },
             {
               label: "Saldo",
-              valor: formatCurrencyFull(resumo.resumo.financeiro.saldo_mes),
+              valor: formatCurrency(resumo.resumo.financeiro.saldo_mes),
               cor: resumo.resumo.financeiro.saldo_mes >= 0 ? "text-sucesso" : "text-erro",
               bg: resumo.resumo.financeiro.saldo_mes >= 0 ? "bg-sucesso/10" : "bg-erro/10",
             },
@@ -217,7 +212,7 @@ export default function AnalyticsPage() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={cores.grid} />
                 <XAxis dataKey="data" tick={{ fontSize: 11, fill: cores.eixo }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 11, fill: cores.eixo }} tickLine={false} axisLine={false} width={75} />
+                <YAxis tickFormatter={formatCurrencyCompact} tick={{ fontSize: 11, fill: cores.eixo }} tickLine={false} axisLine={false} width={75} />
                 <Tooltip content={<CustomTooltipFinanceiro />} />
                 <Legend
                   formatter={(value: string) => {
@@ -258,10 +253,10 @@ export default function AnalyticsPage() {
                 <BarChart data={receitasDespesasAgrupadas} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={cores.grid} />
                   <XAxis dataKey="semana" tick={{ fontSize: 11, fill: cores.eixo }} tickLine={false} axisLine={false} />
-                  <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 11, fill: cores.eixo }} tickLine={false} axisLine={false} width={70} />
+                  <YAxis tickFormatter={formatCurrencyCompact} tick={{ fontSize: 11, fill: cores.eixo }} tickLine={false} axisLine={false} width={70} />
                   <Tooltip
                     formatter={(value, name) => [
-                      formatCurrencyFull(Number(value ?? 0)),
+                      formatCurrency(Number(value ?? 0)),
                       name === "receitas" ? "Receitas" : "Despesas",
                     ]}
                   />
@@ -368,7 +363,7 @@ export default function AnalyticsPage() {
                     </Pie>
                     <Tooltip
                       formatter={(value, name) => [
-                        formatCurrencyFull(Number(value ?? 0)),
+                        formatCurrency(Number(value ?? 0)),
                         name ?? "",
                       ]}
                     />
@@ -406,9 +401,9 @@ export default function AnalyticsPage() {
                 <LineChart data={fluxoDados} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={cores.grid} />
                   <XAxis dataKey="data" tick={{ fontSize: 11, fill: cores.eixo }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                  <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 11, fill: cores.eixo }} tickLine={false} axisLine={false} width={75} />
+                  <YAxis tickFormatter={formatCurrencyCompact} tick={{ fontSize: 11, fill: cores.eixo }} tickLine={false} axisLine={false} width={75} />
                   <Tooltip
-                    formatter={(value) => [formatCurrencyFull(Number(value ?? 0)), "Saldo Acumulado"]}
+                    formatter={(value) => [formatCurrency(Number(value ?? 0)), "Saldo Acumulado"]}
                   />
                   <Line
                     type="monotone"

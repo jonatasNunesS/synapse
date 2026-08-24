@@ -14,6 +14,7 @@ import { ApagarComAjustesFlow } from "@/components/clientes/ApagarComAjustesFlow
 import type { CompraFornecedor } from "@/types/fornecedores";
 import type { ApiError } from "@/types/api";
 import { useModulos } from "@/hooks/useModulos";
+import { formatCurrency } from "@/lib/utils";
 
 const STATUS_COMPRA: Record<string, { label: string; color: string }> = {
   pendente: { label: "Pendente", color: "bg-amber-500/15 text-alerta border-amber-500/30" },
@@ -21,11 +22,6 @@ const STATUS_COMPRA: Record<string, { label: string; color: string }> = {
   cancelado: { label: "Cancelado", color: "bg-red-500/15 text-erro border-red-500/30" },
 };
 
-function formatCurrency(value: string | number) {
-  const num = typeof value === "string" ? parseFloat(value) : value;
-  if (isNaN(num)) return "R$ 0,00";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(num);
-}
 
 const compraSchema = z.object({
   descricao: z.string({ message: "Descrição é obrigatória" }).min(3, "Mínimo 3 caracteres"),

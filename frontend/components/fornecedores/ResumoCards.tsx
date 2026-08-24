@@ -3,15 +3,8 @@
 import { useEffect } from "react";
 import { Building2, CheckCircle2, DollarSign, TrendingUp } from "lucide-react";
 import { useResumoFornecedores } from "@/hooks/useFornecedores";
+import { formatCurrency } from "@/lib/utils";
 
-function formatCurrency(value: string | number) {
-  const num = typeof value === "string" ? parseFloat(value) : value;
-  if (isNaN(num)) return "R$ 0,00";
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(num);
-}
 
 interface CardProps {
   title: string;

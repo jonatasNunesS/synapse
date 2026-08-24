@@ -6,12 +6,8 @@ import { useRankingFornecedores } from "@/hooks/useFornecedores";
 import { ScoreSynapse } from "./ScoreSynapse";
 import { AvaliacaoStars } from "./AvaliacaoStars";
 import type { RankingFornecedor } from "@/types/fornecedores";
+import { formatCurrency } from "@/lib/utils";
 
-function formatCurrency(value: string | number) {
-  const num = typeof value === "string" ? parseFloat(value) : value;
-  if (isNaN(num)) return "R$ 0,00";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(num);
-}
 
 function PosicaoBadge({ posicao }: { posicao: number }) {
   if (posicao === 1)

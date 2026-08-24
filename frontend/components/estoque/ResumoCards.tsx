@@ -2,18 +2,13 @@
 
 import { Package, AlertTriangle, TrendingUp, DollarSign } from "lucide-react";
 import type { ResumoEstoque } from "@/types/estoque";
+import { formatCurrency } from "@/lib/utils";
 
 interface ResumoCardsProps {
   resumo: ResumoEstoque | null;
   loading?: boolean;
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
-}
 
 function SkeletonCard() {
   return (
@@ -107,7 +102,7 @@ export function ResumoCards({ resumo, loading }: ResumoCardsProps) {
             </div>
             <div className="text-2xl font-bold text-foreground mb-1">
               {card.formato === "moeda"
-                ? formatCurrency(card.valor as number)
+                ? formatCurrency(card.valor)
                 : card.valor.toLocaleString("pt-BR")}
             </div>
             <p className="text-xs text-muted-suave">{card.subtitulo}</p>

@@ -14,15 +14,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FluxoCaixaDia } from "@/types/dashboard";
 import { useCoresDoGrafico } from "@/lib/graficos";
+import { formatCurrencyCompact } from "@/lib/utils";
 
 interface FluxoCaixaWidgetProps {
   fluxo: FluxoCaixaDia[];
   isLoading: boolean;
   titulo?: string;
 }
-
-const formatCurrency = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", notation: "compact" });
 
 const formatDate = (dateStr: string) => {
   const [, mes, dia] = dateStr.split("-");
@@ -114,7 +112,7 @@ export function FluxoCaixaWidget({ fluxo, isLoading, titulo = "Fluxo de Caixa" }
               interval="preserveStartEnd"
             />
             <YAxis
-              tickFormatter={formatCurrency}
+              tickFormatter={formatCurrencyCompact}
               tick={{ fontSize: 11, fill: cores.eixo }}
               tickLine={false}
               axisLine={false}

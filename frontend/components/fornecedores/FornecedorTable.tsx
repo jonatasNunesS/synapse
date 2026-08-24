@@ -14,6 +14,7 @@ import {
 import { useFornecedores, useCategoriasFornecedor } from "@/hooks/useFornecedores";
 import { ScoreSynapse } from "./ScoreSynapse";
 import type { FornecedorList } from "@/types/fornecedores";
+import { formatCurrency } from "@/lib/utils";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   ativo: { label: "Ativo", color: "bg-emerald-500/15 text-sucesso border-emerald-500/30" },
@@ -31,11 +32,6 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function formatCurrency(value: string | number) {
-  const num = typeof value === "string" ? parseFloat(value) : value;
-  if (isNaN(num)) return "R$ 0,00";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(num);
-}
 
 interface FornecedorTableProps {
   onNovo: () => void;

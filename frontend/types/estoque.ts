@@ -143,19 +143,25 @@ export interface MovimentacaoCreate {
 export interface ResumoEstoque {
   total_produtos: number;
   total_skus: number;
-  valor_total_estoque: number;
+  // Decimais chegam como string: o DRF serializa DecimalField assim para não
+  // perder precisão em float — o certo para dinheiro. Declarar `number` aqui
+  // era uma mentira que só não aparecia porque o Intl coage string.
+  valor_total_estoque: string;
   produtos_sem_estoque: number;
   produtos_abaixo_minimo: number;
-  giro_medio: number;
+  giro_medio: string;
 }
 
 export interface RelatorioEstoque {
   total_produtos: number;
   total_skus: number;
-  valor_total_estoque: number;
+  // Decimais chegam como string: o DRF serializa DecimalField assim para não
+  // perder precisão em float — o certo para dinheiro. Declarar `number` aqui
+  // era uma mentira que só não aparecia porque o Intl coage string.
+  valor_total_estoque: string;
   produtos_sem_estoque: number;
   produtos_abaixo_minimo: number;
-  giro_medio: number;
+  giro_medio: string;
 }
 
 // ─── Filtros ──────────────────────────────────────────────────────────────────

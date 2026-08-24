@@ -32,11 +32,8 @@ import { STATUS_FUNIL_LABELS, STATUS_FUNIL_COLORS } from "@/types/clientes";
 import type { StatusFunil, InteracaoCliente } from "@/types/clientes";
 import { api, getErrorMessage } from "@/lib/api";
 import { useModulos } from "@/hooks/useModulos";
+import { formatCurrency } from "@/lib/utils";
 
-function formatCurrency(value: string | number): string {
-  const num = typeof value === "string" ? parseFloat(value) : value;
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(num || 0);
-}
 
 function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null;
