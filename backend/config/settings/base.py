@@ -59,6 +59,7 @@ LOCAL_APPS = [
     "modules.painel_admin",
     "modules.recorrencias",
     "modules.caixinhas",
+    "modules.vendas",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
