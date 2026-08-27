@@ -47,6 +47,9 @@ function itensIniciais(venda?: Venda | null): ItemEmEdicao[] {
     chave: item.id,
     produto: item.produto,
     produto_nome: item.produto_nome,
+    // Carregada para voltar intacta no envio: sem ela, salvar uma venda que
+    // tem item livre apagaria o nome da linha.
+    descricao: item.descricao,
     quantidade: item.quantidade,
     preco_unitario: item.preco_unitario,
   }));
@@ -87,6 +90,7 @@ export function VendaForm({ venda, onSubmit, onClose }: Props) {
         chave: `${produtoNovo.id}-${Date.now()}`,
         produto: produtoNovo.id,
         produto_nome: produtoNovo.nome,
+        descricao: "",
         quantidade: "1",
         // Nasce com o preço de tabela; editar é o caso comum, não a exceção.
         preco_unitario: String(produtoNovo.preco_venda ?? "0"),
@@ -120,6 +124,7 @@ export function VendaForm({ venda, onSubmit, onClose }: Props) {
         observacoes,
         itens: itens.map((item) => ({
           produto: item.produto,
+          descricao: item.descricao,
           quantidade: item.quantidade,
           preco_unitario: item.preco_unitario,
         })),

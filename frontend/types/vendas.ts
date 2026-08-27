@@ -19,9 +19,14 @@ export const FORMAS_PAGAMENTO: { valor: FormaPagamento; rotulo: string }[] = [
 
 export interface ItemVenda {
   id: string;
-  produto: string;
+  /**
+   * Nulo = item livre: linha sem produto no catálogo (um serviço, ou uma
+   * venda antiga migrada). Nesse caso `produto_nome` vem da descrição.
+   */
+  produto: string | null;
   produto_nome: string;
   produto_unidade: string;
+  descricao: string;
   quantidade: string;
   preco_unitario: string;
   subtotal: string;
@@ -49,14 +54,20 @@ export interface Venda {
 export interface ItemEmEdicao {
   /** Chave local da linha — o id real só existe depois de salvar. */
   chave: string;
-  produto: string;
+  produto: string | null;
   produto_nome: string;
+  descricao: string;
   quantidade: string;
   preco_unitario: string;
 }
 
 export interface ItemVendaPayload {
-  produto: string;
+  produto: string | null;
+  /**
+   * Obrigatória quando não há produto — é o que dá nome à linha. Vai junto
+   * mesmo com produto para não apagar a anotação de um item já gravado.
+   */
+  descricao: string;
   quantidade: string;
   preco_unitario: string;
 }

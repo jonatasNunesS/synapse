@@ -10,6 +10,7 @@ import { render, screen, fireEvent, waitFor, within } from "@testing-library/rea
 
 import { VendaForm } from "./VendaForm";
 import type { ProdutoList } from "@/types/estoque";
+import type { Venda } from "@/types/vendas";
 
 const CAMISA = {
   id: "prod-camisa",
@@ -214,6 +215,50 @@ describe("Envio", () => {
     expect(enviado.itens[0]).toMatchObject({ produto: "prod-camisa", quantidade: "1" });
     expect(enviado).not.toHaveProperty("subtotal");
     expect(enviado).not.toHaveProperty("total");
+  });
+
+  it("devolve o item livre intacto ao reeditar a venda", async () => {
+    // Item livre é a linha sem produto no catálogo — um serviço, ou uma
+    // venda antiga migrada. O nome dela mora na descrição; perder a descrição
+    // no caminho de volta apagaria o que a linha é, e o backend recusaria.
+    const comItemLivre = {
+      id: "v-1",
+      cliente: null,
+      cliente_nome: null,
+      data_venda: "2026-01-10",
+      subtotal: "1200.00",
+      desconto: "0",
+      total: "1200.00",
+      forma_pagamento: "pix",
+      status_pagamento: "pago",
+      data_prevista_pagamento: null,
+      observacoes: "",
+      itens: [
+        {
+          id: "i-1",
+          produto: null,
+          produto_nome: "Cerimonial",
+          produto_unidade: "",
+          descricao: "Cerimonial",
+          quantidade: "1",
+          preco_unitario: "1200.00",
+          subtotal: "1200.00",
+        },
+      ],
+      criado_em: "2026-01-10T10:00:00Z",
+      atualizado_em: "2026-01-10T10:00:00Z",
+    } as Venda;
+
+    render(<VendaForm venda={comItemLivre} onSubmit={onSubmit} onClose={onClose} />);
+
+    expect(screen.getByText("Cerimonial")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /salvar alterações/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0][0].itens[0]).toMatchObject({
+      produto: null,
+      descricao: "Cerimonial",
+    });
   });
 
   it("mostra o motivo real quando o backend recusa", async () => {

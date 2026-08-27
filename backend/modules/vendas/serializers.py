@@ -19,8 +19,8 @@ from .models import ItemVenda, Venda
 class ItemVendaSerializer(serializers.ModelSerializer):
     """Item como sai para a tela."""
 
-    produto_nome = serializers.CharField(source="produto.nome", read_only=True)
-    produto_unidade = serializers.CharField(source="produto.unidade", read_only=True)
+    produto_nome = serializers.SerializerMethodField()
+    produto_unidade = serializers.SerializerMethodField()
 
     class Meta:
         model = ItemVenda
@@ -29,21 +29,46 @@ class ItemVendaSerializer(serializers.ModelSerializer):
             "produto",
             "produto_nome",
             "produto_unidade",
+            "descricao",
             "quantidade",
             "preco_unitario",
             "subtotal",
         ]
         read_only_fields = ["id", "subtotal"]
 
+    def get_produto_nome(self, obj) -> str:
+        # Item livre não tem produto; o nome é a descrição.
+        return obj.nome_exibido
+
+    def get_produto_unidade(self, obj) -> str:
+        return obj.produto.unidade if obj.produto_id else ""
+
 
 class ItemVendaCreateSerializer(serializers.Serializer):
     """Item como entra. Sem subtotal: ele é derivado."""
 
-    produto = serializers.UUIDField()
+    produto = serializers.UUIDField(required=False, allow_null=True)
+    descricao = serializers.CharField(
+        max_length=255, required=False, allow_blank=True
+    )
     quantidade = serializers.DecimalField(max_digits=12, decimal_places=3)
     preco_unitario = serializers.DecimalField(
         max_digits=12, decimal_places=2, required=False
     )
+
+    def validate(self, attrs):
+        # Sem produto, a linha precisa dizer o que é. E sem produto o preço
+        # não tem de onde vir: é obrigatório informar.
+        if not attrs.get("produto"):
+            if not (attrs.get("descricao") or "").strip():
+                raise serializers.ValidationError(
+                    {"descricao": "Informe a descrição quando o item não tem produto."}
+                )
+            if attrs.get("preco_unitario") is None:
+                raise serializers.ValidationError(
+                    {"preco_unitario": "Informe o preço quando o item não tem produto."}
+                )
+        return attrs
 
     def validate_quantidade(self, value):
         if value <= 0:
@@ -146,21 +171,24 @@ class VendaCreateSerializer(serializers.Serializer):
             resolvidos = []
             subtotal = Decimal("0")
             for item in itens:
-                produto = Produto.objects.filter(
-                    id=item["produto"], empresa_id=self.empresa_id
-                ).first()
-                if not produto:
-                    raise serializers.ValidationError(
-                        {"itens": f"Produto {item['produto']} não encontrado."}
-                    )
+                produto = None
+                if item.get("produto"):
+                    produto = Produto.objects.filter(
+                        id=item["produto"], empresa_id=self.empresa_id
+                    ).first()
+                    if not produto:
+                        raise serializers.ValidationError(
+                            {"itens": f"Produto {item['produto']} não encontrado."}
+                        )
                 # Preço em branco cai no do cadastro — o caso comum é vender
-                # pelo preço de tabela.
+                # pelo preço de tabela. Item livre já teve o preço exigido.
                 preco = item.get("preco_unitario")
                 if preco is None:
                     preco = produto.preco_venda
                 resolvidos.append(
                     {
                         "produto": produto,
+                        "descricao": (item.get("descricao") or "").strip(),
                         "quantidade": item["quantidade"],
                         "preco_unitario": preco,
                     }

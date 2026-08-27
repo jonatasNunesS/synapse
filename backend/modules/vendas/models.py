@@ -130,11 +130,20 @@ class ItemVenda(models.Model):
     empresa = models.ForeignKey(
         Empresa, on_delete=models.CASCADE, related_name="itens_venda"
     )
+    # Nulo permite o ITEM LIVRE: uma linha que não corresponde a produto
+    # cadastrado. Serve para serviço ("cerimonial", "montagem") e é o que
+    # permite migrar a venda antiga que só guardava um valor, sem inventar
+    # produto no catálogo de estoque só para ela caber aqui.
     produto = models.ForeignKey(
         "synapse_estoque.Produto",
         on_delete=models.PROTECT,
+        null=True,
+        blank=True,
         related_name="itens_venda",
     )
+    # Nome da linha quando não há produto. Com produto é opcional: o nome sai
+    # do cadastro.
+    descricao = models.CharField(max_length=255, blank=True, default="")
     # Três casas seguem o padrão da movimentação de estoque, para quem vende
     # por peso ou metro.
     quantidade = models.DecimalField(max_digits=12, decimal_places=3)
@@ -154,14 +163,27 @@ class ItemVenda(models.Model):
             models.Index(fields=["empresa", "produto"], name="itemvenda_emp_prod_idx"),
         ]
 
+    @property
+    def nome_exibido(self) -> str:
+        """O que a linha mostra: o produto quando há, senão a descrição."""
+        if self.produto_id and self.produto:
+            return self.produto.nome
+        return self.descricao
+
     def __str__(self):
-        return f"{self.quantidade} × {self.produto.nome}"
+        return f"{self.quantidade} × {self.nome_exibido}"
 
     def clean(self):
         if self.quantidade is not None and self.quantidade <= 0:
             raise ValidationError({"quantidade": "A quantidade deve ser maior que zero."})
         if self.preco_unitario is not None and self.preco_unitario < 0:
             raise ValidationError({"preco_unitario": "O preço não pode ser negativo."})
+        # Um item precisa dizer o que está sendo vendido. Sem produto e sem
+        # descrição a linha não significa nada — e ainda somaria ao total.
+        if not self.produto_id and not (self.descricao or "").strip():
+            raise ValidationError(
+                {"descricao": "Informe a descrição quando o item não tem produto."}
+            )
 
     def save(self, *args, **kwargs):
         # O subtotal da linha nunca vem de fora: é sempre quantidade × preço.

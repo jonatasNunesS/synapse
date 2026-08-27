@@ -22,6 +22,7 @@ function item(quantidade: string, preco: string): ItemEmEdicao {
     chave: `${quantidade}-${preco}`,
     produto: "p1",
     produto_nome: "Produto",
+    descricao: "",
     quantidade,
     preco_unitario: preco,
   };

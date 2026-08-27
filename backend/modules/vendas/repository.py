@@ -72,6 +72,7 @@ class VendaRepository:
                 venda=venda,
                 empresa_id=venda.empresa_id,
                 produto=item["produto"],
+                descricao=item.get("descricao", ""),
                 quantidade=item["quantidade"],
                 preco_unitario=item["preco_unitario"],
             )

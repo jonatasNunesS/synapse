@@ -17,10 +17,12 @@ import pytest
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from django.core.exceptions import ValidationError
+
 from modules.auth.models import CustomUser, Empresa
 from modules.clientes.models import Cliente
 from modules.estoque.models import CategoriaEstoque, Produto
-from modules.vendas.models import Venda
+from modules.vendas.models import ItemVenda, Venda
 
 
 # ── Cenário ──────────────────────────────────────────────────────────────────
@@ -465,3 +467,165 @@ def test_criar_venda_NAO_cria_interacao_de_cliente(usuario, camisa, cliente):
     )
 
     assert InteracaoCliente.objects.count() == 0
+
+
+# ── Item livre: a linha que não tem produto no catálogo ──────────────────────
+#
+# Existe por dois motivos. O primeiro é o serviço — "cerimonial", "montagem",
+# "frete" — que se vende junto do produto e nunca esteve no estoque. O segundo
+# é a fase 2: a venda antiga guardava só um valor, e migrar sem isto obrigaria
+# a inventar produto no catálogo de estoque só para a venda velha caber aqui.
+#
+# A regra que sustenta os dois: a linha precisa dizer o que está sendo vendido.
+# Com produto o nome sai do cadastro; sem produto, a descrição é obrigatória.
+
+def _linha_livre(empresa, venda, descricao, quantidade="1", preco="50.00"):
+    return ItemVenda(
+        venda=venda,
+        empresa=empresa,
+        produto=None,
+        descricao=descricao,
+        quantidade=Decimal(quantidade),
+        preco_unitario=Decimal(preco),
+    )
+
+
+@pytest.mark.django_db
+def test_item_com_produto_e_sem_descricao_e_valido(empresa, camisa):
+    """Os itens da fase 1 continuam válidos exatamente como eram."""
+    venda = Venda.objects.create(empresa=empresa)
+    item = ItemVenda(
+        venda=venda,
+        empresa=empresa,
+        produto=camisa,
+        quantidade=Decimal("2"),
+        preco_unitario=Decimal("50.00"),
+    )
+
+    item.full_clean()
+    item.save()
+
+    assert item.descricao == ""
+    assert item.nome_exibido == "Camisa"
+
+
+@pytest.mark.django_db
+def test_item_sem_produto_e_com_descricao_e_valido(empresa):
+    venda = Venda.objects.create(empresa=empresa)
+    item = _linha_livre(empresa, venda, "Cerimonial")
+
+    item.full_clean()
+    item.save()
+
+    assert item.produto_id is None
+    assert item.nome_exibido == "Cerimonial"
+
+
+@pytest.mark.django_db
+def test_item_sem_produto_e_sem_descricao_e_recusado(empresa):
+    """Uma linha que não diz o que é ainda somaria ao total. Não entra."""
+    venda = Venda.objects.create(empresa=empresa)
+
+    for vazia in ("", "   "):
+        with pytest.raises(ValidationError) as erro:
+            _linha_livre(empresa, venda, vazia).full_clean()
+        assert "descricao" in erro.value.message_dict
+
+
+@pytest.mark.django_db
+def test_recalcular_totais_soma_item_livre(empresa, camisa):
+    """Item livre entra na conta como qualquer outro."""
+    venda = Venda.objects.create(empresa=empresa, desconto=Decimal("10.00"))
+    ItemVenda.objects.create(
+        venda=venda, empresa=empresa, produto=camisa,
+        quantidade=Decimal("2"), preco_unitario=Decimal("50.00"),
+    )
+    _linha_livre(empresa, venda, "Montagem", "1", "80.00").save()
+
+    venda.recalcular_totais()
+    venda.refresh_from_db()
+
+    assert venda.subtotal == Decimal("180.00")
+    assert venda.total == Decimal("170.00")
+
+
+@pytest.mark.django_db
+def test_venda_so_de_item_livre_pela_api(usuario):
+    resp = _client(usuario).post(
+        "/api/vendas/",
+        _venda([{"descricao": "Cerimonial", "quantidade": "1", "preco_unitario": "1200.00"}]),
+        format="json",
+    )
+
+    assert resp.status_code == 201
+    dados = resp.json()["data"]
+    assert Decimal(dados["total"]) == Decimal("1200.00")
+    item = dados["itens"][0]
+    assert item["produto"] is None
+    assert item["descricao"] == "Cerimonial"
+    # A tela lê produto_nome; sem produto, quem responde é a descrição.
+    assert item["produto_nome"] == "Cerimonial"
+    assert item["produto_unidade"] == ""
+
+
+@pytest.mark.django_db
+def test_venda_mistura_produto_e_item_livre(usuario, camisa):
+    resp = _client(usuario).post(
+        "/api/vendas/",
+        _venda([
+            {"produto": str(camisa.id), "quantidade": "2", "preco_unitario": "50.00"},
+            {"descricao": "Frete", "quantidade": "1", "preco_unitario": "25.00"},
+        ]),
+        format="json",
+    )
+
+    assert resp.status_code == 201
+    dados = resp.json()["data"]
+    assert Decimal(dados["subtotal"]) == Decimal("125.00")
+    assert [i["produto_nome"] for i in dados["itens"]] == ["Camisa", "Frete"]
+
+
+@pytest.mark.django_db
+def test_api_recusa_item_sem_produto_e_sem_descricao(usuario):
+    resp = _client(usuario).post(
+        "/api/vendas/",
+        _venda([{"quantidade": "1", "preco_unitario": "50.00"}]),
+        format="json",
+    )
+
+    assert resp.status_code == 400
+    assert "descri" in str(resp.json()["error"]).lower()
+    assert Venda.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_api_recusa_item_livre_sem_preco(usuario):
+    """Sem produto o preço não tem cadastro de onde cair. Precisa vir."""
+    resp = _client(usuario).post(
+        "/api/vendas/",
+        _venda([{"descricao": "Cerimonial", "quantidade": "1"}]),
+        format="json",
+    )
+
+    assert resp.status_code == 400
+    assert Venda.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_descricao_em_item_com_produto_nao_atrapalha(usuario, camisa):
+    """Com produto o nome sai do cadastro — a descrição fica como anotação."""
+    resp = _client(usuario).post(
+        "/api/vendas/",
+        _venda([{
+            "produto": str(camisa.id),
+            "descricao": "tamanho G",
+            "quantidade": "1",
+            "preco_unitario": "50.00",
+        }]),
+        format="json",
+    )
+
+    assert resp.status_code == 201
+    item = resp.json()["data"]["itens"][0]
+    assert item["produto_nome"] == "Camisa"
+    assert item["descricao"] == "tamanho G"
