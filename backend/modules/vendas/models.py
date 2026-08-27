@@ -70,6 +70,17 @@ class Venda(models.Model):
     data_prevista_pagamento = models.DateField(null=True, blank=True)
     observacoes = models.TextField(blank=True, default="")
 
+    # Lançamento de receita já existente para esta venda. Nasce preenchido só
+    # na migração da fase 2, copiado da interação de origem: a venda antiga já
+    # foi ao financeiro, e a fase 3 precisa saber disso para não lançar de novo.
+    lancamento_financeiro = models.ForeignKey(
+        "synapse_financeiro.Lancamento",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="venda_origem",
+    )
+
     criado_por = models.ForeignKey(
         CustomUser,
         on_delete=models.SET_NULL,

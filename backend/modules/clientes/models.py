@@ -204,6 +204,17 @@ class InteracaoCliente(models.Model):
         blank=True,
         related_name="interacao_origem",
     )
+    # Venda gerada por `manage.py migrar_vendas` a partir desta interação.
+    # É a marca de idempotência: preenchida, a interação não é migrada de
+    # novo. E é o rastro nos dois sentidos — a interação NÃO é apagada na
+    # migração, e este vínculo é o que permite auditar a nova contra a antiga.
+    migrada_para_venda = models.ForeignKey(
+        "synapse_vendas.Venda",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="interacao_migrada",
+    )
     criado_por = models.ForeignKey(
         CustomUser,
         on_delete=models.SET_NULL,
