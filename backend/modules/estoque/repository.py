@@ -207,6 +207,11 @@ class EstoqueRepository:
             motivo=dados.get("motivo", "ajuste_manual"),
             referencia=dados.get("referencia", ""),
             observacoes=dados.get("observacoes", ""),
+            # Preço praticado na saída. Guardar aqui é o que permite reconstruir
+            # o item a partir da movimentação — foi a falta disso no fluxo antigo
+            # que deixou as 22 vendas migradas sem produto.
+            preco_unitario=dados.get("preco_unitario"),
+            venda=dados.get("venda"),
             criado_por_id=usuario_id,
         )
 

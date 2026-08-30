@@ -11,16 +11,20 @@ import { X } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { FORMAS_PAGAMENTO, type Venda } from "@/types/vendas";
 
+import { VendaIntegracoes } from "./VendaIntegracoes";
+
 interface Props {
   venda: Venda;
   onClose: () => void;
+  /** Baixar estoque ou lançar financeiro devolve a venda atualizada. */
+  onAtualizada?: (venda: Venda) => void;
 }
 
 function rotuloForma(valor: string): string {
   return FORMAS_PAGAMENTO.find((f) => f.valor === valor)?.rotulo ?? "Não informada";
 }
 
-export function VendaDetalheModal({ venda, onClose }: Props) {
+export function VendaDetalheModal({ venda, onClose, onAtualizada }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4">
       <div className="my-8 w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-elevacao-lg">
@@ -97,6 +101,10 @@ export function VendaDetalheModal({ venda, onClose }: Props) {
           <p className="mt-4 whitespace-pre-wrap text-sm text-foreground-suave">
             {venda.observacoes}
           </p>
+        )}
+
+        {onAtualizada && (
+          <VendaIntegracoes venda={venda} onAtualizada={onAtualizada} />
         )}
       </div>
     </div>

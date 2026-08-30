@@ -86,6 +86,11 @@ class VendaSerializer(serializers.ModelSerializer):
 
     itens = ItemVendaSerializer(many=True, read_only=True)
     cliente_nome = serializers.SerializerMethodField()
+    # Estado das integrações. A tela precisa disso para saber se oferece a ação
+    # ou avisa que já foi feita — é o que impede o clique que duplicaria.
+    ja_baixou_estoque = serializers.SerializerMethodField()
+    tem_itens_com_produto = serializers.SerializerMethodField()
+    tem_lancamento_financeiro = serializers.SerializerMethodField()
 
     class Meta:
         model = Venda
@@ -102,10 +107,24 @@ class VendaSerializer(serializers.ModelSerializer):
             "data_prevista_pagamento",
             "observacoes",
             "itens",
+            "ja_baixou_estoque",
+            "tem_itens_com_produto",
+            "tem_lancamento_financeiro",
             "criado_em",
             "atualizado_em",
         ]
         read_only_fields = ["id", "subtotal", "total", "criado_em", "atualizado_em"]
+
+    def get_ja_baixou_estoque(self, obj) -> bool:
+        return obj.movimentacoes.exists()
+
+    def get_tem_itens_com_produto(self, obj) -> bool:
+        # Venda só de item livre (serviço, ou venda migrada) não tem estoque a
+        # baixar — a tela não deve nem oferecer.
+        return any(item.produto_id for item in obj.itens.all())
+
+    def get_tem_lancamento_financeiro(self, obj) -> bool:
+        return obj.lancamento_financeiro_id is not None
 
     def get_cliente_nome(self, obj) -> str | None:
         # None e não "Sem cliente": quem decide como exibir a ausência é a

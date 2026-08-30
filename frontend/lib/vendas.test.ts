@@ -10,6 +10,7 @@ import { describe, it, expect } from "vitest";
 
 import {
   descontoValido,
+  montarHistorico,
   paraNumero,
   subtotalDaVenda,
   subtotalDoItem,
@@ -105,5 +106,63 @@ describe("descontoValido — a mesma regra do backend", () => {
   it("sem itens, qualquer desconto acima de zero não cabe", () => {
     expect(descontoValido([], "1")).toBe(false);
     expect(descontoValido([], "0")).toBe(true);
+  });
+});
+
+describe("Histórico do cliente — interações e vendas juntas", () => {
+  const interacao = (id: string, dia: string, titulo = "Liguei") => ({
+    id,
+    titulo,
+    valor: null,
+    data_interacao: `${dia}T10:00:00Z`,
+  });
+  const venda = (id: string, dia: string, total = "50.00") => ({
+    id,
+    data_venda: dia,
+    total,
+    cliente_nome: "Maria",
+  });
+
+  it("junta as duas origens", () => {
+    const historico = montarHistorico(
+      [interacao("i-1", "2026-01-05")],
+      [venda("v-1", "2026-01-06")]
+    );
+
+    expect(historico).toHaveLength(2);
+    expect(historico.map((e) => e.origem)).toEqual(["venda", "interacao"]);
+  });
+
+  it("ordena do mais recente para o mais antigo", () => {
+    const historico = montarHistorico(
+      [interacao("i-velha", "2026-01-01"), interacao("i-nova", "2026-01-10")],
+      [venda("v-meio", "2026-01-05")]
+    );
+
+    expect(historico.map((e) => e.id)).toEqual(["i-nova", "v-meio", "i-velha"]);
+  });
+
+  it("marca a origem de cada entrada — é o que decide as ações da linha", () => {
+    const historico = montarHistorico([], [venda("v-1", "2026-01-06", "120.00")]);
+
+    expect(historico[0]).toMatchObject({
+      origem: "venda",
+      id: "v-1",
+      titulo: "Venda",
+      valor: "120.00",
+    });
+  });
+
+  it("cada uma das duas listas pode estar vazia", () => {
+    expect(montarHistorico([], [])).toEqual([]);
+    expect(montarHistorico([interacao("i-1", "2026-01-01")], [])).toHaveLength(1);
+    expect(montarHistorico([], [venda("v-1", "2026-01-01")])).toHaveLength(1);
+  });
+
+  it("a venda não escorrega para o dia anterior por causa do fuso", () => {
+    // Data pura vira meio-dia: qualquer fuso do Brasil mantém o mesmo dia.
+    const [entrada] = montarHistorico([], [venda("v-1", "2026-03-15")]);
+
+    expect(new Date(entrada.quando).getDate()).toBe(15);
   });
 });

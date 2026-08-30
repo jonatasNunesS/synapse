@@ -19,7 +19,8 @@ import { formatCurrency } from "@/lib/utils";
 import type { Venda } from "@/types/vendas";
 
 export default function VendasPage() {
-  const { vendas, total, loading, error, criar, atualizar, deletar } = useVendas();
+  const { vendas, total, loading, error, criar, atualizar, deletar, recarregar } =
+    useVendas();
 
   const [mostrarForm, setMostrarForm] = useState(false);
   const [vendaParaEditar, setVendaParaEditar] = useState<Venda | null>(null);
@@ -165,7 +166,16 @@ export default function VendasPage() {
       )}
 
       {vendaDetalhe && (
-        <VendaDetalheModal venda={vendaDetalhe} onClose={() => setVendaDetalhe(null)} />
+        <VendaDetalheModal
+          venda={vendaDetalhe}
+          onClose={() => setVendaDetalhe(null)}
+          onAtualizada={(atualizada) => {
+            // O modal mostra a venda que o backend devolveu, e a lista relê
+            // para os badges acompanharem sem a pessoa precisar recarregar.
+            setVendaDetalhe(atualizada);
+            recarregar();
+          }}
+        />
       )}
 
       <ConfirmDialog

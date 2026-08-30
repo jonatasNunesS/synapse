@@ -46,8 +46,35 @@ export interface Venda {
   data_prevista_pagamento: string | null;
   observacoes: string;
   itens: ItemVenda[];
+  /** Já gerou saída de estoque. Oferecer de novo baixaria duas vezes. */
+  ja_baixou_estoque: boolean;
+  /** Tem ao menos um item com produto. Sem isso não há estoque a baixar. */
+  tem_itens_com_produto: boolean;
+  /**
+   * Já tem lançamento de receita. Vem `true` nas vendas migradas da fase 2, que
+   * herdaram o lançamento da interação original — lançar de novo contaria o
+   * mesmo dinheiro duas vezes.
+   */
+  tem_lancamento_financeiro: boolean;
   criado_em: string;
   atualizado_em: string;
+}
+
+/** Uma linha da prévia de baixa: o saldo do produto antes e depois. */
+export interface PreviaEstoqueItem {
+  item_id: string;
+  produto_id: string;
+  produto_nome: string;
+  quantidade: string;
+  estoque_antes: string;
+  estoque_depois: string;
+  suficiente: boolean;
+}
+
+export interface PreviaEstoque {
+  ja_baixou: boolean;
+  tem_itens_com_produto: boolean;
+  itens: PreviaEstoqueItem[];
 }
 
 /** Um item enquanto está sendo montado na tela, antes de virar venda. */

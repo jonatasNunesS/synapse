@@ -238,6 +238,17 @@ class Movimentacao(models.Model):
     )
     referencia = models.CharField(_("referência"), max_length=255, blank=True)
     observacoes = models.TextField(_("observações"), blank=True)
+    # Venda que originou esta saída. Fica do lado da movimentação porque uma
+    # venda tem vários itens e portanto várias movimentações — o inverso não
+    # caberia. É por aqui que se sabe se a venda já baixou estoque, e o que
+    # estornar quando ela for apagada.
+    venda = models.ForeignKey(
+        "synapse_vendas.Venda",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="movimentacoes",
+    )
     criado_por = models.ForeignKey(
         "synapse_auth.CustomUser",
         on_delete=models.SET_NULL,

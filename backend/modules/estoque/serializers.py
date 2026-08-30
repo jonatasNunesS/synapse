@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from rest_framework import serializers
 from .models import CategoriaEstoque, Produto, Variacao, Movimentacao
 
@@ -156,11 +158,19 @@ class MovimentacaoSerializer(serializers.ModelSerializer):
         ]
 
     def get_valor_total(self, obj):
-        """Calcula valor_total = quantidade * preco_unitario * (1 - desconto/100)."""
+        """
+        Calcula valor_total = quantidade * preco_unitario * (1 - desconto/100).
+
+        Tudo em Decimal do início ao fim. `obj.desconto or 0` devolvia o int 0
+        quando o desconto era zero — que é o caso padrão — e `1 - 0/100` vira
+        float; multiplicar Decimal por float levanta TypeError. A conta nunca
+        rodava porque o preço nunca chegava a ser gravado: agora chega.
+        """
         if obj.preco_unitario is None:
             return None
-        desconto = obj.desconto or 0
-        return float(obj.quantidade * obj.preco_unitario * (1 - desconto / 100))
+        desconto = obj.desconto if obj.desconto is not None else Decimal("0")
+        fator = Decimal("1") - (desconto / Decimal("100"))
+        return float(obj.quantidade * obj.preco_unitario * fator)
 
 
 # ─── Movimentação — Escrita ───────────────────────────────────────────────────

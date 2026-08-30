@@ -362,10 +362,18 @@ class ClienteRepository:
 
     @staticmethod
     def listar_interacoes(cliente_id, empresa_id, filtros: dict):
-        """Retorna histórico de interações de um cliente."""
+        """
+        Retorna histórico de interações de um cliente.
+
+        A interação que virou Venda na migração fica de fora: ela continua no
+        banco, intacta, mas quem representa aquela venda agora é a Venda — que
+        tem itens e integrações. Mostrar as duas faria o cliente aparecer com a
+        mesma compra duas vezes, uma delas congelada.
+        """
         qs = InteracaoCliente.objects.filter(
             cliente_id=cliente_id,
             empresa_id=empresa_id,
+            migrada_para_venda__isnull=True,
         ).select_related(
             "criado_por", "movimentacao_estoque__produto", "lancamento_financeiro"
         )

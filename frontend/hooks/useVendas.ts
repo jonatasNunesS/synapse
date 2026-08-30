@@ -10,7 +10,27 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { api, getErrorMessage } from "@/lib/api";
-import type { Venda, VendaPayload } from "@/types/vendas";
+import type { PreviaEstoque, Venda, VendaPayload } from "@/types/vendas";
+
+/**
+ * As duas integrações da venda: estoque e financeiro.
+ *
+ * Nenhuma das duas acontece sozinha — quem chama é a tela, depois de a pessoa
+ * confirmar. O erro do backend sobe intacto: "já baixou", "já lançado" e
+ * "estoque insuficiente" são recusas que ela precisa ler para decidir.
+ */
+export const vendaIntegracoes = {
+  /** O que a baixa faria, sem fazer. */
+  previaEstoque: (id: string) =>
+    api.get<PreviaEstoque>(`/vendas/${id}/estoque/`).then((r) => r.data),
+
+  /** `parcial` responde ao aviso de estoque insuficiente: baixa o que há. */
+  baixarEstoque: (id: string, parcial = false) =>
+    api.post<Venda>(`/vendas/${id}/estoque/`, { parcial }).then((r) => r.data),
+
+  lancarFinanceiro: (id: string) =>
+    api.post<Venda>(`/vendas/${id}/financeiro/`, {}).then((r) => r.data),
+};
 
 export function useVendas() {
   const [vendas, setVendas] = useState<Venda[]>([]);

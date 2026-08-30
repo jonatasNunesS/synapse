@@ -42,3 +42,53 @@ export function totalDaVenda(itens: ItemEmEdicao[], desconto: string | number): 
 export function descontoValido(itens: ItemEmEdicao[], desconto: string | number): boolean {
   return paraNumero(desconto) <= subtotalDaVenda(itens);
 }
+
+/**
+ * Uma entrada do histórico do cliente, venha de onde vier.
+ *
+ * O histórico mistura duas origens: as interações (ligação, reunião, e as
+ * vendas do fluxo antigo que ainda não foram migradas) e as Vendas. Por isso a
+ * entrada carrega `origem` — é o que decide quais ações a linha oferece.
+ */
+export interface EntradaHistorico {
+  origem: "interacao" | "venda";
+  id: string;
+  /** ISO. Interação tem hora; venda tem só a data — o dia é o que ordena. */
+  quando: string;
+  titulo: string;
+  valor: string | null;
+}
+
+/**
+ * Junta interações e vendas num histórico só, do mais recente para o mais antigo.
+ *
+ * NÃO existe risco de a mesma venda aparecer duas vezes: o backend já tira da
+ * lista de interações aquelas que a migração da fase 2 converteu em Venda. Aqui
+ * é só ordenação — se a dedup mudasse de lugar, ela se perderia numa das duas
+ * pontas, e por isso ela mora lá, junto do dado.
+ */
+export function montarHistorico(
+  interacoes: { id: string; titulo: string; valor: string | null; data_interacao: string }[],
+  vendas: { id: string; data_venda: string; total: string; cliente_nome: string | null }[]
+): EntradaHistorico[] {
+  const deInteracoes: EntradaHistorico[] = interacoes.map((i) => ({
+    origem: "interacao",
+    id: i.id,
+    quando: i.data_interacao,
+    titulo: i.titulo,
+    valor: i.valor,
+  }));
+
+  const deVendas: EntradaHistorico[] = vendas.map((v) => ({
+    origem: "venda",
+    id: v.id,
+    // Venda guarda só a data; meio-dia evita que o fuso jogue para o dia anterior.
+    quando: `${v.data_venda}T12:00:00`,
+    titulo: "Venda",
+    valor: v.total,
+  }));
+
+  return [...deInteracoes, ...deVendas].sort(
+    (a, b) => new Date(b.quando).getTime() - new Date(a.quando).getTime()
+  );
+}
