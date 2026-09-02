@@ -87,6 +87,17 @@ vi.mock("@/hooks/useClientes", () => ({
   }),
 }));
 
+// O histórico agora tem duas fontes. Sem vendas aqui: o que estes testes
+// exercitam são as ações de interação.
+vi.mock("@/hooks/useVendas", () => ({
+  useVendasDoCliente: () => ({ vendas: [], loading: false, recarregar: vi.fn() }),
+  vendaIntegracoes: {
+    previaEstoque: vi.fn(),
+    baixarEstoque: vi.fn(),
+    lancarFinanceiro: vi.fn(),
+  },
+}));
+
 import ClienteDetalhePage from "./page";
 
 describe("Cliente — editar/apagar interações", () => {

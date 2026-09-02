@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -27,11 +27,15 @@ import { RegistrarFinanceiroModal } from "@/components/financeiro/RegistrarFinan
 import { ClienteForm } from "@/components/clientes/ClienteForm";
 import { ApagarComAjustesFlow } from "@/components/clientes/ApagarComAjustesFlow";
 import { FollowupAgendaModal } from "@/components/clientes/FollowupAgendaModal";
+import { VendaDetalheModal } from "@/components/vendas/VendaDetalheModal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { STATUS_FUNIL_LABELS, STATUS_FUNIL_COLORS } from "@/types/clientes";
 import type { StatusFunil, InteracaoCliente } from "@/types/clientes";
+import type { Venda } from "@/types/vendas";
 import { api, getErrorMessage } from "@/lib/api";
 import { useModulos } from "@/hooks/useModulos";
+import { useVendasDoCliente } from "@/hooks/useVendas";
+import { montarHistorico } from "@/lib/vendas";
 import { formatCurrency } from "@/lib/utils";
 
 
@@ -67,6 +71,11 @@ export default function ClienteDetalhePage() {
     apagarComAjustes,
     criarEventoFollowup,
   } = useInteracoes(id);
+  const {
+    vendas,
+    loading: vendasLoading,
+    recarregar: recarregarVendas,
+  } = useVendasDoCliente(id);
 
   const [showInteracaoForm, setShowInteracaoForm] = useState(false);
   const [editingInteracao, setEditingInteracao] = useState<InteracaoCliente | null>(null);
@@ -87,6 +96,30 @@ export default function ClienteDetalhePage() {
   const [followupAgenda, setFollowupAgenda] = useState<string | null>(null);
   // Filtro de controle de estoque (Todos | Descontados | Não descontados).
   const [filtroEstoque, setFiltroEstoque] = useState<FiltroEstoque>("");
+  const [vendaDetalhe, setVendaDetalhe] = useState<Venda | null>(null);
+
+  /**
+   * O histórico: interações e vendas na mesma linha do tempo.
+   *
+   * A mesma compra não aparece duas vezes — o backend já esconde da lista de
+   * interações aquelas que a migração da fase 2 virou Venda. Aqui só se junta
+   * e se ordena.
+   *
+   * O filtro de estoque vale para as duas origens: ele é sobre o que já foi
+   * descontado, e uma venda com produto pendente responde à mesma pergunta que
+   * uma interação pendente. Venda sem produto (serviço, ou venda migrada) não
+   * entra em nenhum dos dois lados do filtro: não há o que descontar.
+   */
+  const historico = useMemo(() => {
+    const vendasVisiveis = vendas.filter((venda) => {
+      if (filtroEstoque === "descontados") return venda.ja_baixou_estoque;
+      if (filtroEstoque === "nao_descontados") {
+        return venda.tem_itens_com_produto && !venda.ja_baixou_estoque;
+      }
+      return true;
+    });
+    return montarHistorico(interacoes, vendasVisiveis);
+  }, [interacoes, vendas, filtroEstoque]);
 
   useEffect(() => {
     carregar();
@@ -458,8 +491,8 @@ export default function ClienteDetalhePage() {
         {/* Coluna direita: Timeline de interações */}
         <div className="lg:col-span-2">
           <TimelineInteracoes
-            interacoes={interacoes}
-            loading={interacoesLoading}
+            entradas={historico}
+            loading={interacoesLoading || vendasLoading}
             onNovaInteracao={() => setShowInteracaoForm(true)}
             onEditar={(interacao) => setEditingInteracao(interacao)}
             onApagar={handleApagarInteracao}
@@ -468,6 +501,7 @@ export default function ClienteDetalhePage() {
                 ? (interacao) => setVendaParaEstoque(interacao)
                 : undefined
             }
+            onVerVenda={setVendaDetalhe}
             filtroEstoque={filtroEstoque}
             onFiltroEstoqueChange={setFiltroEstoque}
           />
@@ -550,6 +584,21 @@ export default function ClienteDetalhePage() {
           />
         );
       })()}
+
+      {/* Venda do histórico → detalhe, com as integrações dela */}
+      {vendaDetalhe && (
+        <VendaDetalheModal
+          venda={vendaDetalhe}
+          onClose={() => setVendaDetalhe(null)}
+          onAtualizada={(atualizada) => {
+            // Baixar ou lançar muda os badges da linha; o cliente relê porque
+            // o lançamento entra nos agregados dele.
+            setVendaDetalhe(atualizada);
+            recarregarVendas();
+            carregar();
+          }}
+        />
+      )}
 
       {/* Modal de edição */}
       {showEditForm && (

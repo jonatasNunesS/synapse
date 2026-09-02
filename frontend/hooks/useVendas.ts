@@ -85,6 +85,45 @@ export function useVendas() {
   return { vendas, total, loading, error, recarregar: carregar, criar, atualizar, deletar };
 }
 
+/**
+ * As vendas de um cliente, para o histórico dele.
+ *
+ * Sem isso a Venda não tem por onde chegar na timeline: até aqui a tela do
+ * cliente lia só as interações, e uma venda registrada em Vendas simplesmente
+ * não aparecia no histórico de quem comprou.
+ *
+ * Não há risco de a mesma compra aparecer duas vezes: o backend já tira da
+ * lista de interações aquelas que a migração da fase 2 converteu em Venda.
+ */
+export function useVendasDoCliente(clienteId: string | null) {
+  const [vendas, setVendas] = useState<Venda[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const carregar = useCallback(async () => {
+    if (!clienteId) {
+      setVendas([]);
+      return;
+    }
+    setLoading(true);
+    try {
+      const resp = await api.get<Venda[]>(`/vendas/?cliente_id=${clienteId}`);
+      setVendas((resp.data as unknown as Venda[]) ?? []);
+    } catch {
+      // O histórico não some por causa das vendas: as interações continuam
+      // aparecendo, e uma lista vazia é melhor do que a tela toda em branco.
+      setVendas([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [clienteId]);
+
+  useEffect(() => {
+    carregar();
+  }, [carregar]);
+
+  return { vendas, loading, recarregar: carregar };
+}
+
 /** Detalhe de uma venda, com os itens. */
 export function useVenda(id: string | null) {
   const [venda, setVenda] = useState<Venda | null>(null);

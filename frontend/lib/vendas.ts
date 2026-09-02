@@ -9,7 +9,8 @@
  * Trabalha com string porque é o que os campos de formulário produzem e o
  * que a API troca; converter uma vez, aqui, evita `NaN` espalhado pela tela.
  */
-import type { ItemEmEdicao } from "@/types/vendas";
+import type { InteracaoCliente } from "@/types/clientes";
+import type { ItemEmEdicao, Venda } from "@/types/vendas";
 
 /** Lê número de campo de formulário: vírgula decimal, vazio, lixo. */
 export function paraNumero(valor: string | number | null | undefined): number {
@@ -43,21 +44,27 @@ export function descontoValido(itens: ItemEmEdicao[], desconto: string | number)
   return paraNumero(desconto) <= subtotalDaVenda(itens);
 }
 
-/**
- * Uma entrada do histórico do cliente, venha de onde vier.
- *
- * O histórico mistura duas origens: as interações (ligação, reunião, e as
- * vendas do fluxo antigo que ainda não foram migradas) e as Vendas. Por isso a
- * entrada carrega `origem` — é o que decide quais ações a linha oferece.
- */
-export interface EntradaHistorico {
-  origem: "interacao" | "venda";
+/** O que toda entrada do histórico tem, venha de onde vier. */
+interface EntradaBase {
   id: string;
   /** ISO. Interação tem hora; venda tem só a data — o dia é o que ordena. */
   quando: string;
   titulo: string;
   valor: string | null;
 }
+
+/**
+ * Uma entrada do histórico do cliente, venha de onde vier.
+ *
+ * O histórico mistura duas origens: as interações (ligação, reunião, e as
+ * vendas do fluxo antigo que ainda não foram migradas) e as Vendas. Por isso a
+ * entrada carrega `origem` — é o que decide quais ações a linha oferece — e
+ * carrega junto o objeto de origem, porque cada uma das duas tem o que só ela
+ * sabe exibir: a interação tem follow-up e movimentação, a venda tem itens.
+ */
+export type EntradaHistorico<I = InteracaoCliente, V = Venda> =
+  | (EntradaBase & { origem: "interacao"; interacao: I })
+  | (EntradaBase & { origem: "venda"; venda: V });
 
 /**
  * Junta interações e vendas num histórico só, do mais recente para o mais antigo.
@@ -67,25 +74,27 @@ export interface EntradaHistorico {
  * é só ordenação — se a dedup mudasse de lugar, ela se perderia numa das duas
  * pontas, e por isso ela mora lá, junto do dado.
  */
-export function montarHistorico(
-  interacoes: { id: string; titulo: string; valor: string | null; data_interacao: string }[],
-  vendas: { id: string; data_venda: string; total: string; cliente_nome: string | null }[]
-): EntradaHistorico[] {
-  const deInteracoes: EntradaHistorico[] = interacoes.map((i) => ({
+export function montarHistorico<
+  I extends { id: string; titulo: string; valor: string | null; data_interacao: string },
+  V extends { id: string; data_venda: string; total: string }
+>(interacoes: I[], vendas: V[]): EntradaHistorico<I, V>[] {
+  const deInteracoes: EntradaHistorico<I, V>[] = interacoes.map((i) => ({
     origem: "interacao",
     id: i.id,
     quando: i.data_interacao,
     titulo: i.titulo,
     valor: i.valor,
+    interacao: i,
   }));
 
-  const deVendas: EntradaHistorico[] = vendas.map((v) => ({
+  const deVendas: EntradaHistorico<I, V>[] = vendas.map((v) => ({
     origem: "venda",
     id: v.id,
     // Venda guarda só a data; meio-dia evita que o fuso jogue para o dia anterior.
     quando: `${v.data_venda}T12:00:00`,
     titulo: "Venda",
     valor: v.total,
+    venda: v,
   }));
 
   return [...deInteracoes, ...deVendas].sort(

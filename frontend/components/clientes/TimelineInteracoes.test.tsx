@@ -6,7 +6,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { TimelineInteracoes } from "./TimelineInteracoes";
+import { montarHistorico } from "@/lib/vendas";
 import type { InteracaoCliente } from "@/types/clientes";
+
+/** A timeline recebe o histórico já misturado; aqui ele é só de interações. */
+const so = (...is: InteracaoCliente[]) => montarHistorico(is, []);
 
 const interacao: InteracaoCliente = {
   id: "int-1",
@@ -30,7 +34,7 @@ describe("TimelineInteracoes", () => {
   it("mostra os botões de editar e apagar em cada interação", () => {
     render(
       <TimelineInteracoes
-        interacoes={[interacao]}
+        entradas={so(interacao)}
         onEditar={vi.fn()}
         onApagar={vi.fn()}
       />
@@ -46,7 +50,7 @@ describe("TimelineInteracoes", () => {
   it("clicar em editar dispara onEditar com a interação", () => {
     const onEditar = vi.fn();
     render(
-      <TimelineInteracoes interacoes={[interacao]} onEditar={onEditar} onApagar={vi.fn()} />
+      <TimelineInteracoes entradas={so(interacao)} onEditar={onEditar} onApagar={vi.fn()} />
     );
     fireEvent.click(screen.getByRole("button", { name: "Editar interação" }));
     expect(onEditar).toHaveBeenCalledWith(interacao);
@@ -55,19 +59,19 @@ describe("TimelineInteracoes", () => {
   it("clicar em apagar dispara onApagar com a interação (não deleta direto)", () => {
     const onApagar = vi.fn();
     render(
-      <TimelineInteracoes interacoes={[interacao]} onEditar={vi.fn()} onApagar={onApagar} />
+      <TimelineInteracoes entradas={so(interacao)} onEditar={vi.fn()} onApagar={onApagar} />
     );
     fireEvent.click(screen.getByRole("button", { name: "Excluir interação" }));
     expect(onApagar).toHaveBeenCalledWith(interacao);
   });
 
   it("sem interações mostra o estado vazio", () => {
-    render(<TimelineInteracoes interacoes={[]} />);
+    render(<TimelineInteracoes entradas={[]} />);
     expect(screen.getByText("Nenhuma interação registrada.")).toBeInTheDocument();
   });
 
   it("sem callbacks, os botões de ação não aparecem", () => {
-    render(<TimelineInteracoes interacoes={[interacao]} />);
+    render(<TimelineInteracoes entradas={so(interacao)} />);
     const item = screen.getByText("Ligação de apresentação").closest("div")!;
     expect(
       within(item.parentElement as HTMLElement).queryByRole("button", {
@@ -84,26 +88,26 @@ describe("TimelineInteracoes — badge de pagamento", () => {
   }
 
   it('badge verde "Pago"', () => {
-    render(<TimelineInteracoes interacoes={[venda({ status_pagamento: "pago", status_pagamento_display: "Pago" })]} />);
+    render(<TimelineInteracoes entradas={so(venda({ status_pagamento: "pago", status_pagamento_display: "Pago" }))} />);
     expect(screen.getByText("Pago")).toBeInTheDocument();
   });
 
   it('badge vermelho "Atrasado" para pendente vencida', () => {
-    render(<TimelineInteracoes interacoes={[venda({
+    render(<TimelineInteracoes entradas={so(venda({
       status_pagamento: "pendente", pagamento_atrasado: true, dias_para_vencer: -2,
-    })]} />);
+    }))} />);
     expect(screen.getByText("Atrasado")).toBeInTheDocument();
   });
 
   it('badge "Vence em N dias" para pendente futura', () => {
-    render(<TimelineInteracoes interacoes={[venda({
+    render(<TimelineInteracoes entradas={so(venda({
       status_pagamento: "pendente", pagamento_atrasado: false, dias_para_vencer: 3,
-    })]} />);
+    }))} />);
     expect(screen.getByText("Vence em 3 dias")).toBeInTheDocument();
   });
 
   it("sem badge quando nao_se_aplica", () => {
-    render(<TimelineInteracoes interacoes={[venda({ status_pagamento: "nao_se_aplica" })]} />);
+    render(<TimelineInteracoes entradas={so(venda({ status_pagamento: "nao_se_aplica" }))} />);
     expect(screen.queryByText("Pago")).not.toBeInTheDocument();
     expect(screen.queryByText("Pendente")).not.toBeInTheDocument();
     expect(screen.queryByText(/Vence/)).not.toBeInTheDocument();
@@ -117,21 +121,21 @@ describe("TimelineInteracoes — badge de controle de estoque", () => {
   }
 
   it('venda com movimentação → badge verde "Estoque descontado"', () => {
-    render(<TimelineInteracoes interacoes={[venda({
+    render(<TimelineInteracoes entradas={so(venda({
       movimentacao_estoque_info: { id: "m1", produto_nome: "Camisa", quantidade: "3", tipo: "saida" },
-    })]} />);
+    }))} />);
     expect(screen.getByText("Estoque descontado")).toBeInTheDocument();
     expect(screen.queryByText("Não descontado")).not.toBeInTheDocument();
   });
 
   it('venda com valor e sem movimentação → badge amarelo "Não descontado"', () => {
-    render(<TimelineInteracoes interacoes={[venda({})]} />);
+    render(<TimelineInteracoes entradas={so(venda({}))} />);
     expect(screen.getByText("Não descontado")).toBeInTheDocument();
     expect(screen.queryByText("Estoque descontado")).not.toBeInTheDocument();
   });
 
   it("interação que não é venda não mostra badge de estoque", () => {
-    render(<TimelineInteracoes interacoes={[interacao]} />);
+    render(<TimelineInteracoes entradas={so(interacao)} />);
     expect(screen.queryByText("Não descontado")).not.toBeInTheDocument();
     expect(screen.queryByText("Estoque descontado")).not.toBeInTheDocument();
   });
@@ -139,7 +143,7 @@ describe("TimelineInteracoes — badge de controle de estoque", () => {
   it('"Descontar do estoque agora" dispara onDescontarEstoque', () => {
     const onDescontar = vi.fn();
     const v = venda({});
-    render(<TimelineInteracoes interacoes={[v]} onDescontarEstoque={onDescontar} />);
+    render(<TimelineInteracoes entradas={so(v)} onDescontarEstoque={onDescontar} />);
     fireEvent.click(screen.getByRole("button", { name: /Descontar do estoque agora/ }));
     expect(onDescontar).toHaveBeenCalledWith(v);
   });
@@ -148,7 +152,7 @@ describe("TimelineInteracoes — badge de controle de estoque", () => {
     const onFiltro = vi.fn();
     render(
       <TimelineInteracoes
-        interacoes={[]}
+        entradas={[]}
         filtroEstoque=""
         onFiltroEstoqueChange={onFiltro}
       />
