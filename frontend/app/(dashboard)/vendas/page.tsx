@@ -6,17 +6,18 @@
  * derivado das linhas. Convive com o registro de venda por interação do
  * cliente — as duas formas coexistem até a migração da fase 2.
  */
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Plus, Receipt, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { VendaDetalheModal } from "@/components/vendas/VendaDetalheModal";
 import { VendaForm } from "@/components/vendas/VendaForm";
+import { VendaPosVendaFlow } from "@/components/vendas/VendaPosVendaFlow";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useVendas } from "@/hooks/useVendas";
 import { getErrorMessage } from "@/lib/api";
 import { formatCurrency } from "@/lib/utils";
-import type { Venda } from "@/types/vendas";
+import type { Venda, VendaPayload } from "@/types/vendas";
 
 export default function VendasPage() {
   const { vendas, total, loading, error, criar, atualizar, deletar, recarregar } =
@@ -27,6 +28,27 @@ export default function VendasPage() {
   const [vendaDetalhe, setVendaDetalhe] = useState<Venda | null>(null);
   const [vendaParaExcluir, setVendaParaExcluir] = useState<Venda | null>(null);
   const [excluindo, setExcluindo] = useState(false);
+  // Venda que acabou de ser registrada → as perguntas de estoque e financeiro.
+  const [vendaRecemCriada, setVendaRecemCriada] = useState<Venda | null>(null);
+
+  /**
+   * Registra a venda e guarda o que o backend devolveu.
+   *
+   * É esse retorno que dispara as perguntas: ele traz `tem_itens_com_produto`
+   * e `tem_lancamento_financeiro`, que decidem o que sequer é perguntado. O
+   * erro sobe intacto — quem mostra o motivo é o formulário, que continua
+   * aberto com o que a pessoa digitou.
+   */
+  const criarEPerguntar = async (dados: VendaPayload): Promise<Venda> => {
+    const nova = await criar(dados);
+    setVendaRecemCriada(nova);
+    return nova;
+  };
+
+  // Estáveis porque o fluxo as usa dentro de efeitos: uma identidade nova a
+  // cada render faria os efeitos rodarem de novo sem que nada tivesse mudado.
+  const aoIntegrar = useCallback(() => recarregar(), [recarregar]);
+  const fecharPerguntas = useCallback(() => setVendaRecemCriada(null), []);
 
   const confirmarExclusao = async () => {
     if (!vendaParaExcluir || excluindo) return; // evita duplo clique
@@ -154,7 +176,15 @@ export default function VendasPage() {
       </div>
 
       {mostrarForm && (
-        <VendaForm onSubmit={criar} onClose={() => setMostrarForm(false)} />
+        <VendaForm onSubmit={criarEPerguntar} onClose={() => setMostrarForm(false)} />
+      )}
+
+      {vendaRecemCriada && (
+        <VendaPosVendaFlow
+          venda={vendaRecemCriada}
+          onAtualizada={aoIntegrar}
+          onFim={fecharPerguntas}
+        />
       )}
 
       {vendaParaEditar && (
