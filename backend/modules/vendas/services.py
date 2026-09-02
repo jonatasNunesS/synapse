@@ -295,27 +295,40 @@ class VendaService:
         Mesma mecânica do fluxo antigo (`apagar_interacao_com_ajustes`): o
         estoque volta por movimentação inversa, e o lançamento pendente é
         apagado enquanto o pago é cancelado — pago é histórico, não se reescreve.
+
+        Tudo dentro de uma transação só. É a diferença deliberada em relação ao
+        fluxo antigo: lá, uma falha no meio deixava o estoque devolvido e a
+        interação viva, e ninguém descobria até conferir. Aqui, ou os três
+        passos acontecem, ou nenhum acontece.
         """
+        from django.db import transaction
+
         from modules.financeiro.repository import FinanceiroRepository
 
         venda = VendaService.obter(empresa_id, venda_id)
         resumo = {"movimentacoes_estornadas": 0, "financeiro_ajustado": None}
 
-        if estornar_estoque:
-            resumo["movimentacoes_estornadas"] = VendaService.estornar_estoque(
-                empresa_id, usuario_id, venda, motivo=f"Venda #{venda.id} apagada"
-            )
+        with transaction.atomic():
+            if estornar_estoque:
+                resumo["movimentacoes_estornadas"] = VendaService.estornar_estoque(
+                    empresa_id, usuario_id, venda, motivo=f"Venda #{venda.id} apagada"
+                )
 
-        if apagar_financeiro and venda.lancamento_financeiro_id:
-            lancamento = venda.lancamento_financeiro
-            if lancamento.status == "pago":
-                lancamento.status = "cancelado"
-                lancamento.save(update_fields=["status"])
-                resumo["financeiro_ajustado"] = "cancelado"
-            else:
-                FinanceiroRepository.deletar_lancamento(lancamento)
-                resumo["financeiro_ajustado"] = "apagado"
+            if apagar_financeiro and venda.lancamento_financeiro_id:
+                lancamento = venda.lancamento_financeiro
+                if lancamento.status == "pago":
+                    lancamento.status = "cancelado"
+                    lancamento.save(update_fields=["status"])
+                    resumo["financeiro_ajustado"] = "cancelado"
+                else:
+                    FinanceiroRepository.deletar_lancamento(lancamento)
+                    resumo["financeiro_ajustado"] = "apagado"
+
+            VendaRepository.deletar(venda)
+
+        # Fora da transação: invalidar cache do que não foi confirmado seria
+        # invalidar à toa, e invalidar dentro de um bloco que pode reverter
+        # deixaria o cache limpo para um estado que não aconteceu.
+        if resumo["financeiro_ajustado"]:
             invalidate_cache(empresa_id, "financeiro")
-
-        VendaRepository.deletar(venda)
         return resumo

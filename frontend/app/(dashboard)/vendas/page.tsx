@@ -13,7 +13,12 @@ import { toast } from "sonner";
 import { VendaDetalheModal } from "@/components/vendas/VendaDetalheModal";
 import { VendaForm } from "@/components/vendas/VendaForm";
 import { VendaPosVendaFlow } from "@/components/vendas/VendaPosVendaFlow";
+import {
+  VendaApagarFlow,
+  vendaTemVinculos,
+} from "@/components/vendas/VendaApagarFlow";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useModulos } from "@/hooks/useModulos";
 import { useVendas } from "@/hooks/useVendas";
 import { getErrorMessage } from "@/lib/api";
 import { formatCurrency } from "@/lib/utils";
@@ -22,6 +27,7 @@ import type { Venda, VendaPayload } from "@/types/vendas";
 export default function VendasPage() {
   const { vendas, total, loading, error, criar, atualizar, deletar, recarregar } =
     useVendas();
+  const { moduloAtivo } = useModulos();
 
   const [mostrarForm, setMostrarForm] = useState(false);
   const [vendaParaEditar, setVendaParaEditar] = useState<Venda | null>(null);
@@ -30,6 +36,8 @@ export default function VendasPage() {
   const [excluindo, setExcluindo] = useState(false);
   // Venda que acabou de ser registrada → as perguntas de estoque e financeiro.
   const [vendaRecemCriada, setVendaRecemCriada] = useState<Venda | null>(null);
+  // Venda em exclusão que tem vínculos → as perguntas de estorno.
+  const [apagarFlow, setApagarFlow] = useState<Venda | null>(null);
 
   /**
    * Registra a venda e guarda o que o backend devolveu.
@@ -50,14 +58,49 @@ export default function VendasPage() {
   const aoIntegrar = useCallback(() => recarregar(), [recarregar]);
   const fecharPerguntas = useCallback(() => setVendaRecemCriada(null), []);
 
+  /**
+   * Confirmada a exclusão, o que vem antes de apagar.
+   *
+   * Venda que baixou estoque ou lançou no caixa não some em silêncio: as
+   * perguntas de estorno vêm primeiro, como no fluxo antigo de interação. Sem
+   * vínculo, apaga direto — não há nada a perguntar.
+   */
   const confirmarExclusao = async () => {
     if (!vendaParaExcluir || excluindo) return; // evita duplo clique
+    const alvo = vendaParaExcluir;
+
+    if (vendaTemVinculos(alvo, moduloAtivo("estoque"))) {
+      setVendaParaExcluir(null);
+      setApagarFlow(alvo);
+      return;
+    }
+
     setExcluindo(true);
     try {
-      await deletar(vendaParaExcluir.id);
+      await deletar(alvo.id);
       toast.success("Venda excluída.");
       setVendaParaExcluir(null);
     } catch (err) {
+      toast.error(getErrorMessage(err), { duration: 7000 });
+    } finally {
+      setExcluindo(false);
+    }
+  };
+
+  /** Executa a exclusão com as escolhas de estorno que a pessoa fez. */
+  const finalizarApagarComAjustes = async (
+    estornarEstoque: boolean,
+    apagarFinanceiro: boolean
+  ) => {
+    if (!apagarFlow || excluindo) return;
+    setExcluindo(true);
+    try {
+      await deletar(apagarFlow.id, { estornarEstoque, apagarFinanceiro });
+      toast.success("Venda excluída.");
+      setApagarFlow(null);
+    } catch (err) {
+      // O motivo real importa: "estoque insuficiente para estornar" é
+      // acionável, "erro inesperado" não é.
       toast.error(getErrorMessage(err), { duration: 7000 });
     } finally {
       setExcluindo(false);
@@ -205,6 +248,16 @@ export default function VendasPage() {
             setVendaDetalhe(atualizada);
             recarregar();
           }}
+        />
+      )}
+
+      {/* Apagar venda com vínculos → perguntas de estorno antes de executar */}
+      {apagarFlow && (
+        <VendaApagarFlow
+          venda={apagarFlow}
+          estoqueAtivo={moduloAtivo("estoque")}
+          processando={excluindo}
+          onFinalizar={finalizarApagarComAjustes}
         />
       )}
 

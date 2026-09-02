@@ -74,9 +74,23 @@ export function useVendas() {
     [carregar]
   );
 
+  /**
+   * Apaga a venda, desfazendo o que a pessoa mandou desfazer.
+   *
+   * As escolhas vão por query string porque DELETE não carrega corpo de forma
+   * confiável. Sem nada marcado, apaga só a venda: estornar estoque e mexer no
+   * caixa é decisão explícita de quem apaga, nunca um efeito colateral.
+   */
   const deletar = useCallback(
-    async (id: string): Promise<void> => {
-      await api.delete(`/vendas/${id}/`);
+    async (
+      id: string,
+      ajustes?: { estornarEstoque?: boolean; apagarFinanceiro?: boolean }
+    ): Promise<void> => {
+      const params = new URLSearchParams();
+      if (ajustes?.estornarEstoque) params.set("estornar_estoque", "true");
+      if (ajustes?.apagarFinanceiro) params.set("apagar_financeiro", "true");
+      const query = params.toString();
+      await api.delete(`/vendas/${id}/${query ? `?${query}` : ""}`);
       await carregar();
     },
     [carregar]
