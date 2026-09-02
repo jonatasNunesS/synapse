@@ -500,6 +500,43 @@ def test_interacao_nao_migrada_continua_na_timeline(usuario, empresa, cliente):
 
 
 @pytest.mark.django_db
+def test_venda_migrada_aparece_uma_vez_so_no_historico(usuario, cliente, venda_migrada):
+    """
+    A prova da dedup, olhando as duas fontes juntas.
+
+    O histórico do cliente lê interações E vendas. A mesma compra migrada está
+    nos dois lugares no banco, e é a soma das duas listas que a tela mostra —
+    então é a soma que precisa dar um.
+    """
+    cli = _client(usuario)
+
+    interacoes = cli.get(f"/api/clientes/{cliente.id}/interacoes/").json()["data"]
+    vendas = cli.get(f"/api/vendas/?cliente_id={cliente.id}").json()["data"]
+
+    assert len(interacoes) == 0
+    assert len(vendas) == 1
+    assert len(interacoes) + len(vendas) == 1
+
+
+@pytest.mark.django_db
+def test_interacao_comum_e_venda_convivem_no_historico(
+    usuario, empresa, cliente, camisa
+):
+    """Esconder a migrada não pode esconder o que nunca virou venda."""
+    InteracaoCliente.objects.create(
+        empresa=empresa, cliente=cliente, tipo="ligacao", titulo="Liguei",
+        data_interacao=timezone.now(),
+    )
+    _criar_venda(usuario, [_item(camisa, "1", "50.00")], cliente=str(cliente.id))
+    cli = _client(usuario)
+
+    interacoes = cli.get(f"/api/clientes/{cliente.id}/interacoes/").json()["data"]
+    vendas = cli.get(f"/api/vendas/?cliente_id={cliente.id}").json()["data"]
+
+    assert len(interacoes) + len(vendas) == 2
+
+
+@pytest.mark.django_db
 def test_venda_com_cliente_aparece_na_listagem_dele(usuario, camisa, cliente):
     _criar_venda(usuario, [_item(camisa, "1", "50.00")], cliente=str(cliente.id))
     _criar_venda(usuario, [_item(camisa, "1", "50.00")], cliente=None)
@@ -570,6 +607,71 @@ def test_apagar_com_financeiro_pendente_apaga_o_lancamento(usuario, camisa):
     assert Lancamento.objects.count() == 0
 
 
+@pytest.mark.django_db
+def test_estorno_e_movimentacao_inversa_e_nao_apaga_a_original(usuario, camisa):
+    """
+    O estoque é imutável por design: desfazer é somar de volta.
+
+    Apagar a saída faria o saldo bater e o histórico mentir — ninguém saberia
+    que a mercadoria chegou a sair. O que fica é o par: a saída original e a
+    entrada que a estorna.
+    """
+    venda = _criar_venda(usuario, [_item(camisa, "3", "50.00")])
+    cli = _client(usuario)
+    cli.post(f"/api/vendas/{venda['id']}/estoque/", {}, format="json")
+    original = Movimentacao.objects.get()
+
+    cli.delete(f"/api/vendas/{venda['id']}/?estornar_estoque=true")
+
+    # A original continua lá, do jeito que era.
+    original.refresh_from_db()
+    assert original.tipo == "saida"
+    assert original.quantidade == Decimal("3.000")
+
+    estorno = Movimentacao.objects.exclude(pk=original.pk).get()
+    assert estorno.tipo == "entrada"
+    assert estorno.quantidade == original.quantidade
+    assert str(original.id) in estorno.referencia
+
+
+@pytest.mark.django_db
+def test_apagar_com_ajustes_e_tudo_ou_nada(usuario, camisa, monkeypatch):
+    """
+    Uma falha no meio não pode deixar o estoque devolvido e a venda viva.
+
+    É a diferença deliberada em relação ao fluxo antigo de interação, onde a
+    sequência não era transacional: lá, um erro depois do estorno deixava um
+    estado que ninguém descobria até conferir o estoque na mão.
+    """
+    from modules.vendas.repository import VendaRepository
+    from modules.vendas.services import VendaService
+
+    venda = _criar_venda(usuario, [_item(camisa, "3", "50.00")])
+    cli = _client(usuario)
+    cli.post(f"/api/vendas/{venda['id']}/estoque/", {}, format="json")
+    camisa.refresh_from_db()
+    assert camisa.estoque_atual == Decimal("7")
+
+    # O último passo falha, depois de o estorno já ter acontecido. Chamado no
+    # serviço, e não pela rota: o handler da API transformaria a exceção em 500
+    # e esconderia justamente o que este teste quer ver.
+    def explode(_venda):
+        raise RuntimeError("falha ao apagar a venda")
+
+    monkeypatch.setattr(VendaRepository, "deletar", staticmethod(explode))
+
+    with pytest.raises(RuntimeError):
+        VendaService.apagar_com_ajustes(
+            usuario.empresa_id, usuario.id, venda["id"], estornar_estoque=True
+        )
+
+    # Nada aconteceu: o estorno voltou atrás junto com a exclusão.
+    camisa.refresh_from_db()
+    assert camisa.estoque_atual == Decimal("7")
+    assert Movimentacao.objects.count() == 1
+    assert Venda.objects.filter(pk=venda["id"]).exists()
+
+
 # ── Multi-tenant ─────────────────────────────────────────────────────────────
 
 @pytest.mark.django_db
@@ -606,19 +708,42 @@ def test_movimentacao_da_venda_fica_na_empresa_da_venda(usuario, camisa, empresa
     assert Movimentacao.objects.get().empresa_id == empresa.id
 
 
-# ── Criar a venda continua não disparando nada sozinho ───────────────────────
+# ── O POST de criar não age sozinho; quem age é a resposta à pergunta ────────
 
 @pytest.mark.django_db
-def test_criar_venda_ainda_NAO_baixa_nem_lanca_sozinha(usuario, camisa):
+def test_criar_venda_nao_age_sozinha_e_devolve_o_que_a_tela_precisa_perguntar(
+    usuario, camisa
+):
     """
-    Quem decide é a pessoa.
+    Criar a venda não baixa nem lança — mas devolve com o que perguntar.
 
-    A fase 3A ligou as integrações, mas elas continuam PERGUNTANDO — criar a
-    venda não dispara nenhuma das duas.
+    Este teste já existiu afirmando só a metade de cima, e foi por isso que ele
+    ficou verde enquanto, na tela, a venda era registrada e nenhuma das duas
+    perguntas aparecia: nada aqui obrigava a resposta a dizer se havia o que
+    perguntar. A ausência de efeito continua sendo o certo — quem decide é a
+    pessoa —, mas o que sustenta a decisão são os dois campos abaixo, e é a
+    partir deles que a tela monta as perguntas.
     """
-    _criar_venda(usuario, [_item(camisa, "3", "50.00")])
+    venda = _criar_venda(usuario, [_item(camisa, "3", "50.00")])
 
     camisa.refresh_from_db()
     assert camisa.estoque_atual == Decimal("10")
     assert Movimentacao.objects.count() == 0
     assert Lancamento.objects.count() == 0
+
+    # O que a tela lê para saber o que oferecer logo depois de salvar.
+    assert venda["tem_itens_com_produto"] is True
+    assert venda["ja_baixou_estoque"] is False
+    assert venda["tem_lancamento_financeiro"] is False
+
+
+@pytest.mark.django_db
+def test_venda_so_de_item_livre_diz_que_nao_ha_estoque_a_perguntar(usuario):
+    """A venda migrada tem esta forma: a tela não deve oferecer a baixa."""
+    venda = _criar_venda(
+        usuario,
+        [{"produto": None, "descricao": "Consultoria", "quantidade": "1",
+          "preco_unitario": "300.00"}],
+    )
+
+    assert venda["tem_itens_com_produto"] is False
