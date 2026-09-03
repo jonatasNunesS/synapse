@@ -6,7 +6,8 @@
  * derivado das linhas. Convive com o registro de venda por interação do
  * cliente — as duas formas coexistem até a migração da fase 2.
  */
-import { useCallback, useState } from "react";
+import { Suspense, useCallback, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Receipt, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -17,14 +18,43 @@ import {
   VendaApagarFlow,
   vendaTemVinculos,
 } from "@/components/vendas/VendaApagarFlow";
+import { VendaFiadoModal } from "@/components/vendas/VendaFiadoModal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useModulos } from "@/hooks/useModulos";
 import { useVendas } from "@/hooks/useVendas";
 import { getErrorMessage } from "@/lib/api";
+import { badgePagamentoVenda, temCobrancaAberta } from "@/lib/vendaStatus";
 import { formatCurrency } from "@/lib/utils";
 import type { Venda, VendaPayload } from "@/types/vendas";
 
+/** As classes de cada tom do badge. O papel vem do lib; a cor, da tela. */
+const TOM_BADGE: Record<string, string> = {
+  sucesso: "bg-emerald-400/10 text-sucesso",
+  alerta: "bg-amber-400/10 text-alerta",
+  erro: "bg-red-400/10 text-erro",
+  neutro: "bg-zinc-400/10 text-muted-foreground",
+};
+
+/**
+ * `useSearchParams` obriga a página a renderizar no cliente, e o Next recusa
+ * pré-renderizar uma rota estática que faz isso sem uma fronteira de Suspense.
+ * A leitura do `?fiado=` mora na parte de dentro; esta casca só a isola.
+ */
 export default function VendasPage() {
+  return (
+    <Suspense
+      fallback={
+        <p className="px-5 py-10 text-center text-sm text-muted-foreground">
+          Carregando vendas...
+        </p>
+      }
+    >
+      <Vendas />
+    </Suspense>
+  );
+}
+
+function Vendas() {
   const { vendas, total, loading, error, criar, atualizar, deletar, recarregar } =
     useVendas();
   const { moduloAtivo } = useModulos();
@@ -38,6 +68,19 @@ export default function VendasPage() {
   const [vendaRecemCriada, setVendaRecemCriada] = useState<Venda | null>(null);
   // Venda em exclusão que tem vínculos → as perguntas de estorno.
   const [apagarFlow, setApagarFlow] = useState<Venda | null>(null);
+  // Venda fiada cuja cobrança está aberta na tela.
+  const [vendaParaCobrar, setVendaParaCobrar] = useState<Venda | null>(null);
+
+  // Chegou pelo sino? (?fiado=<id>) → abre a cobrança daquela venda.
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const fiadoId = searchParams.get("fiado");
+  const [fiadoFechado, setFiadoFechado] = useState<string | null>(null);
+  const vendaDoSino =
+    fiadoId && fiadoId !== fiadoFechado
+      ? vendas.find((v) => v.id === fiadoId) ?? null
+      : null;
+  const cobranca = vendaParaCobrar ?? vendaDoSino;
 
   /**
    * Registra a venda e guarda o que o backend devolveu.
@@ -182,18 +225,27 @@ export default function VendasPage() {
                       {formatCurrency(venda.total)}
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={
-                          venda.status_pagamento === "pago"
-                            ? "rounded-full bg-emerald-400/10 px-2 py-0.5 text-xs text-sucesso"
-                            : "rounded-full bg-amber-400/10 px-2 py-0.5 text-xs text-alerta"
-                        }
-                      >
-                        {venda.status_pagamento === "pago" ? "Pago" : "Pendente"}
-                      </span>
+                      {(() => {
+                        const badge = badgePagamentoVenda(venda);
+                        return (
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs ${TOM_BADGE[badge.tom]}`}
+                          >
+                            {badge.label}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                        {temCobrancaAberta(venda) && (
+                          <button
+                            onClick={() => setVendaParaCobrar(venda)}
+                            className="rounded px-2 py-1 text-xs text-alerta transition-colors hover:bg-amber-400/10"
+                          >
+                            Cobrar
+                          </button>
+                        )}
                         <button
                           onClick={() => setVendaParaEditar(venda)}
                           className="rounded px-2 py-1 text-xs text-brand-accent transition-colors hover:bg-brand-400/10"
@@ -248,6 +300,22 @@ export default function VendasPage() {
             setVendaDetalhe(atualizada);
             recarregar();
           }}
+        />
+      )}
+
+      {/* Cobrança do fiado: confirmar, adiar ou não cobrar mais */}
+      {cobranca && (
+        <VendaFiadoModal
+          venda={cobranca}
+          onClose={() => {
+            setVendaParaCobrar(null);
+            if (vendaDoSino) {
+              // Some o ?fiado= da URL para o modal não reabrir a cada render.
+              setFiadoFechado(vendaDoSino.id);
+              router.replace("/vendas");
+            }
+          }}
+          onResolvida={() => recarregar()}
         />
       )}
 

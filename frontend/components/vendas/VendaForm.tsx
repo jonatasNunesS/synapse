@@ -69,6 +69,11 @@ export function VendaForm({ venda, onSubmit, onClose }: Props) {
   const [statusPagamento, setStatusPagamento] = useState<StatusPagamentoVenda>(
     venda?.status_pagamento ?? "pago"
   );
+  // Fiado: quando cobrar, e de quem — este último só faz sentido sem cliente.
+  const [dataPrevista, setDataPrevista] = useState(
+    venda?.data_prevista_pagamento ?? ""
+  );
+  const [devedor, setDevedor] = useState(venda?.devedor ?? "");
   const [observacoes, setObservacoes] = useState(venda?.observacoes ?? "");
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -80,7 +85,12 @@ export function VendaForm({ venda, onSubmit, onClose }: Props) {
   const subtotal = subtotalDaVenda(itens);
   const total = totalDaVenda(itens, desconto);
   const descontoCabe = descontoValido(itens, desconto);
-  const podeSalvar = itens.length > 0 && descontoCabe && !enviando;
+  const aPrazo = statusPagamento === "pendente";
+  // Sem previsão não há dia para cobrar, e o backend recusa. Barrar aqui evita
+  // a viagem só para receber de volta a mesma frase.
+  const fiadoCompleto = !aPrazo || !!dataPrevista;
+  const podeSalvar =
+    itens.length > 0 && descontoCabe && fiadoCompleto && !enviando;
 
   const adicionarItem = () => {
     if (!produtoNovo) return;
@@ -121,6 +131,8 @@ export function VendaForm({ venda, onSubmit, onClose }: Props) {
         desconto: desconto || "0",
         forma_pagamento: formaPagamento,
         status_pagamento: statusPagamento,
+        data_prevista_pagamento: aPrazo ? dataPrevista : null,
+        devedor: cliente ? "" : devedor.trim(),
         observacoes,
         itens: itens.map((item) => ({
           produto: item.produto,
@@ -317,6 +329,56 @@ export function VendaForm({ venda, onSubmit, onClose }: Props) {
             </select>
           </div>
         </div>
+
+        {/* ── Fiado: quando cobrar, e de quem ────────────────────── */}
+        {aPrazo && (
+          <div
+            data-testid="venda-fiado-campos"
+            className="mb-5 grid grid-cols-1 gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 sm:grid-cols-2"
+          >
+            <div>
+              <label
+                htmlFor="venda-data-prevista"
+                className="mb-1.5 block text-sm font-medium text-foreground-suave"
+              >
+                Quando vai pagar?
+              </label>
+              <input
+                id="venda-data-prevista"
+                type="date"
+                value={dataPrevista}
+                onChange={(e) => setDataPrevista(e.target.value)}
+                className="w-full rounded-lg border border-border bg-superficie px-3 py-2.5 text-sm text-foreground focus:border-brand-500 focus:outline-none"
+              />
+              <p className="mt-1 text-xs text-muted-suave">
+                Nesse dia a cobrança aparece no sino.
+              </p>
+            </div>
+            {/* Só sem cliente: com cliente cadastrado, o nome já é dele. */}
+            {!cliente && (
+              <div>
+                <label
+                  htmlFor="venda-devedor"
+                  className="mb-1.5 block text-sm font-medium text-foreground-suave"
+                >
+                  Para quem? <span className="text-muted-suave">(opcional)</span>
+                </label>
+                <input
+                  id="venda-devedor"
+                  type="text"
+                  value={devedor}
+                  onChange={(e) => setDevedor(e.target.value)}
+                  placeholder="João da feira"
+                  maxLength={255}
+                  className="w-full rounded-lg border border-border bg-superficie px-3 py-2.5 text-sm text-foreground focus:border-brand-500 focus:outline-none"
+                />
+                <p className="mt-1 text-xs text-muted-suave">
+                  Só um lembrete — não cadastra cliente.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="mb-5 rounded-lg border border-border bg-superficie p-4">
           <div className="mb-2 flex items-center justify-between text-sm">

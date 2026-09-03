@@ -22,6 +22,8 @@ que bateu ao centavo de virar financeiro duplicado.
 """
 from decimal import Decimal
 
+from django.db import transaction
+
 from shared.cache import invalidate_cache
 from shared.exceptions import BusinessRuleViolation, ResourceNotFound
 
@@ -140,8 +142,6 @@ class VendaService:
           com o saldo nos details para a tela oferecer baixar o que há. Com
           parcial=True, baixa o saldo disponível de quem não tem tudo.
         """
-        from django.db import transaction
-
         from modules.estoque.services import EstoqueService
 
         venda = VendaService.obter(empresa_id, venda_id)
@@ -284,6 +284,251 @@ class VendaService:
         invalidate_cache(empresa_id, "financeiro")
         return lancamento
 
+    # ── Fase 3B: fiado ───────────────────────────────────────────────────────
+
+    @staticmethod
+    def notificar_vendas_fiado(hoje=None) -> int:
+        """
+        Avisa no sino cada venda fiada cuja previsão chegou.
+
+        Espelha `ClienteService.notificar_vendas_fiado`: mesma consulta, mesma
+        idempotência por `notificacao_enviada`, mesma prioridade. O que muda é
+        de quem se cobra — a venda pode não ter cliente cadastrado, e aí o nome
+        vem do rótulo livre `devedor`. Sem nenhum dos dois, a cobrança diz o que
+        dá para dizer: o valor e a data.
+
+        Venda pendente SEM data prevista nunca entra aqui. É o que mantém
+        caladas as vendas migradas que não tinham previsão nenhuma.
+        """
+        from datetime import date as _date
+
+        from modules.notificacoes.services import NotificacaoService
+
+        hoje = hoje or _date.today()
+        pendentes = Venda.objects.select_related("cliente").filter(
+            status_pagamento="pendente",
+            data_prevista_pagamento__isnull=False,
+            data_prevista_pagamento__lte=hoje,
+            notificacao_enviada=False,
+        )
+
+        total = 0
+        for venda in pendentes:
+            if not venda.criado_por_id:
+                # Sem dono para receber no sino. Marca para não reprocessar a
+                # mesma venda todo dia, como o fluxo antigo faz.
+                venda.notificacao_enviada = True
+                venda.save(update_fields=["notificacao_enviada"])
+                continue
+
+            quem = venda.quem_deve
+            falta = venda.saldo_devedor
+            titulo = (
+                f"{quem} ficou de pagar hoje" if quem else "Uma venda fiada vence hoje"
+            )
+            mensagem = (
+                f"{quem} ficou de pagar R$ {falta} hoje."
+                if quem
+                else f"Uma venda de R$ {falta} ficou de ser paga hoje."
+            )
+            if venda.valor_recebido:
+                mensagem += f" (já recebeu R$ {venda.valor_recebido} de R$ {venda.total}.)"
+
+            NotificacaoService.criar_notificacao(
+                usuario_id=venda.criado_por_id,
+                empresa_id=venda.empresa_id,
+                tipo="cliente",
+                titulo=titulo,
+                mensagem=mensagem,
+                acao_url=f"/vendas?fiado={venda.id}",
+                prioridade="alta",
+            )
+            venda.notificacao_enviada = True
+            venda.save(update_fields=["notificacao_enviada"])
+            total += 1
+
+        return total
+
+    @staticmethod
+    def _ajustar_financeiro_do_recebimento(empresa_id, usuario_id, venda, recebido):
+        """
+        Põe o financeiro de acordo com o que entrou.
+
+        Recebimento total: o lançamento pendente vira pago.
+
+        Recebimento parcial: o lançamento existente passa a valer o que entrou
+        e vira pago, e o saldo vira um lançamento novo, pendente, para o qual a
+        venda passa a apontar. Não é duplicar receita — é partir um recebível em
+        dois pedaços que somam o mesmo: o que entrou e o que falta. O FK aponta
+        sempre para o pedaço que ainda se cobra.
+
+        Sem lançamento vinculado, nada acontece: a venda que nunca foi ao
+        financeiro não passa a ir por causa de um recebimento.
+        """
+        from datetime import date
+
+        from modules.financeiro.services import FinanceiroService
+
+        lancamento = venda.lancamento_financeiro
+        if lancamento is None:
+            return None
+        if lancamento.status != "pendente":
+            # Já resolvido (pago ou cancelado). Mexer nele reescreveria
+            # histórico — a regra de imutabilidade do módulo financeiro.
+            return None
+
+        hoje = date.today()
+        saldo = venda.saldo_devedor
+
+        lancamento.valor = recebido
+        lancamento.status = "pago"
+        lancamento.data_pagamento = hoje
+        lancamento.save(update_fields=["valor", "status", "data_pagamento"])
+
+        novo = None
+        if saldo > Decimal("0"):
+            quem = venda.quem_deve or "balcão"
+            novo = FinanceiroService.criar_lancamento(
+                empresa_id,
+                usuario_id,
+                {
+                    "tipo": "receita",
+                    "descricao": f"Saldo devedor - {quem}",
+                    "valor": saldo,
+                    "data_vencimento": venda.data_prevista_pagamento or hoje,
+                    "status": "pendente",
+                    "observacoes": f"Restante da venda #{venda.id}",
+                },
+            )
+            venda.lancamento_financeiro = novo
+
+        invalidate_cache(empresa_id, "financeiro")
+        return novo
+
+    @staticmethod
+    def confirmar_pagamento(
+        empresa_id, usuario_id, venda_id,
+        valor_recebido=None, data_prevista_saldo=None,
+    ) -> dict:
+        """
+        Registra o que entrou de uma venda fiada.
+
+        Recebeu tudo → a venda vira paga e o lançamento pendente vira pago.
+
+        Recebeu menos → o valor entra, a venda CONTINUA pendente pelo saldo, com
+        a nova previsão, e volta a notificar naquele dia.
+
+        Aqui está a única divergência de forma em relação ao fluxo antigo, e ela
+        é deliberada: lá, o saldo vira uma segunda interação. Interação é linha
+        de histórico, e duas linhas não somam faturamento. Venda tem itens e
+        total — criar uma segunda para representar o mesmo saldo faria a mesma
+        mercadoria ser contada duas vezes na lista e no relatório. A pendência
+        do saldo existe; ela é esta venda, rearmada.
+        """
+        venda = VendaService.obter(empresa_id, venda_id)
+
+        if venda.status_pagamento != "pendente":
+            raise BusinessRuleViolation(
+                code="PAGAMENTO_JA_RESOLVIDO",
+                message="Este pagamento já foi resolvido.",
+            )
+
+        falta = venda.saldo_devedor
+        recebido = Decimal(str(valor_recebido)) if valor_recebido is not None else falta
+
+        if recebido <= Decimal("0"):
+            raise BusinessRuleViolation(
+                code="VALOR_RECEBIDO_INVALIDO",
+                message="Informe um valor recebido maior que zero.",
+            )
+        if recebido > falta:
+            raise BusinessRuleViolation(
+                code="VALOR_RECEBIDO_MAIOR_QUE_SALDO",
+                message=f"O saldo devedor é de R$ {falta}.",
+                details={"saldo_devedor": str(falta)},
+            )
+
+        with transaction.atomic():
+            venda.valor_recebido = (venda.valor_recebido or Decimal("0")) + recebido
+            quitou = venda.saldo_devedor <= Decimal("0")
+
+            if quitou:
+                venda.status_pagamento = "pago"
+            else:
+                # Continua pendente pelo resto, e volta a cobrar na nova data.
+                venda.data_prevista_pagamento = (
+                    data_prevista_saldo or venda.data_prevista_pagamento
+                )
+                venda.notificacao_enviada = False
+
+            VendaService._ajustar_financeiro_do_recebimento(
+                empresa_id, usuario_id, venda, recebido
+            )
+            venda.save(
+                update_fields=[
+                    "valor_recebido", "status_pagamento", "data_prevista_pagamento",
+                    "notificacao_enviada", "lancamento_financeiro", "atualizado_em",
+                ]
+            )
+
+        return {
+            "venda": venda,
+            "recebido": recebido,
+            "saldo_devedor": venda.saldo_devedor,
+            "quitou": quitou,
+        }
+
+    @staticmethod
+    def adiar_pagamento(empresa_id, venda_id, dias: int) -> Venda:
+        """
+        Empurra a previsão em N dias e rearma a cobrança.
+
+        Nunca adia para o passado: uma venda vencida há um mês, adiada em 3
+        dias, vence daqui a 3 — senão o adiamento nasceria atrasado e a
+        notificação voltaria no mesmo dia. Mesma conta do fluxo antigo.
+        """
+        from datetime import date as _date, timedelta
+
+        venda = VendaService.obter(empresa_id, venda_id)
+        if venda.status_pagamento != "pendente":
+            raise BusinessRuleViolation(
+                code="PAGAMENTO_JA_RESOLVIDO",
+                message="Este pagamento já foi resolvido.",
+            )
+
+        base = max(venda.data_prevista_pagamento or _date.today(), _date.today())
+        venda.data_prevista_pagamento = base + timedelta(days=max(1, int(dias)))
+        venda.notificacao_enviada = False
+        venda.save(
+            update_fields=[
+                "data_prevista_pagamento", "notificacao_enviada", "atualizado_em"
+            ]
+        )
+        return venda
+
+    @staticmethod
+    def cancelar_pagamento(empresa_id, venda_id) -> Venda:
+        """
+        Para de cobrar esta venda.
+
+        Não apaga nada e não mexe no financeiro: o lançamento é decisão
+        separada, pelo caminho de apagar a venda com ajustes. Aqui só se diz
+        que não se cobra mais.
+        """
+        venda = VendaService.obter(empresa_id, venda_id)
+        if venda.status_pagamento != "pendente":
+            raise BusinessRuleViolation(
+                code="PAGAMENTO_JA_RESOLVIDO",
+                message="Este pagamento já foi resolvido.",
+            )
+
+        venda.status_pagamento = "cancelado"
+        venda.notificacao_enviada = True  # não volta a cobrar
+        venda.save(
+            update_fields=["status_pagamento", "notificacao_enviada", "atualizado_em"]
+        )
+        return venda
+
     @staticmethod
     def apagar_com_ajustes(
         empresa_id, usuario_id, venda_id,
@@ -301,8 +546,6 @@ class VendaService:
         interação viva, e ninguém descobria até conferir. Aqui, ou os três
         passos acontecem, ou nenhum acontece.
         """
-        from django.db import transaction
-
         from modules.financeiro.repository import FinanceiroRepository
 
         venda = VendaService.obter(empresa_id, venda_id)

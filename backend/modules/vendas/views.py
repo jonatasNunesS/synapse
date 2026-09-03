@@ -158,6 +158,113 @@ class VendaEstoqueView(EmpresaQuerySetMixin, APIView):
         )
 
 
+class VendaConfirmarPagamentoView(EmpresaQuerySetMixin, APIView):
+    """
+    POST /api/vendas/{id}/confirmar-pagamento/ — recebeu (tudo ou parte).
+
+    Body: { valor_recebido?, data_prevista_saldo? }. Sem valor_recebido,
+    confirma o saldo inteiro. Com um valor menor, a venda segue pendente pelo
+    resto, e `data_prevista_saldo` diz quando cobrar de novo.
+    """
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def post(self, request, pk):
+        from decimal import Decimal, InvalidOperation
+
+        empresa_id = self.get_empresa_id()
+
+        valor_raw = request.data.get("valor_recebido")
+        valor_recebido = None
+        if valor_raw not in (None, ""):
+            try:
+                valor_recebido = Decimal(str(valor_raw))
+            except (InvalidOperation, ValueError):
+                return error_response("VALIDATION_ERROR", "Valor recebido inválido.")
+
+        data_saldo = request.data.get("data_prevista_saldo") or None
+        if isinstance(data_saldo, str):
+            from django.utils.dateparse import parse_date
+
+            data_saldo = parse_date(data_saldo)
+            if data_saldo is None:
+                return error_response("VALIDATION_ERROR", "Data do saldo inválida.")
+
+        try:
+            resultado = VendaService.confirmar_pagamento(
+                empresa_id, request.user.id, pk,
+                valor_recebido=valor_recebido,
+                data_prevista_saldo=data_saldo,
+            )
+        except ResourceNotFound:
+            return error_response("VENDA_NAO_ENCONTRADA", "Venda não encontrada.", status_code=404)
+        except BusinessRuleViolation as erro:
+            return error_response(erro.code, erro.message, details=erro.details, status_code=400)
+
+        venda = VendaService.obter(empresa_id, pk)
+        return success_response(
+            data={
+                "venda": VendaSerializer(venda).data,
+                "recebido": str(resultado["recebido"]),
+                "saldo_devedor": str(resultado["saldo_devedor"]),
+                "quitou": resultado["quitou"],
+            },
+            message=(
+                "Pagamento confirmado."
+                if resultado["quitou"]
+                else f"Recebimento registrado. Falta R$ {resultado['saldo_devedor']}."
+            ),
+        )
+
+
+class VendaAdiarPagamentoView(EmpresaQuerySetMixin, APIView):
+    """POST /api/vendas/{id}/adiar-pagamento/ — Body: { dias }."""
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def post(self, request, pk):
+        try:
+            dias = int(request.data.get("dias", 3))
+        except (ValueError, TypeError):
+            return error_response("VALIDATION_ERROR", "Número de dias inválido.")
+        if dias < 1:
+            return error_response("VALIDATION_ERROR", "Informe ao menos 1 dia.")
+
+        try:
+            venda = VendaService.adiar_pagamento(self.get_empresa_id(), pk, dias)
+        except ResourceNotFound:
+            return error_response("VENDA_NAO_ENCONTRADA", "Venda não encontrada.", status_code=404)
+        except BusinessRuleViolation as erro:
+            return error_response(erro.code, erro.message, details=erro.details, status_code=400)
+
+        return success_response(
+            data=VendaSerializer(venda).data,
+            message=f"Cobrança adiada por {dias} dia(s).",
+        )
+
+
+class VendaCancelarPagamentoView(EmpresaQuerySetMixin, APIView):
+    """POST /api/vendas/{id}/cancelar-pagamento/ — não cobra mais."""
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def post(self, request, pk):
+        try:
+            venda = VendaService.cancelar_pagamento(self.get_empresa_id(), pk)
+        except ResourceNotFound:
+            return error_response("VENDA_NAO_ENCONTRADA", "Venda não encontrada.", status_code=404)
+        except BusinessRuleViolation as erro:
+            return error_response(erro.code, erro.message, details=erro.details, status_code=400)
+
+        return success_response(
+            data=VendaSerializer(venda).data,
+            message="Essa venda não será cobrada.",
+        )
+
+
 class VendaFinanceiroView(EmpresaQuerySetMixin, APIView):
     """POST /api/vendas/{id}/financeiro/ — lança a receita da venda."""
 

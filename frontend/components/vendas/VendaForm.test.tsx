@@ -274,3 +274,105 @@ describe("Envio", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("Fiado: venda a prazo pede quando cobrar", () => {
+  function marcarPendente() {
+    fireEvent.change(screen.getByLabelText("Situação"), {
+      target: { value: "pendente" },
+    });
+  }
+
+  it("os campos do fiado só aparecem quando a venda é a prazo", () => {
+    montar();
+    expect(screen.queryByTestId("venda-fiado-campos")).not.toBeInTheDocument();
+
+    marcarPendente();
+
+    expect(screen.getByTestId("venda-fiado-campos")).toBeInTheDocument();
+  });
+
+  it("sem previsão não deixa salvar — o backend recusaria de qualquer forma", () => {
+    montar();
+    adicionar("Camisa");
+    marcarPendente();
+
+    expect(screen.getByRole("button", { name: /registrar venda/i })).toBeDisabled();
+  });
+
+  it("com previsão, envia a data", async () => {
+    montar();
+    adicionar("Camisa");
+    marcarPendente();
+    fireEvent.change(screen.getByLabelText(/quando vai pagar/i), {
+      target: { value: "2026-03-15" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /registrar venda/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0][0].data_prevista_pagamento).toBe("2026-03-15");
+  });
+
+  it("venda paga não manda previsão nenhuma", async () => {
+    montar();
+    adicionar("Camisa");
+    fireEvent.click(screen.getByRole("button", { name: /registrar venda/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0][0].data_prevista_pagamento).toBeNull();
+  });
+});
+
+describe('Fiado de balcão: o "para quem?"', () => {
+  function fiadoSemCliente() {
+    montar();
+    adicionar("Camisa");
+    fireEvent.change(screen.getByLabelText("Situação"), {
+      target: { value: "pendente" },
+    });
+    fireEvent.change(screen.getByLabelText(/quando vai pagar/i), {
+      target: { value: "2026-03-15" },
+    });
+  }
+
+  it("o campo existe quando não há cliente escolhido", () => {
+    fiadoSemCliente();
+    expect(screen.getByLabelText(/para quem/i)).toBeInTheDocument();
+  });
+
+  it("some quando há cliente — o nome já é dele", () => {
+    fiadoSemCliente();
+    fireEvent.change(screen.getByLabelText("Cliente"), {
+      target: { value: "cli-1" },
+    });
+
+    expect(screen.queryByLabelText(/para quem/i)).not.toBeInTheDocument();
+  });
+
+  it("envia o rótulo livre", async () => {
+    fiadoSemCliente();
+    fireEvent.change(screen.getByLabelText(/para quem/i), {
+      target: { value: "João da feira" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /registrar venda/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0][0].devedor).toBe("João da feira");
+  });
+
+  it("com cliente, não manda rótulo — evita dois nomes para o mesmo devedor", async () => {
+    fiadoSemCliente();
+    fireEvent.change(screen.getByLabelText(/para quem/i), {
+      target: { value: "apelido qualquer" },
+    });
+    fireEvent.change(screen.getByLabelText("Cliente"), {
+      target: { value: "cli-1" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /registrar venda/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0][0].devedor).toBe("");
+  });
+});

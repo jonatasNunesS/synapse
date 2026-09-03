@@ -58,6 +58,14 @@ vi.mock("@/hooks/useClientes", () => ({
   useClientes: () => ({ clientes: [], carregar: vi.fn() }),
 }));
 
+// A página lê ?fiado= para abrir a cobrança vinda do sino.
+const replace = vi.fn();
+let params = new URLSearchParams();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), replace }),
+  useSearchParams: () => params,
+}));
+
 import VendasPage from "./page";
 
 function venda(extra: Partial<Venda> = {}): Venda {
@@ -85,6 +93,11 @@ function venda(extra: Partial<Venda> = {}): Venda {
         subtotal: "50.00",
       },
     ],
+    devedor: "",
+    valor_recebido: "0",
+    saldo_devedor: "50.00",
+    pagamento_atrasado: false,
+    dias_para_vencer: null,
     ja_baixou_estoque: false,
     tem_itens_com_produto: true,
     tem_lancamento_financeiro: false,
@@ -124,6 +137,8 @@ beforeEach(() => {
   del.mockReset();
   toastSuccess.mockReset();
   toastError.mockReset();
+  replace.mockReset();
+  params = new URLSearchParams();
   respostasPadrao();
 });
 
@@ -326,5 +341,116 @@ describe("Apagar a venda pergunta antes de desfazer", () => {
 
     expect(await screen.findByText("Apagar lançamento financeiro?")).toBeInTheDocument();
     expect(screen.queryByText("Devolver ao estoque?")).not.toBeInTheDocument();
+  });
+});
+
+describe("Fiado: o badge e a cobrança na lista", () => {
+  /** Texto sem o espaço não-quebrável do Intl. */
+  const limpo = (t: string | null | undefined) => (t ?? "").replace(/\u00a0/g, " ");
+
+  async function comLista(alvo: Venda) {
+    respostasPadrao([alvo]);
+    render(<VendasPage />);
+    await screen.findByRole("button", { name: "Excluir venda" });
+  }
+
+  it("venda a vencer mostra o prazo, não só 'pendente'", async () => {
+    await comLista(
+      venda({ status_pagamento: "pendente", dias_para_vencer: 3 })
+    );
+
+    expect(screen.getByText("Vence em 3 dias")).toBeInTheDocument();
+  });
+
+  it("venda vencida aparece como atrasada", async () => {
+    await comLista(
+      venda({
+        status_pagamento: "pendente",
+        pagamento_atrasado: true,
+        dias_para_vencer: -2,
+      })
+    );
+
+    expect(screen.getByText("Atrasado")).toBeInTheDocument();
+  });
+
+  it("venda cancelada não se disfarça de paga", async () => {
+    await comLista(venda({ status_pagamento: "cancelado" }));
+
+    expect(screen.getByText("Não cobrada")).toBeInTheDocument();
+    expect(screen.queryByText("Pago")).not.toBeInTheDocument();
+  });
+
+  it("só venda com cobrança aberta oferece o botão de cobrar", async () => {
+    await comLista(venda({ status_pagamento: "pago" }));
+    expect(screen.queryByRole("button", { name: /cobrar/i })).not.toBeInTheDocument();
+  });
+
+  it("cobrar abre a decisão do fiado com o saldo", async () => {
+    await comLista(
+      venda({ status_pagamento: "pendente", dias_para_vencer: 0, saldo_devedor: "50.00" })
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /cobrar/i }));
+
+    expect(await screen.findByTestId("venda-fiado")).toBeInTheDocument();
+    expect(limpo(screen.getByRole("heading", { level: 2 }).textContent)).toContain(
+      "R$ 50,00"
+    );
+  });
+
+  it("confirmar a cobrança chama o endpoint e relê a lista", async () => {
+    await comLista(venda({ status_pagamento: "pendente", dias_para_vencer: 0 }));
+    fireEvent.click(screen.getByRole("button", { name: /cobrar/i }));
+    await screen.findByTestId("venda-fiado");
+
+    post.mockResolvedValueOnce({
+      data: {
+        venda: venda({ status_pagamento: "pago" }),
+        recebido: "50.00",
+        saldo_devedor: "0",
+        quitou: true,
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /confirmar pagamento/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^confirmar$/i }));
+
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith("/vendas/v-1/confirmar-pagamento/", {})
+    );
+  });
+});
+
+describe("Fiado: o sino leva à cobrança", () => {
+  it("?fiado=<id> abre a decisão daquela venda", async () => {
+    // É o acao_url da notificação: um clique no sino cai direto na cobrança.
+    params = new URLSearchParams("fiado=v-1");
+    respostasPadrao([venda({ status_pagamento: "pendente", dias_para_vencer: 0 })]);
+
+    render(<VendasPage />);
+
+    expect(await screen.findByTestId("venda-fiado")).toBeInTheDocument();
+  });
+
+  it("fechar limpa o ?fiado= para o modal não voltar sozinho", async () => {
+    params = new URLSearchParams("fiado=v-1");
+    respostasPadrao([venda({ status_pagamento: "pendente", dias_para_vencer: 0 })]);
+    render(<VendasPage />);
+    await screen.findByTestId("venda-fiado");
+
+    fireEvent.click(screen.getByRole("button", { name: "Fechar" }));
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/vendas"));
+    expect(screen.queryByTestId("venda-fiado")).not.toBeInTheDocument();
+  });
+
+  it("id que não está na lista não abre nada", async () => {
+    params = new URLSearchParams("fiado=nao-existe");
+    respostasPadrao([venda({ status_pagamento: "pendente" })]);
+
+    render(<VendasPage />);
+
+    await screen.findByRole("button", { name: "Excluir venda" });
+    expect(screen.queryByTestId("venda-fiado")).not.toBeInTheDocument();
   });
 });

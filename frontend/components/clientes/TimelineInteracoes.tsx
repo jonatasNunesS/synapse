@@ -15,6 +15,7 @@ import { Plus, Pencil, Receipt, Trash2, PackageCheck, PackageX } from "lucide-re
 import type { InteracaoCliente } from "@/types/clientes";
 import { TIPO_INTERACAO_LABELS, TIPO_INTERACAO_ICONS } from "@/types/clientes";
 import type { EntradaHistorico } from "@/lib/vendas";
+import { badgePagamentoVenda } from "@/lib/vendaStatus";
 import type { Venda } from "@/types/vendas";
 import { useModulos } from "@/hooks/useModulos";
 import { formatCurrencyOrNull } from "@/lib/utils";
@@ -82,6 +83,16 @@ function formatDate(data: string): string {
 const BADGE = "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.625rem] font-medium";
 const BADGE_OK = "bg-emerald-500/15 text-sucesso border-emerald-500/30";
 const BADGE_ALERTA = "bg-amber-500/15 text-alerta border-amber-500/30";
+const BADGE_ERRO = "bg-red-500/15 text-erro border-red-500/30";
+const BADGE_NEUTRO = "bg-zinc-500/15 text-muted-foreground border-zinc-500/30";
+
+/** As classes de cada tom do badge de pagamento da venda. */
+const TOM_BADGE: Record<string, string> = {
+  sucesso: BADGE_OK,
+  alerta: BADGE_ALERTA,
+  erro: BADGE_ERRO,
+  neutro: BADGE_NEUTRO,
+};
 
 /** Badge de status de pagamento. Retorna null quando não se aplica. */
 function badgePagamento(
@@ -92,11 +103,11 @@ function badgePagamento(
     return { label: "Pago", className: BADGE_OK };
   }
   if (status_pagamento === "cancelado") {
-    return { label: "Cancelado", className: "bg-zinc-500/15 text-muted-foreground border-zinc-500/30" };
+    return { label: "Cancelado", className: BADGE_NEUTRO };
   }
   if (status_pagamento === "pendente") {
     if (pagamento_atrasado) {
-      return { label: "Atrasado", className: "bg-red-500/15 text-erro border-red-500/30" };
+      return { label: "Atrasado", className: BADGE_ERRO };
     }
     if (typeof dias_para_vencer === "number") {
       const label =
@@ -252,13 +263,16 @@ function LinhaVenda({
             <span className="text-xs font-medium text-brand-accent uppercase tracking-wide">
               Venda
             </span>
-            <span
-              className={`${BADGE} ${
-                venda.status_pagamento === "pago" ? BADGE_OK : BADGE_ALERTA
-              }`}
-            >
-              {venda.status_pagamento === "pago" ? "Pago" : "Pendente"}
-            </span>
+            {(() => {
+              // Mesma regra da lista de Vendas: quem calcula é o lib, para as
+              // duas telas nunca discordarem sobre a mesma venda.
+              const badge = badgePagamentoVenda(venda);
+              return (
+                <span className={`${BADGE} ${TOM_BADGE[badge.tom]}`}>
+                  {badge.label}
+                </span>
+              );
+            })()}
             {estado && <BadgeEstoque estado={estado} />}
             {venda.tem_lancamento_financeiro && (
               <span className={`${BADGE} ${BADGE_OK}`}>No financeiro</span>

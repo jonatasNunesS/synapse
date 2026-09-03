@@ -351,8 +351,16 @@ def test_lanca_receita_com_o_total_da_venda(usuario, camisa, cliente):
 def test_status_do_lancamento_herda_o_da_venda(
     usuario, camisa, status_venda, status_lancamento
 ):
+    # Venda a prazo exige previsão de pagamento desde a fase 3B; a data aqui
+    # é só para o cadastro passar — quem este teste olha é o lançamento.
+    extra = (
+        {"data_prevista_pagamento": str(timezone.localdate())}
+        if status_venda == "pendente"
+        else {}
+    )
     venda = _criar_venda(
-        usuario, [_item(camisa, "1", "50.00")], status_pagamento=status_venda
+        usuario, [_item(camisa, "1", "50.00")],
+        status_pagamento=status_venda, **extra,
     )
 
     _client(usuario).post(f"/api/vendas/{venda['id']}/financeiro/", {}, format="json")
@@ -597,7 +605,9 @@ def test_apagar_com_financeiro_pago_cancela_em_vez_de_apagar(usuario, camisa):
 @pytest.mark.django_db
 def test_apagar_com_financeiro_pendente_apaga_o_lancamento(usuario, camisa):
     venda = _criar_venda(
-        usuario, [_item(camisa, "1", "50.00")], status_pagamento="pendente"
+        usuario, [_item(camisa, "1", "50.00")],
+        status_pagamento="pendente",
+        data_prevista_pagamento=str(timezone.localdate()),
     )
     cli = _client(usuario)
     cli.post(f"/api/vendas/{venda['id']}/financeiro/", {}, format="json")

@@ -10,7 +10,12 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { api, getErrorMessage } from "@/lib/api";
-import type { PreviaEstoque, Venda, VendaPayload } from "@/types/vendas";
+import type {
+  PreviaEstoque,
+  ResultadoRecebimento,
+  Venda,
+  VendaPayload,
+} from "@/types/vendas";
 
 /**
  * As duas integrações da venda: estoque e financeiro.
@@ -30,6 +35,29 @@ export const vendaIntegracoes = {
 
   lancarFinanceiro: (id: string) =>
     api.post<Venda>(`/vendas/${id}/financeiro/`, {}).then((r) => r.data),
+};
+
+/**
+ * As três respostas à cobrança de uma venda fiada.
+ *
+ * Mesmas três do fluxo antigo de interação: recebeu, deixa para depois, ou não
+ * cobra mais. `confirmar` aceita um valor menor que o saldo — nesse caso a
+ * venda continua pendente pelo resto, com a nova previsão.
+ */
+export const vendaFiado = {
+  confirmar: (
+    id: string,
+    dados: { valor_recebido?: string; data_prevista_saldo?: string } = {}
+  ) =>
+    api
+      .post<ResultadoRecebimento>(`/vendas/${id}/confirmar-pagamento/`, dados)
+      .then((r) => r.data),
+
+  adiar: (id: string, dias: number) =>
+    api.post<Venda>(`/vendas/${id}/adiar-pagamento/`, { dias }).then((r) => r.data),
+
+  cancelar: (id: string) =>
+    api.post<Venda>(`/vendas/${id}/cancelar-pagamento/`, {}).then((r) => r.data),
 };
 
 export function useVendas() {

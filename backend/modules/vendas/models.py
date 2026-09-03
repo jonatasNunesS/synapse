@@ -31,6 +31,10 @@ class Venda(models.Model):
     STATUS_PAGAMENTO_CHOICES = [
         ("pago", "Pago"),
         ("pendente", "Pendente"),
+        # Fiado que a pessoa decidiu não cobrar. Não é "pago" — o dinheiro não
+        # entrou — e não é "pendente" — não se cobra mais. É o mesmo estado que
+        # o fluxo antigo de interação já tinha.
+        ("cancelado", "Cancelado"),
     ]
 
     FORMA_PAGAMENTO_CHOICES = [
@@ -68,6 +72,23 @@ class Venda(models.Model):
         max_length=20, choices=STATUS_PAGAMENTO_CHOICES, default="pago"
     )
     data_prevista_pagamento = models.DateField(null=True, blank=True)
+
+    # Quem ficou devendo, quando não há cliente cadastrado. Texto livre, como o
+    # `pessoa_emprestimo` do financeiro: não cria cadastro, só dá nome ao fiado
+    # de balcão para a cobrança dizer "João da feira" em vez de "uma venda".
+    devedor = models.CharField(max_length=255, blank=True, default="")
+
+    # Quanto já entrou. Existe por causa do recebimento parcial: a venda vale o
+    # que foi vendido, e o que falta é total − valor_recebido. Mexer no total
+    # para registrar um pagamento apagaria o que a venda foi.
+    valor_recebido = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal("0")
+    )
+
+    # Idempotência da cobrança: a notificação do dia sai uma vez. Adiar
+    # rearma (volta a False), como no fluxo antigo de interação.
+    notificacao_enviada = models.BooleanField(default=False)
+
     observacoes = models.TextField(blank=True, default="")
 
     # Lançamento de receita já existente para esta venda. Nasce preenchido só
@@ -114,6 +135,23 @@ class Venda(models.Model):
             raise ValidationError(
                 {"desconto": "O desconto não pode ser maior que o subtotal da venda."}
             )
+
+    @property
+    def saldo_devedor(self) -> Decimal:
+        """Quanto ainda falta entrar. Zero quando não se deve mais nada."""
+        return max(Decimal("0"), (self.total or Decimal("0")) - (self.valor_recebido or Decimal("0")))
+
+    @property
+    def quem_deve(self) -> str:
+        """
+        O nome a usar na cobrança.
+
+        Cliente cadastrado primeiro; depois o rótulo livre do fiado de balcão;
+        e, se não há nem um nem outro, ninguém — quem chama decide o que dizer.
+        """
+        if self.cliente_id:
+            return self.cliente.nome
+        return (self.devedor or "").strip()
 
     def recalcular_totais(self, salvar: bool = True) -> None:
         """

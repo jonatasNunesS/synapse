@@ -6,7 +6,9 @@
  * que já custou caro no módulo de estoque — o formatCurrency aceita os dois.
  */
 
-export type StatusPagamentoVenda = "pago" | "pendente";
+/** `cancelado` = fiado que se decidiu não cobrar. Não entrou dinheiro, e
+ * não se cobra mais — o mesmo estado que o fluxo antigo já tinha. */
+export type StatusPagamentoVenda = "pago" | "pendente" | "cancelado";
 
 export type FormaPagamento = "dinheiro" | "pix" | "cartao" | "outro";
 
@@ -44,6 +46,19 @@ export interface Venda {
   forma_pagamento: FormaPagamento | "";
   status_pagamento: StatusPagamentoVenda;
   data_prevista_pagamento: string | null;
+  /**
+   * Quem ficou devendo, quando não há cliente cadastrado. Texto livre: não
+   * cria cadastro, só dá nome ao fiado de balcão na hora de cobrar.
+   */
+  devedor: string;
+  /** Quanto já entrou. O recebimento parcial soma aqui, não mexe no total. */
+  valor_recebido: string;
+  /** total − valor_recebido, nunca negativo. É o que ainda se cobra. */
+  saldo_devedor: string;
+  /** Pendente com previsão já vencida. */
+  pagamento_atrasado: boolean;
+  /** Dias até a previsão (negativo se venceu; null se não se aplica). */
+  dias_para_vencer: number | null;
   observacoes: string;
   itens: ItemVenda[];
   /** Já gerou saída de estoque. Oferecer de novo baixaria duas vezes. */
@@ -112,7 +127,18 @@ export interface VendaPayload {
   desconto?: string;
   forma_pagamento?: FormaPagamento | "";
   status_pagamento?: StatusPagamentoVenda;
+  /** Obrigatória quando o status é pendente: sem ela não há dia para cobrar. */
   data_prevista_pagamento?: string | null;
+  devedor?: string;
   observacoes?: string;
   itens?: ItemVendaPayload[];
+}
+
+/** O que a confirmação de recebimento devolve. */
+export interface ResultadoRecebimento {
+  venda: Venda;
+  recebido: string;
+  saldo_devedor: string;
+  /** false = recebeu só uma parte; a venda segue pendente pelo resto. */
+  quitou: boolean;
 }

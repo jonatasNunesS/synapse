@@ -6,6 +6,7 @@ Chegam calculados do backend e saem somente-leitura. O que a interface soma
 enquanto a pessoa monta a venda serve para ela ver o valor na hora — o número
 que vale é o que o servidor devolve.
 """
+from datetime import date
 from decimal import Decimal
 
 from rest_framework import serializers
@@ -91,6 +92,11 @@ class VendaSerializer(serializers.ModelSerializer):
     ja_baixou_estoque = serializers.SerializerMethodField()
     tem_itens_com_produto = serializers.SerializerMethodField()
     tem_lancamento_financeiro = serializers.SerializerMethodField()
+    # Fiado: o que a tela precisa para o badge e para a cobrança.
+    saldo_devedor = serializers.SerializerMethodField()
+    pagamento_atrasado = serializers.SerializerMethodField()
+    # Dias até a previsão (negativo se já venceu; null se não aplicável).
+    dias_para_vencer = serializers.SerializerMethodField()
 
     class Meta:
         model = Venda
@@ -105,6 +111,11 @@ class VendaSerializer(serializers.ModelSerializer):
             "forma_pagamento",
             "status_pagamento",
             "data_prevista_pagamento",
+            "devedor",
+            "valor_recebido",
+            "saldo_devedor",
+            "pagamento_atrasado",
+            "dias_para_vencer",
             "observacoes",
             "itens",
             "ja_baixou_estoque",
@@ -131,6 +142,22 @@ class VendaSerializer(serializers.ModelSerializer):
         # interface, não o serializer.
         return obj.cliente.nome if obj.cliente else None
 
+    def get_saldo_devedor(self, obj) -> str:
+        return str(obj.saldo_devedor)
+
+    def get_pagamento_atrasado(self, obj) -> bool:
+        return bool(
+            obj.status_pagamento == "pendente"
+            and obj.data_prevista_pagamento is not None
+            and obj.data_prevista_pagamento < date.today()
+        )
+
+    def get_dias_para_vencer(self, obj) -> int | None:
+        # Só faz sentido para o que ainda se cobra e tem data marcada.
+        if obj.status_pagamento != "pendente" or obj.data_prevista_pagamento is None:
+            return None
+        return (obj.data_prevista_pagamento - date.today()).days
+
 
 class VendaCreateSerializer(serializers.Serializer):
     """
@@ -153,6 +180,10 @@ class VendaCreateSerializer(serializers.Serializer):
         choices=Venda.STATUS_PAGAMENTO_CHOICES, required=False
     )
     data_prevista_pagamento = serializers.DateField(required=False, allow_null=True)
+    # Fiado de balcão: quem ficou devendo, quando não há cliente cadastrado.
+    devedor = serializers.CharField(
+        max_length=255, required=False, allow_blank=True
+    )
     observacoes = serializers.CharField(required=False, allow_blank=True)
     itens = ItemVendaCreateSerializer(many=True)
 
@@ -215,6 +246,25 @@ class VendaCreateSerializer(serializers.Serializer):
                 subtotal += item["quantidade"] * preco
             attrs["itens"] = resolvidos
             attrs["_subtotal_previsto"] = subtotal
+
+        # Fiado precisa de data: sem previsão não há dia para cobrar, e a venda
+        # ficaria pendente para sempre sem nunca aparecer no sino.
+        #
+        # A exigência vale quando ESTA requisição diz "pendente". Não vale para
+        # quem só edita outra coisa numa venda que já era pendente — entre elas
+        # as migradas da fase 2, que podem não ter previsão nenhuma e não
+        # devem virar reféns de um campo que a migração não tinha de onde tirar.
+        if attrs.get("status_pagamento") == "pendente":
+            prevista = attrs.get("data_prevista_pagamento")
+            if prevista is None and self.instance is not None:
+                prevista = self.instance.data_prevista_pagamento
+            if prevista is None:
+                raise serializers.ValidationError(
+                    {
+                        "data_prevista_pagamento":
+                            "Informe quando a venda a prazo deve ser paga."
+                    }
+                )
 
         # Desconto é validado contra o subtotal que ESTES itens produzem, e
         # não contra o total salvo — senão um PATCH que baixa os itens

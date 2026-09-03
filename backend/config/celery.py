@@ -66,6 +66,12 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=0, minute=15),       # Diariamente às 00:15 (BRT)
         "options": {"expires": 3600},
     },
+    # ── M8: Vendas ────────────────────────────────────────────
+    "notificar-vendas-fiado-entidade": {
+        "task": "vendas.notificar_vendas_fiado",      # modules/vendas/tasks.py
+        "schedule": crontab(hour=0, minute=20),       # Diariamente às 00:20 (BRT)
+        "options": {"expires": 3600},
+    },
     # ── M6: Projetos ──────────────────────────────────────────
     "verificar-prazos-tarefas": {
         "task": "projetos.verificar_prazos_tarefas",  # modules/projetos/tasks.py
