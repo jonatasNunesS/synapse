@@ -10,6 +10,7 @@ from datetime import date
 from decimal import Decimal
 
 from rest_framework import serializers
+from rest_framework.fields import empty
 
 from modules.clientes.models import Cliente
 from modules.estoque.models import Produto
@@ -195,6 +196,12 @@ class VendaCreateSerializer(serializers.Serializer):
         if self.parcial:
             for campo in self.fields.values():
                 campo.required = False
+                # Tirar o default também, e não só o `required`. Campo ausente
+                # com default preenchido volta a valer o default — foi assim
+                # que um PATCH que mandava só o cliente zerava o desconto e
+                # mudava o total da venda. Sem default, o campo ausente é
+                # pulado, que é o que "parcial" quer dizer.
+                campo.default = empty
 
     def validate_desconto(self, value):
         if value is not None and value < 0:

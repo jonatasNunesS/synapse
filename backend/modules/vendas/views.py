@@ -158,6 +158,54 @@ class VendaEstoqueView(EmpresaQuerySetMixin, APIView):
         )
 
 
+class VendaClienteView(EmpresaQuerySetMixin, APIView):
+    """
+    POST /api/vendas/{id}/cliente/ — põe, troca ou tira o cliente da venda.
+
+    Body: `{"cliente": "<uuid>"}` vincula ou troca; `{"cliente": null}`
+    desvincula e a venda volta a ser avulsa.
+
+    Separado do PATCH de propósito: mexe só no vínculo, e não passa perto dos
+    totais nem do financeiro.
+    """
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def post(self, request, pk):
+        empresa_id = self.get_empresa_id()
+        # A chave precisa vir, mesmo que com null: um corpo vazio seria
+        # ambíguo entre "desvincular" e "esqueci de mandar o cliente".
+        if "cliente" not in request.data:
+            return error_response(
+                "VALIDATION_ERROR",
+                "Informe o cliente (ou null para desvincular).",
+            )
+
+        try:
+            venda = VendaService.vincular_cliente(
+                empresa_id, pk, request.data.get("cliente")
+            )
+        except ResourceNotFound as erro:
+            # Distingue as duas ausências: a venda não é sua, ou o cliente não é.
+            if (erro.details or {}).get("resource") == "Cliente":
+                return error_response(
+                    "CLIENTE_NAO_ENCONTRADO", "Cliente não encontrado.", status_code=404
+                )
+            return error_response(
+                "VENDA_NAO_ENCONTRADA", "Venda não encontrada.", status_code=404
+            )
+
+        return success_response(
+            data=VendaSerializer(venda).data,
+            message=(
+                f"Venda vinculada a {venda.cliente.nome}."
+                if venda.cliente_id
+                else "Venda desvinculada do cliente."
+            ),
+        )
+
+
 class VendaConfirmarPagamentoView(EmpresaQuerySetMixin, APIView):
     """
     POST /api/vendas/{id}/confirmar-pagamento/ — recebeu (tudo ou parte).

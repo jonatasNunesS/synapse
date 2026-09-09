@@ -8,7 +8,7 @@
  */
 import { Suspense, useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Receipt, Trash2 } from "lucide-react";
+import { Plus, Receipt, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { VendaDetalheModal } from "@/components/vendas/VendaDetalheModal";
@@ -19,6 +19,7 @@ import {
   vendaTemVinculos,
 } from "@/components/vendas/VendaApagarFlow";
 import { VendaFiadoModal } from "@/components/vendas/VendaFiadoModal";
+import { VendaClienteModal } from "@/components/vendas/VendaClienteModal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useModulos } from "@/hooks/useModulos";
 import { useVendas } from "@/hooks/useVendas";
@@ -70,6 +71,8 @@ function Vendas() {
   const [apagarFlow, setApagarFlow] = useState<Venda | null>(null);
   // Venda fiada cuja cobrança está aberta na tela.
   const [vendaParaCobrar, setVendaParaCobrar] = useState<Venda | null>(null);
+  // Venda cujo vínculo com cliente está sendo mexido.
+  const [vendaParaVincular, setVendaParaVincular] = useState<Venda | null>(null);
 
   // Chegou pelo sino? (?fiado=<id>) → abre a cobrança daquela venda.
   const router = useRouter();
@@ -210,13 +213,24 @@ function Vendas() {
                       {new Date(venda.data_venda + "T00:00:00").toLocaleDateString("pt-BR")}
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => setVendaDetalhe(venda)}
-                        className="text-brand-accent transition-colors hover:underline"
-                      >
-                        {/* Sem cliente é o caso normal do balcão, não uma falha. */}
-                        {venda.cliente_nome ?? "Sem cliente"}
-                      </button>
+                      {venda.cliente_nome ? (
+                        <button
+                          onClick={() => setVendaDetalhe(venda)}
+                          className="text-brand-accent transition-colors hover:underline"
+                        >
+                          {venda.cliente_nome}
+                        </button>
+                      ) : (
+                        // Sem cliente é o caso normal do balcão, não uma falha —
+                        // mas dá para dizer de quem foi depois, se se souber.
+                        <button
+                          onClick={() => setVendaParaVincular(venda)}
+                          className="inline-flex items-center gap-1 text-muted-foreground transition-colors hover:text-brand-accent"
+                        >
+                          <UserPlus className="h-3.5 w-3.5" />
+                          Sem cliente
+                        </button>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {venda.itens.length} item{venda.itens.length !== 1 ? "ns" : ""}
@@ -294,12 +308,25 @@ function Vendas() {
         <VendaDetalheModal
           venda={vendaDetalhe}
           onClose={() => setVendaDetalhe(null)}
+          onTrocarCliente={(alvo) => {
+            setVendaDetalhe(null);
+            setVendaParaVincular(alvo);
+          }}
           onAtualizada={(atualizada) => {
             // O modal mostra a venda que o backend devolveu, e a lista relê
             // para os badges acompanharem sem a pessoa precisar recarregar.
             setVendaDetalhe(atualizada);
             recarregar();
           }}
+        />
+      )}
+
+      {/* De quem foi a venda: pôr, trocar ou tirar o cliente */}
+      {vendaParaVincular && (
+        <VendaClienteModal
+          venda={vendaParaVincular}
+          onClose={() => setVendaParaVincular(null)}
+          onVinculada={() => recarregar()}
         />
       )}
 

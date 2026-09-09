@@ -6,7 +6,7 @@
  * nada na leitura. Se a soma das linhas não bater com o total, o problema é
  * de dado, e escondê-lo com uma conta local seria pior.
  */
-import { X } from "lucide-react";
+import { UserCog, X } from "lucide-react";
 
 import { formatCurrency } from "@/lib/utils";
 import { FORMAS_PAGAMENTO, type Venda } from "@/types/vendas";
@@ -18,23 +18,40 @@ interface Props {
   onClose: () => void;
   /** Baixar estoque ou lançar financeiro devolve a venda atualizada. */
   onAtualizada?: (venda: Venda) => void;
+  /** Mexer em de quem foi a venda. Sem isto, o detalhe é só leitura. */
+  onTrocarCliente?: (venda: Venda) => void;
 }
 
 function rotuloForma(valor: string): string {
   return FORMAS_PAGAMENTO.find((f) => f.valor === valor)?.rotulo ?? "Não informada";
 }
 
-export function VendaDetalheModal({ venda, onClose, onAtualizada }: Props) {
+export function VendaDetalheModal({
+  venda,
+  onClose,
+  onAtualizada,
+  onTrocarCliente,
+}: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4">
       <div className="my-8 w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-elevacao-lg">
         <div className="mb-5 flex items-start justify-between">
           <div>
             <h2 className="text-lg font-semibold text-foreground">Venda</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">
+            <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
               {new Date(venda.data_venda + "T00:00:00").toLocaleDateString("pt-BR")}
               {" · "}
               {venda.cliente_nome ?? "Sem cliente"}
+              {onTrocarCliente && (
+                <button
+                  type="button"
+                  onClick={() => onTrocarCliente(venda)}
+                  className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-brand-accent transition-colors hover:bg-brand-400/10"
+                >
+                  <UserCog className="h-3 w-3" />
+                  {venda.cliente_nome ? "trocar" : "vincular"}
+                </button>
+              )}
             </p>
           </div>
           <button

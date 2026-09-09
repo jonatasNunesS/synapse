@@ -55,7 +55,13 @@ vi.mock("@/components/estoque/ProdutoSelect", () => ({
 }));
 
 vi.mock("@/hooks/useClientes", () => ({
-  useClientes: () => ({ clientes: [], carregar: vi.fn() }),
+  // O seletor de vínculo também lê daqui — sem cliente na lista não há o que
+  // escolher, e o teste do vínculo não teria como clicar em ninguém.
+  useClientes: () => ({
+    clientes: [{ id: "cli-1", nome: "Maria Souza" }],
+    loading: false,
+    carregar: vi.fn(),
+  }),
 }));
 
 // A página lê ?fiado= para abrir a cobrança vinda do sino.
@@ -452,5 +458,50 @@ describe("Fiado: o sino leva à cobrança", () => {
 
     await screen.findByRole("button", { name: "Excluir venda" });
     expect(screen.queryByTestId("venda-fiado")).not.toBeInTheDocument();
+  });
+});
+
+describe("Vínculo com cliente: da lista até o envio", () => {
+  async function comLista(alvo: Venda) {
+    respostasPadrao([alvo]);
+    render(<VendasPage />);
+    await screen.findByRole("button", { name: "Excluir venda" });
+  }
+
+  it("venda avulsa oferece o vínculo na própria linha", async () => {
+    await comLista(venda({ cliente: null, cliente_nome: null }));
+
+    fireEvent.click(screen.getByRole("button", { name: /sem cliente/i }));
+
+    expect(await screen.findByTestId("venda-cliente")).toBeInTheDocument();
+  });
+
+  it("venda com cliente abre o detalhe, e é de lá que se troca", async () => {
+    await comLista(venda({ cliente: "cli-1", cliente_nome: "Maria Souza" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Maria Souza" }));
+    fireEvent.click(await screen.findByRole("button", { name: /trocar/i }));
+
+    expect(await screen.findByTestId("venda-cliente")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Trocar o cliente da venda" })
+    ).toBeInTheDocument();
+  });
+
+  it("vincular chama o endpoint do vínculo, e não o PATCH da venda", async () => {
+    // O PATCH manda a venda inteira e recalcula os totais; o vínculo não pode
+    // passar por ele. Este teste é o que amarra a escolha.
+    await comLista(venda({ cliente: null, cliente_nome: null }));
+    fireEvent.click(screen.getByRole("button", { name: /sem cliente/i }));
+    await screen.findByTestId("venda-cliente");
+
+    post.mockResolvedValueOnce({
+      data: venda({ cliente: "cli-1", cliente_nome: "Maria Souza" }),
+    });
+    fireEvent.click(await screen.findByText("Maria Souza"));
+
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith("/vendas/v-1/cliente/", { cliente: "cli-1" })
+    );
   });
 });

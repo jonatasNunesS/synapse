@@ -6,6 +6,7 @@ from django.urls import path
 from .views import (
     VendaAdiarPagamentoView,
     VendaCancelarPagamentoView,
+    VendaClienteView,
     VendaConfirmarPagamentoView,
     VendaDetailView,
     VendaEstoqueView,
@@ -23,6 +24,12 @@ urlpatterns = [
         "<uuid:pk>/financeiro/",
         VendaFinanceiroView.as_view(),
         name="venda-financeiro",
+    ),
+    # ── Vínculo com cliente: pôr, trocar ou tirar ──
+    path(
+        "<uuid:pk>/cliente/",
+        VendaClienteView.as_view(),
+        name="venda-cliente",
     ),
     # ── Fiado: as três respostas à cobrança do dia ──
     path(

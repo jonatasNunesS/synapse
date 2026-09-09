@@ -243,3 +243,26 @@ describe("GUARDA: a venda migrada não aparece duas vezes", () => {
     expect(screen.getByText("No financeiro")).toBeInTheDocument();
   });
 });
+
+describe("O vínculo é o que faz a venda aparecer aqui", () => {
+  it("venda vinculada ao cliente entra no histórico dele", async () => {
+    // A ponta do outro lado do vínculo: a página do cliente pede as vendas
+    // dele, e o que decide a lista é o cliente gravado na venda.
+    comVendas([venda({ cliente: "cli-1" })]);
+
+    render(<ClienteDetalhePage />);
+
+    expect(await screen.findByText("Venda")).toBeInTheDocument();
+  });
+
+  it("venda desvinculada não aparece — o backend não a devolve mais", async () => {
+    // Desvincular tira a venda do filtro ?cliente_id=; o histórico fica sem
+    // ela sem que a tela precise saber de nada.
+    comVendas([]);
+
+    render(<ClienteDetalhePage />);
+
+    expect(await screen.findByText("Nenhuma interação registrada.")).toBeInTheDocument();
+    expect(screen.queryByText("Venda")).not.toBeInTheDocument();
+  });
+});

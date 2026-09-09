@@ -60,6 +60,22 @@ export const vendaFiado = {
     api.post<Venda>(`/vendas/${id}/cancelar-pagamento/`, {}).then((r) => r.data),
 };
 
+/**
+ * O vínculo da venda com um cliente: pôr, trocar ou tirar.
+ *
+ * Endpoint próprio, separado do PATCH de propósito. O PATCH manda a venda
+ * inteira e recalcula os totais a partir dos itens; para mexer só em de quem
+ * foi a venda, isso é passar perto de dinheiro sem necessidade.
+ *
+ * `null` desvincula — a venda volta a ser de balcão.
+ */
+export const vendaCliente = {
+  definir: (id: string, clienteId: string | null) =>
+    api
+      .post<Venda>(`/vendas/${id}/cliente/`, { cliente: clienteId })
+      .then((r) => r.data),
+};
+
 export function useVendas() {
   const [vendas, setVendas] = useState<Venda[]>([]);
   const [total, setTotal] = useState(0);

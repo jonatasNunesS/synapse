@@ -284,6 +284,44 @@ class VendaService:
         invalidate_cache(empresa_id, "financeiro")
         return lancamento
 
+    # ── Vínculo com cliente ──────────────────────────────────────────────────
+
+    @staticmethod
+    def vincular_cliente(empresa_id, venda_id, cliente_id) -> Venda:
+        """
+        Põe, troca ou tira o cliente de uma venda. E não faz mais nada.
+
+        Vínculo é organização; pagamento é fato. Trocar de quem foi a venda não
+        reescreve o que já aconteceu com o dinheiro: o lançamento financeiro
+        fica onde está, com o valor, o status e a descrição que tinha, e o que
+        já foi recebido continua recebido.
+
+        O que ANDA junto com o vínculo é só o que ainda não aconteceu — a
+        cobrança do fiado, que lê o cliente na hora de notificar e por isso
+        passa a falar do novo dono sem precisar de nada aqui.
+
+        Este endpoint existe separado do PATCH de propósito. O PATCH recebe a
+        venda inteira e recalcula os totais a partir dos itens; usá-lo para
+        mexer só no vínculo seria passar perto de dinheiro sem necessidade.
+        """
+        from modules.clientes.models import Cliente
+
+        venda = VendaService.obter(empresa_id, venda_id)
+
+        cliente = None
+        if cliente_id:
+            cliente = Cliente.objects.filter(
+                id=cliente_id, empresa_id=empresa_id
+            ).first()
+            if not cliente:
+                # Cliente de outra empresa não é "não encontrado" por acaso: é
+                # tentativa de alcançar dado alheio, e para aqui.
+                raise ResourceNotFound("Cliente", str(cliente_id))
+
+        venda.cliente = cliente
+        venda.save(update_fields=["cliente", "atualizado_em"])
+        return venda
+
     # ── Fase 3B: fiado ───────────────────────────────────────────────────────
 
     @staticmethod
