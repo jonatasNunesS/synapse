@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { EmpresaSuspensaAviso } from "@/components/layout/EmpresaSuspensaAviso";
 import { ToasterTema } from "@/components/tema/ToasterTema";
+import { BotaoAcaoRapida } from "@/components/layout/BotaoAcaoRapida";
 
 export default function DashboardLayout({
   children,
@@ -74,6 +75,8 @@ export default function DashboardLayout({
       >
         <div className="p-4 md:p-6">{children}</div>
       </main>
+      {/* Atalho de registrar, em todas as telas do sistema. */}
+      <BotaoAcaoRapida />
       <ToasterTema />
     </div>
   );
