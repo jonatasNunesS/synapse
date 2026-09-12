@@ -72,6 +72,17 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=0, minute=20),       # Diariamente às 00:20 (BRT)
         "options": {"expires": 3600},
     },
+    # ── Agenda ────────────────────────────────────────────────
+    # A cada 5 minutos, e não 1x/dia como as demais: a menor antecedência
+    # oferecida é de 10 minutos, então uma varredura diária avisaria horas
+    # depois da hora. `expires` menor que o intervalo evita empilhar rodadas
+    # se a fila atrasar — a guarda `lembrete_enviado` faz a rodada seguinte
+    # cobrir o que a anterior não alcançou.
+    "enviar-lembretes-agenda": {
+        "task": "agenda.enviar_lembretes",            # modules/agenda/tasks.py
+        "schedule": crontab(minute="*/5"),            # A cada 5 minutos
+        "options": {"expires": 240},
+    },
     # ── M6: Projetos ──────────────────────────────────────────
     "verificar-prazos-tarefas": {
         "task": "projetos.verificar_prazos_tarefas",  # modules/projetos/tasks.py

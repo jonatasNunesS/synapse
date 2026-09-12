@@ -6,6 +6,7 @@ export type TipoNotificacao =
   | "cliente"
   | "fornecedor"
   | "projeto"
+  | "agenda"
   | "equipe"
   | "documento"
   | "sistema";
@@ -34,6 +35,7 @@ export const TIPO_NOTIFICACAO_LABELS: Record<TipoNotificacao, string> = {
   cliente: "Cliente",
   fornecedor: "Fornecedor",
   projeto: "Projeto",
+  agenda: "Agenda",
   equipe: "Equipe",
   documento: "Documento",
   sistema: "Sistema",

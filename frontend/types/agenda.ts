@@ -1,5 +1,5 @@
 /**
- * Synapse — Tipos do Módulo Agenda (v1)
+ * Synapse — Tipos do Módulo Agenda
  */
 
 export interface Evento {
@@ -11,6 +11,8 @@ export interface Evento {
   dia_inteiro: boolean;
   local: string;
   cor: string;
+  /** Minutos antes do início para avisar. 0 = sem lembrete. */
+  lembrete_antecedencia: number;
   cliente: string | null; // id do Cliente
   cliente_nome: string | null;
   criado_por: string | null;
@@ -27,7 +29,28 @@ export interface EventoPayload {
   dia_inteiro?: boolean;
   local?: string;
   cor?: string;
+  lembrete_antecedencia?: number;
   cliente?: string | null;
+}
+
+/**
+ * Antecedências do lembrete, em minutos. Espelha LEMBRETE_CHOICES do backend
+ * (`modules/agenda/models.py`) — se mudar lá, muda aqui.
+ * Zero é o default: quem não pediu lembrete não recebe lembrete.
+ */
+export const SEM_LEMBRETE = 0;
+
+export const LEMBRETES: { valor: number; label: string }[] = [
+  { valor: SEM_LEMBRETE, label: "Sem lembrete" },
+  { valor: 10, label: "10 minutos antes" },
+  { valor: 30, label: "30 minutos antes" },
+  { valor: 60, label: "1 hora antes" },
+  { valor: 1440, label: "1 dia antes" },
+];
+
+/** Rótulo da antecedência, para exibir no detalhe do evento. */
+export function rotuloLembrete(minutos: number): string {
+  return LEMBRETES.find((l) => l.valor === minutos)?.label ?? `${minutos} min antes`;
 }
 
 // Cores preset para o seletor (mesmo padrão do ProjetoForm)

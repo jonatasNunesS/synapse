@@ -9,7 +9,13 @@ import { X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { buscarClientes } from "@/hooks/useAgenda";
 import { getErrorMessage } from "@/lib/api";
-import { CORES_EVENTO, type Evento, type EventoPayload } from "@/types/agenda";
+import {
+  CORES_EVENTO,
+  LEMBRETES,
+  SEM_LEMBRETE,
+  type Evento,
+  type EventoPayload,
+} from "@/types/agenda";
 
 interface ClienteOption {
   id: string;
@@ -65,6 +71,9 @@ export function EventoForm({ evento, slotInicial, onSalvar, onFechar }: EventoFo
   const [diaInteiro, setDiaInteiro] = useState(evento?.dia_inteiro ?? false);
   const [local, setLocal] = useState(evento?.local ?? "");
   const [cor, setCor] = useState(evento?.cor ?? CORES_EVENTO[0]);
+  const [lembrete, setLembrete] = useState<number>(
+    evento?.lembrete_antecedencia ?? SEM_LEMBRETE
+  );
   const [clienteId, setClienteId] = useState<string | "">(evento?.cliente ?? "");
 
   const [clientes, setClientes] = useState<ClienteOption[]>([]);
@@ -122,6 +131,7 @@ export function EventoForm({ evento, slotInicial, onSalvar, onFechar }: EventoFo
         dia_inteiro: diaInteiro,
         local,
         cor,
+        lembrete_antecedencia: lembrete,
         cliente: clienteId || null,
       });
       onFechar();
@@ -219,6 +229,28 @@ export function EventoForm({ evento, slotInicial, onSalvar, onFechar }: EventoFo
               placeholder="Ex: Espaço Villa Garden"
               className={inputClass}
             />
+          </div>
+
+          {/* Lembrete — o que faz a agenda avisar, em vez de só guardar */}
+          <div>
+            <label htmlFor="evento-lembrete" className="block text-sm font-medium text-foreground mb-1">
+              Lembrete
+            </label>
+            <select
+              id="evento-lembrete"
+              value={lembrete}
+              onChange={(e) => setLembrete(Number(e.target.value))}
+              className={inputClass}
+            >
+              {LEMBRETES.map((l) => (
+                <option key={l.valor} value={l.valor}>
+                  {l.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Avisamos por notificação e e-mail.
+            </p>
           </div>
 
           {/* Cliente do CRM (opcional) */}

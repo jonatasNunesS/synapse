@@ -13,6 +13,7 @@ class Notificacao(models.Model):
         ("cliente", "Cliente"),
         ("fornecedor", "Fornecedor"),
         ("projeto", "Projeto"),
+        ("agenda", "Agenda"),
         ("equipe", "Equipe"),
         ("documento", "Documento"),
         ("sistema", "Sistema"),

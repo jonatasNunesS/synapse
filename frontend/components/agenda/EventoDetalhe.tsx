@@ -4,10 +4,10 @@
  * Mostra os dados e, se vinculado, o cliente com link pro perfil no CRM.
  */
 import Link from "next/link";
-import { X, Pencil, Trash2, MapPin, Clock, User, Loader2 } from "lucide-react";
+import { X, Pencil, Trash2, MapPin, Clock, User, Bell, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import type { Evento } from "@/types/agenda";
+import { rotuloLembrete, SEM_LEMBRETE, type Evento } from "@/types/agenda";
 
 interface EventoDetalheProps {
   evento: Evento;
@@ -54,6 +54,15 @@ export function EventoDetalhe({ evento, onEditar, onExcluir, onFechar, excluindo
             <div className="flex items-center gap-2 text-muted-foreground">
               <MapPin size={15} />
               <span className="text-foreground">{evento.local}</span>
+            </div>
+          )}
+
+          {evento.lembrete_antecedencia !== SEM_LEMBRETE && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Bell size={15} />
+              <span className="text-foreground">
+                {rotuloLembrete(evento.lembrete_antecedencia)}
+              </span>
             </div>
           )}
 

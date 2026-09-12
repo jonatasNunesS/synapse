@@ -1,11 +1,25 @@
 """
-Synapse — Módulo Agenda (v1): Models
+Synapse — Módulo Agenda: Models
 Evento de calendário com multi-tenant obrigatório (empresa_id) e vínculo
 opcional com um Cliente do CRM.
 """
 import uuid
 
 from django.db import models
+
+# Antecedência do lembrete, em MINUTOS antes do início do evento.
+# Zero é o default: quem não pediu lembrete não recebe lembrete.
+SEM_LEMBRETE = 0
+LEMBRETE_CHOICES = [
+    (SEM_LEMBRETE, "Sem lembrete"),
+    (10, "10 minutos antes"),
+    (30, "30 minutos antes"),
+    (60, "1 hora antes"),
+    (1440, "1 dia antes"),
+]
+
+# A maior antecedência oferecida — a task usa para limitar a janela que varre.
+MAIOR_ANTECEDENCIA_MIN = max(minutos for minutos, _ in LEMBRETE_CHOICES)
 
 
 class Evento(models.Model):
@@ -35,6 +49,20 @@ class Evento(models.Model):
         related_name="eventos_agenda",
     )
 
+    # ── Lembrete ─────────────────────────────────────────────────────────
+    # Quanto antes avisar. Sem isto a agenda só guarda; com isto ela procura
+    # a pessoa (sino + e-mail), que é o motivo de existir de uma agenda.
+    lembrete_antecedencia = models.PositiveIntegerField(
+        choices=LEMBRETE_CHOICES,
+        default=SEM_LEMBRETE,
+        help_text="Minutos antes do início para avisar. 0 = sem lembrete.",
+    )
+    # Guarda de idempotência: o lembrete deste evento JÁ FOI PROCESSADO — a
+    # task não volta nele. Também fica True quando não havia a quem avisar,
+    # senão o evento seria varrido de novo a cada rodada até passar a hora.
+    # Remarcar o evento ou trocar a antecedência zera a guarda (ver o Service).
+    lembrete_enviado = models.BooleanField(default=False)
+
     criado_por = models.ForeignKey(
         "synapse_auth.CustomUser",
         on_delete=models.SET_NULL,
@@ -53,6 +81,9 @@ class Evento(models.Model):
         indexes = [
             models.Index(fields=["empresa", "data_inicio"]),
             models.Index(fields=["empresa", "data_fim"]),
+            # A varredura do lembrete roda a cada 5 min e atravessa todas as
+            # empresas: o índice é por (pendente, quando começa), não por empresa.
+            models.Index(fields=["lembrete_enviado", "data_inicio"]),
         ]
 
     def __str__(self) -> str:
