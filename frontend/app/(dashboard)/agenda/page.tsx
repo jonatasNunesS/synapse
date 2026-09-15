@@ -11,21 +11,23 @@ import {
   endOfWeek,
   startOfDay,
   endOfDay,
+  addDays,
   addHours,
 } from "date-fns";
 import { Views, type View, type SlotInfo } from "react-big-calendar";
 import { toast } from "sonner";
 import { CalendarDays, Plus } from "lucide-react";
-import { AgendaCalendario } from "@/components/agenda/AgendaCalendario";
+import { AgendaCalendario, DIAS_NA_LISTA } from "@/components/agenda/AgendaCalendario";
 import { EventoForm } from "@/components/agenda/EventoForm";
 import { EventoDetalhe } from "@/components/agenda/EventoDetalhe";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useAgenda } from "@/hooks/useAgenda";
+import { useTelaEstreita } from "@/hooks/useTelaEstreita";
 import { getErrorMessage } from "@/lib/api";
 import type { Evento, EventoPayload } from "@/types/agenda";
 
 // Intervalo visível conforme a visão atual (com folga para semanas parciais)
-function intervaloVisivel(date: Date, view: View): { inicio: Date; fim: Date } {
+export function intervaloVisivel(date: Date, view: View): { inicio: Date; fim: Date } {
   if (view === Views.MONTH) {
     return {
       inicio: startOfWeek(startOfMonth(date), { weekStartsOn: 0 }),
@@ -35,13 +37,24 @@ function intervaloVisivel(date: Date, view: View): { inicio: Date; fim: Date } {
   if (view === Views.WEEK) {
     return { inicio: startOfWeek(date, { weekStartsOn: 0 }), fim: endOfWeek(date, { weekStartsOn: 0 }) };
   }
+  // A lista olha para a frente: da data atual até `DIAS_NA_LISTA` dias depois.
+  // Sem este caso ela cairia no intervalo de um dia só e mostraria um período
+  // bem menor do que diz cobrir.
+  if (view === Views.AGENDA) {
+    return { inicio: startOfDay(date), fim: endOfDay(addDays(date, DIAS_NA_LISTA)) };
+  }
   return { inicio: startOfDay(date), fim: endOfDay(date) };
 }
 
 export default function AgendaPage() {
   const { eventos, loading, carregar, criar, atualizar, deletar } = useAgenda();
 
-  const [view, setView] = useState<View>(Views.MONTH);
+  // No celular a agenda abre na LISTA; no desktop, no mês. Enquanto a pessoa
+  // não escolhe, a visão é derivada da tela — depois de escolher, a escolha
+  // manda (girar o telefone não arranca ninguém de onde estava).
+  const telaEstreita = useTelaEstreita();
+  const [viewEscolhida, setViewEscolhida] = useState<View | null>(null);
+  const view = viewEscolhida ?? (telaEstreita ? Views.AGENDA : Views.MONTH);
   const [date, setDate] = useState<Date>(new Date());
 
   const [formAberto, setFormAberto] = useState(false);
@@ -146,11 +159,20 @@ export default function AgendaPage() {
         <p className="text-xs text-muted-foreground">Carregando eventos…</p>
       )}
 
+      {/* Tela vazia dizia nada: a grade em branco não explica o que fazer.
+          A lista tem a mensagem da própria biblioteca, então aqui é só para
+          as outras visões. */}
+      {!loading && eventos.length === 0 && view !== Views.AGENDA && (
+        <p className="text-sm text-muted-foreground">
+          Nenhum evento neste período. Clique num dia para marcar o primeiro.
+        </p>
+      )}
+
       <AgendaCalendario
         eventos={eventos}
         view={view}
         date={date}
-        onView={setView}
+        onView={setViewEscolhida}
         onNavigate={setDate}
         onSelectSlot={handleSelectSlot}
         onSelectEvent={setDetalhe}

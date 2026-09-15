@@ -42,6 +42,16 @@ const MENSAGENS = {
   showMore: (total: number) => `+${total} mais`,
 };
 
+/**
+ * Quantos dias a visão de lista cobre a partir da data atual.
+ *
+ * É o `length` do react-big-calendar, passado explicitamente porque a página
+ * precisa buscar no backend exatamente o período que a lista vai mostrar —
+ * deixar os dois lados dependerem do default da biblioteca seria um jeito
+ * silencioso de a lista mostrar menos do que existe.
+ */
+export const DIAS_NA_LISTA = 30;
+
 export interface CalendarioEvento {
   id: string;
   title: string;
@@ -93,7 +103,10 @@ export function AgendaCalendario({
         startAccessor="start"
         endAccessor="end"
         allDayAccessor="allDay"
-        views={[Views.MONTH, Views.WEEK, Views.DAY]}
+        // A lista (Views.AGENDA) é a visão que salva o celular: o mês em
+        // 375px dá ~50px por coluna, onde um título vira três pixels de cor.
+        views={[Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA]}
+        length={DIAS_NA_LISTA}
         view={view}
         date={date}
         onView={onView}
