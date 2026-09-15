@@ -78,10 +78,23 @@ export function EventoDetalhe({ evento, onEditar, onExcluir, onFechar, excluindo
             </div>
           )}
 
-          {evento.descricao && (
-            <p className="text-foreground whitespace-pre-wrap pt-1 border-t border-border/60">
-              {evento.descricao}
-            </p>
+          {/* Descrição e autoria: o que o evento diz, e de quem ele é.
+              A agenda é compartilhada — todos da empresa editam e apagam
+              tudo — então saber de quem é o compromisso ANTES de mexer nele
+              é o que falta para a regra não virar pegadinha. */}
+          {(evento.descricao || evento.criado_por_nome) && (
+            <div className="space-y-2 pt-3 border-t border-border/60">
+              {evento.descricao && (
+                <p className="text-foreground whitespace-pre-wrap">
+                  {evento.descricao}
+                </p>
+              )}
+              {evento.criado_por_nome && (
+                <p className="text-xs text-muted-foreground">
+                  Criado por {evento.criado_por_nome}
+                </p>
+              )}
+            </div>
           )}
         </div>
 
