@@ -43,6 +43,17 @@ class FollowUpsQuerySerializer(serializers.Serializer):
     )
 
 
+class ProximosCompromissosQuerySerializer(serializers.Serializer):
+    """Parâmetros para o endpoint de próximos compromissos da Agenda."""
+    dias = serializers.IntegerField(
+        min_value=1,
+        max_value=30,
+        default=7,
+        required=False,
+        help_text="Janela à frente, em dias (padrão: 7 — a semana).",
+    )
+
+
 class AtividadeQuerySerializer(serializers.Serializer):
     """Parâmetros para o endpoint de atividade recente."""
     limit = serializers.IntegerField(

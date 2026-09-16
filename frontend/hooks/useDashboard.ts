@@ -12,6 +12,7 @@ import type {
   DashboardFunil,
   DashboardMinhasTarefas,
   DashboardProjetos2,
+  DashboardProximosCompromissos,
   DashboardResumo,
   DashboardVencimentos,
   PeriodoAnalytics,
@@ -124,6 +125,28 @@ export function useDashboardFollowUps(dias: number = 3) {
 
   return {
     followups: data?.followups ?? [],
+    dias: data?.dias ?? dias,
+    isLoading,
+    isError: !!error,
+    refresh: mutate,
+  };
+}
+
+// ════════════════════════════════════════════════════════════
+// HOOK: PRÓXIMOS COMPROMISSOS (Agenda)
+// ════════════════════════════════════════════════════════════
+
+export function useDashboardProximosCompromissos(dias: number = 7) {
+  const { data, error, isLoading, mutate } = useSWR<DashboardProximosCompromissos>(
+    `/dashboard/proximos-compromissos/?dias=${dias}`,
+    fetcher,
+    // 2 min: o mesmo TTL do cache do backend. Adiantar o refresh só gastaria
+    // requisição para receber a mesma resposta guardada.
+    { refreshInterval: 120_000 }
+  );
+
+  return {
+    compromissos: data?.compromissos ?? [],
     dias: data?.dias ?? dias,
     isLoading,
     isError: !!error,

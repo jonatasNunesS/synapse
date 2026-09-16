@@ -22,6 +22,7 @@ import {
   useDashboardMinhasTarefas,
   useDashboardAlertasEstoque,
   useDashboardProjetos,
+  useDashboardProximosCompromissos,
   useDashboardAtividade,
 } from "@/hooks/useDashboard";
 
@@ -36,6 +37,7 @@ import { FollowUpsWidget } from "@/components/dashboard/FollowUpsWidget";
 import { MinhasTarefasWidget } from "@/components/dashboard/MinhasTarefasWidget";
 import { AlertasEstoqueWidget } from "@/components/dashboard/AlertasEstoqueWidget";
 import { ProjetosWidget } from "@/components/dashboard/ProjetosWidget";
+import { ProximosCompromissosWidget } from "@/components/dashboard/ProximosCompromissosWidget";
 import { AtividadeWidget } from "@/components/dashboard/AtividadeWidget";
 
 export default function DashboardPage() {
@@ -51,6 +53,8 @@ export default function DashboardPage() {
   const { moduloAtivo } = useModulos();
   const { alertas, isLoading: loadingAlertas } = useDashboardAlertasEstoque();
   const { projetos, isLoading: loadingProjetos } = useDashboardProjetos();
+  const { compromissos, isLoading: loadingCompromissos } =
+    useDashboardProximosCompromissos(7);
   const { eventos, isLoading: loadingAtividade } = useDashboardAtividade(10);
 
   return (
@@ -96,6 +100,17 @@ export default function DashboardPage() {
 
       {/* ── KPIs ───────────────────────────────────────────── */}
       <KPIGrid resumo={resumo} isLoading={loadingResumo} />
+
+      {/* ── Próximos compromissos ──────────────────────────
+          Logo abaixo dos números, porque "o que eu tenho hoje" é a primeira
+          pergunta de quem abre o sistema de manhã. Some com o módulo
+          desligado, como os demais widgets opcionais. */}
+      {moduloAtivo("agenda") && (
+        <ProximosCompromissosWidget
+          compromissos={compromissos}
+          isLoading={loadingCompromissos}
+        />
+      )}
 
       {/* ── Linha 1: Fluxo de Caixa + Funil ───────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

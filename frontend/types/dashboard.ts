@@ -142,6 +142,29 @@ export interface DashboardFollowUps {
 }
 
 // ════════════════════════════════════════════════════════════
+// PRÓXIMOS COMPROMISSOS (Agenda)
+// ════════════════════════════════════════════════════════════
+
+export interface CompromissoItem {
+  id: string;
+  titulo: string;
+  data_inicio: string; // ISO
+  data_fim: string; // ISO
+  dia_inteiro: boolean;
+  local: string;
+  cor: string;
+  cliente_id: string | null;
+  cliente_nome: string | null;
+  /** 0 = hoje, 1 = amanhã, negativo = começou antes e ainda está rolando. */
+  dias_restantes: number;
+}
+
+export interface DashboardProximosCompromissos {
+  compromissos: CompromissoItem[];
+  dias: number;
+}
+
+// ════════════════════════════════════════════════════════════
 // MINHAS TAREFAS
 // ════════════════════════════════════════════════════════════
 

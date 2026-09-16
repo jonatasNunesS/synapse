@@ -63,6 +63,11 @@ vi.mock("@/hooks/useDashboard", () => ({
   useDashboardMinhasTarefas: () => ({ tarefas: [], isLoading: false }),
   useDashboardAlertasEstoque: () => ({ alertas: [], isLoading: false }),
   useDashboardProjetos: () => ({ projetos: [], isLoading: false }),
+  useDashboardProximosCompromissos: () => ({
+    compromissos: [],
+    dias: 7,
+    isLoading: false,
+  }),
   useDashboardAtividade: () => ({ eventos: [], isLoading: false }),
 }));
 
@@ -106,5 +111,25 @@ describe("Dashboard × módulos", () => {
     expect(screen.getByText("Produtos em Estoque")).toBeInTheDocument();
     expect(screen.getByText("Projetos em Andamento")).toBeInTheDocument();
     expect(screen.getAllByText("Minhas Tarefas").length).toBeGreaterThan(0);
+  });
+
+  it("com a Agenda LIGADA o bloco de compromissos aparece", () => {
+    setModulos({ agenda: true });
+    render(<DashboardPage />);
+
+    expect(
+      screen.getByTestId("widget-proximos-compromissos")
+    ).toBeInTheDocument();
+  });
+
+  it("com a Agenda DESLIGADA o bloco de compromissos some", () => {
+    setModulos({ agenda: false });
+    render(<DashboardPage />);
+
+    expect(
+      screen.queryByTestId("widget-proximos-compromissos")
+    ).not.toBeInTheDocument();
+    // E o resto do dashboard segue de pé.
+    expect(screen.getByText("Receitas do Mês")).toBeInTheDocument();
   });
 });

@@ -15,6 +15,7 @@ TTL_DASHBOARD = 300       # 5 min — resumo principal
 TTL_ATIVIDADE = 120       # 2 min — feed de atividade recente
 TTL_VENCIMENTOS = 120     # 2 min — vencimentos próximos
 TTL_FOLLOWUPS = 120       # 2 min — follow-ups próximos
+TTL_COMPROMISSOS = 120    # 2 min — próximos compromissos da agenda
 TTL_TAREFAS = 120         # 2 min — minhas tarefas
 TTL_ALERTAS = 300         # 5 min — alertas de estoque
 TTL_PROJETOS_WIDGET = 300 # 5 min — projetos em andamento
@@ -277,6 +278,80 @@ class DashboardService:
             resultado = []
 
         set_cached(cache_key, resultado, TTL_VENCIMENTOS)
+        return resultado
+
+    # ── Próximos Compromissos (Agenda) ────────────────────────
+    @staticmethod
+    def obter_proximos_compromissos(empresa_id, dias: int = 7) -> list:
+        """
+        Eventos da Agenda de agora até o fim do dia daqui a N dias.
+
+        Existe para tirar a agenda do beco sem saída: até aqui o dashboard não
+        sabia que ela existia, e o compromisso marcado só aparecia para quem
+        fosse até a tela da Agenda olhar.
+
+        Empresa com o módulo Agenda desligado recebe lista vazia — o widget
+        some no front, mas o backend também não entrega, para o dado não vazar
+        por um cliente de API que ignore o gating da tela.
+        """
+        cache_key = build_cache_key(
+            empresa_id, "dashboard", "compromissos", {"dias": dias}
+        )
+        cached = get_cached(cache_key)
+        if cached is not None:
+            return cached
+
+        try:
+            from django.utils import timezone
+
+            from modules.agenda.models import Evento
+            from modules.auth.models import Empresa
+            from shared.modulos import modulo_ativo
+
+            empresa = Empresa.objects.filter(pk=empresa_id).only("modulo_agenda").first()
+            if not modulo_ativo(empresa, "agenda"):
+                resultado = []
+            else:
+                agora = timezone.now()
+                limite = timezone.localtime(agora).replace(
+                    hour=23, minute=59, second=59, microsecond=0
+                ) + timedelta(days=dias)
+
+                # `data_fim >= agora` e não `data_inicio >= agora`: um
+                # compromisso que começou às 9h e vai até as 11h ainda está
+                # acontecendo ao meio-dia — sumir com ele seria mentira.
+                eventos = (
+                    Evento.objects.filter(
+                        empresa_id=empresa_id,
+                        data_fim__gte=agora,
+                        data_inicio__lte=limite,
+                    )
+                    .select_related("cliente")
+                    .order_by("data_inicio")[:10]
+                )
+                hoje = timezone.localtime(agora).date()
+                resultado = [
+                    {
+                        "id": str(e.id),
+                        "titulo": e.titulo,
+                        "data_inicio": e.data_inicio.isoformat(),
+                        "data_fim": e.data_fim.isoformat(),
+                        "dia_inteiro": e.dia_inteiro,
+                        "local": e.local,
+                        "cor": e.cor,
+                        "cliente_id": str(e.cliente_id) if e.cliente_id else None,
+                        "cliente_nome": e.cliente.nome if e.cliente_id else None,
+                        "dias_restantes": (
+                            timezone.localtime(e.data_inicio).date() - hoje
+                        ).days,
+                    }
+                    for e in eventos
+                ]
+        except Exception as e:
+            logger.warning(f"Dashboard: erro ao obter próximos compromissos — {e}")
+            resultado = []
+
+        set_cached(cache_key, resultado, TTL_COMPROMISSOS)
         return resultado
 
     # ── Follow-ups Próximos ───────────────────────────────────

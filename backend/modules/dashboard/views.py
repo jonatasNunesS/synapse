@@ -8,6 +8,7 @@ Rotas:
   GET /api/dashboard/funil-vendas/     → Funil de vendas CRM
   GET /api/dashboard/vencimentos/      → Lançamentos com vencimento próximo
   GET /api/dashboard/followups/        → Clientes com follow-up próximo
+  GET /api/dashboard/proximos-compromissos/ → Eventos da Agenda à frente
   GET /api/dashboard/minhas-tarefas/   → Tarefas pendentes do usuário
   GET /api/dashboard/alertas-estoque/  → Produtos com estoque crítico
   GET /api/dashboard/projetos/         → Projetos em andamento
@@ -26,6 +27,7 @@ from .serializers import (
     AtividadeQuerySerializer,
     FluxoCaixaQuerySerializer,
     FollowUpsQuerySerializer,
+    ProximosCompromissosQuerySerializer,
     VencimentosQuerySerializer,
 )
 from .services import DashboardService
@@ -184,6 +186,43 @@ class DashboardFollowUpsView(EmpresaQuerySetMixin, APIView):
             return error_response(
                 code="DASHBOARD_ERROR",
                 message="Erro ao carregar follow-ups.",
+                details={"error": str(e)},
+                status_code=500,
+            )
+
+
+class DashboardProximosCompromissosView(EmpresaQuerySetMixin, APIView):
+    """GET /api/dashboard/proximos-compromissos/?dias=7 — Eventos da Agenda."""
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsEmpresaMember]
+
+    def get(self, request):
+        empresa_id = self.get_empresa_id()
+
+        serializer = ProximosCompromissosQuerySerializer(data=request.query_params)
+        if not serializer.is_valid():
+            return error_response(
+                code="VALIDATION_ERROR",
+                message="Parâmetros inválidos.",
+                details=serializer.errors,
+            )
+
+        dias = serializer.validated_data.get("dias", 7)
+
+        try:
+            compromissos = DashboardService.obter_proximos_compromissos(
+                empresa_id, dias
+            )
+            return success_response(
+                data={"compromissos": compromissos, "dias": dias},
+                message="Próximos compromissos obtidos com sucesso.",
+            )
+        except Exception as e:
+            logger.error(f"Dashboard proximos-compromissos error: {e}", exc_info=True)
+            return error_response(
+                code="DASHBOARD_ERROR",
+                message="Erro ao carregar os próximos compromissos.",
                 details={"error": str(e)},
                 status_code=500,
             )

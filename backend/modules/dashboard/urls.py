@@ -12,6 +12,7 @@ from .views import (
     DashboardFunilVendasView,
     DashboardMinhasTarefasView,
     DashboardProjetosView,
+    DashboardProximosCompromissosView,
     DashboardResumoView,
     DashboardVencimentosView,
 )
@@ -22,6 +23,11 @@ urlpatterns = [
     path("funil-vendas/", DashboardFunilVendasView.as_view(), name="dashboard-funil-vendas"),
     path("vencimentos/", DashboardVencimentosView.as_view(), name="dashboard-vencimentos"),
     path("followups/", DashboardFollowUpsView.as_view(), name="dashboard-followups"),
+    path(
+        "proximos-compromissos/",
+        DashboardProximosCompromissosView.as_view(),
+        name="dashboard-proximos-compromissos",
+    ),
     path("minhas-tarefas/", DashboardMinhasTarefasView.as_view(), name="dashboard-minhas-tarefas"),
     path("alertas-estoque/", DashboardAlertasEstoqueView.as_view(), name="dashboard-alertas-estoque"),
     path("projetos/", DashboardProjetosView.as_view(), name="dashboard-projetos"),
