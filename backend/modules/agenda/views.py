@@ -30,8 +30,8 @@ logger = logging.getLogger("synapse")
 
 class EventoListCreateView(EmpresaQuerySetMixin, APIView):
     """
-    GET  /api/agenda/?inicio=&fim=  → lista eventos (por intervalo, paginado)
-    POST /api/agenda/               → cria evento
+    GET  /api/agenda/?inicio=&fim=&cliente=  → lista eventos (paginado)
+    POST /api/agenda/                        → cria evento
     """
 
     authentication_classes = [CookieJWTAuthentication]
@@ -42,6 +42,7 @@ class EventoListCreateView(EmpresaQuerySetMixin, APIView):
         empresa_id = self.get_empresa_id()
         inicio = self._parse_dt(request.query_params.get("inicio"))
         fim = self._parse_dt(request.query_params.get("fim"))
+        cliente_id = self._parse_uuid(request.query_params.get("cliente"))
 
         # Cache da página (chave inclui os query params: intervalo + page)
         params = dict(request.query_params)
@@ -52,7 +53,7 @@ class EventoListCreateView(EmpresaQuerySetMixin, APIView):
 
             return Response(cached)
 
-        eventos = AgendaService.listar_eventos(empresa_id, inicio, fim)
+        eventos = AgendaService.listar_eventos(empresa_id, inicio, fim, cliente_id)
         paginator = StandardPagination()
         page = paginator.paginate_queryset(eventos, request)
         serializer = EventoSerializer(page, many=True)
@@ -73,6 +74,22 @@ class EventoListCreateView(EmpresaQuerySetMixin, APIView):
             data=EventoSerializer(evento).data,
             message="Evento criado com sucesso.",
         )
+
+    @staticmethod
+    def _parse_uuid(value):
+        """
+        Converte o `?cliente=` em UUID. Lixo vira None (lista sem o filtro),
+        em vez de estourar 500 — e um id de outra empresa simplesmente não
+        casa, porque o recorte por empresa vem antes no queryset.
+        """
+        if not value:
+            return None
+        import uuid
+
+        try:
+            return uuid.UUID(str(value))
+        except (ValueError, AttributeError, TypeError):
+            return None
 
     @staticmethod
     def _parse_dt(value):

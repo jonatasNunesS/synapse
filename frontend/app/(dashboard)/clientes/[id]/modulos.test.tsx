@@ -90,11 +90,23 @@ const patch = vi.fn().mockResolvedValue({
   success: true,
   data: { ...cliente, proximo_followup: "2026-09-10" },
 });
+/** O que GET /agenda/?cliente= devolve nesta renderização. */
+let eventosDoCliente: unknown[] = [];
+const get = vi.fn(async () => ({
+  data: eventosDoCliente,
+  pagination: { total_pages: 1 },
+}));
+
 vi.mock("@/lib/api", async () => {
   const real = await vi.importActual<typeof import("@/lib/api")>("@/lib/api");
   return {
     ...real,
-    api: { patch: (...args: unknown[]) => patch(...args), delete: vi.fn(), post: vi.fn() },
+    api: {
+      patch: (...args: unknown[]) => patch(...args),
+      get: (...args: unknown[]) => get(...(args as [])),
+      delete: vi.fn(),
+      post: vi.fn(),
+    },
   };
 });
 
@@ -115,6 +127,8 @@ async function salvarClienteComFollowup() {
 
 beforeEach(() => {
   patch.mockClear();
+  get.mockClear();
+  eventosDoCliente = [];
   useAppStore.setState({ usuario: null });
 });
 
@@ -140,20 +154,56 @@ describe("Cliente × módulo Agenda", () => {
   });
 });
 
+describe("Compromissos do cliente no perfil", () => {
+  it("com Agenda LIGADA o bloco aparece e busca os eventos DESTE cliente", async () => {
+    setModulos({ agenda: true, estoque: true });
+    render(<ClienteDetalhePage />);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("compromissos-cliente")).toBeInTheDocument()
+    );
+    // O filtro por cliente é o que impede o perfil de listar a agenda inteira.
+    const chamada = get.mock.calls.find(
+      ([rota]) => typeof rota === "string" && rota.startsWith("/agenda/")
+    );
+    expect(chamada).toBeTruthy();
+    expect((chamada as unknown[])[1]).toMatchObject({ cliente: "cli-1" });
+  });
+
+  it("com Agenda DESLIGADA o bloco some e nem busca", async () => {
+    setModulos({ agenda: false, estoque: true });
+    render(<ClienteDetalhePage />);
+
+    await waitFor(() =>
+      expect(screen.queryByTestId("compromissos-cliente")).not.toBeInTheDocument()
+    );
+    expect(
+      get.mock.calls.some(
+        ([rota]) => typeof rota === "string" && rota.startsWith("/agenda/")
+      )
+    ).toBe(false);
+  });
+});
+
 describe("Cliente × módulo Estoque", () => {
-  it("com Estoque DESLIGADO a timeline não oferece descontar do estoque", () => {
+  it("com Estoque DESLIGADO a timeline não oferece descontar do estoque", async () => {
     setModulos({ estoque: false, agenda: true });
     render(<ClienteDetalhePage />);
+    // Espera a timeline sair do esqueleto: sem isto a ausência do botão não
+    // prova nada — nada tinha sido desenhado ainda.
+    expect(await screen.findByText("Venda inicial")).toBeInTheDocument();
+
     expect(
       screen.queryByRole("button", { name: /Descontar do estoque/i })
     ).not.toBeInTheDocument();
   });
 
-  it("com Estoque LIGADO a ação de descontar aparece na venda", () => {
+  it("com Estoque LIGADO a ação de descontar aparece na venda", async () => {
     setModulos({ estoque: true, agenda: true });
     render(<ClienteDetalhePage />);
+
     expect(
-      screen.getByRole("button", { name: /Descontar do estoque/i })
+      await screen.findByRole("button", { name: /Descontar do estoque/i })
     ).toBeInTheDocument();
   });
 });

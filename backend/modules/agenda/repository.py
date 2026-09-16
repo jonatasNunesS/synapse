@@ -24,17 +24,23 @@ class AgendaRepository:
         )
 
     @staticmethod
-    def listar(empresa_id, inicio=None, fim=None):
+    def listar(empresa_id, inicio=None, fim=None, cliente_id=None):
         """
         Lista eventos da empresa. Se inicio/fim informados, retorna apenas os
         que SOBREPÕEM o intervalo [inicio, fim] (evento cujo período cruza a
         janela visível do calendário): data_inicio <= fim AND data_fim >= inicio.
+
+        `cliente_id` restringe aos eventos daquele cliente — é o que o perfil
+        do cliente usa para mostrar os compromissos dele. O filtro entra DEPOIS
+        do recorte por empresa, então não há como pedir o cliente de outra.
         """
         qs = AgendaRepository._base_qs(empresa_id)
         if inicio is not None:
             qs = qs.filter(data_fim__gte=inicio)
         if fim is not None:
             qs = qs.filter(data_inicio__lte=fim)
+        if cliente_id is not None:
+            qs = qs.filter(cliente_id=cliente_id)
         return qs.order_by("data_inicio")
 
     @staticmethod

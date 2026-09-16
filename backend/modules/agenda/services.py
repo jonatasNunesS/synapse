@@ -16,9 +16,9 @@ class AgendaService:
     """Serviço da Agenda."""
 
     @staticmethod
-    def listar_eventos(empresa_id, inicio=None, fim=None):
-        """Lista eventos (opcionalmente por intervalo). Retorna queryset."""
-        return AgendaRepository.listar(empresa_id, inicio, fim)
+    def listar_eventos(empresa_id, inicio=None, fim=None, cliente_id=None):
+        """Lista eventos (opcionalmente por intervalo e/ou cliente)."""
+        return AgendaRepository.listar(empresa_id, inicio, fim, cliente_id)
 
     @staticmethod
     def obter_evento(empresa_id, evento_id) -> Evento:

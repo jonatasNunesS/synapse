@@ -27,6 +27,7 @@ import { RegistrarFinanceiroModal } from "@/components/financeiro/RegistrarFinan
 import { ClienteForm } from "@/components/clientes/ClienteForm";
 import { ApagarComAjustesFlow } from "@/components/clientes/ApagarComAjustesFlow";
 import { FollowupAgendaModal } from "@/components/clientes/FollowupAgendaModal";
+import { CompromissosCliente } from "@/components/clientes/CompromissosCliente";
 import { VendaDetalheModal } from "@/components/vendas/VendaDetalheModal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { STATUS_FUNIL_LABELS, STATUS_FUNIL_COLORS } from "@/types/clientes";
@@ -34,6 +35,7 @@ import type { StatusFunil, InteracaoCliente } from "@/types/clientes";
 import type { Venda } from "@/types/vendas";
 import { api, getErrorMessage } from "@/lib/api";
 import { useModulos } from "@/hooks/useModulos";
+import { useEventosDoCliente } from "@/hooks/useAgenda";
 import { useVendasDoCliente } from "@/hooks/useVendas";
 import { montarHistorico } from "@/lib/vendas";
 import { formatCurrency } from "@/lib/utils";
@@ -60,6 +62,7 @@ export default function ClienteDetalhePage() {
 
   const { cliente, loading, carregar, setCliente } = useClienteDetalhe(id);
   const { moduloAtivo } = useModulos();
+  const agendaAtiva = moduloAtivo("agenda");
   const {
     interacoes,
     loading: interacoesLoading,
@@ -76,6 +79,11 @@ export default function ClienteDetalhePage() {
     loading: vendasLoading,
     recarregar: recarregarVendas,
   } = useVendasDoCliente(id);
+  const {
+    eventos: compromissos,
+    loading: compromissosLoading,
+    carregar: carregarCompromissos,
+  } = useEventosDoCliente(id);
 
   const [showInteracaoForm, setShowInteracaoForm] = useState(false);
   const [editingInteracao, setEditingInteracao] = useState<InteracaoCliente | null>(null);
@@ -129,6 +137,13 @@ export default function ClienteDetalhePage() {
   useEffect(() => {
     carregarInteracoes(filtroEstoque ? { estoque: filtroEstoque } : {});
   }, [carregarInteracoes, filtroEstoque]);
+
+  // Compromissos deste cliente — só se a empresa usa a Agenda. O erro não
+  // vira toast: o bloco é acessório e não pode atrapalhar o perfil.
+  useEffect(() => {
+    if (!agendaAtiva) return;
+    carregarCompromissos().catch(() => {});
+  }, [agendaAtiva, carregarCompromissos]);
 
   // Recarrega as interações preservando o filtro de estoque atual.
   const recarregarInteracoes = () =>
@@ -472,6 +487,15 @@ export default function ClienteDetalhePage() {
                 </p>
               )}
             </div>
+          )}
+
+          {/* Compromissos deste cliente — logo abaixo do follow-up, que é de
+              onde a maior parte deles nasce. */}
+          {agendaAtiva && (
+            <CompromissosCliente
+              eventos={compromissos}
+              loading={compromissosLoading}
+            />
           )}
 
           {/* Info adicional */}
