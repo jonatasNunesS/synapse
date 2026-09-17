@@ -14,6 +14,7 @@ TIPO_PARA_MODULO = {
     "estoque": "estoque",
     "fornecedor": "fornecedores",
     "projeto": "projetos",
+    "agenda": "agenda",
     "equipe": "equipe",
     "documento": "documentos",
 }

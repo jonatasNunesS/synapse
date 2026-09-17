@@ -4,10 +4,10 @@
  * Mostra os dados e, se vinculado, o cliente com link pro perfil no CRM.
  */
 import Link from "next/link";
-import { X, Pencil, Trash2, MapPin, Clock, User, Loader2 } from "lucide-react";
+import { X, Pencil, Trash2, MapPin, Clock, User, Bell, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import type { Evento } from "@/types/agenda";
+import { rotuloLembrete, SEM_LEMBRETE, type Evento } from "@/types/agenda";
 
 interface EventoDetalheProps {
   evento: Evento;
@@ -57,6 +57,15 @@ export function EventoDetalhe({ evento, onEditar, onExcluir, onFechar, excluindo
             </div>
           )}
 
+          {evento.lembrete_antecedencia !== SEM_LEMBRETE && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Bell size={15} />
+              <span className="text-foreground">
+                {rotuloLembrete(evento.lembrete_antecedencia)}
+              </span>
+            </div>
+          )}
+
           {evento.cliente && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <User size={15} />
@@ -69,10 +78,23 @@ export function EventoDetalhe({ evento, onEditar, onExcluir, onFechar, excluindo
             </div>
           )}
 
-          {evento.descricao && (
-            <p className="text-foreground whitespace-pre-wrap pt-1 border-t border-border/60">
-              {evento.descricao}
-            </p>
+          {/* Descrição e autoria: o que o evento diz, e de quem ele é.
+              A agenda é compartilhada — todos da empresa editam e apagam
+              tudo — então saber de quem é o compromisso ANTES de mexer nele
+              é o que falta para a regra não virar pegadinha. */}
+          {(evento.descricao || evento.criado_por_nome) && (
+            <div className="space-y-2 pt-3 border-t border-border/60">
+              {evento.descricao && (
+                <p className="text-foreground whitespace-pre-wrap">
+                  {evento.descricao}
+                </p>
+              )}
+              {evento.criado_por_nome && (
+                <p className="text-xs text-muted-foreground">
+                  Criado por {evento.criado_por_nome}
+                </p>
+              )}
+            </div>
           )}
         </div>
 

@@ -25,6 +25,7 @@ class EventoSerializer(serializers.ModelSerializer):
             "dia_inteiro",
             "local",
             "cor",
+            "lembrete_antecedencia",
             "cliente",
             "cliente_nome",
             "criado_por",
@@ -63,6 +64,7 @@ class EventoCreateSerializer(serializers.ModelSerializer):
             "dia_inteiro",
             "local",
             "cor",
+            "lembrete_antecedencia",
             "cliente",
         ]
 

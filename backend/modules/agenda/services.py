@@ -40,6 +40,7 @@ class AgendaService:
     @staticmethod
     def atualizar_evento(empresa_id, evento_id, dados: dict) -> Evento:
         evento = AgendaService.obter_evento(empresa_id, evento_id)
+        dados = AgendaService._rearmar_lembrete(evento, dados)
         evento = AgendaRepository.atualizar(evento, dados)
         invalidate_cache(empresa_id, "agenda")
         logger.info(
@@ -47,6 +48,26 @@ class AgendaService:
             extra={"empresa_id": str(empresa_id), "evento_id": str(evento_id)},
         )
         return evento
+
+    @staticmethod
+    def _rearmar_lembrete(evento: Evento, dados: dict) -> dict:
+        """
+        Remarcou o evento ou trocou a antecedência? O lembrete volta a valer.
+
+        Sem isto, avisar uma vez calaria o lembrete para sempre: quem adiasse a
+        reunião de hoje para a semana que vem não seria avisado de novo, que é
+        justamente quando o aviso faz falta.
+        """
+        novo_inicio = dados.get("data_inicio", evento.data_inicio)
+        nova_antecedencia = dados.get(
+            "lembrete_antecedencia", evento.lembrete_antecedencia
+        )
+        remarcado = novo_inicio != evento.data_inicio
+        antecedencia_mudou = nova_antecedencia != evento.lembrete_antecedencia
+
+        if evento.lembrete_enviado and (remarcado or antecedencia_mudou):
+            dados = {**dados, "lembrete_enviado": False}
+        return dados
 
     @staticmethod
     def deletar_evento(empresa_id, evento_id) -> None:
