@@ -47,6 +47,19 @@ function dateParaLocalInput(d: Date): string {
   return new Date(d.getTime() - off * 60000).toISOString().slice(0, 16);
 }
 
+// ── Dia inteiro: a hora some da tela, mas o estado continua sendo
+// "YYYY-MM-DDTHH:mm". Quem normaliza para 00:00 → 23:59 é o backend, no save
+// do modelo, porque o evento nasce por mais caminhos que este formulário.
+/** "2026-10-05T14:30" → "2026-10-05" (o que o input `date` mostra). */
+export function soData(local: string): string {
+  return local.slice(0, 10);
+}
+/** "2026-10-05" + o estado anterior → mantém a hora que já estava guardada. */
+export function juntarComHora(data: string, anterior: string): string {
+  const hora = anterior.slice(11) || "00:00";
+  return `${data}T${hora}`;
+}
+
 export function EventoForm({ evento, slotInicial, onSalvar, onFechar }: EventoFormProps) {
   const editando = !!evento;
 
@@ -116,7 +129,14 @@ export function EventoForm({ evento, slotInicial, onSalvar, onFechar }: EventoFo
     }
     const inicioIso = localInputParaIso(dataInicio);
     const fimIso = localInputParaIso(dataFim);
-    if (new Date(fimIso) < new Date(inicioIso)) {
+    // Com dia inteiro a hora está escondida e não quer dizer nada — comparar
+    // por data. Senão, quem abrisse o formulário às 23h e marcasse o mesmo dia
+    // nas duas pontas levaria "término antes do início" por causa de horas que
+    // a tela nem mostra, e sem ter como corrigir.
+    const foraDeOrdem = diaInteiro
+      ? soData(dataFim) < soData(dataInicio)
+      : new Date(fimIso) < new Date(inicioIso);
+    if (foraDeOrdem) {
       setErro("A data de término não pode ser anterior à de início.");
       return;
     }
@@ -199,22 +219,45 @@ export function EventoForm({ evento, slotInicial, onSalvar, onFechar }: EventoFo
             Dia inteiro
           </label>
 
+          {/* Marcou "dia inteiro"? A hora some. Enquanto ela ficava visível e
+              editável, o campo mentia: dava para gravar "dia inteiro das 14h
+              às 15h" e a tela escondia a hora depois. */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Início</label>
+              <label
+                htmlFor="evento-inicio"
+                className="block text-sm font-medium text-foreground mb-1"
+              >
+                {diaInteiro ? "Data de início" : "Início"}
+              </label>
               <input
-                type="datetime-local"
-                value={dataInicio}
-                onChange={(e) => setDataInicio(e.target.value)}
+                id="evento-inicio"
+                type={diaInteiro ? "date" : "datetime-local"}
+                value={diaInteiro ? soData(dataInicio) : dataInicio}
+                onChange={(e) =>
+                  setDataInicio(
+                    diaInteiro ? juntarComHora(e.target.value, dataInicio) : e.target.value
+                  )
+                }
                 className={inputClass}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Término</label>
+              <label
+                htmlFor="evento-fim"
+                className="block text-sm font-medium text-foreground mb-1"
+              >
+                {diaInteiro ? "Data de término" : "Término"}
+              </label>
               <input
-                type="datetime-local"
-                value={dataFim}
-                onChange={(e) => setDataFim(e.target.value)}
+                id="evento-fim"
+                type={diaInteiro ? "date" : "datetime-local"}
+                value={diaInteiro ? soData(dataFim) : dataFim}
+                onChange={(e) =>
+                  setDataFim(
+                    diaInteiro ? juntarComHora(e.target.value, dataFim) : e.target.value
+                  )
+                }
                 className={inputClass}
               />
             </div>

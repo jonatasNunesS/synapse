@@ -84,8 +84,25 @@ class EventoCreateSerializer(serializers.ModelSerializer):
         # Em PATCH, cair para o valor atual da instância quando o campo não vem
         inicio = attrs.get("data_inicio") or getattr(self.instance, "data_inicio", None)
         fim = attrs.get("data_fim") or getattr(self.instance, "data_fim", None)
-        if inicio and fim and fim < inicio:
-            raise serializers.ValidationError(
-                {"data_fim": "A data de término não pode ser anterior à de início."}
-            )
+        dia_inteiro = attrs.get("dia_inteiro")
+        if dia_inteiro is None:
+            dia_inteiro = getattr(self.instance, "dia_inteiro", False)
+
+        if inicio and fim:
+            # Dia inteiro: a hora é normalizada no save e não significa nada
+            # aqui. Comparar por data — senão um evento de um dia só, criado
+            # perto da meia-noite, seria recusado por horas que ninguém
+            # escolheu e que a tela sequer mostra.
+            if dia_inteiro:
+                from django.utils import timezone
+
+                fora_de_ordem = (
+                    timezone.localtime(fim).date() < timezone.localtime(inicio).date()
+                )
+            else:
+                fora_de_ordem = fim < inicio
+            if fora_de_ordem:
+                raise serializers.ValidationError(
+                    {"data_fim": "A data de término não pode ser anterior à de início."}
+                )
         return attrs

@@ -8,7 +8,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
-import { EventoForm } from "./EventoForm";
+import { EventoForm, juntarComHora, soData } from "./EventoForm";
 import type { Evento } from "@/types/agenda";
 
 // A busca de clientes do CRM não é o assunto deste teste.
@@ -42,6 +42,102 @@ async function preencherESalvar() {
   fireEvent.click(screen.getByRole("button", { name: /criar evento/i }));
   await waitFor(() => expect(onSalvar).toHaveBeenCalled());
 }
+
+describe("Dia inteiro", () => {
+  const inicio = () => screen.getByLabelText(/início/i) as HTMLInputElement;
+  const fim = () => screen.getByLabelText(/término/i) as HTMLInputElement;
+  const caixaDiaInteiro = () => screen.getByLabelText(/dia inteiro/i);
+
+  it("desmarcado, os campos pedem data E hora", () => {
+    abrirNovo();
+
+    expect(inicio().type).toBe("datetime-local");
+    expect(fim().type).toBe("datetime-local");
+  });
+
+  it("marcado, a hora some da tela", () => {
+    // Enquanto a hora ficava visível e editável, o campo mentia: dava para
+    // gravar "dia inteiro das 14h às 15h" e a tela escondia a hora depois.
+    abrirNovo();
+
+    fireEvent.click(caixaDiaInteiro());
+
+    expect(inicio().type).toBe("date");
+    expect(fim().type).toBe("date");
+    expect(inicio().value).not.toContain("T");
+  });
+
+  it("desmarcar devolve a hora", () => {
+    abrirNovo();
+    fireEvent.click(caixaDiaInteiro());
+
+    fireEvent.click(caixaDiaInteiro());
+
+    expect(inicio().type).toBe("datetime-local");
+  });
+
+  it("um dia só, com as horas escondidas invertidas, salva mesmo assim", async () => {
+    // O cenário real: o formulário abriu às 23h30, então a hora guardada no
+    // início é 23:30 e a do término, 00:30. Marcar dia inteiro esconde as
+    // duas — e comparar por HORA recusaria um evento de um dia só por causa
+    // de valores que ninguém escolheu e que a tela nem mostra.
+    // O slot fixa o horário: sem ele o teste só pegaria o bug às 23h.
+    const abertura = new Date("2026-11-20T23:30:00");
+    render(
+      <EventoForm
+        evento={null}
+        slotInicial={{
+          inicio: abertura,
+          fim: new Date("2026-11-20T00:30:00"),
+        }}
+        onSalvar={onSalvar}
+        onFechar={onFechar}
+      />
+    );
+    fireEvent.click(caixaDiaInteiro());
+
+    fireEvent.change(inicio(), { target: { value: "2026-11-20" } });
+    fireEvent.change(fim(), { target: { value: "2026-11-20" } });
+    await preencherESalvar();
+
+    // Quem normaliza para 00:00 → 23:59 é o backend; daqui sai o dia certo.
+    expect(payloadSalvo().dia_inteiro).toBe(true);
+    expect(payloadSalvo().data_inicio).toContain("2026-11-20");
+  });
+
+  it("término num dia ANTERIOR continua sendo recusado", async () => {
+    // A guarda não pode sumir junto com a comparação por hora.
+    render(
+      <EventoForm
+        evento={null}
+        slotInicial={{
+          inicio: new Date("2026-11-20T10:00:00"),
+          fim: new Date("2026-11-18T10:00:00"),
+        }}
+        onSalvar={onSalvar}
+        onFechar={onFechar}
+      />
+    );
+    fireEvent.click(caixaDiaInteiro());
+
+    fireEvent.change(screen.getByPlaceholderText(/casamento ana/i), {
+      target: { value: "Viagem impossível" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /criar evento/i }));
+
+    expect(
+      await screen.findByText(/não pode ser anterior/i)
+    ).toBeInTheDocument();
+    expect(onSalvar).not.toHaveBeenCalled();
+  });
+
+  it("os ajudantes de data não perdem nem inventam hora", () => {
+    expect(soData("2026-10-05T14:30")).toBe("2026-10-05");
+    expect(juntarComHora("2026-11-20", "2026-10-05T14:30")).toBe("2026-11-20T14:30");
+    // Sem hora anterior, meia-noite — não um valor quebrado.
+    expect(juntarComHora("2026-11-20", "")).toBe("2026-11-20T00:00");
+  });
+});
 
 describe("Lembrete", () => {
   it("nasce em 'Sem lembrete' — não se impõe aviso a quem não pediu", () => {

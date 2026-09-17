@@ -22,6 +22,28 @@ LEMBRETE_CHOICES = [
 MAIOR_ANTECEDENCIA_MIN = max(minutos for minutos, _ in LEMBRETE_CHOICES)
 
 
+def normalizar_dia_inteiro(data_inicio, data_fim):
+    """
+    Dia inteiro é 00:00 → 23:59:59, no fuso da empresa.
+
+    Sem isto o campo mente: marcar "dia inteiro" num evento das 14h às 15h
+    guardava 14h–15h, o calendário desenhava na faixa de dia inteiro e o
+    detalhe imprimia "Dia inteiro" escondendo a hora que estava lá.
+
+    O corte é no fuso LOCAL (America/Sao_Paulo), não em UTC: "o dia todo" é o
+    dia de quem marcou, e usar UTC deslocaria as bordas em três horas.
+    """
+    from django.utils import timezone
+
+    inicio = timezone.localtime(data_inicio).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    fim = timezone.localtime(data_fim).replace(
+        hour=23, minute=59, second=59, microsecond=0
+    )
+    return inicio, fim
+
+
 class Evento(models.Model):
     """Evento da agenda. Pode existir sem cliente; se tiver, linka ao CRM."""
 
@@ -85,6 +107,18 @@ class Evento(models.Model):
             # empresas: o índice é por (pendente, quando começa), não por empresa.
             models.Index(fields=["lembrete_enviado", "data_inicio"]),
         ]
+
+    def save(self, *args, **kwargs):
+        """
+        A normalização do dia inteiro mora aqui, e não na view, porque o evento
+        nasce por mais de um caminho: a API, o follow-up do CRM, o admin e o
+        shell. Confiar só no formulário deixaria os outros três mentindo.
+        """
+        if self.dia_inteiro and self.data_inicio and self.data_fim:
+            self.data_inicio, self.data_fim = normalizar_dia_inteiro(
+                self.data_inicio, self.data_fim
+            )
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return f"{self.titulo} ({self.data_inicio:%d/%m/%Y %H:%M})"
