@@ -92,7 +92,7 @@ const patch = vi.fn().mockResolvedValue({
 });
 /** O que GET /agenda/?cliente= devolve nesta renderização. */
 let eventosDoCliente: unknown[] = [];
-const get = vi.fn(async () => ({
+const get = vi.fn(async (_rota: string, _params?: Record<string, unknown>) => ({
   data: eventosDoCliente,
   pagination: { total_pages: 1 },
 }));
@@ -103,7 +103,7 @@ vi.mock("@/lib/api", async () => {
     ...real,
     api: {
       patch: (...args: unknown[]) => patch(...args),
-      get: (...args: unknown[]) => get(...(args as [])),
+      get: (rota: string, params?: Record<string, unknown>) => get(rota, params),
       delete: vi.fn(),
       post: vi.fn(),
     },
@@ -163,11 +163,9 @@ describe("Compromissos do cliente no perfil", () => {
       expect(screen.getByTestId("compromissos-cliente")).toBeInTheDocument()
     );
     // O filtro por cliente é o que impede o perfil de listar a agenda inteira.
-    const chamada = get.mock.calls.find(
-      ([rota]) => typeof rota === "string" && rota.startsWith("/agenda/")
-    );
+    const chamada = get.mock.calls.find(([rota]) => rota.startsWith("/agenda/"));
     expect(chamada).toBeTruthy();
-    expect((chamada as unknown[])[1]).toMatchObject({ cliente: "cli-1" });
+    expect(chamada![1]).toMatchObject({ cliente: "cli-1" });
   });
 
   it("com Agenda DESLIGADA o bloco some e nem busca", async () => {
@@ -177,11 +175,7 @@ describe("Compromissos do cliente no perfil", () => {
     await waitFor(() =>
       expect(screen.queryByTestId("compromissos-cliente")).not.toBeInTheDocument()
     );
-    expect(
-      get.mock.calls.some(
-        ([rota]) => typeof rota === "string" && rota.startsWith("/agenda/")
-      )
-    ).toBe(false);
+    expect(get.mock.calls.some(([rota]) => rota.startsWith("/agenda/"))).toBe(false);
   });
 });
 

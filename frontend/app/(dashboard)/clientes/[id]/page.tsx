@@ -82,6 +82,7 @@ export default function ClienteDetalhePage() {
   const {
     eventos: compromissos,
     loading: compromissosLoading,
+    carregadoEm: compromissosCarregadosEm,
     carregar: carregarCompromissos,
   } = useEventosDoCliente(id);
 
@@ -495,6 +496,7 @@ export default function ClienteDetalhePage() {
             <CompromissosCliente
               eventos={compromissos}
               loading={compromissosLoading}
+              agora={compromissosCarregadosEm}
             />
           )}
 

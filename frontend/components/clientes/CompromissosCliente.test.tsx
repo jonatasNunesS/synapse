@@ -62,6 +62,7 @@ describe("O que o cliente tem marcado", () => {
       <CompromissosCliente
         eventos={[evento({ id: "1", titulo: "Visita técnica" })]}
         loading={false}
+        agora={Date.now()}
       />
     );
 
@@ -76,6 +77,7 @@ describe("O que o cliente tem marcado", () => {
           evento({ id: "f1", titulo: "Reunião futura" }),
         ]}
         loading={false}
+        agora={Date.now()}
       />
     );
 
@@ -89,7 +91,7 @@ describe("O que o cliente tem marcado", () => {
       passado(d + 10, { id: `p${d}`, titulo: `Há ${d + 10} dias` })
     );
 
-    render(<CompromissosCliente eventos={antigos} loading={false} />);
+    render(<CompromissosCliente eventos={antigos} loading={false} agora={Date.now()} />);
 
     const textos = within(bloco())
       .getAllByText(/há \d+ dias/i)
@@ -103,6 +105,7 @@ describe("O que o cliente tem marcado", () => {
       <CompromissosCliente
         eventos={[passado(3, { id: "p1", titulo: "Já foi" })]}
         loading={false}
+        agora={Date.now()}
       />
     );
 
@@ -110,7 +113,7 @@ describe("O que o cliente tem marcado", () => {
   });
 
   it("sem nenhum, explica em vez de deixar o bloco vazio", () => {
-    render(<CompromissosCliente eventos={[]} loading={false} />);
+    render(<CompromissosCliente eventos={[]} loading={false} agora={Date.now()} />);
 
     expect(
       within(bloco()).getByText(/nenhum compromisso com este cliente/i)
@@ -118,7 +121,7 @@ describe("O que o cliente tem marcado", () => {
   });
 
   it("carregando, não acusa vazio", () => {
-    render(<CompromissosCliente eventos={[]} loading />);
+    render(<CompromissosCliente eventos={[]} loading agora={Date.now()} />);
 
     expect(
       within(bloco()).queryByText(/nenhum compromisso com este cliente/i)
@@ -137,6 +140,7 @@ describe("Follow-up que virou evento não vira dois compromissos", () => {
       <CompromissosCliente
         eventos={[evento({ titulo: "Follow-up: Maria" })]}
         loading={false}
+        agora={Date.now()}
       />
     );
 
@@ -151,7 +155,11 @@ describe("Follow-up que virou evento não vira dois compromissos", () => {
 
   it("um evento comum não ganha o selo", () => {
     render(
-      <CompromissosCliente eventos={[evento({ titulo: "Reunião" })]} loading={false} />
+      <CompromissosCliente
+        eventos={[evento({ titulo: "Reunião" })]}
+        loading={false}
+        agora={Date.now()}
+      />
     );
 
     expect(within(bloco()).queryByText("follow-up")).not.toBeInTheDocument();
@@ -164,6 +172,7 @@ describe("Como a data se apresenta", () => {
       <CompromissosCliente
         eventos={[evento({ dia_inteiro: true })]}
         loading={false}
+        agora={Date.now()}
       />
     );
 

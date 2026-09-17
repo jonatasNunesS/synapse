@@ -22,6 +22,9 @@ interface ClienteOption {
   nome: string;
 }
 
+/** Quanto tempo sem digitar antes de perguntar ao servidor. */
+export const ESPERA_BUSCA_MS = 300;
+
 interface EventoFormProps {
   evento?: Evento | null;
   // Data inicial ao criar clicando num slot do calendário
@@ -90,6 +93,11 @@ export function EventoForm({ evento, slotInicial, onSalvar, onFechar }: EventoFo
   const [clienteId, setClienteId] = useState<string | "">(evento?.cliente ?? "");
 
   const [clientes, setClientes] = useState<ClienteOption[]>([]);
+  // Dois estados de propósito: `buscaDigitada` é o que aparece no campo (muda
+  // a cada tecla) e `buscaCliente` é o que vai ao servidor (muda quando a
+  // pessoa para de digitar). Com um só, ou a digitação trava ou a busca dispara
+  // a cada letra — que era o defeito.
+  const [buscaDigitada, setBuscaDigitada] = useState("");
   const [buscaCliente, setBuscaCliente] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
@@ -116,10 +124,22 @@ export function EventoForm({ evento, slotInicial, onSalvar, onFechar }: EventoFo
     };
   }, [buscaCliente, evento]);
 
+  // Espera a pessoa parar de digitar antes de ir ao servidor. O timer era
+  // declarado e limpo, mas nada nunca o ATRIBUÍA: o debounce estava escrito
+  // pela metade e cada tecla virava uma chamada a /clientes/.
   const onBuscaChange = (v: string) => {
-    setBuscaCliente(v);
+    setBuscaDigitada(v);
     if (buscaTimer.current) clearTimeout(buscaTimer.current);
+    buscaTimer.current = setTimeout(() => setBuscaCliente(v), ESPERA_BUSCA_MS);
   };
+
+  // Sair do formulário no meio da digitação não pode deixar um timer vivo
+  // chamando setState num componente que já saiu de cena.
+  useEffect(() => {
+    return () => {
+      if (buscaTimer.current) clearTimeout(buscaTimer.current);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -301,7 +321,7 @@ export function EventoForm({ evento, slotInicial, onSalvar, onFechar }: EventoFo
             <label className="block text-sm font-medium text-foreground mb-1">Cliente (opcional)</label>
             <input
               type="text"
-              value={buscaCliente}
+              value={buscaDigitada}
               onChange={(e) => onBuscaChange(e.target.value)}
               placeholder="Buscar cliente do CRM..."
               className={`${inputClass} mb-2`}

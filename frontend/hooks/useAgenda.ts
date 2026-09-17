@@ -86,6 +86,10 @@ export function useEventosDoCliente(clienteId: string | null) {
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // O instante em que a lista chegou — é ele que separa "já foi" de "vem aí".
+  // Marcado aqui, e não no render do componente: ler o relógio durante o
+  // render deixa o resultado instável a cada re-renderização.
+  const [carregadoEm, setCarregadoEm] = useState(0);
 
   const carregar = useCallback(async () => {
     if (!clienteId) return;
@@ -106,6 +110,7 @@ export function useEventosDoCliente(clienteId: string | null) {
         page += 1;
       }
       setEventos(acumulado);
+      setCarregadoEm(Date.now());
       return acumulado;
     } catch (err) {
       setError("Não foi possível carregar os compromissos.");
@@ -115,7 +120,7 @@ export function useEventosDoCliente(clienteId: string | null) {
     }
   }, [clienteId]);
 
-  return { eventos, loading, error, carregar };
+  return { eventos, loading, error, carregadoEm, carregar };
 }
 
 /**

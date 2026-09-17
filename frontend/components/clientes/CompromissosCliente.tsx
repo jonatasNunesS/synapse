@@ -20,6 +20,12 @@ import type { Evento } from "@/types/agenda";
 interface Props {
   eventos: Evento[];
   loading: boolean;
+  /**
+   * O instante que separa "já foi" de "vem aí", em ms — vem do hook, marcado
+   * quando a lista chegou. Ler o relógio aqui dentro deixaria o resultado
+   * instável entre renderizações, e o React avisa.
+   */
+  agora: number;
 }
 
 /** Quantos compromissos passados mostrar — o resto é história, está na Agenda. */
@@ -84,14 +90,19 @@ function Linha({ evento, passado }: { evento: Evento; passado?: boolean }) {
   );
 }
 
-export function CompromissosCliente({ eventos, loading }: Props) {
-  const agora = Date.now();
+/** Separa o que vem do que já foi, a partir do instante recebido. */
+export function separarPorTempo(eventos: Evento[], agora: number) {
   const proximos = eventos.filter((e) => new Date(e.data_fim).getTime() >= agora);
   // Os passados vêm da API em ordem crescente; aqui o mais recente primeiro.
   const passados = eventos
     .filter((e) => new Date(e.data_fim).getTime() < agora)
     .reverse()
     .slice(0, MAXIMO_PASSADOS);
+  return { proximos, passados };
+}
+
+export function CompromissosCliente({ eventos, loading, agora }: Props) {
+  const { proximos, passados } = separarPorTempo(eventos, agora);
 
   return (
     <div

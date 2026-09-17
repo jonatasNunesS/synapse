@@ -8,12 +8,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
-import { EventoForm, juntarComHora, soData } from "./EventoForm";
+import { ESPERA_BUSCA_MS, EventoForm, juntarComHora, soData } from "./EventoForm";
 import type { Evento } from "@/types/agenda";
 
-// A busca de clientes do CRM não é o assunto deste teste.
+const buscarClientes = vi.fn().mockResolvedValue([]);
 vi.mock("@/hooks/useAgenda", () => ({
-  buscarClientes: vi.fn().mockResolvedValue([]),
+  buscarClientes: (...args: unknown[]) => buscarClientes(...args),
 }));
 
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
@@ -24,6 +24,7 @@ const onFechar = vi.fn();
 beforeEach(() => {
   onSalvar.mockClear();
   onFechar.mockClear();
+  buscarClientes.mockClear();
 });
 
 function abrirNovo() {
@@ -42,6 +43,59 @@ async function preencherESalvar() {
   fireEvent.click(screen.getByRole("button", { name: /criar evento/i }));
   await waitFor(() => expect(onSalvar).toHaveBeenCalled());
 }
+
+describe("Busca de cliente: uma chamada por busca, não uma por tecla", () => {
+  const campo = () => screen.getByPlaceholderText(/buscar cliente/i);
+
+  /** Só as buscas com texto — a inicial, de lista vazia, não conta. */
+  const buscasComTexto = () =>
+    buscarClientes.mock.calls.filter(([termo]) => termo);
+
+  it("digitar 'Fernanda' dispara UMA busca, não oito", async () => {
+    vi.useFakeTimers();
+    try {
+      abrirNovo();
+      for (const n of [1, 2, 3, 4, 5, 6, 7, 8]) {
+        fireEvent.change(campo(), { target: { value: "Fernanda".slice(0, n) } });
+        vi.advanceTimersByTime(50); // digitação rápida, dentro da espera
+      }
+      expect(buscasComTexto()).toHaveLength(0);
+
+      vi.advanceTimersByTime(ESPERA_BUSCA_MS);
+    } finally {
+      vi.useRealTimers();
+    }
+
+    await waitFor(() => expect(buscasComTexto()).toHaveLength(1));
+    expect(buscasComTexto()[0][0]).toBe("Fernanda");
+  });
+
+  it("parar e voltar a digitar busca de novo, com o termo novo", async () => {
+    vi.useFakeTimers();
+    try {
+      abrirNovo();
+      fireEvent.change(campo(), { target: { value: "Fer" } });
+      vi.advanceTimersByTime(ESPERA_BUSCA_MS);
+      fireEvent.change(campo(), { target: { value: "Maria" } });
+      vi.advanceTimersByTime(ESPERA_BUSCA_MS);
+    } finally {
+      vi.useRealTimers();
+    }
+
+    await waitFor(() => expect(buscasComTexto()).toHaveLength(2));
+    expect(buscasComTexto().map(([t]) => t)).toEqual(["Fer", "Maria"]);
+  });
+
+  it("o que a pessoa digitou aparece no campo na hora", () => {
+    // O debounce atrasa a BUSCA, nunca o texto: um campo que engasga ao
+    // digitar seria pior que o defeito que estamos consertando.
+    abrirNovo();
+
+    fireEvent.change(campo(), { target: { value: "Fern" } });
+
+    expect(campo()).toHaveValue("Fern");
+  });
+});
 
 describe("Dia inteiro", () => {
   const inicio = () => screen.getByLabelText(/início/i) as HTMLInputElement;
