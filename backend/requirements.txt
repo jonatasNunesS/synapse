@@ -1,0 +1,79 @@
+django
+python-decouple
+python-json-logger
+djangorestframework
+# ════════════════════════════════════════════════════════════
+# Synapse Backend - Dependências de Desenvolvimento
+# ════════════════════════════════════════════════════════════
+
+
+# ── Debug ──────────────────────────────────────────────────
+django-debug-toolbar==4.4.6
+ipython==8.31.0
+
+# ── Testes ─────────────────────────────────────────────────
+pytest==8.3.4
+pytest-django==4.9.0
+pytest-cov==6.0.0
+factory-boy==3.3.1
+faker==33.3.1
+
+# ── Qualidade de Código ───────────────────────────────────
+ruff==0.9.4
+black==24.10.0
+isort==5.13.2
+# ════════════════════════════════════════════════════════════
+# Synapse Backend - Dependências de Produção
+# ════════════════════════════════════════════════════════════
+
+# ── Servidor WSGI ──────────────────────────────────────────
+gunicorn==23.0.0
+
+# ── Arquivos Estáticos em Produção ──────────────────────────
+# WhiteNoise serve arquivos estáticos; /media/ é servido via
+# DocumentoDownloadView (autenticado) ou nginx em produção.
+whitenoise==6.9.0
+
+# ── Monitoramento ──────────────────────────────────────────
+sentry-sdk[django]==2.19.2
+# ════════════════════════════════════════════════════════════
+# Synapse Backend - Dependências Base
+# ════════════════════════════════════════════════════════════
+
+# ── Django Core ────────────────────────────────────────────
+Django==5.2.17
+djangorestframework==3.15.2
+django-cors-headers==4.6.0
+django-filter==24.3
+django-celery-beat
+
+# ── Autenticação JWT ───────────────────────────────────────
+djangorestframework-simplejwt==5.5.1
+PyJWT==2.13.0
+
+# ── Banco de Dados ─────────────────────────────────────────
+psycopg2-binary==2.9.10
+
+# ── Redis e Cache ──────────────────────────────────────────
+redis==5.2.1
+django-redis==5.4.0
+
+# ── Celery ─────────────────────────────────────────────────
+celery==5.4.0
+flower==2.0.1
+
+# ── Variáveis de Ambiente ──────────────────────────────────
+python-decouple==3.8
+
+# ── Utilidades ─────────────────────────────────────────────
+python-dateutil==2.9.0
+pillow==12.3.0
+
+# ── Logging ────────────────────────────────────────────────
+python-json-logger==3.2.1
+
+# ── Email ──────────────────────────────────────────────────
+resend==2.5.1
+
+# ── IA / Groq ──────────────────────────────────────────────
+groq>=0.9.0
