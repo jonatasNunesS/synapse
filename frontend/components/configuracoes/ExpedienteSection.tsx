@@ -17,7 +17,11 @@ import { toast } from "sonner";
 import { Clock, Loader2 } from "lucide-react";
 import { api, getErrorMessage } from "@/lib/api";
 import { useAppStore } from "@/store/useAppStore";
-import { EXPEDIENTE_PADRAO, type Usuario } from "@/types/auth";
+import {
+  DURACAO_PADRAO_MIN,
+  EXPEDIENTE_PADRAO,
+  type Usuario,
+} from "@/types/auth";
 
 /** "07:00" — o rótulo de uma hora cheia. */
 export function rotuloHora(hora: number): string {
@@ -29,6 +33,17 @@ const HORAS_INICIO = Array.from({ length: 24 }, (_, h) => h);
 /** E para terminar: 1h às 24h ("24:00" é o fim do dia). */
 const HORAS_FIM = Array.from({ length: 24 }, (_, i) => i + 1);
 
+/** Durações oferecidas para um evento novo, em minutos. */
+export const DURACOES = [15, 30, 45, 60, 90, 120, 180, 240];
+
+/** "1h30" — como a duração aparece na lista. */
+export function rotuloDuracao(minutos: number): string {
+  if (minutos < 60) return `${minutos} min`;
+  const horas = Math.floor(minutos / 60);
+  const resto = minutos % 60;
+  return resto ? `${horas}h${String(resto).padStart(2, "0")}` : `${horas}h`;
+}
+
 export function ExpedienteSection() {
   const usuario = useAppStore((s) => s.usuario);
   const setUsuario = useAppStore((s) => s.setUsuario);
@@ -38,11 +53,16 @@ export function ExpedienteSection() {
     usuario?.empresa?.agenda_hora_inicio ?? EXPEDIENTE_PADRAO.inicio;
   const atualFim = usuario?.empresa?.agenda_hora_fim ?? EXPEDIENTE_PADRAO.fim;
 
+  const atualDuracao =
+    usuario?.empresa?.agenda_duracao_padrao ?? DURACAO_PADRAO_MIN;
+
   const [inicio, setInicio] = useState(atualInicio);
   const [fim, setFim] = useState(atualFim);
+  const [duracao, setDuracao] = useState(atualDuracao);
   const [salvando, setSalvando] = useState(false);
 
-  const mudou = inicio !== atualInicio || fim !== atualFim;
+  const mudou =
+    inicio !== atualInicio || fim !== atualFim || duracao !== atualDuracao;
   const invertido = fim <= inicio;
 
   const salvar = async () => {
@@ -52,9 +72,11 @@ export function ExpedienteSection() {
       const resp = await api.patch<{
         agenda_hora_inicio: number;
         agenda_hora_fim: number;
+        agenda_duracao_padrao: number;
       }>("/auth/empresa/agenda/", {
         agenda_hora_inicio: inicio,
         agenda_hora_fim: fim,
+        agenda_duracao_padrao: duracao,
       });
       const salvo = resp.data;
       if (salvo && usuario?.empresa) {
@@ -65,10 +87,11 @@ export function ExpedienteSection() {
             ...usuario.empresa,
             agenda_hora_inicio: salvo.agenda_hora_inicio,
             agenda_hora_fim: salvo.agenda_hora_fim,
+            agenda_duracao_padrao: salvo.agenda_duracao_padrao,
           },
         } as Usuario);
       }
-      toast.success("Expediente atualizado.", {
+      toast.success("Agenda atualizada.", {
         description: "As visões de dia e semana já mostram só essa faixa.",
       });
     } catch (err) {
@@ -91,8 +114,9 @@ export function ExpedienteSection() {
         Expediente
       </h2>
       <p className="text-sm text-muted-foreground mb-5">
-        A que horas a empresa trabalha. As visões de dia e semana da Agenda
-        mostram só essa faixa — nenhum compromisso fora dela é escondido.
+        Como a empresa trabalha. O expediente recorta as visões de dia e
+        semana da Agenda — nenhum compromisso fora dela é escondido — e a
+        duração vale para o evento criado clicando num horário livre.
       </p>
 
       {!isAdmin && (
@@ -141,6 +165,28 @@ export function ExpedienteSection() {
             {HORAS_FIM.map((h) => (
               <option key={h} value={h}>
                 {rotuloHora(h)}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label
+            htmlFor="expediente-duracao"
+            className="block text-sm font-medium text-foreground mb-1"
+          >
+            Evento novo dura
+          </label>
+          <select
+            id="expediente-duracao"
+            value={duracao}
+            disabled={!isAdmin}
+            onChange={(e) => setDuracao(Number(e.target.value))}
+            className={selectClass}
+          >
+            {DURACOES.map((m) => (
+              <option key={m} value={m}>
+                {rotuloDuracao(m)}
               </option>
             ))}
           </select>

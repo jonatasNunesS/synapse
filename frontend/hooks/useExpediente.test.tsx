@@ -9,7 +9,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 
-import { horaComoData, useExpediente } from "./useExpediente";
+import {
+  horaComoData,
+  useDuracaoPadrao,
+  useExpediente,
+} from "./useExpediente";
 import { useAppStore } from "@/store/useAppStore";
 import type { Usuario } from "@/types/auth";
 
@@ -77,5 +81,34 @@ describe("useExpediente", () => {
 
     expect(result.current.min.getHours()).toBe(0);
     expect(result.current.max.getHours()).toBe(8);
+  });
+});
+
+describe("useDuracaoPadrao", () => {
+  it("usa a duração que a empresa configurou", () => {
+    setEmpresa(7, 20);
+    useAppStore.setState({
+      usuario: {
+        id: "u1",
+        empresa: {
+          id: "e1",
+          agenda_hora_inicio: 7,
+          agenda_hora_fim: 20,
+          agenda_duracao_padrao: 30,
+        },
+      } as unknown as Usuario,
+    });
+
+    const { result } = renderHook(() => useDuracaoPadrao());
+
+    expect(result.current).toBe(30);
+  });
+
+  it("sem empresa carregada, uma hora", () => {
+    setEmpresa(undefined);
+
+    const { result } = renderHook(() => useDuracaoPadrao());
+
+    expect(result.current).toBe(60);
   });
 });

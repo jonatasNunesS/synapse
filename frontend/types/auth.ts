@@ -25,11 +25,16 @@ export interface Empresa {
    */
   agenda_hora_inicio: number;
   agenda_hora_fim: number;
+  /** Quanto dura um evento criado clicando num horário livre, em minutos. */
+  agenda_duracao_padrao: number;
   criado_em: string;
 }
 
 /** Expediente padrão, quando a empresa ainda não carregou ou não escolheu. */
 export const EXPEDIENTE_PADRAO = { inicio: 7, fim: 20 } as const;
+
+/** Uma hora — a duração de quem nunca mexeu nessa configuração. */
+export const DURACAO_PADRAO_MIN = 60;
 
 /** Módulos OPCIONAIS — cada empresa liga/desliga. Os obrigatórios não entram. */
 export type ModuloOpcional =

@@ -32,6 +32,7 @@ class EmpresaSerializer(serializers.ModelSerializer):
             "tema_fonte",
             "agenda_hora_inicio",
             "agenda_hora_fim",
+            "agenda_duracao_padrao",
             "criado_em",
         ]
         read_only_fields = fields
@@ -247,7 +248,11 @@ class AgendaEmpresaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Empresa
-        fields = ["agenda_hora_inicio", "agenda_hora_fim"]
+        fields = [
+            "agenda_hora_inicio",
+            "agenda_hora_fim",
+            "agenda_duracao_padrao",
+        ]
 
     def validate_agenda_hora_inicio(self, value):
         if value > 23:
@@ -257,6 +262,15 @@ class AgendaEmpresaSerializer(serializers.ModelSerializer):
     def validate_agenda_hora_fim(self, value):
         if not 1 <= value <= 24:
             raise serializers.ValidationError("A hora de término vai de 1 a 24.")
+        return value
+
+    def validate_agenda_duracao_padrao(self, value):
+        # Teto de um dia: acima disso o evento novo já nasceria atravessando
+        # a virada, que não é o que alguém quer de um clique num horário livre.
+        if not 5 <= value <= 1440:
+            raise serializers.ValidationError(
+                "A duração padrão vai de 5 minutos a 24 horas."
+            )
         return value
 
     def validate(self, attrs):

@@ -12,7 +12,7 @@ import {
   startOfDay,
   endOfDay,
   addDays,
-  addHours,
+  addMinutes,
 } from "date-fns";
 import { Views, type View, type SlotInfo } from "react-big-calendar";
 import { toast } from "sonner";
@@ -26,7 +26,7 @@ import { EventoForm } from "@/components/agenda/EventoForm";
 import { EventoDetalhe } from "@/components/agenda/EventoDetalhe";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useAgenda } from "@/hooks/useAgenda";
-import { useExpediente } from "@/hooks/useExpediente";
+import { useDuracaoPadrao, useExpediente } from "@/hooks/useExpediente";
 import { useTelaEstreita } from "@/hooks/useTelaEstreita";
 import { getErrorMessage } from "@/lib/api";
 import type { Evento, EventoPayload } from "@/types/agenda";
@@ -60,6 +60,7 @@ export default function AgendaPage() {
   // manda (girar o telefone não arranca ninguém de onde estava).
   const telaEstreita = useTelaEstreita();
   const expediente = useExpediente();
+  const duracaoPadrao = useDuracaoPadrao();
   const [viewEscolhida, setViewEscolhida] = useState<View | null>(null);
   const view = viewEscolhida ?? (telaEstreita ? Views.AGENDA : Views.MONTH);
   const [date, setDate] = useState<Date>(new Date());
@@ -95,8 +96,13 @@ export default function AgendaPage() {
 
   const handleSelectSlot = (slot: SlotInfo) => {
     const inicio = slot.start as Date;
-    // Slot de mês costuma vir com allDay; damos 1h de duração padrão
-    const fim = slot.end && slot.end > inicio ? (slot.end as Date) : addHours(inicio, 1);
+    // No mês o slot vem como dia inteiro, sem hora de término útil: aí vale a
+    // duração que a empresa configurou. Na semana e no dia, o que a pessoa
+    // desenhou arrastando é uma escolha explícita e manda.
+    const fim =
+      slot.end && slot.end > inicio
+        ? (slot.end as Date)
+        : addMinutes(inicio, duracaoPadrao);
     abrirNovoEvento({ inicio, fim });
   };
 

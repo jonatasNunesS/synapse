@@ -135,6 +135,11 @@ class Empresa(models.Model):
         default=20,
         help_text="Hora em que o expediente termina (1–24).",
     )
+    # Quanto dura um evento criado clicando num horário livre do calendário.
+    agenda_duracao_padrao = models.PositiveSmallIntegerField(
+        default=60,
+        help_text="Duração padrão de um evento novo, em minutos.",
+    )
 
     # ── Identidade visual ────────────────────────────────────────────────
     # Vale para TODOS os usuários da empresa (white-label, não preferência

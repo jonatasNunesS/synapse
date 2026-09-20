@@ -9,7 +9,7 @@
  */
 import { useMemo } from "react";
 import { useAppStore } from "@/store/useAppStore";
-import { EXPEDIENTE_PADRAO } from "@/types/auth";
+import { DURACAO_PADRAO_MIN, EXPEDIENTE_PADRAO } from "@/types/auth";
 
 /** Uma hora cheia virada em Date — o dia não importa para o `min`/`max`. */
 export function horaComoData(hora: number): Date {
@@ -33,4 +33,15 @@ export function useExpediente(): { min: Date; max: Date } {
     () => ({ min: horaComoData(inicio), max: horaComoData(fim) }),
     [inicio, fim]
   );
+}
+
+/**
+ * Quanto dura um evento novo criado clicando num horário livre, em minutos.
+ *
+ * Mora aqui junto do expediente porque é a mesma família — "como esta empresa
+ * trabalha" — e vem da mesma configuração.
+ */
+export function useDuracaoPadrao(): number {
+  const usuario = useAppStore((s) => s.usuario);
+  return usuario?.empresa?.agenda_duracao_padrao ?? DURACAO_PADRAO_MIN;
 }

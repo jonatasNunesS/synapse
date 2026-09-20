@@ -8,7 +8,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
-import { ExpedienteSection, rotuloHora } from "./ExpedienteSection";
+import {
+  ExpedienteSection,
+  rotuloDuracao,
+  rotuloHora,
+} from "./ExpedienteSection";
 import { useAppStore } from "@/store/useAppStore";
 import type { Usuario } from "@/types/auth";
 
@@ -30,7 +34,12 @@ vi.mock("sonner", () => ({
   },
 }));
 
-function entrar(perfil: "admin" | "membro", inicio = 7, fim = 20) {
+function entrar(
+  perfil: "admin" | "membro",
+  inicio = 7,
+  fim = 20,
+  duracao = 60
+) {
   useAppStore.setState({
     usuario: {
       id: "u1",
@@ -39,6 +48,7 @@ function entrar(perfil: "admin" | "membro", inicio = 7, fim = 20) {
         id: "e1",
         agenda_hora_inicio: inicio,
         agenda_hora_fim: fim,
+        agenda_duracao_padrao: duracao,
       },
     } as unknown as Usuario,
   });
@@ -46,6 +56,8 @@ function entrar(perfil: "admin" | "membro", inicio = 7, fim = 20) {
 
 const campoInicio = () => screen.getByLabelText(/começa às/i) as HTMLSelectElement;
 const campoFim = () => screen.getByLabelText(/termina às/i) as HTMLSelectElement;
+const campoDuracao = () =>
+  screen.getByLabelText(/evento novo dura/i) as HTMLSelectElement;
 const botaoSalvar = () => screen.getByRole("button", { name: /salvar/i });
 
 beforeEach(() => {
@@ -105,18 +117,24 @@ describe("Salvar", () => {
   it("manda o expediente novo e guarda a resposta no store", async () => {
     entrar("admin");
     patch.mockResolvedValue({
-      data: { agenda_hora_inicio: 9, agenda_hora_fim: 18 },
+      data: {
+        agenda_hora_inicio: 9,
+        agenda_hora_fim: 18,
+        agenda_duracao_padrao: 30,
+      },
     });
     render(<ExpedienteSection />);
 
     fireEvent.change(campoInicio(), { target: { value: "9" } });
     fireEvent.change(campoFim(), { target: { value: "18" } });
+    fireEvent.change(campoDuracao(), { target: { value: "30" } });
     fireEvent.click(botaoSalvar());
 
     await waitFor(() => expect(patch).toHaveBeenCalledTimes(1));
     expect(patch).toHaveBeenCalledWith("/auth/empresa/agenda/", {
       agenda_hora_inicio: 9,
       agenda_hora_fim: 18,
+      agenda_duracao_padrao: 30,
     });
     // Sem isto a grade da Agenda só mudaria no próximo load.
     await waitFor(() =>
@@ -182,5 +200,59 @@ describe("Expediente invertido", () => {
     expect(
       screen.queryByText(/precisa terminar depois de começar/i)
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("Duração padrão do evento novo", () => {
+  it("abre com a duração que a empresa tem hoje", () => {
+    entrar("admin", 7, 20, 30);
+    render(<ExpedienteSection />);
+
+    expect(campoDuracao()).toHaveValue("30");
+  });
+
+  it("mudar só a duração já habilita o salvar", () => {
+    // Sem isso, trocar a duração sem mexer no expediente não salvaria nada.
+    entrar("admin");
+    render(<ExpedienteSection />);
+
+    fireEvent.change(campoDuracao(), { target: { value: "90" } });
+
+    expect(botaoSalvar()).toBeEnabled();
+  });
+
+  it("membro vê, mas não muda", () => {
+    entrar("membro");
+    render(<ExpedienteSection />);
+
+    expect(campoDuracao()).toBeDisabled();
+  });
+
+  it("guarda a duração da resposta no store", async () => {
+    entrar("admin");
+    patch.mockResolvedValue({
+      data: {
+        agenda_hora_inicio: 7,
+        agenda_hora_fim: 20,
+        agenda_duracao_padrao: 120,
+      },
+    });
+    render(<ExpedienteSection />);
+
+    fireEvent.change(campoDuracao(), { target: { value: "120" } });
+    fireEvent.click(botaoSalvar());
+
+    await waitFor(() =>
+      expect(
+        useAppStore.getState().usuario?.empresa?.agenda_duracao_padrao
+      ).toBe(120)
+    );
+  });
+
+  it("o rótulo é legível em minutos e em horas", () => {
+    expect(rotuloDuracao(30)).toBe("30 min");
+    expect(rotuloDuracao(60)).toBe("1h");
+    expect(rotuloDuracao(90)).toBe("1h30");
+    expect(rotuloDuracao(240)).toBe("4h");
   });
 });

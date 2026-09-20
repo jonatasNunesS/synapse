@@ -72,7 +72,11 @@ def test_get_devolve_o_expediente(admin_a):
     r = _client(admin_a).get(URL)
 
     assert r.status_code == 200
-    assert r.data["data"] == {"agenda_hora_inicio": 7, "agenda_hora_fim": 20}
+    assert r.data["data"] == {
+        "agenda_hora_inicio": 7,
+        "agenda_hora_fim": 20,
+        "agenda_duracao_padrao": 60,
+    }
 
 
 # ── Salvar ──────────────────────────────────────────────────────────────────
@@ -215,3 +219,63 @@ def test_expediente_viaja_no_me(admin_a, empresa_a):
     assert r.status_code == 200
     assert r.data["data"]["empresa"]["agenda_hora_inicio"] == 8
     assert r.data["data"]["empresa"]["agenda_hora_fim"] == 17
+
+
+# ── Duração padrão do evento novo ───────────────────────────────────────────
+
+@pytest.mark.django_db
+def test_duracao_padrao_nasce_em_uma_hora(empresa_a):
+    assert empresa_a.agenda_duracao_padrao == 60
+
+
+@pytest.mark.django_db
+def test_admin_muda_a_duracao_padrao(admin_a, empresa_a):
+    r = _client(admin_a).patch(URL, {"agenda_duracao_padrao": 30}, format="json")
+
+    assert r.status_code == 200, r.data
+    empresa_a.refresh_from_db()
+    assert empresa_a.agenda_duracao_padrao == 30
+
+
+@pytest.mark.django_db
+def test_mudar_so_a_duracao_nao_mexe_no_expediente(admin_a, empresa_a):
+    empresa_a.agenda_hora_inicio = 8
+    empresa_a.agenda_hora_fim = 17
+    empresa_a.save(update_fields=["agenda_hora_inicio", "agenda_hora_fim"])
+
+    _client(admin_a).patch(URL, {"agenda_duracao_padrao": 45}, format="json")
+
+    empresa_a.refresh_from_db()
+    assert empresa_a.agenda_duracao_padrao == 45
+    assert (empresa_a.agenda_hora_inicio, empresa_a.agenda_hora_fim) == (8, 17)
+
+
+@pytest.mark.django_db
+def test_duracao_fora_do_razoavel_e_recusada(admin_a):
+    curta = _client(admin_a).patch(URL, {"agenda_duracao_padrao": 1}, format="json")
+    assert curta.status_code == 400
+    assert "agenda_duracao_padrao" in curta.data["error"]["details"]
+
+    # Acima de um dia, o evento novo já nasceria atravessando a virada.
+    longa = _client(admin_a).patch(URL, {"agenda_duracao_padrao": 2000}, format="json")
+    assert longa.status_code == 400
+
+
+@pytest.mark.django_db
+def test_membro_nao_muda_a_duracao(membro_a, empresa_a):
+    r = _client(membro_a).patch(URL, {"agenda_duracao_padrao": 15}, format="json")
+
+    assert r.status_code == 403
+    empresa_a.refresh_from_db()
+    assert empresa_a.agenda_duracao_padrao == 60
+
+
+@pytest.mark.django_db
+def test_duracao_viaja_no_me(admin_a, empresa_a):
+    """A agenda lê daqui ao criar evento clicando num horário livre."""
+    empresa_a.agenda_duracao_padrao = 90
+    empresa_a.save(update_fields=["agenda_duracao_padrao"])
+
+    r = _client(admin_a).get("/api/auth/me/")
+
+    assert r.data["data"]["empresa"]["agenda_duracao_padrao"] == 90

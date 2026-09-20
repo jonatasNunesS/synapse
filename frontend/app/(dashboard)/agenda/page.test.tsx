@@ -6,7 +6,7 @@
  * a visão mostra — senão a tela mente por omissão.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { Views } from "react-big-calendar";
 import { addDays, endOfDay, startOfDay } from "date-fns";
 
@@ -20,17 +20,22 @@ import type { Evento } from "@/types/agenda";
 let viewRecebida: string | undefined;
 /** Dispara um arraste como o calendário dispararia. */
 let remarcarDoCalendario: ((r: unknown) => void) | undefined;
+/** Dispara a seleção de um horário livre, como o calendário faria. */
+let selecionarSlot: ((s: unknown) => void) | undefined;
 vi.mock("@/components/agenda/AgendaCalendario", () => ({
   DIAS_NA_LISTA: 30,
   AgendaCalendario: ({
     view,
     onRemarcar,
+    onSelectSlot,
   }: {
     view: string;
     onRemarcar?: (r: unknown) => void;
+    onSelectSlot?: (s: unknown) => void;
   }) => {
     viewRecebida = view;
     remarcarDoCalendario = onRemarcar;
+    selecionarSlot = onSelectSlot;
     return <div data-testid="calendario" data-view={view} />;
   },
 }));
@@ -69,11 +74,33 @@ vi.mock("@/hooks/useTelaEstreita", () => ({
   useTelaEstreita: () => telaEstreita,
 }));
 
+/** A duração padrão da empresa nesta renderização. */
+let duracaoPadrao = 60;
+vi.mock("@/hooks/useExpediente", () => ({
+  useExpediente: () => ({
+    min: new Date(2000, 0, 1, 7, 0),
+    max: new Date(2000, 0, 1, 20, 0),
+  }),
+  useDuracaoPadrao: () => duracaoPadrao,
+}));
+
+/** O slot com que o formulário foi aberto. */
+let slotDoFormulario: { inicio: Date; fim: Date } | null = null;
+vi.mock("@/components/agenda/EventoForm", () => ({
+  EventoForm: ({ slotInicial }: { slotInicial: { inicio: Date; fim: Date } | null }) => {
+    slotDoFormulario = slotInicial;
+    return <div data-testid="evento-form" />;
+  },
+}));
+
 beforeEach(() => {
   eventos = [];
   telaEstreita = false;
   viewRecebida = undefined;
   remarcarDoCalendario = undefined;
+  selecionarSlot = undefined;
+  slotDoFormulario = null;
+  duracaoPadrao = 60;
   carregar.mockClear();
   aplicarLocal.mockClear();
   atualizar.mockReset();
@@ -355,5 +382,69 @@ describe("Arrastar não troca a natureza do evento", () => {
 
     await waitFor(() => expect(atualizar).toHaveBeenCalledTimes(1));
     expect(toastInfo).not.toHaveBeenCalled();
+  });
+});
+
+describe("Duração padrão ao criar clicando num horário livre", () => {
+  /** Clica num horário livre; `fim` ausente é o que o mês entrega. */
+  async function clicarEm(inicio: Date, fim?: Date) {
+    render(<AgendaPage />);
+    await waitFor(() => expect(selecionarSlot).toBeDefined());
+    await act(async () => {
+      selecionarSlot!({ start: inicio, end: fim });
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId("evento-form")).toBeInTheDocument()
+    );
+  }
+
+  /** Quantos minutos o formulário abriu. */
+  const minutosDoFormulario = () =>
+    (slotDoFormulario!.fim.getTime() - slotDoFormulario!.inicio.getTime()) / 60000;
+
+  it("usa a duração que a empresa configurou", async () => {
+    duracaoPadrao = 30;
+
+    await clicarEm(new Date("2026-10-05T14:00:00"));
+
+    expect(minutosDoFormulario()).toBe(30);
+  });
+
+  it("outra empresa, outra duração", async () => {
+    duracaoPadrao = 120;
+
+    await clicarEm(new Date("2026-10-05T14:00:00"));
+
+    expect(minutosDoFormulario()).toBe(120);
+  });
+
+  it("sem configuração, uma hora", async () => {
+    await clicarEm(new Date("2026-10-05T14:00:00"));
+
+    expect(minutosDoFormulario()).toBe(60);
+  });
+
+  it("o que a pessoa desenhou arrastando manda sobre a duração padrão", async () => {
+    // Na semana e no dia, o slot vem com o período que ela marcou. Aí a
+    // escolha é explícita e a configuração não tem o que dizer.
+    duracaoPadrao = 30;
+
+    await clicarEm(
+      new Date("2026-10-05T14:00:00"),
+      new Date("2026-10-05T17:00:00")
+    );
+
+    expect(minutosDoFormulario()).toBe(180);
+  });
+
+  it("um slot de fim igual ao início cai na duração padrão", async () => {
+    // O mês às vezes entrega start === end; sem a guarda o evento nasceria
+    // com duração zero.
+    duracaoPadrao = 45;
+    const inicio = new Date("2026-10-05T14:00:00");
+
+    await clicarEm(inicio, inicio);
+
+    expect(minutosDoFormulario()).toBe(45);
   });
 });
