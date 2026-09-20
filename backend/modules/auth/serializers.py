@@ -30,6 +30,8 @@ class EmpresaSerializer(serializers.ModelSerializer):
             "status",
             "tema_paleta",
             "tema_fonte",
+            "agenda_hora_inicio",
+            "agenda_hora_fim",
             "criado_em",
         ]
         read_only_fields = fields
@@ -232,6 +234,42 @@ class ModulosEmpresaSerializer(serializers.ModelSerializer):
 # ════════════════════════════════════════════════════════════
 # SERIALIZER: IDENTIDADE VISUAL (PATCH /empresa/tema/)
 # ════════════════════════════════════════════════════════════
+
+
+class AgendaEmpresaSerializer(serializers.ModelSerializer):
+    """
+    Como esta empresa trabalha, do ponto de vista da Agenda.
+
+    O expediente recorta a grade que aparece nas visões de dia e semana; não
+    esconde evento nenhum. Quem marcou às 5h continua vendo o evento, na
+    lista e na própria grade, que rola até ele.
+    """
+
+    class Meta:
+        model = Empresa
+        fields = ["agenda_hora_inicio", "agenda_hora_fim"]
+
+    def validate_agenda_hora_inicio(self, value):
+        if value > 23:
+            raise serializers.ValidationError("A hora de início vai de 0 a 23.")
+        return value
+
+    def validate_agenda_hora_fim(self, value):
+        if not 1 <= value <= 24:
+            raise serializers.ValidationError("A hora de término vai de 1 a 24.")
+        return value
+
+    def validate(self, attrs):
+        # Em PATCH parcial, cair para o valor atual quando o campo não vem.
+        inicio = attrs.get(
+            "agenda_hora_inicio", getattr(self.instance, "agenda_hora_inicio", 7)
+        )
+        fim = attrs.get("agenda_hora_fim", getattr(self.instance, "agenda_hora_fim", 20))
+        if fim <= inicio:
+            raise serializers.ValidationError(
+                {"agenda_hora_fim": "O expediente precisa terminar depois de começar."}
+            )
+        return attrs
 
 
 class TemaEmpresaSerializer(serializers.ModelSerializer):

@@ -400,6 +400,66 @@ class ModulosEmpresaView(APIView):
         )
 
 
+class AgendaEmpresaView(APIView):
+    """
+    GET   — como a empresa trabalha (expediente da Agenda).
+    PATCH — muda o expediente. Só admin: vale para a equipe inteira, como o
+            tema, e não é preferência individual.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        from .serializers import AgendaEmpresaSerializer
+
+        empresa = request.user.empresa
+        if empresa is None:
+            return error_response(
+                code="SEM_EMPRESA",
+                message="Usuário sem empresa vinculada.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        return success_response(data=AgendaEmpresaSerializer(empresa).data)
+
+    def patch(self, request: Request) -> Response:
+        from shared.cache import invalidate_cache
+
+        from .serializers import AgendaEmpresaSerializer
+
+        if request.user.perfil != "admin":
+            return error_response(
+                code="PERMISSION_DENIED",
+                message="Apenas administradores podem alterar o expediente.",
+                status_code=status.HTTP_403_FORBIDDEN,
+            )
+
+        empresa = request.user.empresa
+        if empresa is None:
+            return error_response(
+                code="SEM_EMPRESA",
+                message="Usuário sem empresa vinculada.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = AgendaEmpresaSerializer(empresa, data=request.data, partial=True)
+        if not serializer.is_valid():
+            return error_response(
+                code="VALIDATION_ERROR",
+                message="Dados inválidos.",
+                details=serializer.errors,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer.save()
+        empresa.refresh_from_db()
+        # O expediente viaja no /auth/me; o que estiver em cache da empresa some.
+        invalidate_cache(empresa.id, "auth")
+
+        return success_response(
+            data=AgendaEmpresaSerializer(empresa).data,
+            message="Expediente atualizado.",
+        )
+
+
 class TemaEmpresaView(APIView):
     """
     GET   — identidade visual da empresa (paleta + fonte).

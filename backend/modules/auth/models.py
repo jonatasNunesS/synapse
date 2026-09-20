@@ -123,6 +123,19 @@ class Empresa(models.Model):
     modulo_equipe = models.BooleanField(default=True)
     modulo_documentos = models.BooleanField(default=True)
 
+    # ── Como esta empresa trabalha (Agenda) ──────────────────────────────
+    # O expediente recorta a GRADE das visões de dia e semana: sem isso ~10h
+    # de madrugada vazia ocupam metade da tela. Não filtra evento nenhum —
+    # quem marcou às 5h continua vendo o evento (ver AGENDA_AUDIT, item 8).
+    agenda_hora_inicio = models.PositiveSmallIntegerField(
+        default=7,
+        help_text="Hora em que o expediente começa (0–23).",
+    )
+    agenda_hora_fim = models.PositiveSmallIntegerField(
+        default=20,
+        help_text="Hora em que o expediente termina (1–24).",
+    )
+
     # ── Identidade visual ────────────────────────────────────────────────
     # Vale para TODOS os usuários da empresa (white-label, não preferência
     # individual). Empresas existentes seguem no padrão Synapse.

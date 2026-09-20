@@ -26,6 +26,7 @@ import { EventoForm } from "@/components/agenda/EventoForm";
 import { EventoDetalhe } from "@/components/agenda/EventoDetalhe";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useAgenda } from "@/hooks/useAgenda";
+import { useExpediente } from "@/hooks/useExpediente";
 import { useTelaEstreita } from "@/hooks/useTelaEstreita";
 import { getErrorMessage } from "@/lib/api";
 import type { Evento, EventoPayload } from "@/types/agenda";
@@ -58,6 +59,7 @@ export default function AgendaPage() {
   // não escolhe, a visão é derivada da tela — depois de escolher, a escolha
   // manda (girar o telefone não arranca ninguém de onde estava).
   const telaEstreita = useTelaEstreita();
+  const expediente = useExpediente();
   const [viewEscolhida, setViewEscolhida] = useState<View | null>(null);
   const view = viewEscolhida ?? (telaEstreita ? Views.AGENDA : Views.MONTH);
   const [date, setDate] = useState<Date>(new Date());
@@ -218,6 +220,7 @@ export default function AgendaPage() {
         onSelectSlot={handleSelectSlot}
         onSelectEvent={setDetalhe}
         onRemarcar={handleRemarcar}
+        expediente={expediente}
       />
 
       {formAberto && (

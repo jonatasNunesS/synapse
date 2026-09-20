@@ -168,3 +168,63 @@ describe("O que o addon devolve vira uma Remarcação", () => {
     expect(r!.viraDiaInteiro).toBe(false);
   });
 });
+
+describe("Expediente: recorta a grade, não esconde evento", () => {
+  it("passa min e max ao calendário", () => {
+    const expediente = {
+      min: new Date(2000, 0, 1, 9, 0),
+      max: new Date(2000, 0, 1, 18, 0),
+    };
+    render(
+      <AgendaCalendario
+        eventos={[evento()]}
+        view="week"
+        date={new Date("2026-10-05T12:00:00")}
+        onView={vi.fn()}
+        onNavigate={vi.fn()}
+        onSelectSlot={vi.fn()}
+        onSelectEvent={vi.fn()}
+        expediente={expediente}
+      />
+    );
+
+    expect(props.min).toBe(expediente.min);
+    expect(props.max).toBe(expediente.max);
+  });
+
+  it("um evento fora do expediente continua sendo entregue ao calendário", () => {
+    // O recorte é de DESENHO. Se o componente filtrasse pelo expediente, o
+    // compromisso das 5h sumiria da tela — o oposto do que o audit pedia.
+    const madrugada = evento({
+      id: "cedo",
+      titulo: "Entrega na madrugada",
+      data_inicio: "2026-10-05T08:00:00.000Z", // 05:00 em São Paulo
+      data_fim: "2026-10-05T09:00:00.000Z",
+    });
+    render(
+      <AgendaCalendario
+        eventos={[madrugada]}
+        view="week"
+        date={new Date("2026-10-05T12:00:00")}
+        onView={vi.fn()}
+        onNavigate={vi.fn()}
+        onSelectSlot={vi.fn()}
+        onSelectEvent={vi.fn()}
+        expediente={{
+          min: new Date(2000, 0, 1, 9, 0),
+          max: new Date(2000, 0, 1, 18, 0),
+        }}
+      />
+    );
+
+    const items = props.events as { id: string }[];
+    expect(items.map((e) => e.id)).toContain("cedo");
+  });
+
+  it("sem expediente, o calendário não recebe recorte nenhum", () => {
+    montar(vi.fn());
+
+    expect(props.min).toBeUndefined();
+    expect(props.max).toBeUndefined();
+  });
+});

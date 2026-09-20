@@ -14,12 +14,14 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useAppStore } from "@/store/useAppStore";
+import { useModulos } from "@/hooks/useModulos";
 import { api } from "@/lib/api";
 import { PLANO_LABELS, PLANO_CORES, SEGMENTOS } from "@/types/auth";
 import type { ApiError } from "@/types/api";
 import { UpgradeWhatsappButton } from "@/components/ui/UpgradeWhatsappButton";
 import { ModulosSection } from "@/components/configuracoes/ModulosSection";
 import { IdentidadeVisualSection } from "@/components/configuracoes/IdentidadeVisualSection";
+import { ExpedienteSection } from "@/components/configuracoes/ExpedienteSection";
 
 // ── Schema de empresa ────────────────────────────────────────────────────────
 
@@ -35,6 +37,7 @@ type EmpresaForm = z.infer<typeof empresaSchema>;
 
 export default function ConfiguracoesPage() {
   const { empresa, usuario } = useAppStore();
+  const { moduloAtivo } = useModulos();
   const [empresaOk, setEmpresaOk] = useState(false);
   const [empresaErro, setEmpresaErro] = useState<string | null>(null);
 
@@ -115,6 +118,9 @@ export default function ConfiguracoesPage() {
 
       {/* Cores e fonte que a equipe inteira vê */}
       <IdentidadeVisualSection />
+
+      {/* Como a empresa trabalha — recorta a grade da Agenda */}
+      {moduloAtivo("agenda") && <ExpedienteSection />}
 
       {/* Dados da empresa */}
       <section className="bg-card shadow-elevacao border border-border rounded-xl p-6">

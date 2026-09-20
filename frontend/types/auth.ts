@@ -19,8 +19,17 @@ export interface Empresa {
   /** Identidade visual (white-label) — vale para toda a equipe. */
   tema_paleta: Paleta;
   tema_fonte: FonteTema;
+  /**
+   * Expediente da empresa, em horas cheias. Recorta a GRADE das visões de
+   * dia e semana da Agenda; não esconde evento nenhum.
+   */
+  agenda_hora_inicio: number;
+  agenda_hora_fim: number;
   criado_em: string;
 }
+
+/** Expediente padrão, quando a empresa ainda não carregou ou não escolheu. */
+export const EXPEDIENTE_PADRAO = { inicio: 7, fim: 20 } as const;
 
 /** Módulos OPCIONAIS — cada empresa liga/desliga. Os obrigatórios não entram. */
 export type ModuloOpcional =

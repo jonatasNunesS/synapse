@@ -6,6 +6,7 @@ Prefixo: /api/auth/
 from django.urls import path
 
 from .views import (
+    AgendaEmpresaView,
     LoginView,
     LogoutView,
     MeView,
@@ -35,6 +36,11 @@ urlpatterns = [
         "empresa/modulos/",
         ModulosEmpresaView.as_view(),
         name="auth-empresa-modulos",
+    ),
+    path(
+        "empresa/agenda/",
+        AgendaEmpresaView.as_view(),
+        name="auth-empresa-agenda",
     ),
     path(
         "empresa/tema/",

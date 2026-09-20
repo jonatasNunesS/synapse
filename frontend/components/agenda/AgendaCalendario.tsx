@@ -93,6 +93,12 @@ interface AgendaCalendarioProps {
   onSelectEvent: (evento: Evento) => void;
   /** Arrastou ou esticou um evento. Ausente → calendário só de leitura. */
   onRemarcar?: (r: Remarcacao) => void;
+  /**
+   * O expediente da empresa. Recorta a grade das visões de dia e semana —
+   * sem ele, ~10h de madrugada vazia ocupam metade da tela. Evento fora da
+   * faixa NÃO some: a grade rola até ele e a lista sempre o mostra.
+   */
+  expediente?: { min: Date; max: Date };
 }
 
 export function AgendaCalendario({
@@ -104,6 +110,7 @@ export function AgendaCalendario({
   onSelectSlot,
   onSelectEvent,
   onRemarcar,
+  expediente,
 }: AgendaCalendarioProps) {
   const items: CalendarioEvento[] = useMemo(
     () =>
@@ -141,6 +148,11 @@ export function AgendaCalendario({
         // 375px dá ~50px por coluna, onde um título vira três pixels de cor.
         views={[Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA]}
         length={DIAS_NA_LISTA}
+        // `min`/`max` só recortam o DESENHO das visões de dia e semana. O mês
+        // e a lista não olham para eles, e nenhum evento é filtrado: a grade
+        // rola até o compromisso das 5h da manhã.
+        min={expediente?.min}
+        max={expediente?.max}
         view={view}
         date={date}
         onView={onView}
