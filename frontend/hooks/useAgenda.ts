@@ -54,6 +54,20 @@ export function useAgenda() {
     }
   }, []);
 
+  /**
+   * Mexe num evento da lista que já está na tela, sem ir ao servidor.
+   *
+   * É o que deixa o arraste parecer instantâneo: o evento muda de lugar na
+   * hora e o PATCH confirma depois. Se o PATCH falhar, o caller chama de novo
+   * com os valores antigos e o evento volta para onde estava — em vez de
+   * ficar na posição nova mentindo que salvou.
+   */
+  const aplicarLocal = useCallback((id: string, mudanca: Partial<Evento>) => {
+    setEventos((atuais) =>
+      atuais.map((e) => (e.id === id ? { ...e, ...mudanca } : e))
+    );
+  }, []);
+
   const criar = useCallback(async (payload: EventoPayload): Promise<Evento> => {
     const resp = await api.post<Evento>("/agenda/", payload);
     return resp.data as Evento;
@@ -71,7 +85,16 @@ export function useAgenda() {
     await api.delete(`/agenda/${id}/`);
   }, []);
 
-  return { eventos, loading, error, carregar, criar, atualizar, deletar };
+  return {
+    eventos,
+    loading,
+    error,
+    carregar,
+    aplicarLocal,
+    criar,
+    atualizar,
+    deletar,
+  };
 }
 
 /**

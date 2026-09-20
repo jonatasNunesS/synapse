@@ -259,6 +259,29 @@
   color: inherit;
 }
 
+/* Arrastar para remarcar — o addon traz o comportamento, aqui só o aviso
+   visual de que o evento se move e a prévia legível no tema escuro. */
+.rbc-synapse .rbc-addons-dnd .rbc-event {
+  cursor: grab;
+}
+.rbc-synapse .rbc-addons-dnd.rbc-addons-dnd-is-dragging .rbc-event {
+  cursor: grabbing;
+}
+.rbc-synapse .rbc-addons-dnd-drag-preview {
+  outline: 2px solid hsl(var(--ring));
+  opacity: 0.9;
+}
+/* A linha de "solte aqui" no cabeçalho de dia inteiro. */
+.rbc-synapse .rbc-addons-dnd .rbc-addons-dnd-over {
+  background-color: hsl(var(--primary) / 0.1);
+}
+/* Quem pediu menos movimento não precisa do fade dos outros eventos. */
+@media (prefers-reduced-motion: reduce) {
+  .rbc-synapse .rbc-addons-dnd .rbc-event {
+    transition: none;
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────
    Identidade visual da empresa (white-label)
 

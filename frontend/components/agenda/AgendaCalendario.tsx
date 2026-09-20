@@ -8,9 +8,13 @@ import {
   type View,
   type SlotInfo,
 } from "react-big-calendar";
+import withDragAndDrop, {
+  type EventInteractionArgs,
+} from "react-big-calendar/lib/addons/dragAndDrop";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import type { Evento } from "@/types/agenda";
 
 const locales = { "pt-BR": ptBR };
@@ -61,6 +65,24 @@ export interface CalendarioEvento {
   resource: Evento;
 }
 
+/** O que um arraste (ou redimensionamento) pede: este evento, neste período. */
+export interface Remarcacao {
+  evento: Evento;
+  inicio: Date;
+  fim: Date;
+  /** Onde o calendário entendeu que o evento foi solto: faixa de dia inteiro? */
+  viraDiaInteiro: boolean;
+}
+
+/**
+ * O calendário com arrastar e redimensionar.
+ *
+ * Criado fora do componente: `withDragAndDrop` devolve um componente NOVO, e
+ * recriá-lo a cada render faria o React desmontar e remontar o calendário
+ * inteiro a cada teclada em qualquer estado da página.
+ */
+const CalendarioArrastavel = withDragAndDrop<CalendarioEvento>(Calendar);
+
 interface AgendaCalendarioProps {
   eventos: Evento[];
   view: View;
@@ -69,6 +91,8 @@ interface AgendaCalendarioProps {
   onNavigate: (d: Date) => void;
   onSelectSlot: (slot: SlotInfo) => void;
   onSelectEvent: (evento: Evento) => void;
+  /** Arrastou ou esticou um evento. Ausente → calendário só de leitura. */
+  onRemarcar?: (r: Remarcacao) => void;
 }
 
 export function AgendaCalendario({
@@ -79,6 +103,7 @@ export function AgendaCalendario({
   onNavigate,
   onSelectSlot,
   onSelectEvent,
+  onRemarcar,
 }: AgendaCalendarioProps) {
   const items: CalendarioEvento[] = useMemo(
     () =>
@@ -93,9 +118,18 @@ export function AgendaCalendario({
     [eventos]
   );
 
+  // O calendário entrega `stringOrDate`; a página trabalha com Date.
+  const remarcar = ({ event, start, end, isAllDay }: EventInteractionArgs<CalendarioEvento>) =>
+    onRemarcar?.({
+      evento: event.resource,
+      inicio: new Date(start),
+      fim: new Date(end),
+      viraDiaInteiro: !!isAllDay,
+    });
+
   return (
     <div className="rbc-synapse h-[75vh] rounded-xl border border-border bg-card shadow-elevacao p-3">
-      <Calendar<CalendarioEvento>
+      <CalendarioArrastavel
         localizer={localizer}
         culture="pt-BR"
         messages={MENSAGENS}
@@ -115,6 +149,13 @@ export function AgendaCalendario({
         popup
         onSelectSlot={onSelectSlot}
         onSelectEvent={(item) => onSelectEvent(item.resource)}
+        // Arrastar para remarcar e esticar para mudar a duração. No toque, o
+        // rbc só inicia o arraste depois de um long press (250ms), então um
+        // toque simples continua abrindo o evento em vez de movê-lo sem querer.
+        onEventDrop={onRemarcar ? remarcar : undefined}
+        onEventResize={onRemarcar ? remarcar : undefined}
+        resizable={!!onRemarcar}
+        draggableAccessor={() => !!onRemarcar}
         eventPropGetter={(item) => ({
           style: { backgroundColor: item.resource.cor || "var(--brand-primary)" },
         })}

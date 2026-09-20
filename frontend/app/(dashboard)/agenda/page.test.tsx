@@ -14,29 +14,51 @@ import AgendaPage, { intervaloVisivel } from "./page";
 import { DIAS_NA_LISTA } from "@/components/agenda/AgendaCalendario";
 import type { Evento } from "@/types/agenda";
 
-// O calendário vira uma sonda: o que se testa é QUAL visão a página escolheu
-// e com que período ela chamou o backend, não o desenho da grade.
+// O calendário vira uma sonda: o que se testa é QUAL visão a página escolheu,
+// com que período ela chamou o backend e o que ela faz com um arraste — não o
+// desenho da grade.
 let viewRecebida: string | undefined;
+/** Dispara um arraste como o calendário dispararia. */
+let remarcarDoCalendario: ((r: unknown) => void) | undefined;
 vi.mock("@/components/agenda/AgendaCalendario", () => ({
   DIAS_NA_LISTA: 30,
-  AgendaCalendario: ({ view }: { view: string }) => {
+  AgendaCalendario: ({
+    view,
+    onRemarcar,
+  }: {
+    view: string;
+    onRemarcar?: (r: unknown) => void;
+  }) => {
     viewRecebida = view;
+    remarcarDoCalendario = onRemarcar;
     return <div data-testid="calendario" data-view={view} />;
   },
 }));
 
-vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+const toastError = vi.fn();
+const toastSuccess = vi.fn();
+const toastInfo = vi.fn();
+vi.mock("sonner", () => ({
+  toast: {
+    error: (...a: unknown[]) => toastError(...a),
+    success: (...a: unknown[]) => toastSuccess(...a),
+    info: (...a: unknown[]) => toastInfo(...a),
+  },
+}));
 
 /** Eventos que o hook devolve nesta renderização. */
 let eventos: Evento[] = [];
 const carregar = vi.fn().mockResolvedValue([]);
+const aplicarLocal = vi.fn();
+const atualizar = vi.fn();
 vi.mock("@/hooks/useAgenda", () => ({
   useAgenda: () => ({
     eventos,
     loading: false,
     carregar,
+    aplicarLocal,
     criar: vi.fn(),
-    atualizar: vi.fn(),
+    atualizar,
     deletar: vi.fn(),
   }),
 }));
@@ -51,7 +73,13 @@ beforeEach(() => {
   eventos = [];
   telaEstreita = false;
   viewRecebida = undefined;
+  remarcarDoCalendario = undefined;
   carregar.mockClear();
+  aplicarLocal.mockClear();
+  atualizar.mockReset();
+  toastError.mockClear();
+  toastSuccess.mockClear();
+  toastInfo.mockClear();
 });
 
 describe("Qual visão abre", () => {
@@ -153,5 +181,179 @@ describe("Tela vazia", () => {
 
     await waitFor(() => expect(screen.getByTestId("calendario")).toBeInTheDocument());
     expect(screen.queryByText(/nenhum evento neste período/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("Arrastar para remarcar", () => {
+  const ORIGINAL = {
+    inicio: "2026-10-05T14:00:00.000Z",
+    fim: "2026-10-05T15:00:00.000Z",
+  };
+  const NOVO = {
+    inicio: new Date("2026-10-07T09:00:00.000Z"),
+    fim: new Date("2026-10-07T10:00:00.000Z"),
+  };
+
+  function evento(over: Partial<Evento> = {}): Evento {
+    return {
+      id: "e1",
+      titulo: "Reunião",
+      descricao: "",
+      data_inicio: ORIGINAL.inicio,
+      data_fim: ORIGINAL.fim,
+      dia_inteiro: false,
+      local: "",
+      cor: "#6D28D9",
+      lembrete_antecedencia: 0,
+      cliente: null,
+      cliente_nome: null,
+      criado_por: null,
+      criado_por_nome: null,
+      criado_em: "",
+      atualizado_em: "",
+      ...over,
+    };
+  }
+
+  /** Monta a tela e solta o evento no período novo. */
+  async function arrastar(
+    over: Partial<Evento> = {},
+    destino = NOVO,
+    viraDiaInteiro?: boolean
+  ) {
+    const alvo = evento(over);
+    eventos = [alvo];
+    render(<AgendaPage />);
+    await waitFor(() => expect(remarcarDoCalendario).toBeDefined());
+
+    await remarcarDoCalendario!({
+      evento: alvo,
+      inicio: destino.inicio,
+      fim: destino.fim,
+      viraDiaInteiro: viraDiaInteiro ?? alvo.dia_inteiro,
+    });
+    return alvo;
+  }
+
+  it("salva o período novo", async () => {
+    atualizar.mockResolvedValue(evento({
+      data_inicio: NOVO.inicio.toISOString(),
+      data_fim: NOVO.fim.toISOString(),
+    }));
+
+    await arrastar();
+
+    await waitFor(() => expect(atualizar).toHaveBeenCalledTimes(1));
+    expect(atualizar).toHaveBeenCalledWith("e1", {
+      data_inicio: NOVO.inicio.toISOString(),
+      data_fim: NOVO.fim.toISOString(),
+    });
+  });
+
+  it("move o evento na hora, antes de o servidor responder", async () => {
+    atualizar.mockResolvedValue(evento());
+
+    await arrastar();
+
+    // A primeira aplicação local é o movimento otimista.
+    expect(aplicarLocal.mock.calls[0]).toEqual([
+      "e1",
+      { data_inicio: NOVO.inicio.toISOString(), data_fim: NOVO.fim.toISOString() },
+    ]);
+  });
+
+  it("a resposta do servidor manda, não o que o calendário calculou", async () => {
+    // O backend normaliza o dia inteiro; o que ele devolve é a verdade.
+    const normalizado = evento({
+      data_inicio: "2026-10-07T03:00:00.000Z",
+      data_fim: "2026-10-08T02:59:59.000Z",
+    });
+    atualizar.mockResolvedValue(normalizado);
+
+    await arrastar();
+
+    await waitFor(() => expect(aplicarLocal).toHaveBeenCalledTimes(2));
+    expect(aplicarLocal.mock.calls[1]).toEqual(["e1", normalizado]);
+    expect(toastSuccess).toHaveBeenCalled();
+  });
+
+  it("se o PATCH falha, o evento volta para onde estava", async () => {
+    atualizar.mockRejectedValue(new Error("deu ruim"));
+
+    await arrastar();
+
+    await waitFor(() => expect(aplicarLocal).toHaveBeenCalledTimes(2));
+    // Deixar na posição nova seria a tela mentindo que salvou.
+    expect(aplicarLocal.mock.calls[1]).toEqual([
+      "e1",
+      { data_inicio: ORIGINAL.inicio, data_fim: ORIGINAL.fim },
+    ]);
+    expect(toastError).toHaveBeenCalled();
+    expect(toastSuccess).not.toHaveBeenCalled();
+  });
+
+  it("soltar no mesmo lugar não chama o servidor", async () => {
+    await arrastar({}, {
+      inicio: new Date(ORIGINAL.inicio),
+      fim: new Date(ORIGINAL.fim),
+    });
+
+    expect(atualizar).not.toHaveBeenCalled();
+    expect(aplicarLocal).not.toHaveBeenCalled();
+  });
+});
+
+describe("Arrastar não troca a natureza do evento", () => {
+  function evento(over: Partial<Evento> = {}): Evento {
+    return {
+      id: "e1", titulo: "Reunião", descricao: "",
+      data_inicio: "2026-10-05T14:00:00.000Z",
+      data_fim: "2026-10-05T15:00:00.000Z",
+      dia_inteiro: false, local: "", cor: "#6D28D9", lembrete_antecedencia: 0,
+      cliente: null, cliente_nome: null, criado_por: null, criado_por_nome: null,
+      criado_em: "", atualizado_em: "", ...over,
+    };
+  }
+
+  async function soltar(alvo: Evento, viraDiaInteiro: boolean) {
+    eventos = [alvo];
+    render(<AgendaPage />);
+    await waitFor(() => expect(remarcarDoCalendario).toBeDefined());
+    await remarcarDoCalendario!({
+      evento: alvo,
+      inicio: new Date("2026-10-07T09:00:00.000Z"),
+      fim: new Date("2026-10-07T10:00:00.000Z"),
+      viraDiaInteiro,
+    });
+  }
+
+  it("soltar um evento com hora na faixa de dia inteiro não salva nada", async () => {
+    // Virar dia inteiro apaga o horário escolhido (o backend normaliza para
+    // 00:00–23:59) e desmarcar não o traz de volta. Perder isso por um
+    // arraste impreciso seria caro demais.
+    await soltar(evento({ dia_inteiro: false }), true);
+
+    expect(atualizar).not.toHaveBeenCalled();
+    expect(aplicarLocal).not.toHaveBeenCalled();
+    expect(toastInfo).toHaveBeenCalledWith(
+      expect.stringMatching(/edite o evento/i)
+    );
+  });
+
+  it("tirar um evento de dia inteiro da faixa também não salva", async () => {
+    await soltar(evento({ dia_inteiro: true }), false);
+
+    expect(atualizar).not.toHaveBeenCalled();
+    expect(toastInfo).toHaveBeenCalled();
+  });
+
+  it("mover um evento de dia inteiro para outro dia funciona normalmente", async () => {
+    const alvo = evento({ dia_inteiro: true });
+    atualizar.mockResolvedValue(alvo);
+
+    await soltar(alvo, true); // continua dia inteiro
+
+    await waitFor(() => expect(atualizar).toHaveBeenCalledTimes(1));
+    expect(toastInfo).not.toHaveBeenCalled();
   });
 });

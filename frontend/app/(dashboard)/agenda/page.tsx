@@ -17,7 +17,11 @@ import {
 import { Views, type View, type SlotInfo } from "react-big-calendar";
 import { toast } from "sonner";
 import { CalendarDays, Plus } from "lucide-react";
-import { AgendaCalendario, DIAS_NA_LISTA } from "@/components/agenda/AgendaCalendario";
+import {
+  AgendaCalendario,
+  DIAS_NA_LISTA,
+  type Remarcacao,
+} from "@/components/agenda/AgendaCalendario";
 import { EventoForm } from "@/components/agenda/EventoForm";
 import { EventoDetalhe } from "@/components/agenda/EventoDetalhe";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -47,7 +51,8 @@ export function intervaloVisivel(date: Date, view: View): { inicio: Date; fim: D
 }
 
 export default function AgendaPage() {
-  const { eventos, loading, carregar, criar, atualizar, deletar } = useAgenda();
+  const { eventos, loading, carregar, aplicarLocal, criar, atualizar, deletar } =
+    useAgenda();
 
   // No celular a agenda abre na LISTA; no desktop, no mês. Enquanto a pessoa
   // não escolhe, a visão é derivada da tela — depois de escolher, a escolha
@@ -91,6 +96,42 @@ export default function AgendaPage() {
     // Slot de mês costuma vir com allDay; damos 1h de duração padrão
     const fim = slot.end && slot.end > inicio ? (slot.end as Date) : addHours(inicio, 1);
     abrirNovoEvento({ inicio, fim });
+  };
+
+  /**
+   * Arrastou (ou esticou) um evento no calendário.
+   *
+   * O evento vai para o lugar novo na hora e o PATCH confirma depois. Se
+   * falhar, ele volta para onde estava — deixá-lo na posição nova seria a tela
+   * mentindo que salvou.
+   */
+  const handleRemarcar = async ({ evento, inicio, fim, viraDiaInteiro }: Remarcacao) => {
+    // Arrastar move o evento no tempo; NÃO muda a natureza dele. Virar "dia
+    // inteiro" apaga o horário escolhido (o backend normaliza para 00:00–23:59)
+    // e desmarcar não o traz de volta — perder isso por um arraste impreciso
+    // seria caro demais. Essa troca fica no formulário, onde é deliberada.
+    if (viraDiaInteiro !== evento.dia_inteiro) {
+      toast.info('Para trocar "dia inteiro", edite o evento.');
+      return;
+    }
+
+    const antes = { data_inicio: evento.data_inicio, data_fim: evento.data_fim };
+    const novo = { data_inicio: inicio.toISOString(), data_fim: fim.toISOString() };
+    if (novo.data_inicio === antes.data_inicio && novo.data_fim === antes.data_fim) {
+      return; // soltou no mesmo lugar
+    }
+
+    aplicarLocal(evento.id, novo);
+    try {
+      // A resposta manda: o backend normaliza o dia inteiro, e o que ele
+      // devolve é a verdade — não o que o calendário calculou ao soltar.
+      const salvo = await atualizar(evento.id, novo);
+      aplicarLocal(evento.id, salvo);
+      toast.success("Evento remarcado.");
+    } catch (err) {
+      aplicarLocal(evento.id, antes);
+      toast.error(getErrorMessage(err), { duration: 7000 });
+    }
   };
 
   const handleSalvar = async (dados: EventoPayload) => {
@@ -176,6 +217,7 @@ export default function AgendaPage() {
         onNavigate={setDate}
         onSelectSlot={handleSelectSlot}
         onSelectEvent={setDetalhe}
+        onRemarcar={handleRemarcar}
       />
 
       {formAberto && (
