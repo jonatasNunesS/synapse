@@ -36,7 +36,7 @@ export function EventoDetalhe({ evento, onEditar, onExcluir, onFechar, excluindo
       <div className="bg-card text-card-foreground rounded-2xl shadow-2xl w-full max-w-md">
         <div className="flex items-start justify-between px-6 py-4 border-b border-border">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: evento.cor }} />
+            <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: evento.cor_efetiva }} />
             <h2 className="text-lg font-semibold text-foreground truncate">{evento.titulo}</h2>
           </div>
           <button onClick={onFechar} className="text-muted-foreground hover:text-foreground transition-colors">

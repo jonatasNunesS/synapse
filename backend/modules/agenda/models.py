@@ -21,6 +21,10 @@ LEMBRETE_CHOICES = [
 # A maior antecedência oferecida — a task usa para limitar a janela que varre.
 MAIOR_ANTECEDENCIA_MIN = max(minutos for minutos, _ in LEMBRETE_CHOICES)
 
+# A cor de quem não escolheu nada. É também o primeiro item do seletor no
+# front, o que quer dizer que a maioria dos eventos antigos está nela.
+COR_PADRAO = "#6D28D9"
+
 
 def normalizar_dia_inteiro(data_inicio, data_fim):
     """
@@ -44,6 +48,53 @@ def normalizar_dia_inteiro(data_inicio, data_fim):
     return inicio, fim
 
 
+class CategoriaEvento(models.Model):
+    """
+    Categoria de evento criada pela empresa — é ela que dá NOME à cor.
+
+    Antes, o evento escolhia entre 10 cores livres sem legenda em lugar nenhum:
+    duas semanas depois ninguém lembrava por que aquele compromisso era laranja
+    (AGENDA_AUDIT, item 5). Agora laranja é "Cobrança" ou "Entrega", e a tela
+    mostra a legenda.
+
+    Desativar OCULTA, não apaga — mesma filosofia dos módulos opcionais. Os
+    eventos mantêm o vínculo e continuam pegando a cor daqui; a categoria só
+    para de aparecer como opção para novos eventos.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    empresa = models.ForeignKey(
+        "synapse_auth.Empresa",
+        on_delete=models.CASCADE,
+        related_name="categorias_evento",
+        db_index=True,
+    )
+    nome = models.CharField(max_length=60)
+    cor = models.CharField(max_length=7, default=COR_PADRAO)
+    ativo = models.BooleanField(default=True)
+    # Para a legenda sair na ordem que a empresa acha útil, não alfabética.
+    ordem = models.PositiveSmallIntegerField(default=0)
+
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = "synapse_agenda"
+        verbose_name = "Categoria de evento"
+        verbose_name_plural = "Categorias de evento"
+        ordering = ["ordem", "nome"]
+        constraints = [
+            # Duas "Reunião" na mesma empresa é erro de digitação, não escolha.
+            models.UniqueConstraint(
+                fields=["empresa", "nome"], name="categoria_evento_nome_unico_por_empresa"
+            ),
+        ]
+        indexes = [models.Index(fields=["empresa", "ativo"])]
+
+    def __str__(self) -> str:
+        return self.nome
+
+
 class Evento(models.Model):
     """Evento da agenda. Pode existir sem cliente; se tiver, linka ao CRM."""
 
@@ -60,7 +111,9 @@ class Evento(models.Model):
     data_fim = models.DateTimeField()
     dia_inteiro = models.BooleanField(default=False)
     local = models.CharField(max_length=255, blank=True, default="")
-    cor = models.CharField(max_length=7, default="#6D28D9")
+    # Cor livre, de antes das categorias. Continua sendo o FALLBACK de quem
+    # não tem categoria; o formulário não a escreve mais.
+    cor = models.CharField(max_length=7, default=COR_PADRAO)
 
     # Vínculo opcional com o CRM — evento pode existir sem cliente
     cliente = models.ForeignKey(
@@ -69,6 +122,19 @@ class Evento(models.Model):
         null=True,
         blank=True,
         related_name="eventos_agenda",
+    )
+
+    # ── Categoria ────────────────────────────────────────────────────────
+    # Quando existe, é ela quem define a cor exibida (ver `cor_efetiva`).
+    # Nulável de propósito: evento pode não ter categoria, e TODOS os eventos
+    # criados antes desta mudança chegam aqui com null — eles seguem exibindo
+    # a cor que já tinham, sem categoria inventada.
+    categoria = models.ForeignKey(
+        "synapse_agenda.CategoriaEvento",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="eventos",
     )
 
     # ── Lembrete ─────────────────────────────────────────────────────────
@@ -119,6 +185,20 @@ class Evento(models.Model):
                 self.data_inicio, self.data_fim
             )
         super().save(*args, **kwargs)
+
+    @property
+    def cor_efetiva(self) -> str:
+        """
+        A cor que a tela deve pintar. REGRA ÚNICA, num só lugar.
+
+        Tem categoria? A cor é dela — é o que dá significado ao colorido. Não
+        tem? Cai no campo `cor` do próprio evento, que é como os eventos
+        anteriores às categorias continuam exatamente com a aparência que
+        tinham. Serializer e dashboard leem daqui; nenhum dos dois recalcula.
+        """
+        if self.categoria_id and self.categoria and self.categoria.cor:
+            return self.categoria.cor
+        return self.cor or COR_PADRAO
 
     def __str__(self) -> str:
         return f"{self.titulo} ({self.data_inicio:%d/%m/%Y %H:%M})"

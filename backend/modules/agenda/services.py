@@ -5,9 +5,10 @@ Regras de negócio da agenda. Views chamam o service, nunca o ORM direto.
 import logging
 
 from shared.cache import invalidate_cache
+from shared.exceptions import ResourceNotFound
 
 from .models import Evento
-from .repository import AgendaRepository
+from .repository import AgendaRepository, CategoriaEventoRepository
 
 logger = logging.getLogger("synapse")
 
@@ -78,3 +79,46 @@ class AgendaService:
             "Evento excluído",
             extra={"empresa_id": str(empresa_id), "evento_id": str(evento_id)},
         )
+
+
+class CategoriaEventoService:
+    """
+    Regras das categorias de evento.
+
+    A categoria é DESATIVADA, nunca apagada: os eventos mantêm o vínculo e
+    seguem pegando a cor dela, e a categoria só para de aparecer como opção.
+    Apagar de verdade faria eventos históricos mudarem de cor sozinhos.
+    """
+
+    @staticmethod
+    def listar(empresa_id, incluir_inativas=False):
+        return CategoriaEventoRepository.listar(empresa_id, incluir_inativas)
+
+    @staticmethod
+    def obter(empresa_id, categoria_id):
+        categoria = CategoriaEventoRepository.obter(empresa_id, categoria_id)
+        if not categoria:
+            raise ResourceNotFound("CategoriaEvento", str(categoria_id))
+        return categoria
+
+    @staticmethod
+    def criar(empresa_id, dados: dict):
+        categoria = CategoriaEventoRepository.criar(empresa_id, dados)
+        # A cor exibida dos eventos sai da categoria: mexer nela muda a tela.
+        invalidate_cache(empresa_id, "agenda")
+        logger.info(
+            "Categoria de evento criada",
+            extra={"empresa_id": str(empresa_id), "categoria_id": str(categoria.id)},
+        )
+        return categoria
+
+    @staticmethod
+    def atualizar(empresa_id, categoria_id, dados: dict):
+        categoria = CategoriaEventoService.obter(empresa_id, categoria_id)
+        categoria = CategoriaEventoRepository.atualizar(categoria, dados)
+        invalidate_cache(empresa_id, "agenda")
+        logger.info(
+            "Categoria de evento atualizada",
+            extra={"empresa_id": str(empresa_id), "categoria_id": str(categoria_id)},
+        )
+        return categoria

@@ -152,6 +152,12 @@ export interface CompromissoItem {
   data_fim: string; // ISO
   dia_inteiro: boolean;
   local: string;
+  /**
+   * A cor que o widget pinta. O backend já resolve aqui o `cor_efetiva` do
+   * evento (categoria quando há uma, senão a cor livre antiga) — este payload
+   * é montado à mão em `modules/dashboard/services.py`, não é o serializer da
+   * agenda. Pintar com ela está certo; não trocar por `evento.cor`.
+   */
   cor: string;
   cliente_id: string | null;
   cliente_nome: string | null;

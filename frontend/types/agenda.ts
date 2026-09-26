@@ -2,6 +2,31 @@
  * Synapse — Tipos do Módulo Agenda
  */
 
+/**
+ * Categoria de evento — é ela que dá NOME à cor.
+ *
+ * Antes havia 10 cores livres sem legenda em lugar nenhum, e duas semanas
+ * depois ninguém lembrava por que um compromisso era laranja. Agora laranja é
+ * "Cobrança", e a agenda mostra a legenda.
+ */
+export interface CategoriaEvento {
+  id: string;
+  nome: string;
+  cor: string;
+  ativo: boolean;
+  ordem: number;
+  /** Quantos eventos usam esta categoria — a gestão avisa antes de desligar. */
+  eventos_count: number;
+  criado_em: string;
+}
+
+export interface CategoriaEventoPayload {
+  nome: string;
+  cor: string;
+  ativo?: boolean;
+  ordem?: number;
+}
+
 export interface Evento {
   id: string;
   titulo: string;
@@ -10,7 +35,15 @@ export interface Evento {
   data_fim: string; // ISO
   dia_inteiro: boolean;
   local: string;
+  /**
+   * Cor livre, de antes das categorias. NÃO pintar com esta — é só o fallback
+   * histórico de quem não tem categoria. Para pintar, use `cor_efetiva`.
+   */
   cor: string;
+  /** A cor que a tela pinta. Vem da categoria quando há uma; senão, de `cor`. */
+  cor_efetiva: string;
+  categoria: string | null;
+  categoria_nome: string | null;
   /** Minutos antes do início para avisar. 0 = sem lembrete. */
   lembrete_antecedencia: number;
   cliente: string | null; // id do Cliente
@@ -29,6 +62,7 @@ export interface EventoPayload {
   dia_inteiro?: boolean;
   local?: string;
   cor?: string;
+  categoria?: string | null;
   lembrete_antecedencia?: number;
   cliente?: string | null;
 }
@@ -53,7 +87,10 @@ export function rotuloLembrete(minutos: number): string {
   return LEMBRETES.find((l) => l.valor === minutos)?.label ?? `${minutos} min antes`;
 }
 
-// Cores preset para o seletor (mesmo padrão do ProjetoForm)
+/**
+ * Paleta oferecida ao criar uma CATEGORIA. O evento não escolhe mais cor
+ * solta — ele escolhe categoria, e a cor vem dela.
+ */
 export const CORES_EVENTO = [
   "#6D28D9", "#8b5cf6", "#ec4899", "#ef4444",
   "#f97316", "#eab308", "#22c55e", "#14b8a6",

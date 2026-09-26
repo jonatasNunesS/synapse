@@ -326,7 +326,7 @@ class DashboardService:
                         data_fim__gte=agora,
                         data_inicio__lte=limite,
                     )
-                    .select_related("cliente")
+                    .select_related("cliente", "categoria")
                     .order_by("data_inicio")[:10]
                 )
                 hoje = timezone.localtime(agora).date()
@@ -338,7 +338,9 @@ class DashboardService:
                         "data_fim": e.data_fim.isoformat(),
                         "dia_inteiro": e.dia_inteiro,
                         "local": e.local,
-                        "cor": e.cor,
+                        # A cor vem da categoria quando há uma; a regra é a do
+                        # modelo, para o widget não ter a sua própria versão.
+                        "cor": e.cor_efetiva,
                         "cliente_id": str(e.cliente_id) if e.cliente_id else None,
                         "cliente_nome": e.cliente.nome if e.cliente_id else None,
                         "dias_restantes": (
