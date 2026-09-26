@@ -7,7 +7,7 @@ import logging
 
 from shared.cache import build_cache_key, get_cached, set_cached
 
-from .models import Evento
+from .models import CategoriaEvento, Evento
 
 logger = logging.getLogger("synapse")
 
@@ -19,8 +19,10 @@ class AgendaRepository:
 
     @staticmethod
     def _base_qs(empresa_id):
+        # `categoria` entra no select_related porque a cor exibida sai dela:
+        # sem isto, pintar uma tela de eventos viraria uma query por evento.
         return Evento.objects.filter(empresa_id=empresa_id).select_related(
-            "cliente", "criado_por"
+            "cliente", "criado_por", "categoria"
         )
 
     @staticmethod
@@ -76,3 +78,43 @@ class AgendaRepository:
     @staticmethod
     def cache_set_lista(key: str, data) -> None:
         set_cached(key, data, CACHE_TTL)
+
+
+class CategoriaEventoRepository:
+    """Repositório das categorias de evento. Sempre recortado por empresa."""
+
+    @staticmethod
+    def listar(empresa_id, incluir_inativas=False):
+        """
+        Categorias da empresa. Por padrão só as ATIVAS — é essa lista que o
+        formulário e a legenda mostram. A gestão pede as inativas também, para
+        poder religá-las.
+        """
+        qs = CategoriaEvento.objects.filter(empresa_id=empresa_id)
+        if not incluir_inativas:
+            qs = qs.filter(ativo=True)
+        return qs.order_by("ordem", "nome")
+
+    @staticmethod
+    def obter(empresa_id, categoria_id):
+        """Uma categoria da empresa, ou None. Nunca a de outra empresa."""
+        return (
+            CategoriaEvento.objects.filter(empresa_id=empresa_id, pk=categoria_id)
+            .first()
+        )
+
+    @staticmethod
+    def criar(empresa_id, dados: dict) -> CategoriaEvento:
+        return CategoriaEvento.objects.create(empresa_id=empresa_id, **dados)
+
+    @staticmethod
+    def atualizar(categoria: CategoriaEvento, dados: dict) -> CategoriaEvento:
+        for campo, valor in dados.items():
+            setattr(categoria, campo, valor)
+        categoria.save()
+        return categoria
+
+    @staticmethod
+    def quantos_eventos(categoria: CategoriaEvento) -> int:
+        """Quantos eventos usam esta categoria — a tela avisa antes de desligar."""
+        return categoria.eventos.count()

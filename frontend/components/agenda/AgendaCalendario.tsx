@@ -169,7 +169,11 @@ export function AgendaCalendario({
         resizable={!!onRemarcar}
         draggableAccessor={() => !!onRemarcar}
         eventPropGetter={(item) => ({
-          style: { backgroundColor: item.resource.cor || "var(--brand-primary)" },
+          style: {
+            // `cor_efetiva` vem do backend: da categoria quando há uma, senão
+            // da cor antiga do evento. Nunca pintar com `.cor` direto.
+            backgroundColor: item.resource.cor_efetiva || "var(--brand-primary)",
+          },
         })}
         style={{ height: "100%" }}
       />

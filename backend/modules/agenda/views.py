@@ -12,7 +12,11 @@ from rest_framework.views import APIView
 from shared.authentication import CookieJWTAuthentication
 from shared.cache import build_cache_key, get_cached, set_cached
 from shared.pagination import StandardPagination
-from shared.permissions import EmpresaQuerySetMixin, IsEmpresaMember
+from shared.permissions import (
+    EmpresaQuerySetMixin,
+    IsAdminOrReadOnly,
+    IsEmpresaMember,
+)
 from shared.modulos import ModuloAtivo
 from shared.responses import (
     created_response,
@@ -22,15 +26,21 @@ from shared.responses import (
 )
 
 from .repository import CACHE_TTL
-from .serializers import EventoCreateSerializer, EventoSerializer
-from .services import AgendaService
+from .serializers import (
+    CategoriaEventoCreateSerializer,
+    CategoriaEventoSerializer,
+    EventoCreateSerializer,
+    EventoSerializer,
+)
+from .services import AgendaService, CategoriaEventoService
 
 logger = logging.getLogger("synapse")
 
 
 class EventoListCreateView(EmpresaQuerySetMixin, APIView):
     """
-    GET  /api/agenda/?inicio=&fim=&cliente=  → lista eventos (paginado)
+    GET  /api/agenda/categorias/     → categorias de evento da empresa
+  GET  /api/agenda/?inicio=&fim=&cliente=  → lista eventos (paginado)
     POST /api/agenda/                        → cria evento
     """
 
@@ -163,3 +173,87 @@ class EventoDetailView(EmpresaQuerySetMixin, APIView):
             data=EventoSerializer(evento).data,
             message="Evento atualizado com sucesso.",
         )
+
+
+class CategoriaEventoListCreateView(EmpresaQuerySetMixin, APIView):
+    """
+    GET  /api/agenda/categorias/?inativas=1  → lista (ativas por padrão)
+    POST /api/agenda/categorias/             → cria (só admin)
+
+    `IsAdminOrReadOnly`: todos da empresa LEEM, porque o formulário de evento e
+    a legenda precisam da lista; só admin escreve.
+    """
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [
+        IsAuthenticated,
+        IsEmpresaMember,
+        ModuloAtivo,
+        IsAdminOrReadOnly,
+    ]
+    modulo = "agenda"
+
+    def get(self, request):
+        incluir_inativas = request.query_params.get("inativas") in ("1", "true", "True")
+        categorias = CategoriaEventoService.listar(
+            self.get_empresa_id(), incluir_inativas
+        )
+        return success_response(data=CategoriaEventoSerializer(categorias, many=True).data)
+
+    def post(self, request):
+        serializer = CategoriaEventoCreateSerializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        categoria = CategoriaEventoService.criar(
+            self.get_empresa_id(), serializer.validated_data
+        )
+        return created_response(
+            data=CategoriaEventoSerializer(categoria).data,
+            message="Categoria criada.",
+        )
+
+
+class CategoriaEventoDetailView(EmpresaQuerySetMixin, APIView):
+    """
+    GET   /api/agenda/categorias/{id}/
+    PATCH /api/agenda/categorias/{id}/  → edita, ou liga/desliga com `ativo`
+
+    Não há DELETE de propósito: desligar oculta e preserva a cor dos eventos
+    históricos. Apagar faria eventos antigos mudarem de cor sozinhos.
+    """
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [
+        IsAuthenticated,
+        IsEmpresaMember,
+        ModuloAtivo,
+        IsAdminOrReadOnly,
+    ]
+    modulo = "agenda"
+
+    def get(self, request, pk):
+        categoria = self._get(pk)
+        return success_response(data=CategoriaEventoSerializer(categoria).data)
+
+    def patch(self, request, pk):
+        categoria = self._get(pk)
+        serializer = CategoriaEventoCreateSerializer(
+            categoria, data=request.data, partial=True, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        categoria = CategoriaEventoService.atualizar(
+            self.get_empresa_id(), pk, serializer.validated_data
+        )
+        return success_response(
+            data=CategoriaEventoSerializer(categoria).data,
+            message="Categoria atualizada.",
+        )
+
+    def _get(self, pk):
+        from shared.exceptions import ResourceNotFound
+
+        try:
+            return CategoriaEventoService.obter(self.get_empresa_id(), pk)
+        except ResourceNotFound:
+            raise NotFound("Categoria não encontrada.")

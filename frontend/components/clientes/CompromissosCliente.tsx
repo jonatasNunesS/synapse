@@ -72,7 +72,7 @@ function Linha({ evento, passado }: { evento: Evento; passado?: boolean }) {
       <span
         aria-hidden
         className="h-6 w-1 flex-shrink-0 rounded-full"
-        style={{ backgroundColor: evento.cor }}
+        style={{ backgroundColor: evento.cor_efetiva }}
       />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm text-foreground">{tituloNoPerfil(evento)}</p>

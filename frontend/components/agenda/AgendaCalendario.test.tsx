@@ -23,6 +23,9 @@ function evento(over: Partial<Evento> = {}): Evento {
     dia_inteiro: false,
     local: "",
     cor: "#6D28D9",
+    cor_efetiva: "#6D28D9",
+    categoria: null,
+    categoria_nome: null,
     lembrete_antecedencia: 0,
     cliente: null,
     cliente_nome: null,
@@ -101,5 +104,52 @@ describe("O alcance da lista", () => {
 
     expect(screen.getByText("Dentro do alcance")).toBeInTheDocument();
     expect(screen.queryByText("Depois do alcance")).not.toBeInTheDocument();
+  });
+});
+
+describe("A cor que o calendário pinta", () => {
+  /** O bloco do evento na grade — é nele que a cor aparece. */
+  function blocoDe(titulo: string): HTMLElement {
+    const rotulo = screen.getAllByText(titulo)[0];
+    const bloco = rotulo.closest(".rbc-event") as HTMLElement | null;
+    expect(bloco).not.toBeNull();
+    return bloco!;
+  }
+
+  function pintar(over: Partial<Evento>) {
+    render(
+      <AgendaCalendario
+        eventos={[evento(over)]}
+        view={Views.MONTH}
+        date={new Date("2026-10-05T12:00:00")}
+        onView={vi.fn()}
+        onNavigate={vi.fn()}
+        onSelectSlot={vi.fn()}
+        onSelectEvent={vi.fn()}
+      />
+    );
+  }
+
+  it("evento com categoria sai na cor DA CATEGORIA, não na cor antiga dele", () => {
+    // O caso que motivou as categorias: o evento guarda um roxo de antes, mas
+    // agora ele é "Cobrança" e Cobrança é laranja. A tela tem que mostrar
+    // laranja — senão a legenda diz uma coisa e o calendário mostra outra.
+    pintar({
+      titulo: "Cobrar o fornecedor",
+      cor: "#6D28D9",
+      cor_efetiva: "#f97316",
+      categoria: "c1",
+      categoria_nome: "Cobrança",
+    });
+
+    expect(blocoDe("Cobrar o fornecedor")).toHaveStyle({
+      backgroundColor: "#f97316",
+    });
+  });
+
+  it("evento sem categoria continua na cor que sempre teve", () => {
+    pintar({ titulo: "Follow-up antigo", cor: "#3B82F6", cor_efetiva: "#3B82F6" });
+
+    expect(blocoDe("Follow-up antigo")).toHaveStyle({ backgroundColor: "#3B82F6" });
   });
 });

@@ -16,18 +16,22 @@ import {
 } from "date-fns";
 import { Views, type View, type SlotInfo } from "react-big-calendar";
 import { toast } from "sonner";
-import { CalendarDays, Plus } from "lucide-react";
+import { CalendarDays, Plus, Tag } from "lucide-react";
 import {
   AgendaCalendario,
   DIAS_NA_LISTA,
   type Remarcacao,
 } from "@/components/agenda/AgendaCalendario";
+import { CategoriaEventoModal } from "@/components/agenda/CategoriaEventoModal";
+import { LegendaCategorias } from "@/components/agenda/LegendaCategorias";
 import { EventoForm } from "@/components/agenda/EventoForm";
 import { EventoDetalhe } from "@/components/agenda/EventoDetalhe";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useAgenda } from "@/hooks/useAgenda";
+import { useCategoriasAgenda } from "@/hooks/useCategoriasAgenda";
 import { useDuracaoPadrao, useExpediente } from "@/hooks/useExpediente";
 import { useTelaEstreita } from "@/hooks/useTelaEstreita";
+import { useAppStore } from "@/store/useAppStore";
 import { getErrorMessage } from "@/lib/api";
 import type { Evento, EventoPayload } from "@/types/agenda";
 
@@ -54,6 +58,11 @@ export function intervaloVisivel(date: Date, view: View): { inicio: Date; fim: D
 export default function AgendaPage() {
   const { eventos, loading, carregar, aplicarLocal, criar, atualizar, deletar } =
     useAgenda();
+
+  // A legenda usa as categorias ATIVAS; quem gerencia é só o admin.
+  const { categorias, carregar: carregarCategorias } = useCategoriasAgenda();
+  const isAdmin = useAppStore((s) => s.usuario?.perfil) === "admin";
+  const [categoriasAbertas, setCategoriasAbertas] = useState(false);
 
   // No celular a agenda abre na LISTA; no desktop, no mês. Enquanto a pessoa
   // não escolhe, a visão é derivada da tela — depois de escolher, a escolha
@@ -86,6 +95,13 @@ export default function AgendaPage() {
   useEffect(() => {
     recarregar();
   }, [recarregar]);
+
+  // A legenda não depende do intervalo visível: é o vocabulário da empresa,
+  // carregado uma vez. Falhar aqui não pode derrubar o calendário — no pior
+  // caso a agenda fica sem legenda, que é como ela era antes.
+  useEffect(() => {
+    carregarCategorias().catch(() => {});
+  }, [carregarCategorias]);
 
   // ── Handlers ──────────────────────────────────────────────
   const abrirNovoEvento = (slot?: { inicio: Date; fim: Date }) => {
@@ -195,14 +211,27 @@ export default function AgendaPage() {
             Seus eventos e compromissos em um só lugar.
           </p>
         </div>
-        <button
-          onClick={() => abrirNovoEvento()}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          Novo Evento
-        </button>
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <button
+              onClick={() => setCategoriasAbertas(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-foreground-suave text-sm font-medium hover:text-foreground hover:bg-superficie transition-colors"
+            >
+              <Tag className="h-4 w-4" />
+              Categorias
+            </button>
+          )}
+          <button
+            onClick={() => abrirNovoEvento()}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            Novo Evento
+          </button>
+        </div>
       </div>
+
+      <LegendaCategorias categorias={categorias} eventos={eventos} />
 
       {loading && (
         <p className="text-xs text-muted-foreground">Carregando eventos…</p>
@@ -235,6 +264,18 @@ export default function AgendaPage() {
           slotInicial={slotInicial}
           onSalvar={handleSalvar}
           onFechar={() => setFormAberto(false)}
+        />
+      )}
+
+      {categoriasAbertas && (
+        <CategoriaEventoModal
+          onFechar={() => setCategoriasAbertas(false)}
+          onMudou={() => {
+            // Mexer na cor de uma categoria repinta eventos já na tela, e
+            // criar uma nova precisa aparecer na legenda sem recarregar a página.
+            carregarCategorias().catch(() => {});
+            recarregar();
+          }}
         />
       )}
 

@@ -5,7 +5,7 @@ Atualizado no M1 para usar ForeignKey empresa (UUID).
 """
 
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 # Empresa suspensa administrativamente (painel Synapse). Espelha
 # STATUS_EMPRESA_CHOICES em modules.auth.models.
@@ -100,6 +100,25 @@ class IsAdmin(BasePermission):
             and hasattr(request.user, "perfil")
             and request.user.perfil == "admin"
         )
+
+
+class IsAdminOrReadOnly(BasePermission):
+    """
+    Todos da empresa LEEM; só admin ESCREVE.
+
+    É a forma de "o colaborador usa, não cria": o formulário de evento e a
+    legenda precisam da lista de categorias, mas quem define quais categorias
+    a empresa tem é o admin.
+    """
+
+    message = "Apenas administradores podem alterar isto."
+
+    def has_permission(self, request, view):
+        if not (request.user and request.user.is_authenticated):
+            return False
+        if request.method in SAFE_METHODS:
+            return True
+        return getattr(request.user, "perfil", None) == "admin"
 
 
 class IsAdminOrGerente(BasePermission):

@@ -12,7 +12,7 @@ import { addDays, endOfDay, startOfDay } from "date-fns";
 
 import AgendaPage, { intervaloVisivel } from "./page";
 import { DIAS_NA_LISTA } from "@/components/agenda/AgendaCalendario";
-import type { Evento } from "@/types/agenda";
+import type { CategoriaEvento, Evento } from "@/types/agenda";
 
 // O calendário vira uma sonda: o que se testa é QUAL visão a página escolheu,
 // com que período ela chamou o backend e o que ela faz com um arraste — não o
@@ -84,6 +84,32 @@ vi.mock("@/hooks/useExpediente", () => ({
   useDuracaoPadrao: () => duracaoPadrao,
 }));
 
+/** Categorias da empresa nesta renderização (alimentam a legenda). */
+let categorias: CategoriaEvento[] = [];
+const carregarCategorias = vi.fn().mockResolvedValue([]);
+vi.mock("@/hooks/useCategoriasAgenda", () => ({
+  useCategoriasAgenda: () => ({
+    categorias,
+    loading: false,
+    error: null,
+    carregar: carregarCategorias,
+    criar: vi.fn(),
+    atualizar: vi.fn(),
+    definirAtivo: vi.fn(),
+  }),
+}));
+
+vi.mock("@/components/agenda/CategoriaEventoModal", () => ({
+  CategoriaEventoModal: () => <div data-testid="categorias-modal" />,
+}));
+
+/** Perfil do usuário logado nesta renderização. */
+let perfil = "colaborador";
+vi.mock("@/store/useAppStore", () => ({
+  useAppStore: (seletor: (s: unknown) => unknown) =>
+    seletor({ usuario: { perfil } }),
+}));
+
 /** O slot com que o formulário foi aberto. */
 let slotDoFormulario: { inicio: Date; fim: Date } | null = null;
 vi.mock("@/components/agenda/EventoForm", () => ({
@@ -95,6 +121,9 @@ vi.mock("@/components/agenda/EventoForm", () => ({
 
 beforeEach(() => {
   eventos = [];
+  categorias = [];
+  perfil = "colaborador";
+  carregarCategorias.mockClear();
   telaEstreita = false;
   viewRecebida = undefined;
   remarcarDoCalendario = undefined;
@@ -190,7 +219,8 @@ describe("Tela vazia", () => {
       {
         id: "e1", titulo: "Reunião", descricao: "",
         data_inicio: new Date().toISOString(), data_fim: new Date().toISOString(),
-        dia_inteiro: false, local: "", cor: "#6D28D9", lembrete_antecedencia: 0,
+        dia_inteiro: false, local: "", cor: "#6D28D9", cor_efetiva: "#6D28D9",
+        categoria: null, categoria_nome: null, lembrete_antecedencia: 0,
         cliente: null, cliente_nome: null, criado_por: null, criado_por_nome: null,
         criado_em: "", atualizado_em: "",
       },
@@ -231,6 +261,9 @@ describe("Arrastar para remarcar", () => {
       dia_inteiro: false,
       local: "",
       cor: "#6D28D9",
+      cor_efetiva: "#6D28D9",
+      categoria: null,
+      categoria_nome: null,
       lembrete_antecedencia: 0,
       cliente: null,
       cliente_nome: null,
@@ -336,7 +369,8 @@ describe("Arrastar não troca a natureza do evento", () => {
       id: "e1", titulo: "Reunião", descricao: "",
       data_inicio: "2026-10-05T14:00:00.000Z",
       data_fim: "2026-10-05T15:00:00.000Z",
-      dia_inteiro: false, local: "", cor: "#6D28D9", lembrete_antecedencia: 0,
+      dia_inteiro: false, local: "", cor: "#6D28D9", cor_efetiva: "#6D28D9",
+      categoria: null, categoria_nome: null, lembrete_antecedencia: 0,
       cliente: null, cliente_nome: null, criado_por: null, criado_por_nome: null,
       criado_em: "", atualizado_em: "", ...over,
     };
@@ -446,5 +480,76 @@ describe("Duração padrão ao criar clicando num horário livre", () => {
     await clicarEm(inicio, inicio);
 
     expect(minutosDoFormulario()).toBe(45);
+  });
+});
+
+describe("A legenda na tela da agenda", () => {
+  function categoria(over: Partial<CategoriaEvento> = {}): CategoriaEvento {
+    return {
+      id: "c1", nome: "Cobrança", cor: "#f97316", ativo: true, ordem: 0,
+      eventos_count: 0, criado_em: "", ...over,
+    };
+  }
+
+  it("mostra o nome da categoria ao lado da cor dela", async () => {
+    categorias = [categoria()];
+    render(<AgendaPage />);
+
+    await waitFor(() => expect(screen.getByTestId("calendario")).toBeInTheDocument());
+    expect(screen.getByTestId("legenda-categorias")).toBeInTheDocument();
+    expect(screen.getByText("Cobrança")).toBeInTheDocument();
+    expect(screen.getByTestId("legenda-cor-c1")).toHaveStyle({
+      backgroundColor: "#f97316",
+    });
+  });
+
+  it("empresa sem categoria nenhuma: nada de legenda vazia ocupando a tela", async () => {
+    render(<AgendaPage />);
+
+    await waitFor(() => expect(screen.getByTestId("calendario")).toBeInTheDocument());
+    expect(screen.queryByTestId("legenda-categorias")).not.toBeInTheDocument();
+  });
+
+  it("falhar ao carregar as categorias não derruba o calendário", async () => {
+    // Sem legenda a agenda é o que já era. Sem calendário, ela não serve.
+    carregarCategorias.mockRejectedValueOnce(new Error("rede caiu"));
+    render(<AgendaPage />);
+
+    await waitFor(() => expect(screen.getByTestId("calendario")).toBeInTheDocument());
+    expect(toastError).not.toHaveBeenCalled();
+  });
+});
+
+describe("Quem gerencia as categorias", () => {
+  it("o admin tem o botão de categorias", async () => {
+    perfil = "admin";
+    render(<AgendaPage />);
+
+    await waitFor(() => expect(screen.getByTestId("calendario")).toBeInTheDocument());
+    expect(screen.getByRole("button", { name: /categorias/i })).toBeInTheDocument();
+  });
+
+  it("o colaborador USA as categorias, mas não as cria", async () => {
+    perfil = "colaborador";
+    render(<AgendaPage />);
+
+    await waitFor(() => expect(screen.getByTestId("calendario")).toBeInTheDocument());
+    expect(
+      screen.queryByRole("button", { name: /categorias/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("o botão abre a gestão", async () => {
+    perfil = "admin";
+    render(<AgendaPage />);
+
+    await waitFor(() => expect(screen.getByTestId("calendario")).toBeInTheDocument());
+    expect(screen.queryByTestId("categorias-modal")).not.toBeInTheDocument();
+
+    await act(async () => {
+      screen.getByRole("button", { name: /categorias/i }).click();
+    });
+
+    expect(screen.getByTestId("categorias-modal")).toBeInTheDocument();
   });
 });

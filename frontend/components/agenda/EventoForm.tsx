@@ -9,6 +9,7 @@ import { X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { buscarClientes } from "@/hooks/useAgenda";
 import { getErrorMessage } from "@/lib/api";
+import { useCategoriasAgenda } from "@/hooks/useCategoriasAgenda";
 import {
   CORES_EVENTO,
   LEMBRETES,
@@ -86,7 +87,15 @@ export function EventoForm({ evento, slotInicial, onSalvar, onFechar }: EventoFo
   const [dataFim, setDataFim] = useState(fimPadrao);
   const [diaInteiro, setDiaInteiro] = useState(evento?.dia_inteiro ?? false);
   const [local, setLocal] = useState(evento?.local ?? "");
-  const [cor, setCor] = useState(evento?.cor ?? CORES_EVENTO[0]);
+  // A cor não é mais escolhida aqui: ela vem da CATEGORIA. O campo `cor` do
+  // evento continua existindo como fallback dos eventos criados antes das
+  // categorias, e o formulário não o toca.
+  const [categoriaId, setCategoriaId] = useState<string>(evento?.categoria ?? "");
+  const {
+    categorias,
+    carregar: carregarCategorias,
+    error: erroCategorias,
+  } = useCategoriasAgenda();
   const [lembrete, setLembrete] = useState<number>(
     evento?.lembrete_antecedencia ?? SEM_LEMBRETE
   );
@@ -102,6 +111,24 @@ export function EventoForm({ evento, slotInicial, onSalvar, onFechar }: EventoFo
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const buscaTimer = useRef<NodeJS.Timeout | null>(null);
+
+  /**
+   * A cor da categoria escolhida, para a prévia ao lado do seletor.
+   *
+   * Sem categoria: a cor que o evento já tinha (o fallback), ou o padrão num
+   * evento novo. É a mesma regra do `cor_efetiva` do backend, e só serve para
+   * a prévia — quem pinta o calendário é o `cor_efetiva` que vem de lá.
+   */
+  const corDaCategoria =
+    categorias.find((c) => c.id === categoriaId)?.cor ??
+    evento?.cor_efetiva ??
+    CORES_EVENTO[0];
+
+  // As categorias alimentam o seletor. Erro não vira toast: o formulário
+  // continua usável sem categoria, e a mensagem abaixo do campo explica.
+  useEffect(() => {
+    carregarCategorias().catch(() => {});
+  }, [carregarCategorias]);
 
   // Carrega clientes (com o vinculado atual garantido na lista)
   useEffect(() => {
@@ -170,7 +197,7 @@ export function EventoForm({ evento, slotInicial, onSalvar, onFechar }: EventoFo
         data_fim: fimIso,
         dia_inteiro: diaInteiro,
         local,
-        cor,
+        categoria: categoriaId || null,
         lembrete_antecedencia: lembrete,
         cliente: clienteId || null,
       });
@@ -340,22 +367,41 @@ export function EventoForm({ evento, slotInicial, onSalvar, onFechar }: EventoFo
             </select>
           </div>
 
+          {/* Categoria — no lugar das 10 cores mudas. A cor vem dela. */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Cor</label>
-            <div className="flex gap-2 flex-wrap">
-              {CORES_EVENTO.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setCor(c)}
-                  className={`w-7 h-7 rounded-full transition-transform ${
-                    cor === c ? "scale-125 ring-2 ring-offset-1 ring-offset-card ring-foreground/40" : ""
-                  }`}
-                  style={{ backgroundColor: c }}
-                  title={c}
-                />
-              ))}
+            <label
+              htmlFor="evento-categoria"
+              className="block text-sm font-medium text-foreground mb-1"
+            >
+              Categoria
+            </label>
+            <div className="flex items-center gap-2">
+              <span
+                aria-hidden
+                data-testid="previa-cor-categoria"
+                className="h-5 w-5 flex-shrink-0 rounded-full border border-border"
+                style={{ backgroundColor: corDaCategoria }}
+              />
+              <select
+                id="evento-categoria"
+                value={categoriaId}
+                onChange={(e) => setCategoriaId(e.target.value)}
+                className={inputClass}
+              >
+                <option value="">— Sem categoria —</option>
+                {categorias.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
+                ))}
+              </select>
             </div>
+            {categorias.length === 0 && !erroCategorias && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Nenhuma categoria ainda. Um administrador cria em
+                &ldquo;Categorias&rdquo;, na tela da Agenda.
+              </p>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
