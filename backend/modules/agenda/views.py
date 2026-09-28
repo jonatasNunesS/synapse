@@ -40,7 +40,7 @@ logger = logging.getLogger("synapse")
 class EventoListCreateView(EmpresaQuerySetMixin, APIView):
     """
     GET  /api/agenda/categorias/     → categorias de evento da empresa
-  GET  /api/agenda/?inicio=&fim=&cliente=  → lista eventos (paginado)
+  GET  /api/agenda/?inicio=&fim=&cliente=&projeto=&venda=  → lista (paginado)
     POST /api/agenda/                        → cria evento
     """
 
@@ -53,6 +53,8 @@ class EventoListCreateView(EmpresaQuerySetMixin, APIView):
         inicio = self._parse_dt(request.query_params.get("inicio"))
         fim = self._parse_dt(request.query_params.get("fim"))
         cliente_id = self._parse_uuid(request.query_params.get("cliente"))
+        projeto_id = self._parse_uuid(request.query_params.get("projeto"))
+        venda_id = self._parse_uuid(request.query_params.get("venda"))
 
         # Cache da página (chave inclui os query params: intervalo + page)
         params = dict(request.query_params)
@@ -63,7 +65,9 @@ class EventoListCreateView(EmpresaQuerySetMixin, APIView):
 
             return Response(cached)
 
-        eventos = AgendaService.listar_eventos(empresa_id, inicio, fim, cliente_id)
+        eventos = AgendaService.listar_eventos(
+            empresa_id, inicio, fim, cliente_id, projeto_id, venda_id
+        )
         paginator = StandardPagination()
         page = paginator.paginate_queryset(eventos, request)
         serializer = EventoSerializer(page, many=True)
@@ -88,9 +92,10 @@ class EventoListCreateView(EmpresaQuerySetMixin, APIView):
     @staticmethod
     def _parse_uuid(value):
         """
-        Converte o `?cliente=` em UUID. Lixo vira None (lista sem o filtro),
-        em vez de estourar 500 — e um id de outra empresa simplesmente não
-        casa, porque o recorte por empresa vem antes no queryset.
+        Converte `?cliente=`, `?projeto=` e `?venda=` em UUID. Lixo vira None
+        (lista sem o filtro), em vez de estourar 500 — e um id de outra empresa
+        simplesmente não casa, porque o recorte por empresa vem antes no
+        queryset.
         """
         if not value:
             return None

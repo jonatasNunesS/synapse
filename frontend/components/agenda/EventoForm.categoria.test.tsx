@@ -14,6 +14,8 @@ import type { CategoriaEvento, Evento } from "@/types/agenda";
 const buscarClientes = vi.fn().mockResolvedValue([]);
 vi.mock("@/hooks/useAgenda", () => ({
   buscarClientes: (...args: unknown[]) => buscarClientes(...args),
+  buscarProjetos: () => Promise.resolve([]),
+  buscarVendas: () => Promise.resolve([]),
 }));
 
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
@@ -62,6 +64,8 @@ function evento(over: Partial<Evento> = {}): Evento {
     cor_efetiva: "#3B82F6",
     categoria: null,
     categoria_nome: null,
+    projeto: null, projeto_nome: null,
+    venda: null, venda_rotulo: null,
     lembrete_antecedencia: 0,
     cliente: null,
     cliente_nome: null,

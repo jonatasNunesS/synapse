@@ -67,6 +67,32 @@ def _evento(empresa, *, daqui_horas=2, duracao_horas=1, **over):
     return Evento.objects.create(**dados)
 
 
+def _evento_no_dia(empresa, *, dias_a_frente, titulo):
+    """
+    Evento cuja DATA LOCAL é hoje + `dias_a_frente`, a qualquer hora que a
+    suíte rode.
+
+    Existe porque `_evento(daqui_horas=2)` não serve para afirmar
+    `dias_restantes`: rodando às 22h, "daqui 2h" já é o dia seguinte, e o teste
+    quebrava toda noite entre 22h e meia-noite. Aqui a data é construída no
+    fuso local, que é o mesmo em que o serviço calcula o `dias_restantes`.
+
+    O término é sempre no futuro porque o widget lista por `data_fim` — assim o
+    evento de hoje aparece mesmo quando o começo do dia já passou.
+    """
+    dia = timezone.localdate() + timedelta(days=dias_a_frente)
+    inicio_local = timezone.localtime(timezone.now()).replace(
+        year=dia.year, month=dia.month, day=dia.day,
+        hour=0, minute=5, second=0, microsecond=0,
+    )
+    return Evento.objects.create(
+        empresa=empresa,
+        titulo=titulo,
+        data_inicio=inicio_local,
+        data_fim=max(inicio_local + timedelta(hours=1), timezone.now() + timedelta(hours=1)),
+    )
+
+
 def _titulos(empresa_id, dias=7):
     return [c["titulo"] for c in
             DashboardService.obter_proximos_compromissos(empresa_id, dias)]
@@ -128,8 +154,8 @@ def test_traz_o_cliente_vinculado(empresa_a):
 
 @pytest.mark.django_db
 def test_dias_restantes_diz_hoje_e_amanha(empresa_a):
-    _evento(empresa_a, daqui_horas=2, titulo="Hoje")
-    _evento(empresa_a, daqui_horas=26, titulo="Amanhã")
+    _evento_no_dia(empresa_a, dias_a_frente=0, titulo="Hoje")
+    _evento_no_dia(empresa_a, dias_a_frente=1, titulo="Amanhã")
 
     itens = DashboardService.obter_proximos_compromissos(empresa_a.id)
     por_titulo = {i["titulo"]: i["dias_restantes"] for i in itens}

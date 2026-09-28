@@ -6,6 +6,7 @@ import re
 from rest_framework import serializers
 
 from modules.clientes.models import Cliente
+from shared.modulos import modulo_ativo
 
 from .models import CategoriaEvento, Evento
 
@@ -67,9 +68,11 @@ class CategoriaEventoCreateSerializer(serializers.ModelSerializer):
 
 
 class EventoSerializer(serializers.ModelSerializer):
-    """Saída de leitura — inclui dados do cliente vinculado (se houver)."""
+    """Saída de leitura — inclui os vínculos (cliente, projeto, venda)."""
 
     cliente_nome = serializers.SerializerMethodField()
+    projeto_nome = serializers.SerializerMethodField()
+    venda_rotulo = serializers.SerializerMethodField()
     criado_por_nome = serializers.SerializerMethodField()
     categoria_nome = serializers.SerializerMethodField()
     # A cor que a tela pinta. Sai da categoria quando há uma; senão, do campo
@@ -94,6 +97,10 @@ class EventoSerializer(serializers.ModelSerializer):
             "lembrete_antecedencia",
             "cliente",
             "cliente_nome",
+            "projeto",
+            "projeto_nome",
+            "venda",
+            "venda_rotulo",
             "criado_por",
             "criado_por_nome",
             "criado_em",
@@ -104,6 +111,8 @@ class EventoSerializer(serializers.ModelSerializer):
             "cor_efetiva",
             "categoria_nome",
             "cliente_nome",
+            "projeto_nome",
+            "venda_rotulo",
             "criado_por",
             "criado_por_nome",
             "criado_em",
@@ -115,6 +124,24 @@ class EventoSerializer(serializers.ModelSerializer):
 
     def get_cliente_nome(self, obj):
         return obj.cliente.nome if obj.cliente_id else None
+
+    def get_projeto_nome(self, obj):
+        return obj.projeto.nome if obj.projeto_id else None
+
+    def get_venda_rotulo(self, obj):
+        """
+        Como a tela chama esta venda. Venda não tem nome, tem data — é por ela
+        que a pessoa reconhece qual é.
+
+        Sem valor em dinheiro de propósito: formatar moeda é trabalho do front
+        (`formatCurrency`), e devolver "R$ 150.00" daqui produziria o formato
+        errado justamente no campo onde ele salta aos olhos.
+        """
+        if not obj.venda_id:
+            return None
+        if not obj.venda.data_venda:
+            return "Venda"
+        return f"Venda de {obj.venda.data_venda.strftime('%d/%m/%Y')}"
 
     def get_criado_por_nome(self, obj):
         if obj.criado_por_id:
@@ -138,7 +165,67 @@ class EventoCreateSerializer(serializers.ModelSerializer):
             "categoria",
             "lembrete_antecedencia",
             "cliente",
+            "projeto",
+            "venda",
         ]
+
+    def _empresa_id(self):
+        """A empresa de quem está mandando o request, ou None fora de request."""
+        request = self.context.get("request")
+        return getattr(request.user, "empresa_id", None) if request else None
+
+    def _mesma_empresa(self, obj) -> bool:
+        """
+        O objeto vinculado é da empresa de quem pede?
+
+        Sem request (shell, admin, follow-up do CRM) não há com quem comparar, e
+        aí o vínculo passa — quem monta esses caminhos já escolheu o objeto.
+        """
+        empresa_id = self._empresa_id()
+        if not empresa_id:
+            return True
+        return str(obj.empresa_id) == str(empresa_id)
+
+    def validate_projeto(self, value):
+        """
+        Projeto da MESMA empresa, e só quando a empresa usa Projetos.
+
+        Duas guardas no mesmo lugar porque são dois furos distintos: mandar o id
+        do projeto do vizinho vazaria que ele existe, e vincular com o módulo
+        desligado criaria um vínculo que nenhuma tela mostra — invisível para
+        quem o criou e vivo no banco.
+        """
+        if value is None:
+            return value
+        if not self._mesma_empresa(value):
+            raise serializers.ValidationError("Projeto não pertence à sua empresa.")
+
+        request = self.context.get("request")
+        empresa = getattr(request.user, "empresa", None) if request else None
+        if empresa is not None and not modulo_ativo(empresa, "projetos"):
+            raise serializers.ValidationError(
+                "O módulo Projetos está desativado. Ative em Configurações "
+                "para vincular eventos a projetos."
+            )
+        return value
+
+    def validate_venda(self, value):
+        """
+        Venda da MESMA empresa.
+
+        Sem gating de módulo aqui, de propósito: "vendas" não é um módulo
+        opcional (não está em MODULOS_OPCIONAIS) e as próprias views de venda
+        não têm `ModuloAtivo`. Barrar só na agenda deixaria uma empresa com
+        vendas no banco sem poder vinculá-las, enquanto a API de vendas
+        continuaria respondendo — inconsistência nova, não segurança. Quem
+        decide se o seletor aparece é o front, pelo mesmo critério que a
+        Sidebar já usa para o item Vendas.
+        """
+        if value is None:
+            return value
+        if not self._mesma_empresa(value):
+            raise serializers.ValidationError("Venda não pertence à sua empresa.")
+        return value
 
     def validate_categoria(self, value):
         """

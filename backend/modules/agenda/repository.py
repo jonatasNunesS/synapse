@@ -21,20 +21,33 @@ class AgendaRepository:
     def _base_qs(empresa_id):
         # `categoria` entra no select_related porque a cor exibida sai dela:
         # sem isto, pintar uma tela de eventos viraria uma query por evento.
+        # `projeto` e `venda` pelo mesmo motivo: o serializer publica o nome de
+        # cada vínculo, e sem eles uma lista de 50 eventos faria 100 queries.
         return Evento.objects.filter(empresa_id=empresa_id).select_related(
-            "cliente", "criado_por", "categoria"
+            "cliente", "criado_por", "categoria", "projeto", "venda"
         )
 
     @staticmethod
-    def listar(empresa_id, inicio=None, fim=None, cliente_id=None):
+    def listar(
+        empresa_id,
+        inicio=None,
+        fim=None,
+        cliente_id=None,
+        projeto_id=None,
+        venda_id=None,
+    ):
         """
         Lista eventos da empresa. Se inicio/fim informados, retorna apenas os
         que SOBREPÕEM o intervalo [inicio, fim] (evento cujo período cruza a
         janela visível do calendário): data_inicio <= fim AND data_fim >= inicio.
 
-        `cliente_id` restringe aos eventos daquele cliente — é o que o perfil
-        do cliente usa para mostrar os compromissos dele. O filtro entra DEPOIS
-        do recorte por empresa, então não há como pedir o cliente de outra.
+        `cliente_id`, `projeto_id` e `venda_id` restringem aos eventos daquele
+        vínculo — é o que o perfil do cliente, o detalhe do projeto e o da venda
+        usam para mostrar os compromissos de cada um. Os filtros entram DEPOIS
+        do recorte por empresa, então não há como pedir o de outra.
+
+        Combinar filtros é E, não OU: um evento só sai em `?projeto=X&venda=Y`
+        se tiver os dois vínculos.
         """
         qs = AgendaRepository._base_qs(empresa_id)
         if inicio is not None:
@@ -43,6 +56,10 @@ class AgendaRepository:
             qs = qs.filter(data_inicio__lte=fim)
         if cliente_id is not None:
             qs = qs.filter(cliente_id=cliente_id)
+        if projeto_id is not None:
+            qs = qs.filter(projeto_id=projeto_id)
+        if venda_id is not None:
+            qs = qs.filter(venda_id=venda_id)
         return qs.order_by("data_inicio")
 
     @staticmethod

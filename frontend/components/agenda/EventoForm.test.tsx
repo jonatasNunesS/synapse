@@ -14,6 +14,8 @@ import type { Evento } from "@/types/agenda";
 const buscarClientes = vi.fn().mockResolvedValue([]);
 vi.mock("@/hooks/useAgenda", () => ({
   buscarClientes: (...args: unknown[]) => buscarClientes(...args),
+  buscarProjetos: () => Promise.resolve([]),
+  buscarVendas: () => Promise.resolve([]),
 }));
 
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
@@ -246,6 +248,8 @@ describe("Lembrete", () => {
       cor_efetiva: "#6D28D9",
       categoria: null,
       categoria_nome: null,
+      projeto: null, projeto_nome: null,
+      venda: null, venda_rotulo: null,
       lembrete_antecedencia: 1440,
       cliente: null,
       cliente_nome: null,

@@ -47,6 +47,18 @@ class VendaService:
             qs = qs.filter(data_venda__gte=filtros["data_inicio"])
         if filtros.get("data_fim"):
             qs = qs.filter(data_venda__lte=filtros["data_fim"])
+        if filtros.get("busca"):
+            # Venda não tem nome próprio: quem procura uma venda procura por
+            # QUEM comprou. Cobre o cliente cadastrado e o `devedor`, que é o
+            # nome livre do fiado de balcão — sem ele, metade das vendas (as
+            # sem cliente) seria impossível de achar.
+            from django.db.models import Q
+
+            termo = str(filtros["busca"]).strip()
+            if termo:
+                qs = qs.filter(
+                    Q(cliente__nome__icontains=termo) | Q(devedor__icontains=termo)
+                )
 
         return qs
 

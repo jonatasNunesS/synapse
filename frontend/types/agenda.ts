@@ -48,6 +48,16 @@ export interface Evento {
   lembrete_antecedencia: number;
   cliente: string | null; // id do Cliente
   cliente_nome: string | null;
+  /**
+   * Vínculos com projeto e venda. Independentes entre si e do cliente: um
+   * evento pode ter os três, ou nenhum. Null em todo evento criado antes da
+   * Fase B — o que é o estado normal, não um dado faltando.
+   */
+  projeto: string | null;
+  projeto_nome: string | null;
+  venda: string | null;
+  /** "Venda de 05/10/2026" — venda não tem nome, tem data. */
+  venda_rotulo: string | null;
   criado_por: string | null;
   criado_por_nome: string | null;
   criado_em: string;
@@ -65,6 +75,8 @@ export interface EventoPayload {
   categoria?: string | null;
   lembrete_antecedencia?: number;
   cliente?: string | null;
+  projeto?: string | null;
+  venda?: string | null;
 }
 
 /**
