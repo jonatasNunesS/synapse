@@ -6,12 +6,16 @@
  * nada na leitura. Se a soma das linhas não bater com o total, o problema é
  * de dado, e escondê-lo com uma conta local seria pior.
  */
+import { useEffect } from "react";
 import { UserCog, X } from "lucide-react";
 
 import { formatCurrency } from "@/lib/utils";
 import { FORMAS_PAGAMENTO, type Venda } from "@/types/vendas";
 
 import { VendaIntegracoes } from "./VendaIntegracoes";
+import { CompromissosVinculados } from "@/components/agenda/CompromissosVinculados";
+import { useEventosDaVenda } from "@/hooks/useAgenda";
+import { useModulos } from "@/hooks/useModulos";
 
 interface Props {
   venda: Venda;
@@ -32,6 +36,22 @@ export function VendaDetalheModal({
   onAtualizada,
   onTrocarCliente,
 }: Props) {
+  // Os compromissos vinculados a esta venda.
+  const { moduloAtivo } = useModulos();
+  const agendaAtiva = moduloAtivo("agenda");
+  const {
+    eventos: compromissos,
+    loading: compromissosCarregando,
+    carregadoEm: compromissosCarregadosEm,
+    carregar: carregarCompromissos,
+  } = useEventosDaVenda(venda.id);
+
+  useEffect(() => {
+    // Falhar aqui não pode derrubar o detalhe da venda: sem a seção, o modal é
+    // o que já era.
+    if (agendaAtiva) carregarCompromissos().catch(() => {});
+  }, [agendaAtiva, carregarCompromissos]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4">
       <div className="my-8 w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-elevacao-lg">
@@ -122,6 +142,20 @@ export function VendaDetalheModal({
 
         {onAtualizada && (
           <VendaIntegracoes venda={venda} onAtualizada={onAtualizada} />
+        )}
+
+        {/* Os compromissos vinculados a esta venda (Fase B da agenda).
+            A venda não tem página própria — este modal É o detalhe dela, então
+            é aqui que a seção mora. Só aparece com o módulo Agenda ligado. */}
+        {agendaAtiva && (
+          <div className="mt-4">
+            <CompromissosVinculados
+              eventos={compromissos}
+              loading={compromissosCarregando}
+              agora={compromissosCarregadosEm}
+              vazioSufixo="nesta venda"
+            />
+          </div>
         )}
       </div>
     </div>

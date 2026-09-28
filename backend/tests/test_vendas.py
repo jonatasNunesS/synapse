@@ -629,3 +629,77 @@ def test_descricao_em_item_com_produto_nao_atrapalha(usuario, camisa):
     item = resp.json()["data"]["itens"][0]
     assert item["produto_nome"] == "Camisa"
     assert item["descricao"] == "tamanho G"
+
+
+# ── Busca por quem comprou ──────────────────────────────────────────────────
+# Venda não tem nome próprio, então "buscar venda" é buscar por QUEM comprou.
+# O filtro entrou para o seletor de venda do formulário de evento poder buscar
+# em vez de listar todas.
+
+@pytest.mark.django_db
+def test_busca_venda_pelo_nome_do_cliente(usuario, empresa, cliente):
+    Venda.objects.create(empresa=empresa, cliente=cliente, total=Decimal("150.00"))
+    Venda.objects.create(empresa=empresa, total=Decimal("80.00"))
+
+    resp = _client(usuario).get("/api/vendas/", {"busca": "Maria"})
+
+    assert resp.status_code == 200
+    dados = resp.json()["data"]
+    assert len(dados) == 1
+    assert dados[0]["cliente_nome"] == "Maria Souza"
+
+
+@pytest.mark.django_db
+def test_busca_venda_pelo_devedor_do_fiado(usuario, empresa):
+    """
+    Sem isto, metade das vendas seria impossível de achar: a de balcão não tem
+    cliente cadastrado, só o nome livre de quem ficou devendo.
+    """
+    Venda.objects.create(
+        empresa=empresa, total=Decimal("40.00"), devedor="Seu Joaquim da esquina"
+    )
+    Venda.objects.create(empresa=empresa, total=Decimal("90.00"), devedor="Outra pessoa")
+
+    resp = _client(usuario).get("/api/vendas/", {"busca": "Joaquim"})
+
+    assert resp.status_code == 200
+    dados = resp.json()["data"]
+    assert len(dados) == 1
+    assert dados[0]["devedor"] == "Seu Joaquim da esquina"
+
+
+@pytest.mark.django_db
+def test_busca_venda_ignora_maiusculas(usuario, empresa, cliente):
+    """
+    Documenta a intenção (`icontains`), mas ATENÇÃO: a suíte roda em SQLite, e
+    o LIKE dele já é case-insensitive para ASCII. Aqui este teste passa mesmo
+    se alguém trocar `icontains` por `contains` — quem o pegaria é o Postgres
+    de produção. Mantido porque é lá que a regressão doeria.
+    """
+    Venda.objects.create(empresa=empresa, cliente=cliente, total=Decimal("150.00"))
+
+    resp = _client(usuario).get("/api/vendas/", {"busca": "mARIa"})
+
+    assert len(resp.json()["data"]) == 1
+
+
+@pytest.mark.django_db
+def test_busca_venda_vazia_devolve_tudo(usuario, empresa, cliente):
+    """Campo em branco não pode virar filtro que esconde tudo."""
+    Venda.objects.create(empresa=empresa, cliente=cliente, total=Decimal("150.00"))
+    Venda.objects.create(empresa=empresa, total=Decimal("80.00"))
+
+    for termo in ("", "   "):
+        resp = _client(usuario).get("/api/vendas/", {"busca": termo})
+        assert len(resp.json()["data"]) == 2, f"busca={termo!r} escondeu vendas"
+
+
+@pytest.mark.django_db
+def test_busca_venda_nao_atravessa_empresa(usuario, outra_empresa):
+    """O recorte por empresa vem antes do filtro."""
+    alheio = Cliente.objects.create(empresa=outra_empresa, nome="Maria Souza")
+    Venda.objects.create(empresa=outra_empresa, cliente=alheio, total=Decimal("150.00"))
+
+    resp = _client(usuario).get("/api/vendas/", {"busca": "Maria"})
+
+    assert resp.json()["data"] == []

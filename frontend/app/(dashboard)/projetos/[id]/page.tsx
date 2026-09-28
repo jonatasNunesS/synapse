@@ -3,7 +3,7 @@
  * Synapse — M6: Página de Detalhe do Projeto com Kanban
  * Rota: /projetos/[id]
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -22,6 +22,9 @@ import { TarefaForm } from "@/components/projetos/TarefaForm";
 import { TarefaModal } from "@/components/projetos/TarefaModal";
 import { ProjetoForm } from "@/components/projetos/ProjetoForm";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { CompromissosVinculados } from "@/components/agenda/CompromissosVinculados";
+import { useEventosDoProjeto } from "@/hooks/useAgenda";
+import { useModulos } from "@/hooks/useModulos";
 import {
   useProjetoDetalhe,
   useKanban,
@@ -68,6 +71,22 @@ export default function ProjetoDetalhePage() {
     useTarefas(projetoId);
   const { tarefa: tarefaDetalhe, recarregar: recarregarTarefa } =
     useTarefaDetalhe(tarefaDetalheId);
+
+  // Os compromissos vinculados a este projeto (Fase B da agenda).
+  const { moduloAtivo } = useModulos();
+  const agendaAtiva = moduloAtivo("agenda");
+  const {
+    eventos: compromissos,
+    loading: compromissosCarregando,
+    carregadoEm: compromissosCarregadosEm,
+    carregar: carregarCompromissos,
+  } = useEventosDoProjeto(projetoId);
+
+  useEffect(() => {
+    // Falhar aqui não pode derrubar a página do projeto: sem a seção, ela é o
+    // que já era. O hook guarda o erro, e a seção some.
+    if (agendaAtiva && projetoId) carregarCompromissos().catch(() => {});
+  }, [agendaAtiva, projetoId, carregarCompromissos]);
 
   const handleNovaTarefa = (status: TarefaStatus) => {
     setStatusNovaTarefa(status);
@@ -288,6 +307,17 @@ export default function ProjetoDetalhePage() {
           )}
         </div>
       </div>
+
+      {/* Os compromissos deste projeto. Só aparece quando a empresa usa a
+          Agenda — sem o módulo, a seção não teria para onde levar. */}
+      {agendaAtiva && (
+        <CompromissosVinculados
+          eventos={compromissos}
+          loading={compromissosCarregando}
+          agora={compromissosCarregadosEm}
+          vazioSufixo="neste projeto"
+        />
+      )}
 
       {/* Controles de visão */}
       <div className="flex items-center justify-between">

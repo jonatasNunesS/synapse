@@ -124,6 +124,31 @@ class Evento(models.Model):
         related_name="eventos_agenda",
     )
 
+    # ── Projeto e venda ──────────────────────────────────────────────────
+    # Os três vínculos (cliente, projeto, venda) são INDEPENDENTES e podem
+    # coexistir: a reunião de entrega é do cliente, do projeto e da venda ao
+    # mesmo tempo. Nulável em todos porque a maioria dos eventos não tem
+    # nenhum, e porque TODO evento criado antes desta mudança chega aqui com
+    # null — nada é reescrito.
+    #
+    # SET_NULL, e não CASCADE: apagar um projeto não pode apagar a reunião que
+    # aconteceu. O evento perde o vínculo e continua na agenda, que é o mesmo
+    # que o `cliente` já fazia.
+    projeto = models.ForeignKey(
+        "synapse_projetos.Projeto",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="eventos_agenda",
+    )
+    venda = models.ForeignKey(
+        "synapse_vendas.Venda",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="eventos_agenda",
+    )
+
     # ── Categoria ────────────────────────────────────────────────────────
     # Quando existe, é ela quem define a cor exibida (ver `cor_efetiva`).
     # Nulável de propósito: evento pode não ter categoria, e TODOS os eventos

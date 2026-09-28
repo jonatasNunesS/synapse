@@ -7,8 +7,10 @@
 
 import { useCallback, useState } from "react";
 import { api } from "@/lib/api";
+import { formatCurrency } from "@/lib/utils";
 import type { ApiResponse } from "@/types/api";
 import type { Evento, EventoPayload } from "@/types/agenda";
+import type { OpcaoVinculo } from "@/hooks/useBuscaVinculo";
 
 interface ClienteOption {
   id: string;
@@ -106,6 +108,34 @@ export function useAgenda() {
  * precisa mostrar em destaque.
  */
 export function useEventosDoCliente(clienteId: string | null) {
+  return useEventosPorVinculo("cliente", clienteId);
+}
+
+/**
+ * Os compromissos de UM projeto, para o detalhe dele.
+ *
+ * Mesma mecânica do cliente: o vínculo existia só de um lado (do evento dava
+ * para chegar ao projeto, do projeto não dava para ver os eventos).
+ */
+export function useEventosDoProjeto(projetoId: string | null) {
+  return useEventosPorVinculo("projeto", projetoId);
+}
+
+/** Os compromissos de UMA venda, para o detalhe dela. */
+export function useEventosDaVenda(vendaId: string | null) {
+  return useEventosPorVinculo("venda", vendaId);
+}
+
+/**
+ * O motor dos três hooks acima.
+ *
+ * Um só porque a diferença entre eles é o NOME do query param — e três cópias
+ * desta paginação seriam três lugares para o mesmo defeito aparecer.
+ */
+function useEventosPorVinculo(
+  campo: "cliente" | "projeto" | "venda",
+  valor: string | null
+) {
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -115,7 +145,7 @@ export function useEventosDoCliente(clienteId: string | null) {
   const [carregadoEm, setCarregadoEm] = useState(0);
 
   const carregar = useCallback(async () => {
-    if (!clienteId) return;
+    if (!valor) return;
     setLoading(true);
     setError(null);
     try {
@@ -123,7 +153,7 @@ export function useEventosDoCliente(clienteId: string | null) {
       let page = 1;
       while (true) {
         const resp = await api.get<Evento[]>("/agenda/", {
-          cliente: clienteId,
+          [campo]: valor,
           page,
           page_size: 50,
         });
@@ -141,7 +171,7 @@ export function useEventosDoCliente(clienteId: string | null) {
     } finally {
       setLoading(false);
     }
-  }, [clienteId]);
+  }, [campo, valor]);
 
   return { eventos, loading, error, carregadoEm, carregar };
 }
@@ -157,4 +187,63 @@ export async function buscarClientes(busca = ""): Promise<ClienteOption[]> {
   })) as ApiResponse<ClienteOption[]>;
   const lista = (resp.data as unknown as ClienteOption[]) ?? [];
   return lista.map((c) => ({ id: c.id, nome: c.nome }));
+}
+
+/** Busca projetos para o seletor de vínculo. Rótulo = nome do projeto. */
+export async function buscarProjetos(busca = ""): Promise<OpcaoVinculo[]> {
+  const resp = (await api.get<{ id: string; nome: string }[]>("/projetos/", {
+    busca: busca || undefined,
+    page_size: 25,
+  })) as ApiResponse<{ id: string; nome: string }[]>;
+  const lista = (resp.data as unknown as { id: string; nome: string }[]) ?? [];
+  return lista.map((p) => ({ id: p.id, rotulo: p.nome }));
+}
+
+/**
+ * Busca vendas para o seletor de vínculo.
+ *
+ * O rótulo é montado aqui porque venda não tem nome: é a data mais quem
+ * comprou, que é como a pessoa reconhece qual venda é. O valor entra
+ * formatado pelo `formatCurrency` — a mesma função do resto do sistema, para
+ * não aparecer um "R$ 150.00" torto só neste seletor.
+ */
+export async function buscarVendas(busca = ""): Promise<OpcaoVinculo[]> {
+  const resp = (await api.get<VendaResumida[]>("/vendas/", {
+    busca: busca || undefined,
+    page_size: 25,
+  })) as ApiResponse<VendaResumida[]>;
+  const lista = (resp.data as unknown as VendaResumida[]) ?? [];
+  return lista.map((v) => ({
+    id: v.id,
+    rotulo: rotuloDaVenda(v),
+    // Desce junto para o formulário poder oferecer "essa venda é da Ana,
+    // vincular a ela também?" sem uma segunda ida ao servidor.
+    clienteSugerido:
+      v.cliente && v.cliente_nome ? { id: v.cliente, nome: v.cliente_nome } : null,
+  }));
+}
+
+interface VendaResumida {
+  id: string;
+  data_venda: string | null;
+  total: string | number | null;
+  cliente: string | null;
+  cliente_nome: string | null;
+  devedor?: string;
+}
+
+/** "05/10/2026 · Ana Paula · R$ 150,00" — exportado para o teste afirmar o formato. */
+export function rotuloDaVenda(v: VendaResumida): string {
+  const partes: string[] = [];
+  if (v.data_venda) {
+    // `data_venda` é uma DATA pura ("2026-10-05"); `new Date` a leria como UTC
+    // e no fuso de São Paulo cairia no dia anterior. Inverter os pedaços à mão
+    // evita esse deslocamento de um dia.
+    const [ano, mes, dia] = v.data_venda.split("-");
+    if (ano && mes && dia) partes.push(`${dia}/${mes}/${ano}`);
+  }
+  const quem = v.cliente_nome || v.devedor;
+  if (quem) partes.push(quem);
+  partes.push(formatCurrency(v.total));
+  return partes.join(" · ");
 }

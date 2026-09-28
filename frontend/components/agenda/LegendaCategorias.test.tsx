@@ -41,6 +41,8 @@ function evento(over: Partial<Evento> = {}): Evento {
     cor_efetiva: "#6D28D9",
     categoria: null,
     categoria_nome: null,
+    projeto: null, projeto_nome: null,
+    venda: null, venda_rotulo: null,
     lembrete_antecedencia: 0,
     cliente: null,
     cliente_nome: null,
