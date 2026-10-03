@@ -8,7 +8,7 @@
 
 > **Nota de baseline — duas correções ao enunciado.**
 >
-> 1. A instrução dizia "agenda completa mergeada". O `master` tem as **categorias** (PR #53) mergeadas, mas a **PR #54** (vínculo com projeto e venda) estava **aberta** quando esta auditoria começou. A pedido, o escopo passou a cobrir os dois estados: os achados valem para o `master`, e onde a #54 muda o quadro está dito explicitamente.
+> 1. A instrução dizia "agenda completa mergeada". O `master` tem as **categorias** (PR #53) mergeadas, mas a **PR #54** (vínculo com projeto e venda) estava **aberta** quando esta auditoria começou. A pedido, o escopo passou a cobrir os dois estados — e a #54 foi auditada em **duas passadas**: primeiro contra as classes de achado do `master`, depois como código próprio, linha a linha. A segunda passada rendeu **três achados que só existem nela** (seção 7), um dos quais vale corrigir antes do merge.
 > 2. Vários achados dos audits anteriores **foram de fato corrigidos** e estão confirmados resolvidos na seção 6. Mas dois que o `QUALITY_AUDIT` declarava contidos **não estavam**: o erro engolido (`UX-01`, "os únicos dois casos remanescentes") hoje são **30**, e as datas à mão (`INC-04`) passaram de 28 para **42 arquivos**. Ambos pioraram, não melhoraram.
 
 ---
@@ -28,10 +28,12 @@ Há **três bugs ativos** (não latentes: errados agora, em produção) e todos 
 | Severidade | Qtd |
 |---|---|
 | 🔴 risco real (bug latente, falha silenciosa, buraco de erro) | **9** |
-| 🟠 dívida que atrapalha | **8** |
+| 🟠 dívida que atrapalha | **10** |
 | 🟡 melhoria | **9** |
-| 🔵 cosmético | **3** |
-| **Total** | **29** |
+| 🔵 cosmético | **4** |
+| **Total** | **32** |
+
+Dos 32, **29 estão no `master`** e **3 são do código próprio da PR #54** (seção 7).
 
 ### Os 5 mais importantes
 
@@ -723,21 +725,102 @@ Tudo aqui está errado **agora**, em produção, e a correção é pequena.
 
 ---
 
-## 7. Nota sobre a PR #54 (`feature/agenda-vinculos`)
+## 7. A PR #54 (`feature/agenda-vinculos`) — auditada no mesmo rigor
 
-Auditada a pedido, no mesmo rigor. Ela **não introduz achado novo** e não aparece em nenhum 🔴. O que ela acrescenta aos números:
+Auditada em duas passadas. A primeira conferiu a #54 contra as classes de achado que vieram do `master`. A segunda — a pedido — auditou as **2.330 linhas novas dela** como código próprio, e encontrou **três achados que não existem no `master`**: um deles bloqueia uma operação legítima e vale corrigir **antes do merge**.
 
-- **+1** `} catch {` (`useBuscaVinculo.ts:80`) — mas **documentado como deliberado**, com justificativa escrita: o vínculo é opcional, e um toast de erro por não listar projetos atrapalharia quem só quer marcar um compromisso. Está na allowlist que o `ERR-07` propõe, não na lista de correção.
-- **+2** chamadas de data à mão (`DUP-01`), e um **nono contorno** do `ERR-03` (`split("-")` remontado em `useAgenda.ts:242`) — com comentário explicando exatamente o bug do fuso. É evidência a favor do `ERR-03`: mais um autor descobriu o problema sozinho e remendou do seu jeito.
+### 7.1 — O que a #54 acrescenta aos números do `master`
+
+- **+1** `} catch {` (`useBuscaVinculo.ts:80`) — **documentado como deliberado**, com justificativa escrita: o vínculo é opcional, e um toast por não listar projetos atrapalharia quem só quer marcar um compromisso. Vai para a allowlist que o `ERR-07` propõe, não para a lista de correção.
+- **+2** chamadas de data à mão (`DUP-01`), e um **nono contorno** do `ERR-03` (`split("-")` remontado em `useAgenda.ts:242`), com comentário explicando o bug do fuso. É evidência a favor do `ERR-03`: mais um autor topou com o problema e remendou do seu jeito.
 - **+2** `as unknown as` (`ERR-08`).
 
-Em contrapartida, ela anda na direção certa em dois pontos que esta auditoria recomenda em geral:
+### 7.2 — Onde ela anda na direção certa
 
-- criou **um** hook de busca com debounce (`useBuscaVinculo`) em vez de copiar o bloco do cliente pela terceira vez — exatamente o remédio do `DUP-03`, e pelo motivo certo, dito no comentário: copiar era como o bug do debounce morto voltaria;
-- incluiu **teste de contagem de queries** (`CaptureQueriesContext` em `test_agenda_vinculos.py`) contra N+1 — a ferramenta que o `ESC-01` pede e que nenhum outro módulo usava.
+Vale registrar, porque são exatamente dois remédios que esta auditoria recomenda em geral:
 
-Se a #54 mergear antes das correções, nenhuma leva deste plano muda.
+- criou **um** hook de busca com debounce (`useBuscaVinculo`) em vez de copiar o bloco do cliente pela terceira vez — o remédio do `DUP-03`, e pelo motivo certo, dito no comentário: copiar era como o bug do debounce morto voltaria;
+- incluiu **teste de contagem de queries** (`CaptureQueriesContext` em `test_agenda_vinculos.py`) contra N+1 — a ferramenta que o `ESC-01` pede e que **nenhum outro módulo** usava.
+
+Também confirmei o que seria fácil errar e está certo: o `select_for_update` não é necessário ali (não há contador disputado); os guards multi-tenant valem no **PATCH** e não só na criação (o `_update` usa o mesmo `EventoCreateSerializer` com contexto, e há teste); o `SET_NULL` das FKs novas preserva o evento quando o projeto é apagado, com teste; e o `vivo` do efeito do hook descarta resposta atrasada, então **não há race de resultado fora de ordem**.
 
 ---
 
-*Auditoria por leitura de código, varredura de padrões e verificação em execução. As medições de query, de formatação de data e da contagem da equipe foram obtidas rodando o código, com sondas temporárias criadas e removidas — nenhum arquivo de teste foi deixado no repositório. **Nenhuma linha de código de produção foi alterada nesta branch.** O único artefato é este documento.*
+#### PR54-01 — Com o módulo Projetos desligado, o evento vinculado fica impossível de editar
+- **Severidade:** 🟠 *(achado próprio da #54 — não existe no `master`)*
+- **Local:** `modules/agenda/serializers.py` (`validate_projeto`) + `components/agenda/EventoForm.tsx:114`
+- **Descrição:** O `validate_projeto` recusa qualquer `projeto` não-nulo quando `modulo_projetos` está desligado. A intenção é boa (não criar vínculo invisível). O problema é que ele não distingue **criar um vínculo novo** de **manter o que já estava lá**.
+
+  E o formulário sempre manda o campo: `projetoId` é inicializado com `evento?.projeto ?? ""` (:114), independente do gating. Com o módulo off o seletor não renderiza (:449), mas o estado **conserva o id**, e o payload leva `projeto: <id existente>` (:270).
+
+  Medido em execução (sonda criada e apagada), num PATCH que só renomeia o título:
+
+  ```
+  >>> PATCH so renomeando o titulo  -> HTTP 400
+  >>> erro devolvido: {'projeto': ['O módulo Projetos está desativado.
+                        Ative em Configurações para vincular eventos a projetos.']}
+  ```
+
+  A empresa que vinculou eventos a projetos e depois desligou o módulo **não consegue mais editar esses eventos** — nem para corrigir o título ou a hora. O erro culpa um módulo que ela desligou de propósito, e a tela não oferece saída: o seletor está escondido, então não há como limpar o vínculo pela interface.
+
+  Isso contradiz a filosofia que a própria PR adota em outro ponto: *"desligar OCULTA, não apaga"*. O vínculo sobrevive — mas o evento vira somente-leitura.
+
+  O teste `test_vinculo_antigo_sobrevive_a_desligar_o_modulo` da #54 cobre o caso vizinho (o vínculo continua **na listagem** depois de desligar) e passa. Ele não cobre **editar** esse evento, que é onde está o bloqueio.
+- **Correção recomendada:** No `validate_projeto`, só aplicar o gating quando o valor **muda**: comparar com `getattr(self.instance, "projeto_id", None)` e deixar passar o valor inalterado. Dois efeitos: manter continua possível, e trocar/criar continua bloqueado. Teste: PATCH de título num evento vinculado com o módulo off → 200, e PATCH trocando para outro projeto → 400.
+
+  Alternativa complementar no front: não enviar `projeto` quando `mostrarProjeto` é falso. Resolve o sintoma, mas deixa o backend com a mesma aspereza para qualquer outro cliente da API — a correção no serializer é a que vale.
+- **Esforço:** Baixo.
+
+---
+
+#### PR54-02 — A seção de compromissos baixa o histórico inteiro para exibir no máximo 3 itens passados
+- **Severidade:** 🟠 *(herdado do `master`, mas a #54 triplica o alcance)*
+- **Local:** `frontend/hooks/useAgenda.ts` (`useEventosPorVinculo`)
+- **Descrição:** O hook pagina em laço **sem teto**:
+
+  ```ts
+  let page = 1;
+  while (true) {
+    const resp = await api.get<Evento[]>("/agenda/", { [campo]: valor, page, page_size: 50 });
+    acumulado.push(...);
+    if (page >= (resp.pagination?.total_pages ?? 1)) break;
+    page += 1;
+  }
+  ```
+
+  São requisições **sequenciais** — cada uma espera a anterior. Um cliente antigo ou um projeto longo com 500 eventos custa 10 idas ao servidor antes de a seção aparecer.
+
+  E o componente exibe os próximos **mais no máximo 3 passados** (`CompromissosVinculados.tsx:23`, `MAXIMO_PASSADOS = 3`). Todo o resto do histórico é baixado, parseado e descartado.
+
+  O laço vem do `master` (`useEventosDoCliente`, da Leva 2 da agenda). A #54 generalizou o hook — decisão boa, que eliminou duas cópias — mas com isso levou o mesmo custo de **um para três** lugares: perfil do cliente, detalhe do projeto e modal da venda.
+- **Correção recomendada:** Pedir ao servidor só o que a tela mostra. O endpoint **já aceita `inicio`/`fim`** (usados pelo calendário), então uma janela — digamos de 60 dias atrás para frente — resolve com **uma** requisição e sem mudar o backend. Se o histórico completo passar a ser desejado, aí sim um "ver todos" que pagine sob demanda, em vez de na carga.
+- **Esforço:** Baixo.
+
+---
+
+#### PR54-03 — Reabrir um evento que já tem venda não oferece herdar o cliente
+- **Severidade:** 🔵 *(achado próprio da #54)*
+- **Local:** `components/agenda/EventoForm.tsx` (o `fixo` de `buscaVenda`) + `hooks/useBuscaVinculo.ts:74`
+- **Descrição:** A sugestão "essa venda é da Ana, vincular a ela também?" depende de `clienteSugerido`, que o `buscarVendas` preenche. Mas a opção **fixa** — a que garante o vínculo atual na lista mesmo fora da busca — é construída só com `{ id, rotulo }`, nos dois lugares: o formulário monta o `fixo` a partir de `evento.venda` + `evento.venda_rotulo`, e o hook o reinsere na lista com os mesmos dois campos (:74).
+
+  Consequência: um evento que tem venda mas **não** tem cliente, reaberto para edição, não recebe a oferta — justamente o caso em que ela seria útil, porque é a lacuna que a sugestão existe para fechar. Quando a venda aparece na busca, a sugestão funciona; quando só existe como opção fixa, não.
+
+  É pequeno e não há perda de dado — só uma ajuda que não aparece onde faria sentido.
+- **Correção recomendada:** Levar `clienteSugerido` no `fixo` (o `Evento` já traz `cliente`/`cliente_nome`, mas o da **venda** não está no payload do evento — então o caminho barato é o hook preservar o objeto `fixo` inteiro em vez de remontá-lo com dois campos). Alternativa: publicar `venda_cliente`/`venda_cliente_nome` no `EventoSerializer`.
+- **Esforço:** Trivial.
+
+---
+
+### 7.3 — Efeito no plano de correção
+
+Os três achados são **da branch**, não do `master`, então nenhuma leva das seções anteriores muda. O que muda é a recomendação de merge:
+
+- **`PR54-01` vale corrigir antes do merge.** É pequeno (uma comparação no `validate_projeto`) e, sem ele, qualquer empresa que desligue o módulo Projetos perde a capacidade de editar os eventos que já vinculou. É a única objeção que eu levantaria ao merge.
+- **`PR54-02`** pode ir junto ou na Leva 6 — mas é baixo esforço e tem efeito nas três telas, então aproveitar a branch é mais barato que voltar depois.
+- **`PR54-03`** é cosmético; pode ficar para quando o arquivo for tocado.
+
+Fora isso, a #54 é das contribuições mais bem testadas da base (30 testes de backend, 46 de frontend, 28 mutações reintroduzidas) e eleva a razão teste/código da agenda, que já era a segunda melhor do projeto.
+
+---
+
+*Auditoria por leitura de código, varredura de padrões e verificação em execução. As quatro medições que sustentam os achados mais fortes — a contagem de queries da lista de projetos, a formatação de datas no fuso de São Paulo, a contagem de tarefas da equipe e o bloqueio de edição da `PR54-01` — foram obtidas **rodando o código**, com sondas temporárias criadas, medidas e removidas; nenhum arquivo de teste foi deixado no repositório. A PR #54 foi auditada em duas passadas, a segunda sobre as 2.330 linhas novas dela como código próprio. **Nenhuma linha de código de produção foi alterada nesta branch.** O único artefato é este documento.*
