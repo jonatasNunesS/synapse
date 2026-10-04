@@ -2,7 +2,12 @@
 
 **Data:** 2026-10-03
 **Base:** `master` @ `eb49fa3` **+ PR #54** (`feature/agenda-vinculos` @ `064656a`)
-**Status de 2026-10-04 — a Leva 1 foi mergeada (PR #56).** Sete achados estão **corrigidos em produção**: `ERR-01`, `ERR-02`, `ERR-05`, `ERR-06`, `ESC-01` (os cinco 🔴) mais `ESC-04` e `PR54-01` (🟠). Restam **25 dos 32**, e nenhum dos três bugs ativos de falha silenciosa que abriam o relatório segue de pé. O que sobra de 🔴 é `ERR-03` (datas um dia antes), `ERR-04` (dashboard mostrando zero por falha) e `ERR-07` (30 catches que descartam o erro) — as Levas 2, 3 e 4. Cada achado corrigido está marcado na seção 2.
+**Status de 2026-10-04 — Levas 1 e 2 mergeadas (PRs #56 e #57).** Nove achados estão **corrigidos em produção**:
+
+- **Leva 1** (#56): `ERR-01`, `ERR-02`, `ERR-05`, `ERR-06`, `ESC-01` (cinco 🔴) mais `ESC-04` e `PR54-01` (🟠).
+- **Leva 2** (#57): `ERR-03` (🔴, as datas um dia antes) e `DUP-01` (🟠, a migração para os helpers).
+
+Restam **23 dos 32**. Dos quatro defeitos de produção que abriam o relatório, **nenhum segue de pé**. O que sobra de 🔴 são dois, ambos de falha silenciosa: `ERR-04` (dashboard mostrando zero quando a consulta falha) e `ERR-07` (os 30 catches que descartam a mensagem do backend) — Levas 3 e 4. Cada achado corrigido está marcado na seção 2.
 
 **Atualização de 2026-10-04:** a **PR #54 foi mergeada** (`master` agora é `064656a`) *depois* desta auditoria. Os três achados próprios dela (seção 7) **deixaram de ser "da branch" e são achados de produção** — a `PR54-01`, que a auditoria recomendava corrigir antes do merge, está hoje no `master` e entrou na Leva 1.
 **Escopo:** saúde estrutural — duplicação, arquitetura, código morto, proteção contra erro, testes, contrato e preparo para crescimento.
@@ -30,13 +35,13 @@ A auditoria encontrou **três bugs ativos** (não latentes: errados na hora em q
 
 > **Os quatro foram corrigidos na Leva 1** (PR #56, mergeada em 2026-10-04), junto com dois achados de escalabilidade. A nota 7,0 é a do diagnóstico original e **não foi recalculada** — ela descreve o estado que motivou o trabalho, e recalcular a cada leva tiraria a referência. O que mudou está na tabela abaixo e marcado achado por achado na seção 2.
 
-| Severidade | Achados | Corrigidos na Leva 1 | Em aberto |
-|---|---|---|---|
-| 🔴 risco real (bug latente, falha silenciosa, buraco de erro) | **9** | 5 | **4** |
-| 🟠 dívida que atrapalha | **10** | 2 | **8** |
-| 🟡 melhoria | **9** | — | **9** |
-| 🔵 cosmético | **4** | — | **4** |
-| **Total** | **32** | **7** | **25** |
+| Severidade | Achados | Leva 1 | Leva 2 | Em aberto |
+|---|---|---|---|---|
+| 🔴 risco real (bug latente, falha silenciosa, buraco de erro) | **9** | 5 | 1 | **3** |
+| 🟠 dívida que atrapalha | **10** | 2 | 1 | **7** |
+| 🟡 melhoria | **9** | — | — | **9** |
+| 🔵 cosmético | **4** | — | — | **4** |
+| **Total** | **32** | **7** | **2** | **23** |
 
 Os 32 estão **todos no `master`**: 29 vinham dele, e os 3 restantes entraram com o merge da PR #54 (seção 7).
 
@@ -71,6 +76,8 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### DUP-01 — Datas formatadas à mão em 42 arquivos, e o helper está quebrado
+
+> ✅ **CORRIGIDO** na Leva 2 (PR #57, mergeada em 2026-10-04).
 - **Severidade:** 🟠 (a quebra do helper em si é o `ERR-03` 🔴)
 - **Local:** 58 chamadas em 42 arquivos; só **6** usam `formatDate`/`formatDateTime` de `lib/utils`.
 - **Descrição:** O `INC-04` do `QUALITY_AUDIT` contou 28 arquivos. Hoje são **42** — a dívida cresceu durante as correções. A PR #54 adiciona duas chamadas novas (`CompromissosVinculados.tsx:51` e o `rotuloDaVenda` em `useAgenda.ts:242`).
@@ -275,6 +282,8 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### ERR-03 — `formatDate` mostra o dia anterior para toda data pura do backend
+
+> ✅ **CORRIGIDO** na Leva 2 (PR #57, mergeada em 2026-10-04).
 - **Severidade:** 🔴 **bug ativo**
 - **Local:** `frontend/lib/utils.ts:73-75`
 - **Descrição:** O helper é `new Intl.DateTimeFormat("pt-BR").format(new Date(date))`. Para uma string ISO completa funciona. Para **data pura** — o que o DRF serializa de um `DateField`, `"2026-10-05"` — o `new Date` interpreta como **meia-noite UTC**, que em São Paulo (UTC−3) é 21h do dia **anterior**.
@@ -686,14 +695,14 @@ Tudo aqui está errado **agora**, em produção, e a correção é pequena.
 
 > Fecha 6 achados, 3 deles 🔴, e entrega a maior melhoria de performance da lista. Se só uma leva for feita, é esta.
 
-### Leva 2 — A data, na ordem certa *(≈1 dia + migração)*
+### ~~Leva 2~~ — A data, na ordem certa ✅ **FEITA** (PR #57, mergeada em 2026-10-04)
 6. `ERR-03` — consertar `formatDate`/`formatDateTime` para data pura, com teste em `"2026-01-01"`
 7. Remover os 9 contornos `T00:00:00`/`split("-")`, que deixam de ser necessários
 8. `DUP-01` — só então migrar os 42 arquivos (mecânico, fatiável, pode ir em segundo plano)
 
 > A ordem é o ponto. Migrar para o helper **antes** de consertá-lo espalharia o bug para 42 arquivos.
 
-### Leva 3 — Parar a falha silenciosa *(≈2–3 dias)*
+### Leva 3 — Parar a falha silenciosa *(≈2–3 dias)* ← **a próxima**
 9. `ERR-04` — dashboard marca degradação em vez de devolver zero; a tela mostra "indisponível"
 10. `TST-02` (parcial) — testes de `dashboard`, que é a tela do `ERR-04` e tem 1 teste para 13 componentes
 
