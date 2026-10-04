@@ -44,18 +44,25 @@ export default function DashboardPage() {
   const { usuario } = useAppStore();
 
   // ── Dados ─────────────────────────────────────────────────
+  // Cada widget recebe três coisas do seu hook: o dado, se está carregando e
+  // se a consulta FALHOU. A terceira é a desta leva: sem ela, o widget mostrava
+  // o estado vazio ("Nenhum vencimento próximo") para uma consulta que nunca
+  // respondeu — negando a existência do que ninguém chegou a olhar.
+  //
+  // `refresh` vira o "Tentar de novo" do próprio cartão. Importa porque a
+  // alternativa é recarregar a página toda por causa de um bloco, descartando
+  // o resto do dashboard, que está funcionando.
   const { resumo, isLoading: loadingResumo, refresh: refreshResumo } = useDashboardResumo();
-  const { fluxo, isLoading: loadingFluxo } = useDashboardFluxoCaixa(30);
-  const { etapas, isLoading: loadingFunil } = useDashboardFunil();
-  const { vencimentos, isLoading: loadingVencimentos } = useDashboardVencimentos(7);
-  const { followups, isLoading: loadingFollowUps } = useDashboardFollowUps(3);
-  const { tarefas, isLoading: loadingTarefas } = useDashboardMinhasTarefas();
+  const fluxoCaixa = useDashboardFluxoCaixa(30);
+  const funil = useDashboardFunil();
+  const vencimentosData = useDashboardVencimentos(7);
+  const followUpsData = useDashboardFollowUps(3);
+  const tarefasData = useDashboardMinhasTarefas();
   const { moduloAtivo } = useModulos();
-  const { alertas, isLoading: loadingAlertas } = useDashboardAlertasEstoque();
-  const { projetos, isLoading: loadingProjetos } = useDashboardProjetos();
-  const { compromissos, isLoading: loadingCompromissos } =
-    useDashboardProximosCompromissos(7);
-  const { eventos, isLoading: loadingAtividade } = useDashboardAtividade(10);
+  const alertasData = useDashboardAlertasEstoque();
+  const projetosData = useDashboardProjetos();
+  const compromissosData = useDashboardProximosCompromissos(7);
+  const atividadeData = useDashboardAtividade(10);
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
@@ -107,21 +114,43 @@ export default function DashboardPage() {
           desligado, como os demais widgets opcionais. */}
       {moduloAtivo("agenda") && (
         <ProximosCompromissosWidget
-          compromissos={compromissos}
-          isLoading={loadingCompromissos}
+          compromissos={compromissosData.compromissos}
+          isLoading={compromissosData.isLoading}
+          indisponivel={compromissosData.indisponivel}
+          onTentarNovamente={compromissosData.refresh}
         />
       )}
 
       {/* ── Linha 1: Fluxo de Caixa + Funil ───────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <FluxoCaixaWidget fluxo={fluxo} isLoading={loadingFluxo} />
-        <FunilWidget etapas={etapas} isLoading={loadingFunil} />
+        <FluxoCaixaWidget
+          fluxo={fluxoCaixa.fluxo}
+          isLoading={fluxoCaixa.isLoading}
+          indisponivel={fluxoCaixa.indisponivel}
+          onTentarNovamente={fluxoCaixa.refresh}
+        />
+        <FunilWidget
+          etapas={funil.etapas}
+          isLoading={funil.isLoading}
+          indisponivel={funil.indisponivel}
+          onTentarNovamente={funil.refresh}
+        />
       </div>
 
       {/* ── Linha 2: Vencimentos + Follow-ups ─────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <VencimentosWidget vencimentos={vencimentos} isLoading={loadingVencimentos} />
-        <FollowUpsWidget followups={followups} isLoading={loadingFollowUps} />
+        <VencimentosWidget
+          vencimentos={vencimentosData.vencimentos}
+          isLoading={vencimentosData.isLoading}
+          indisponivel={vencimentosData.indisponivel}
+          onTentarNovamente={vencimentosData.refresh}
+        />
+        <FollowUpsWidget
+          followups={followUpsData.followups}
+          isLoading={followUpsData.isLoading}
+          indisponivel={followUpsData.indisponivel}
+          onTentarNovamente={followUpsData.refresh}
+        />
       </div>
 
       {/* ── Linha 3: Minhas Tarefas + Alertas de Estoque ────
@@ -130,10 +159,20 @@ export default function DashboardPage() {
       {(moduloAtivo("projetos") || moduloAtivo("estoque")) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {moduloAtivo("projetos") && (
-            <MinhasTarefasWidget tarefas={tarefas} isLoading={loadingTarefas} />
+            <MinhasTarefasWidget
+              tarefas={tarefasData.tarefas}
+              isLoading={tarefasData.isLoading}
+              indisponivel={tarefasData.indisponivel}
+              onTentarNovamente={tarefasData.refresh}
+            />
           )}
           {moduloAtivo("estoque") && (
-            <AlertasEstoqueWidget alertas={alertas} isLoading={loadingAlertas} />
+            <AlertasEstoqueWidget
+              alertas={alertasData.alertas}
+              isLoading={alertasData.isLoading}
+              indisponivel={alertasData.indisponivel}
+              onTentarNovamente={alertasData.refresh}
+            />
           )}
         </div>
       )}
@@ -141,9 +180,19 @@ export default function DashboardPage() {
       {/* ── Linha 4: Projetos + Atividade Recente ─────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {moduloAtivo("projetos") && (
-          <ProjetosWidget projetos={projetos} isLoading={loadingProjetos} />
+          <ProjetosWidget
+            projetos={projetosData.projetos}
+            isLoading={projetosData.isLoading}
+            indisponivel={projetosData.indisponivel}
+            onTentarNovamente={projetosData.refresh}
+          />
         )}
-        <AtividadeWidget eventos={eventos} isLoading={loadingAtividade} />
+        <AtividadeWidget
+          eventos={atividadeData.eventos}
+          isLoading={atividadeData.isLoading}
+          indisponivel={atividadeData.indisponivel}
+          onTentarNovamente={atividadeData.refresh}
+        />
       </div>
     </div>
   );

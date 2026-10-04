@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BlocoIndisponivel } from "./BlocoIndisponivel";
 import type { FluxoCaixaDia } from "@/types/dashboard";
 import { useCoresDoGrafico } from "@/lib/graficos";
 import { formatCurrencyCompact } from "@/lib/utils";
@@ -19,6 +20,9 @@ import { formatCurrencyCompact } from "@/lib/utils";
 interface FluxoCaixaWidgetProps {
   fluxo: FluxoCaixaDia[];
   isLoading: boolean;
+  /** A consulta falhou: aviso em vez de "nenhum dado", que seria mentira. */
+  indisponivel?: boolean;
+  onTentarNovamente?: () => void;
   titulo?: string;
 }
 
@@ -44,7 +48,13 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-export function FluxoCaixaWidget({ fluxo, isLoading, titulo = "Fluxo de Caixa" }: FluxoCaixaWidgetProps) {
+export function FluxoCaixaWidget({
+  fluxo,
+  isLoading,
+  indisponivel,
+  onTentarNovamente,
+  titulo = "Fluxo de Caixa",
+}: FluxoCaixaWidgetProps) {
   // Cores do gráfico saem dos tokens do tema (funcionam nos dois modos).
   const cores = useCoresDoGrafico();
 
@@ -65,6 +75,26 @@ export function FluxoCaixaWidget({ fluxo, isLoading, titulo = "Fluxo de Caixa" }
     ...d,
     data: formatDate(d.data),
   }));
+
+  // Antes do estado vazio: "nenhum dado disponível" numa falha de consulta
+  // afirma que a empresa não teve movimento, o que ninguém verificou.
+  if (indisponivel) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{titulo}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex h-[220px] items-center justify-center">
+            <BlocoIndisponivel
+              oQue="o fluxo de caixa"
+              onTentarNovamente={onTentarNovamente}
+            />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (dados.length === 0) {
     return (

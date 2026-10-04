@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BlocoIndisponivel } from "./BlocoIndisponivel";
 import type { AtividadeEvento, AtividadeTipo } from "@/types/dashboard";
 import { formatDateDiaMesAbrev } from "@/lib/utils";
 
@@ -56,9 +57,12 @@ function formatRelativeTime(dateStr: string): string {
 interface AtividadeWidgetProps {
   eventos: AtividadeEvento[];
   isLoading: boolean;
+  /** A consulta falhou: mostra aviso em vez de "nenhum", que seria mentira. */
+  indisponivel?: boolean;
+  onTentarNovamente?: () => void;
 }
 
-export function AtividadeWidget({ eventos, isLoading }: AtividadeWidgetProps) {
+export function AtividadeWidget({ eventos, isLoading, indisponivel, onTentarNovamente }: AtividadeWidgetProps) {
   if (isLoading) {
     return (
       <Card>
@@ -86,7 +90,9 @@ export function AtividadeWidget({ eventos, isLoading }: AtividadeWidgetProps) {
         <CardTitle className="text-base">Atividade Recente</CardTitle>
       </CardHeader>
       <CardContent>
-        {eventos.length === 0 ? (
+        {indisponivel ? (
+          <BlocoIndisponivel oQue="a atividade recente" onTentarNovamente={onTentarNovamente} />
+        ) : eventos.length === 0 ? (
           <div className="py-6 text-center text-muted-foreground text-sm">
             Nenhuma atividade recente.
           </div>

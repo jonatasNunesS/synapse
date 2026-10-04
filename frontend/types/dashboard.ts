@@ -1,4 +1,21 @@
 // Synapse — M8 Dashboard: Types
+//
+// ════════════════════════════════════════════════════════════
+// `null` NÃO É ZERO, E NÃO É LISTA VAZIA
+// ════════════════════════════════════════════════════════════
+//
+// Todo bloco do dashboard pode vir `null`. Significa uma coisa só: a consulta
+// daquele bloco falhou. Não significa "deu zero" nem "não tem nada".
+//
+//   bloco = { total_receitas: 0 }  → o banco respondeu: não houve receita
+//   bloco = null                   → o banco não respondeu: não sabemos
+//   lista = []                     → respondeu: não há vencimento esta semana
+//   lista = null                   → não respondeu
+//
+// Antes, falha e zero eram a mesma coisa no payload, e a tela mostrava o zero
+// como se fosse resposta — número errado com cara de certo. O `| null` aqui é
+// o que faz o compilador cobrar o tratamento de cada leitor: sem ele, a
+// correção dá para aplicar pela metade e ninguém percebe.
 
 // ════════════════════════════════════════════════════════════
 // RESUMO PRINCIPAL
@@ -59,12 +76,13 @@ export interface DashboardMeta {
 }
 
 export interface DashboardResumo {
-  financeiro: DashboardFinanceiro;
-  estoque: DashboardEstoque;
-  crm: DashboardCRM;
-  projetos: DashboardProjetos;
-  equipe: DashboardEquipe;
-  notificacoes: DashboardNotificacoes;
+  financeiro: DashboardFinanceiro | null;
+  estoque: DashboardEstoque | null;
+  crm: DashboardCRM | null;
+  projetos: DashboardProjetos | null;
+  equipe: DashboardEquipe | null;
+  notificacoes: DashboardNotificacoes | null;
+  /** Mês, ano e data de geração. Montado localmente, nunca falha. */
   meta: DashboardMeta;
 }
 
@@ -81,7 +99,7 @@ export interface FluxoCaixaDia {
 }
 
 export interface DashboardFluxoCaixa {
-  fluxo: FluxoCaixaDia[];
+  fluxo: FluxoCaixaDia[] | null;
   dias: number;
 }
 
@@ -89,18 +107,23 @@ export interface DashboardFluxoCaixa {
 // FUNIL DE VENDAS
 // ════════════════════════════════════════════════════════════
 
+/**
+ * Uma etapa do funil, como `modules/dashboard/services.py` a monta.
+ *
+ * Tinha também `valor_total` e `percentual` aqui, e o backend nunca mandou
+ * nenhum dos dois: o tooltip do gráfico chamava `percentual.toFixed(1)` em
+ * `undefined` e estourava ao passar o mouse na barra. Campo declarado que não
+ * chega é pior que campo ausente, porque o compilador garante que ele existe.
+ * O percentual agora é calculado no widget, a partir dos counts que chegam.
+ */
 export interface FunilEtapa {
   status: string;
   label: string;
   count: number;
-  valor_total: number;
-  percentual: number;
 }
 
 export interface DashboardFunil {
-  etapas: FunilEtapa[];
-  total_clientes: number;
-  total_valor: number;
+  etapas: FunilEtapa[] | null;
 }
 
 // ════════════════════════════════════════════════════════════
@@ -118,7 +141,7 @@ export interface VencimentoItem {
 }
 
 export interface DashboardVencimentos {
-  vencimentos: VencimentoItem[];
+  vencimentos: VencimentoItem[] | null;
   dias: number;
 }
 
@@ -137,7 +160,7 @@ export interface FollowUpItem {
 }
 
 export interface DashboardFollowUps {
-  followups: FollowUpItem[];
+  followups: FollowUpItem[] | null;
   dias: number;
 }
 
@@ -166,7 +189,7 @@ export interface CompromissoItem {
 }
 
 export interface DashboardProximosCompromissos {
-  compromissos: CompromissoItem[];
+  compromissos: CompromissoItem[] | null;
   dias: number;
 }
 
@@ -187,7 +210,7 @@ export interface TarefaDashboard {
 }
 
 export interface DashboardMinhasTarefas {
-  tarefas: TarefaDashboard[];
+  tarefas: TarefaDashboard[] | null;
 }
 
 // ════════════════════════════════════════════════════════════
@@ -205,7 +228,7 @@ export interface AlertaEstoqueItem {
 }
 
 export interface DashboardAlertasEstoque {
-  alertas: AlertaEstoqueItem[];
+  alertas: AlertaEstoqueItem[] | null;
 }
 
 // ════════════════════════════════════════════════════════════
@@ -227,7 +250,7 @@ export interface ProjetoDashboard {
 }
 
 export interface DashboardProjetos2 {
-  projetos: ProjetoDashboard[];
+  projetos: ProjetoDashboard[] | null;
 }
 
 // ════════════════════════════════════════════════════════════
@@ -255,7 +278,7 @@ export interface AtividadeEvento {
 }
 
 export interface DashboardAtividade {
-  eventos: AtividadeEvento[];
+  eventos: AtividadeEvento[] | null;
 }
 
 // ════════════════════════════════════════════════════════════

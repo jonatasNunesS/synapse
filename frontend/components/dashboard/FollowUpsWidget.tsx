@@ -4,12 +4,16 @@ import Link from "next/link";
 import { Users, Phone, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BlocoIndisponivel } from "./BlocoIndisponivel";
 import type { FollowUpItem } from "@/types/dashboard";
 import { STATUS_FUNIL_CLASSES, STATUS_FUNIL_LABELS } from "@/types/dashboard";
 
 interface FollowUpsWidgetProps {
   followups: FollowUpItem[];
   isLoading: boolean;
+  /** A consulta falhou: mostra aviso em vez de "nenhum", que seria mentira. */
+  indisponivel?: boolean;
+  onTentarNovamente?: () => void;
 }
 
 const formatDate = (dateStr: string) => {
@@ -17,7 +21,7 @@ const formatDate = (dateStr: string) => {
   return `${dia}/${mes}`;
 };
 
-export function FollowUpsWidget({ followups, isLoading }: FollowUpsWidgetProps) {
+export function FollowUpsWidget({ followups, isLoading, indisponivel, onTentarNovamente }: FollowUpsWidgetProps) {
   if (isLoading) {
     return (
       <Card>
@@ -50,7 +54,9 @@ export function FollowUpsWidget({ followups, isLoading }: FollowUpsWidgetProps) 
         </div>
       </CardHeader>
       <CardContent>
-        {followups.length === 0 ? (
+        {indisponivel ? (
+          <BlocoIndisponivel oQue="os follow-ups" onTentarNovamente={onTentarNovamente} />
+        ) : followups.length === 0 ? (
           <div className="py-6 text-center text-muted-foreground text-sm">
             Nenhum follow-up agendado para os próximos 3 dias.
           </div>

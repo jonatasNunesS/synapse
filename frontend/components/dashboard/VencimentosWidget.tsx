@@ -4,12 +4,16 @@ import Link from "next/link";
 import { DollarSign, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BlocoIndisponivel } from "./BlocoIndisponivel";
 import type { VencimentoItem } from "@/types/dashboard";
 import { formatCurrency } from "@/lib/utils";
 
 interface VencimentosWidgetProps {
   vencimentos: VencimentoItem[];
   isLoading: boolean;
+  /** A consulta falhou: mostra aviso em vez de "nenhum", que seria mentira. */
+  indisponivel?: boolean;
+  onTentarNovamente?: () => void;
 }
 
 
@@ -18,7 +22,7 @@ const formatDate = (dateStr: string) => {
   return `${dia}/${mes}/${ano}`;
 };
 
-export function VencimentosWidget({ vencimentos, isLoading }: VencimentosWidgetProps) {
+export function VencimentosWidget({ vencimentos, isLoading, indisponivel, onTentarNovamente }: VencimentosWidgetProps) {
   if (isLoading) {
     return (
       <Card>
@@ -51,7 +55,9 @@ export function VencimentosWidget({ vencimentos, isLoading }: VencimentosWidgetP
         </div>
       </CardHeader>
       <CardContent>
-        {vencimentos.length === 0 ? (
+        {indisponivel ? (
+          <BlocoIndisponivel oQue="os vencimentos" onTentarNovamente={onTentarNovamente} />
+        ) : vencimentos.length === 0 ? (
           <div className="py-6 text-center text-muted-foreground text-sm">
             Nenhum vencimento nos próximos 7 dias.
           </div>
