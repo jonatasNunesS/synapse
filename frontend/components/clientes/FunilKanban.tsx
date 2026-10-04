@@ -16,6 +16,7 @@ import {
 import { MessageCircle, AlertCircle, DollarSign } from "lucide-react";
 import type { ClienteList, StatusFunil, FunilData } from "@/types/clientes";
 import { STATUS_FUNIL_LABELS, STATUS_FUNIL_COLORS } from "@/types/clientes";
+import { formatDate } from "@/lib/utils";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -147,7 +148,7 @@ function KanbanCard({ cliente, isDragging }: { cliente: ClienteList; isDragging?
 
         {cliente.proximo_followup && !cliente.followup_atrasado && (
           <div className="text-xs text-alerta">
-            Follow-up: {new Date(cliente.proximo_followup).toLocaleDateString("pt-BR")}
+            Follow-up: {formatDate(cliente.proximo_followup)}
           </div>
         )}
       </div>

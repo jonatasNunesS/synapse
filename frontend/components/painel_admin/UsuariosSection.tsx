@@ -23,6 +23,7 @@ import {
 } from "@/hooks/usePainelAdmin";
 import { getErrorMessage } from "@/lib/api";
 import { PERFIS, type UsuarioAdmin } from "@/types/painel_admin";
+import { formatDate } from "@/lib/utils";
 
 interface Props {
   empresaId: string;
@@ -32,7 +33,7 @@ interface Props {
 
 function formatData(iso: string | null): string {
   if (!iso) return "nunca";
-  return new Date(iso).toLocaleDateString("pt-BR");
+  return formatDate(iso);
 }
 
 export function UsuariosSection({ empresaId, usuarios, onMutate }: Props) {

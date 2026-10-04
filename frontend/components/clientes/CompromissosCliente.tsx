@@ -16,6 +16,7 @@
 import Link from "next/link";
 import { CalendarDays, Clock } from "lucide-react";
 import type { Evento } from "@/types/agenda";
+import { formatDateDiaMes, formatTime } from "@/lib/utils";
 
 interface Props {
   eventos: Evento[];
@@ -54,11 +55,9 @@ export function tituloNoPerfil(evento: Evento): string {
 }
 
 function quando(evento: Evento): string {
-  const d = new Date(evento.data_inicio);
-  const data = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  const data = formatDateDiaMes(evento.data_inicio);
   if (evento.dia_inteiro) return `${data} · dia inteiro`;
-  const hora = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-  return `${data} · ${hora}`;
+  return `${data} · ${formatTime(evento.data_inicio)}`;
 }
 
 function Linha({ evento, passado }: { evento: Evento; passado?: boolean }) {

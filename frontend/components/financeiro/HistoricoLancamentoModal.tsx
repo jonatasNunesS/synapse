@@ -16,6 +16,7 @@ import type {
   LogEdicaoLancamento,
   SnapshotLancamento,
 } from "@/types/financeiro";
+import { formatDate, formatTime } from "@/lib/utils";
 
 interface HistoricoLancamentoModalProps {
   lancamento: Lancamento;
@@ -80,11 +81,7 @@ function camposAlterados(log: LogEdicaoLancamento) {
 }
 
 function formatarDataHora(iso: string): string {
-  const d = new Date(iso);
-  return `${d.toLocaleDateString("pt-BR")} às ${d.toLocaleTimeString("pt-BR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  })}`;
+  return `${formatDate(iso)} às ${formatTime(iso)}`;
 }
 
 export function HistoricoLancamentoModal({

@@ -22,6 +22,7 @@ import { UpgradeWhatsappButton } from "@/components/ui/UpgradeWhatsappButton";
 import { ModulosSection } from "@/components/configuracoes/ModulosSection";
 import { IdentidadeVisualSection } from "@/components/configuracoes/IdentidadeVisualSection";
 import { ExpedienteSection } from "@/components/configuracoes/ExpedienteSection";
+import { formatDate } from "@/lib/utils";
 
 // ── Schema de empresa ────────────────────────────────────────────────────────
 
@@ -105,7 +106,7 @@ export default function ConfiguracoesPage() {
           {empresa.plano_validade && (
             <p className="text-xs text-muted-suave">
               Válido até{" "}
-              {new Date(empresa.plano_validade).toLocaleDateString("pt-BR")}
+              {formatDate(empresa.plano_validade)}
             </p>
           )}
           {/* Sempre visível quando o WhatsApp está configurado */}

@@ -12,6 +12,7 @@ import {
   PROJETO_STATUS_LABELS,
   type ProjetoList,
 } from "@/types/projetos";
+import { formatDate } from "@/lib/utils";
 
 interface ProjetoCardProps {
   projeto: ProjetoList;
@@ -91,7 +92,7 @@ export function ProjetoCard({ projeto, onEditar, onDeletar }: ProjetoCardProps) 
               }`}
             >
               <Calendar size={12} />
-              {new Date(projeto.data_prazo).toLocaleDateString("pt-BR")}
+              {formatDate(projeto.data_prazo)}
               {projeto.esta_atrasado && " ⚠"}
             </span>
           )}

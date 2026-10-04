@@ -4,6 +4,7 @@ import { Lightbulb, Clock, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { ConteudoGerado } from "@/types/ai_hub";
+import { formatDateDiaMesAbrev } from "@/lib/utils";
 
 interface InsightCardProps {
   insight: ConteudoGerado | null;
@@ -70,10 +71,7 @@ export function InsightCard({ insight, onGerarInsight, gerando }: InsightCardPro
           </CardTitle>
           <Badge variant="outline" className="text-xs border-alerta/40 text-alerta flex-shrink-0">
             <Clock className="h-3 w-3 mr-1" />
-            {new Date(insight.criado_em).toLocaleDateString("pt-BR", {
-              day: "2-digit",
-              month: "short",
-            })}
+            {formatDateDiaMesAbrev(insight.criado_em)}
           </Badge>
         </div>
       </CardHeader>

@@ -230,7 +230,7 @@ function LinhaInteracao({
         {interacao.proximo_followup && (
           <span className="text-xs text-alerta">
             Follow-up:{" "}
-            {new Date(interacao.proximo_followup).toLocaleDateString("pt-BR")}
+            {formatDate(interacao.proximo_followup)}
           </span>
         )}
       </div>

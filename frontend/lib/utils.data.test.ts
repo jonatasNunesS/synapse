@@ -18,7 +18,16 @@
  */
 import { describe, it, expect } from "vitest";
 
-import { formatDate, formatDateTime, paraData } from "./utils";
+import {
+  formatDate,
+  formatDateDiaMes,
+  formatDateDiaMesAbrev,
+  formatDateDiaMesHora,
+  formatDateDiaMesLongo,
+  formatDateTime,
+  formatTime,
+  paraData,
+} from "./utils";
 
 describe("A suíte roda no fuso que expõe o bug", () => {
   it("o fuso é America/Sao_Paulo, não UTC", () => {
@@ -108,5 +117,38 @@ describe("paraData", () => {
     expect(paraData("2026-10-05T00:00:00Z").getTime()).toBe(
       new Date("2026-10-05T00:00:00Z").getTime()
     );
+  });
+});
+
+describe("As variantes preservam o formato que as telas já mostravam", () => {
+  // Fixa a SAÍDA de cada variante. É o que garante que a migração dos 42
+  // arquivos não mudou nada visível — só corrigiu o valor onde estava errado.
+  const casos: [string, (d: string) => string, string][] = [
+    ["formatDate", formatDate, "05/10/2026"],
+    ["formatDateDiaMes", formatDateDiaMes, "05/10"],
+    ["formatDateDiaMesAbrev", formatDateDiaMesAbrev, "05 de out."],
+    ["formatDateDiaMesLongo", formatDateDiaMesLongo, "05 de outubro"],
+  ];
+
+  for (const [nome, fn, esperado] of casos) {
+    it(`${nome} em data pura → "${esperado}"`, () => {
+      expect(fn("2026-10-05")).toBe(esperado);
+    });
+  }
+
+  it("todas as variantes tratam data pura sem deslocar o dia", () => {
+    // A virada de ano é o caso que mais revela: um dia a menos erra o ano.
+    for (const [nome, fn] of casos) {
+      expect(fn("2026-01-01"), `${nome} em 2026-01-01`).not.toContain("2025");
+      expect(fn("2026-01-01"), `${nome} em 2026-01-01`).toMatch(/01|jan/);
+    }
+  });
+
+  it("formatDateDiaMesHora mostra dia, mês e hora de uma ISO", () => {
+    expect(formatDateDiaMesHora("2026-10-05T14:30:00Z")).toBe("05 de out., 11:30");
+  });
+
+  it("formatTime mostra só a hora, no fuso local", () => {
+    expect(formatTime("2026-10-05T14:30:00Z")).toBe("11:30");
   });
 });

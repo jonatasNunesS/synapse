@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { EmprestimoAcaoModal } from "@/components/financeiro/EmprestimoAcaoModal";
 import { useEmprestimos, type FiltroEmprestimo } from "@/hooks/useEmprestimos";
 import type { Lancamento, StatusEmprestimo } from "@/types/financeiro";
+import { formatDate } from "@/lib/utils";
 
 function moeda(v: number | string): string {
   const n = typeof v === "string" ? parseFloat(v) : v;
@@ -24,7 +25,7 @@ function moeda(v: number | string): string {
 
 function data(d: string | null): string {
   if (!d) return "—";
-  return new Date(`${d}T12:00:00`).toLocaleDateString("pt-BR");
+  return formatDate(d);
 }
 
 const STATUS_STYLE: Record<StatusEmprestimo, { label: string; cls: string }> = {

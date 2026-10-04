@@ -46,6 +46,7 @@ import {
 } from "@/types/projetos";
 import { api, getErrorMessage } from "@/lib/api";
 import type { ApiError } from "@/types/api";
+import { formatDate } from "@/lib/utils";
 
 export default function ProjetoDetalhePage() {
   const params = useParams();
@@ -280,7 +281,7 @@ export default function ProjetoDetalhePage() {
             <div className="flex items-center gap-1.5">
               <Calendar size={14} className="text-muted-foreground" />
               <span className={projeto.esta_atrasado ? "text-erro font-medium" : ""}>
-                {new Date(projeto.data_prazo).toLocaleDateString("pt-BR")}
+                {formatDate(projeto.data_prazo)}
               </span>
             </div>
           )}
@@ -438,7 +439,7 @@ export default function ProjetoDetalhePage() {
                       }`}
                     >
                       {tarefa.data_prazo
-                        ? new Date(tarefa.data_prazo).toLocaleDateString("pt-BR")
+                        ? formatDate(tarefa.data_prazo)
                         : "—"}
                     </td>
                     <td className="px-4 py-3">

@@ -4,6 +4,7 @@ import { Zap, TrendingUp, Crown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { UsoIA } from "@/types/ai_hub";
+import { formatDateDiaMesLongo } from "@/lib/utils";
 
 interface UsoIACardProps {
   uso: UsoIA | null;
@@ -81,10 +82,7 @@ export function UsoIACard({ uso }: UsoIACardProps) {
             </div>
             <p className="text-xs text-muted-suave">
               Renova em{" "}
-              {new Date(uso.resetar_em).toLocaleDateString("pt-BR", {
-                day: "2-digit",
-                month: "long",
-              })}
+              {formatDateDiaMesLongo(uso.resetar_em)}
               {percentual >= 90 && (
                 <span className="text-erro font-medium ml-2">
                   — Limite quase atingido

@@ -27,6 +27,7 @@ import {
   type TarefaStatus,
 } from "@/types/projetos";
 import { Calendar, GripVertical, AlertCircle } from "lucide-react";
+import { formatDateDiaMesAbrev } from "@/lib/utils";
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -161,10 +162,7 @@ function KanbanCard({
               }`}
             >
               <Calendar size={10} />
-              {new Date(tarefa.data_prazo).toLocaleDateString("pt-BR", {
-                day: "2-digit",
-                month: "short",
-              })}
+              {formatDateDiaMesAbrev(tarefa.data_prazo)}
             </span>
           )}
           {tarefa.responsavel_nome && (

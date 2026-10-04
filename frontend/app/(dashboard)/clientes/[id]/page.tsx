@@ -38,7 +38,7 @@ import { useModulos } from "@/hooks/useModulos";
 import { useEventosDoCliente } from "@/hooks/useAgenda";
 import { useVendasDoCliente } from "@/hooks/useVendas";
 import { montarHistorico } from "@/lib/vendas";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
 
 function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
@@ -454,7 +454,7 @@ export default function ClienteDetalhePage() {
             {cliente.ultima_compra && (
               <p className="text-xs text-muted-suave">
                 Última compra:{" "}
-                {new Date(cliente.ultima_compra).toLocaleDateString("pt-BR")}
+                {formatDate(cliente.ultima_compra)}
               </p>
             )}
           </div>
@@ -484,7 +484,7 @@ export default function ClienteDetalhePage() {
               </div>
               {cliente.proximo_followup && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  {new Date(cliente.proximo_followup).toLocaleDateString("pt-BR")}
+                  {formatDate(cliente.proximo_followup)}
                 </p>
               )}
             </div>
@@ -508,7 +508,7 @@ export default function ClienteDetalhePage() {
             <InfoRow label="CEP" value={cliente.cep} />
             <InfoRow
               label="Cadastrado em"
-              value={new Date(cliente.criado_em).toLocaleDateString("pt-BR")}
+              value={formatDate(cliente.criado_em)}
             />
             <InfoRow label="Cadastrado por" value={cliente.criado_por_nome} />
           </div>

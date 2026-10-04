@@ -14,7 +14,7 @@ import { ApagarComAjustesFlow } from "@/components/clientes/ApagarComAjustesFlow
 import type { CompraFornecedor } from "@/types/fornecedores";
 import type { ApiError } from "@/types/api";
 import { useModulos } from "@/hooks/useModulos";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
 const STATUS_COMPRA: Record<string, { label: string; color: string }> = {
   pendente: { label: "Pendente", color: "bg-amber-500/15 text-alerta border-amber-500/30" },
@@ -297,7 +297,7 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
               <div className="flex-1">
                 <p className="text-sm font-medium text-foreground">{c.descricao}</p>
                 <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-suave">
-                  <span>{new Date(c.data_compra).toLocaleDateString("pt-BR")}</span>
+                  <span>{formatDate(c.data_compra)}</span>
                   {c.numero_nf && <span>NF: {c.numero_nf}</span>}
                   {c.criado_por_nome && <span>por {c.criado_por_nome}</span>}
                 </div>

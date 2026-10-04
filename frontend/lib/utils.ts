@@ -124,6 +124,73 @@ export function formatDateTime(date: string | Date): string {
 }
 
 /**
+ * Só o dia e o mês (05/10). Para listas e cartões onde o ano é óbvio.
+ */
+export function formatDateDiaMes(date: string | Date): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+  }).format(paraData(date));
+}
+
+/**
+ * Dia com mês abreviado (05/out). Usado em timelines e kanban, onde o mês por
+ * extenso não cabe mas o número sozinho fica ambíguo.
+ */
+export function formatDateDiaMesAbrev(date: string | Date): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short",
+  }).format(paraData(date));
+}
+
+/**
+ * Dia com mês por extenso (05 de outubro). Para quando a data é o assunto.
+ */
+export function formatDateDiaMesLongo(date: string | Date): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "long",
+  }).format(paraData(date));
+}
+
+/**
+ * Dia, mês abreviado e hora (05/out 14:30). O formato do histórico do AI Hub.
+ */
+export function formatDateDiaMesHora(date: string | Date): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(paraData(date));
+}
+
+/**
+ * Mês e ano por extenso (outubro de 2026). Para agrupar por competência.
+ */
+export function formatMesAno(date: string | Date): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    month: "long",
+    year: "numeric",
+  }).format(paraData(date));
+}
+
+/**
+ * Só a hora (14:30).
+ *
+ * Note que aqui NÃO faz sentido receber data pura: sem hora no dado, qualquer
+ * saída seria inventada. Quem chamar com data pura recebe "00:00", que é o
+ * comportamento do `Date` — a responsabilidade de não chamar é de quem chama.
+ */
+export function formatTime(date: string | Date): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(paraData(date));
+}
+
+/**
  * Trunca texto com reticências.
  */
 export function truncate(text: string, length: number): string {

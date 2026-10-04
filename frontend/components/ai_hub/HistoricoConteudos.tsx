@@ -15,6 +15,7 @@ import {
 import { useHistoricoConteudos } from "@/hooks/useAIHub";
 import type { TipoConteudo } from "@/types/ai_hub";
 import { TIPO_CONTEUDO_LABELS, TIPO_CONTEUDO_ICONE } from "@/types/ai_hub";
+import { formatDateDiaMesHora } from "@/lib/utils";
 
 const TIPOS_FILTRO: { value: TipoConteudo | ""; label: string }[] = [
   { value: "", label: "Todos os tipos" },
@@ -59,12 +60,7 @@ function ConteudoCard({
             </Badge>
             <span className="flex items-center gap-1 text-xs text-muted-foreground">
               <Clock className="h-3 w-3" />
-              {new Date(conteudo.criado_em).toLocaleDateString("pt-BR", {
-                day: "2-digit",
-                month: "short",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              {formatDateDiaMesHora(conteudo.criado_em)}
             </span>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">

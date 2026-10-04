@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AtividadeEvento, AtividadeTipo } from "@/types/dashboard";
+import { formatDateDiaMesAbrev } from "@/lib/utils";
 
 const ICONES: Record<AtividadeTipo, React.ReactNode> = {
   lancamento: <DollarSign className="h-3.5 w-3.5" />,
@@ -49,7 +50,7 @@ function formatRelativeTime(dateStr: string): string {
   if (diffHr < 24) return `${diffHr}h atrás`;
   if (diffDay === 1) return "ontem";
   if (diffDay < 7) return `${diffDay} dias atrás`;
-  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+  return formatDateDiaMesAbrev(date);
 }
 
 interface AtividadeWidgetProps {

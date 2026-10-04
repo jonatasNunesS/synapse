@@ -36,6 +36,7 @@ import { UsuariosSection } from "@/components/painel_admin/UsuariosSection";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { getErrorMessage } from "@/lib/api";
 import { podeExcluir } from "@/types/painel_admin";
+import { formatDate } from "@/lib/utils";
 
 const ACAO_LABEL: Record<string, string> = {
   troca_plano: "Troca de plano",
@@ -55,7 +56,7 @@ function Dado({ label, valor }: { label: string; valor: React.ReactNode }) {
 
 function fmtData(iso: string | null): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("pt-BR");
+  return formatDate(iso);
 }
 
 export default function PainelAdminEmpresaDetalhePage() {
