@@ -7,7 +7,7 @@
 
 import { useCallback, useState } from "react";
 import { api } from "@/lib/api";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import type { ApiResponse } from "@/types/api";
 import type { Evento, EventoPayload } from "@/types/agenda";
 import type { OpcaoVinculo } from "@/hooks/useBuscaVinculo";
@@ -235,13 +235,9 @@ interface VendaResumida {
 /** "05/10/2026 · Ana Paula · R$ 150,00" — exportado para o teste afirmar o formato. */
 export function rotuloDaVenda(v: VendaResumida): string {
   const partes: string[] = [];
-  if (v.data_venda) {
-    // `data_venda` é uma DATA pura ("2026-10-05"); `new Date` a leria como UTC
-    // e no fuso de São Paulo cairia no dia anterior. Inverter os pedaços à mão
-    // evita esse deslocamento de um dia.
-    const [ano, mes, dia] = v.data_venda.split("-");
-    if (ano && mes && dia) partes.push(`${dia}/${mes}/${ano}`);
-  }
+  // `formatDate` trata data pura sem escorregar o dia (ver `paraData`), então
+  // não é mais preciso remontar os pedaços à mão aqui.
+  if (v.data_venda) partes.push(formatDate(v.data_venda));
   const quem = v.cliente_nome || v.devedor;
   if (quem) partes.push(quem);
   partes.push(formatCurrency(v.total));

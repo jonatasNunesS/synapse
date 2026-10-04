@@ -14,6 +14,7 @@ import {
 } from "@/hooks/useRecorrencias";
 import { getErrorMessage } from "@/lib/api";
 import type { OcorrenciaDetalhe } from "@/types/recorrencias";
+import { formatDate } from "@/lib/utils";
 
 type Modo = "menu" | "editar" | "editar_atualizar" | "adiar";
 
@@ -80,7 +81,7 @@ export function OcorrenciaDecisaoModal({ ocorrencia, onClose, onResolved }: Prop
     }
   };
 
-  const dataFmt = new Date(ocorrencia.data_esperada + "T00:00:00").toLocaleDateString("pt-BR");
+  const dataFmt = formatDate(ocorrencia.data_esperada);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">

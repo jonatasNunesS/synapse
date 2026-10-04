@@ -18,7 +18,7 @@ import type { EntradaHistorico } from "@/lib/vendas";
 import { badgePagamentoVenda } from "@/lib/vendaStatus";
 import type { Venda } from "@/types/vendas";
 import { useModulos } from "@/hooks/useModulos";
-import { formatCurrencyOrNull } from "@/lib/utils";
+import { formatCurrencyOrNull, formatDate } from "@/lib/utils";
 
 /** Opções do filtro de controle de estoque (perfil do cliente). */
 export type FiltroEstoque = "" | "descontados" | "nao_descontados";
@@ -73,11 +73,6 @@ function formatDateTime(dt: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
-}
-
-/** Venda guarda só a data — mostrar uma hora inventada seria pior que omitir. */
-function formatDate(data: string): string {
-  return new Date(data + "T00:00:00").toLocaleDateString("pt-BR");
 }
 
 const BADGE = "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.625rem] font-medium";

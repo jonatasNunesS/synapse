@@ -25,7 +25,7 @@ import { useModulos } from "@/hooks/useModulos";
 import { useVendas } from "@/hooks/useVendas";
 import { getErrorMessage } from "@/lib/api";
 import { badgePagamentoVenda, temCobrancaAberta } from "@/lib/vendaStatus";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import type { Venda, VendaPayload } from "@/types/vendas";
 
 /** As classes de cada tom do badge. O papel vem do lib; a cor, da tela. */
@@ -210,7 +210,7 @@ function Vendas() {
                     className="group border-b border-border last:border-0 transition-colors hover:bg-superficie"
                   >
                     <td className="px-4 py-3 text-foreground-suave">
-                      {new Date(venda.data_venda + "T00:00:00").toLocaleDateString("pt-BR")}
+                      {formatDate(venda.data_venda)}
                     </td>
                     <td className="px-4 py-3">
                       {venda.cliente_nome ? (

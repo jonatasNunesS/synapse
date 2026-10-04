@@ -9,7 +9,7 @@
 import { useEffect } from "react";
 import { UserCog, X } from "lucide-react";
 
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import { FORMAS_PAGAMENTO, type Venda } from "@/types/vendas";
 
 import { VendaIntegracoes } from "./VendaIntegracoes";
@@ -59,7 +59,7 @@ export function VendaDetalheModal({
           <div>
             <h2 className="text-lg font-semibold text-foreground">Venda</h2>
             <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
-              {new Date(venda.data_venda + "T00:00:00").toLocaleDateString("pt-BR")}
+              {formatDate(venda.data_venda)}
               {" · "}
               {venda.cliente_nome ?? "Sem cliente"}
               {onTrocarCliente && (
