@@ -56,12 +56,34 @@ class MembroEquipe(models.Model):
 
     @property
     def total_tarefas_abertas(self):
-        from modules.projetos.models import Tarefa
-        return Tarefa.objects.filter(
-            responsavel=self.usuario,
-            empresa=self.empresa,
-            status__in=["backlog", "a_fazer", "em_progresso"],
-        ).count()
+        """
+        Quantas tarefas desta pessoa ainda não terminaram.
+
+        "Aberta" é definida por EXCLUSÃO do único status terminal, não por uma
+        lista de status abertos. Dois motivos, e o primeiro é um bug que já
+        aconteceu: a lista literal aqui era
+        `["backlog", "a_fazer", "em_progresso"]`, e **"backlog" e
+        "em_progresso" não existem** em `Tarefa.STATUS_CHOICES` (os reais são
+        `a_fazer`, `em_andamento`, `revisao`, `concluido`). Um `status__in` com
+        valor inexistente não levanta erro — só não casa. A tela mostrava 1
+        tarefa aberta para quem tinha 3, calada (CODE_HEALTH_AUDIT, ERR-01).
+
+        O segundo: por exclusão, um status novo entra como ABERTO sozinho, que
+        é o padrão seguro. Pela lista, ele seria esquecido em silêncio de novo.
+
+        É também o idioma que o repository de projetos já usa em cinco lugares
+        (`.exclude(status="concluido")`) — esta propriedade era a única fora.
+        """
+        from modules.projetos.models import TAREFA_STATUS_CONCLUIDO, Tarefa
+
+        return (
+            Tarefa.objects.filter(
+                responsavel=self.usuario,
+                empresa=self.empresa,
+            )
+            .exclude(status=TAREFA_STATUS_CONCLUIDO)
+            .count()
+        )
 
     @property
     def total_projetos(self):

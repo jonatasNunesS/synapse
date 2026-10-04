@@ -7,6 +7,12 @@ from datetime import date
 
 from django.db import models
 
+# O único status TERMINAL de uma tarefa. Existe como constante porque outro
+# módulo precisa dele para responder "quais tarefas estão abertas?", e uma
+# string repetida à mão foi exatamente como a contagem da equipe passou a
+# filtrar por status que não existem (CODE_HEALTH_AUDIT, ERR-01).
+TAREFA_STATUS_CONCLUIDO = "concluido"
+
 
 class Projeto(models.Model):
     """Projeto gerenciado pela empresa."""
@@ -117,7 +123,7 @@ class Tarefa(models.Model):
         ("a_fazer", "A Fazer"),
         ("em_andamento", "Em Andamento"),
         ("revisao", "Revisão"),
-        ("concluido", "Concluído"),
+        (TAREFA_STATUS_CONCLUIDO, "Concluído"),
     ]
 
     PRIORIDADE_CHOICES = [
