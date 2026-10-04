@@ -486,3 +486,149 @@ def test_listagem_com_vinculos_nao_faz_query_por_evento(user_a, empresa_a):
     # Uma consulta por evento seriam 20+. O teto aqui é folgado de propósito:
     # o que ele pega é a volta do N+1, não o número exato de hoje.
     assert len(capturadas) < 15, f"{len(capturadas)} queries — N+1 voltou?"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 6. MÓDULO DESLIGADO NÃO TRANCA O EVENTO (CODE_HEALTH_AUDIT, PR54-01)
+#
+# O gating recusava qualquer `projeto` não-nulo com o módulo off, sem distinguir
+# CRIAR vínculo de MANTER o que já estava. Como o formulário reenvia o vínculo
+# atual (o estado inicial vem de `evento.projeto`, independente do gating), todo
+# PATCH chegava com o projeto preenchido e levava 400 — a empresa que desligou
+# Projetos não conseguia nem renomear um evento vinculado, e a tela não oferecia
+# saída, porque com o módulo off o seletor não aparece.
+# ═══════════════════════════════════════════════════════════════════════════
+
+@pytest.fixture
+def evento_vinculado_modulo_off(empresa_a, user_a):
+    """Evento com projeto, numa empresa que depois desligou o módulo."""
+    projeto = _projeto(empresa_a)
+    evento = _evento(empresa_a, titulo="Reunião do projeto", projeto=projeto)
+    empresa_a.modulo_projetos = False
+    empresa_a.save()
+    return evento, projeto
+
+
+@pytest.mark.django_db
+def test_renomear_evento_vinculado_com_modulo_off(
+    user_a, empresa_a, evento_vinculado_modulo_off
+):
+    """O caso que estava quebrado: mexer só no título."""
+    evento, projeto = evento_vinculado_modulo_off
+
+    r = _client(user_a).patch(
+        f"{URL}{evento.id}/",
+        {"titulo": "Reunião renomeada", "projeto": str(projeto.id)},
+        format="json",
+    )
+
+    assert r.status_code == 200, r.data
+    evento.refresh_from_db()
+    assert evento.titulo == "Reunião renomeada"
+    assert evento.projeto_id == projeto.id, "o vínculo foi perdido na edição"
+
+
+@pytest.mark.django_db
+def test_remarcar_evento_vinculado_com_modulo_off(
+    user_a, empresa_a, evento_vinculado_modulo_off
+):
+    """Arrastar no calendário também manda o vínculo atual de volta."""
+    evento, projeto = evento_vinculado_modulo_off
+    novo_inicio = timezone.now() + timedelta(days=5)
+
+    r = _client(user_a).patch(
+        f"{URL}{evento.id}/",
+        {
+            "data_inicio": novo_inicio.isoformat(),
+            "data_fim": (novo_inicio + timedelta(hours=1)).isoformat(),
+            "projeto": str(projeto.id),
+        },
+        format="json",
+    )
+
+    assert r.status_code == 200, r.data
+
+
+@pytest.mark.django_db
+def test_trocar_para_outro_projeto_com_modulo_off_continua_bloqueado(
+    user_a, empresa_a, evento_vinculado_modulo_off
+):
+    """
+    O que o gating existe para impedir segue impedido: um vínculo NOVO, que
+    nenhuma tela mostraria.
+    """
+    evento, _ = evento_vinculado_modulo_off
+    outro = _projeto(empresa_a, nome="Outro projeto")
+
+    r = _client(user_a).patch(
+        f"{URL}{evento.id}/", {"projeto": str(outro.id)}, format="json"
+    )
+
+    assert r.status_code == 400
+    assert "projeto" in r.data["error"]["details"]
+
+
+@pytest.mark.django_db
+def test_criar_evento_com_projeto_e_modulo_off_continua_bloqueado(
+    user_a, empresa_a
+):
+    projeto = _projeto(empresa_a)
+    empresa_a.modulo_projetos = False
+    empresa_a.save()
+
+    r = _client(user_a).post(URL, _payload(projeto=str(projeto.id)), format="json")
+
+    assert r.status_code == 400
+    assert "projeto" in r.data["error"]["details"]
+
+
+@pytest.mark.django_db
+def test_desvincular_com_modulo_off_e_permitido(
+    user_a, empresa_a, evento_vinculado_modulo_off
+):
+    """
+    Mandar null é se livrar do vínculo, não criar um. Tem de passar — é a única
+    forma de a pessoa limpar o vínculo depois de desligar o módulo.
+    """
+    evento, _ = evento_vinculado_modulo_off
+
+    r = _client(user_a).patch(f"{URL}{evento.id}/", {"projeto": None}, format="json")
+
+    assert r.status_code == 200
+    evento.refresh_from_db()
+    assert evento.projeto_id is None
+
+
+@pytest.mark.django_db
+def test_a_guarda_de_empresa_nao_afrouxa_com_o_modulo_off(
+    user_a, empresa_a, empresa_b, evento_vinculado_modulo_off
+):
+    """
+    A exceção é só para o GATING DE MÓDULO. A guarda multi-tenant é segurança
+    e vale sempre — inclusive quando o id mandado é o de um projeto alheio.
+    """
+    evento, _ = evento_vinculado_modulo_off
+    alheio = _projeto(empresa_b, nome="Projeto do vizinho")
+
+    r = _client(user_a).patch(
+        f"{URL}{evento.id}/", {"projeto": str(alheio.id)}, format="json"
+    )
+
+    assert r.status_code == 400
+    assert "projeto" in r.data["error"]["details"]
+
+
+@pytest.mark.django_db
+def test_com_modulo_ligado_trocar_de_projeto_funciona(user_a, empresa_a):
+    """A correção não pode ter afrouxado o caminho normal."""
+    projeto = _projeto(empresa_a)
+    outro = _projeto(empresa_a, nome="Outro")
+    evento = _evento(empresa_a, projeto=projeto)
+
+    r = _client(user_a).patch(
+        f"{URL}{evento.id}/", {"projeto": str(outro.id)}, format="json"
+    )
+
+    assert r.status_code == 200
+    evento.refresh_from_db()
+    assert evento.projeto_id == outro.id

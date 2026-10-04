@@ -188,17 +188,42 @@ class EventoCreateSerializer(serializers.ModelSerializer):
 
     def validate_projeto(self, value):
         """
-        Projeto da MESMA empresa, e só quando a empresa usa Projetos.
+        Projeto da MESMA empresa, e — quando o vínculo MUDA — só com o módulo
+        Projetos ligado.
 
-        Duas guardas no mesmo lugar porque são dois furos distintos: mandar o id
-        do projeto do vizinho vazaria que ele existe, e vincular com o módulo
-        desligado criaria um vínculo que nenhuma tela mostra — invisível para
-        quem o criou e vivo no banco.
+        As duas guardas respondem a furos distintos, e por isso têm alcances
+        distintos:
+
+        • **Empresa**: vale SEMPRE. Mandar o id do projeto do vizinho vazaria
+          que ele existe, e isso não depende de módulo nenhum.
+
+        • **Módulo desligado**: vale só quando o valor MUDA. Criar ou trocar um
+          vínculo com o módulo off produziria algo que nenhuma tela mostra —
+          invisível para quem criou e vivo no banco. Mas MANTER o vínculo que
+          já estava lá tem de passar.
+
+        A diferença não é teórica. Sem ela, uma empresa que vinculasse eventos
+        a projetos e depois desligasse o módulo não conseguia mais EDITAR esses
+        eventos — nem para corrigir o título ou a hora. O formulário reenvia o
+        vínculo atual (o estado inicial vem de `evento.projeto`,
+        independentemente do gating), então todo PATCH chegava com o projeto
+        preenchido e levava 400, culpando um módulo que a pessoa desligou de
+        propósito. E a tela não oferecia saída: com o módulo off o seletor nem
+        aparece, logo não havia como limpar o vínculo pela interface.
+
+        Isso contradizia a filosofia do próprio sistema — desligar OCULTA, não
+        apaga. O vínculo sobrevivia, mas o evento virava somente-leitura
+        (CODE_HEALTH_AUDIT, PR54-01).
         """
         if value is None:
             return value
         if not self._mesma_empresa(value):
             raise serializers.ValidationError("Projeto não pertence à sua empresa.")
+
+        # Mesmo projeto que já estava vinculado? Então não há vínculo novo
+        # sendo criado, e o módulo desligado não tem o que impedir.
+        if str(getattr(self.instance, "projeto_id", "") or "") == str(value.pk):
+            return value
 
         request = self.context.get("request")
         empresa = getattr(request.user, "empresa", None) if request else None
