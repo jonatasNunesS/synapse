@@ -2,6 +2,13 @@
 
 **Data:** 2026-10-03
 **Base:** `master` @ `eb49fa3` **+ PR #54** (`feature/agenda-vinculos` @ `064656a`)
+**Status de 2026-10-04 — Levas 1 e 2 mergeadas (PRs #56 e #57).** Nove achados estão **corrigidos em produção**:
+
+- **Leva 1** (#56): `ERR-01`, `ERR-02`, `ERR-05`, `ERR-06`, `ESC-01` (cinco 🔴) mais `ESC-04` e `PR54-01` (🟠).
+- **Leva 2** (#57): `ERR-03` (🔴, as datas um dia antes) e `DUP-01` (🟠, a migração para os helpers).
+
+Restam **23 dos 32**. Dos quatro defeitos de produção que abriam o relatório, **nenhum segue de pé**. O que sobra de 🔴 são dois, ambos de falha silenciosa: `ERR-04` (dashboard mostrando zero quando a consulta falha) e `ERR-07` (os 30 catches que descartam a mensagem do backend) — Levas 3 e 4. Cada achado corrigido está marcado na seção 2.
+
 **Atualização de 2026-10-04:** a **PR #54 foi mergeada** (`master` agora é `064656a`) *depois* desta auditoria. Os três achados próprios dela (seção 7) **deixaram de ser "da branch" e são achados de produção** — a `PR54-01`, que a auditoria recomendava corrigir antes do merge, está hoje no `master` e entrou na Leva 1.
 **Escopo:** saúde estrutural — duplicação, arquitetura, código morto, proteção contra erro, testes, contrato e preparo para crescimento.
 **Natureza desta branch:** auditoria. **Nenhuma linha de código de produção foi alterada.** O único artefato é este documento.
@@ -24,15 +31,17 @@ O que foi construído ou revisitado nos últimos meses é **sólido de verdade**
 
 O que puxa a nota para baixo não é desleixo: é **assimetria**. Os módulos recentes (vendas, agenda) têm 1,4 a 2,0 linhas de teste por linha de código; os antigos (recorrências, projetos) têm 0,30. Os fluxos tocados pelas últimas levas são atômicos; os gêmeos deles, escritos antes e copiados sem a transação, não são. O cuidado existe e é alto — ele só não foi aplicado uniformemente, e os buracos estão exatamente onde ninguém voltou.
 
-Há **três bugs ativos** (não latentes: errados agora, em produção) e todos falham **em silêncio**, que é a categoria que o fundador pediu para priorizar. Com o merge da PR #54 somou-se um quarto defeito em produção — a `PR54-01` —, que não é silencioso (ele grita um 400), mas **bloqueia uma operação legítima**: quem desliga o módulo Projetos não consegue mais editar os eventos que já vinculou.
+A auditoria encontrou **três bugs ativos** (não latentes: errados na hora em que isto foi escrito, em produção), todos falhando **em silêncio** — a categoria que o fundador pediu para priorizar. O merge da PR #54 somou um quarto defeito, a `PR54-01`, que não é silencioso (ele grita um 400) mas **bloqueava uma operação legítima**: quem desligasse o módulo Projetos não conseguia mais editar os eventos que já tinha vinculado.
 
-| Severidade | Qtd |
-|---|---|
-| 🔴 risco real (bug latente, falha silenciosa, buraco de erro) | **9** |
-| 🟠 dívida que atrapalha | **10** |
-| 🟡 melhoria | **9** |
-| 🔵 cosmético | **4** |
-| **Total** | **32** |
+> **Os quatro foram corrigidos na Leva 1** (PR #56, mergeada em 2026-10-04), junto com dois achados de escalabilidade. A nota 7,0 é a do diagnóstico original e **não foi recalculada** — ela descreve o estado que motivou o trabalho, e recalcular a cada leva tiraria a referência. O que mudou está na tabela abaixo e marcado achado por achado na seção 2.
+
+| Severidade | Achados | Leva 1 | Leva 2 | Em aberto |
+|---|---|---|---|---|
+| 🔴 risco real (bug latente, falha silenciosa, buraco de erro) | **9** | 5 | 1 | **3** |
+| 🟠 dívida que atrapalha | **10** | 2 | 1 | **7** |
+| 🟡 melhoria | **9** | — | — | **9** |
+| 🔵 cosmético | **4** | — | — | **4** |
+| **Total** | **32** | **7** | **2** | **23** |
 
 Os 32 estão **todos no `master`**: 29 vinham dele, e os 3 restantes entraram com o merge da PR #54 (seção 7).
 
@@ -67,6 +76,8 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### DUP-01 — Datas formatadas à mão em 42 arquivos, e o helper está quebrado
+
+> ✅ **CORRIGIDO** na Leva 2 (PR #57, mergeada em 2026-10-04).
 - **Severidade:** 🟠 (a quebra do helper em si é o `ERR-03` 🔴)
 - **Local:** 58 chamadas em 42 arquivos; só **6** usam `formatDate`/`formatDateTime` de `lib/utils`.
 - **Descrição:** O `INC-04` do `QUALITY_AUDIT` contou 28 arquivos. Hoje são **42** — a dívida cresceu durante as correções. A PR #54 adiciona duas chamadas novas (`CompromissosVinculados.tsx:51` e o `rotuloDaVenda` em `useAgenda.ts:242`).
@@ -203,6 +214,8 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### ERR-01 — A tela da equipe conta tarefas com dois status que não existem
+
+> ✅ **CORRIGIDO** na Leva 1 (PR #56, mergeada em 2026-10-04).
 - **Severidade:** 🔴 **bug ativo, falha silenciosa**
 - **Local:** `backend/modules/equipe/models.py:63`
 - **Descrição:** `MembroEquipe.total_tarefas_abertas` filtra:
@@ -231,6 +244,8 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### ERR-02 — O fallback de invalidação de cache invalida zero chaves e diz que funcionou
+
+> ✅ **CORRIGIDO** na Leva 1 (PR #56, mergeada em 2026-10-04).
 - **Severidade:** 🔴 **falha silenciosa**
 - **Local:** `backend/shared/cache.py:72-86`
 - **Descrição:** `invalidate_cache` tem três tentativas em cascata. A segunda monta o padrão à mão:
@@ -267,6 +282,8 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### ERR-03 — `formatDate` mostra o dia anterior para toda data pura do backend
+
+> ✅ **CORRIGIDO** na Leva 2 (PR #57, mergeada em 2026-10-04).
 - **Severidade:** 🔴 **bug ativo**
 - **Local:** `frontend/lib/utils.ts:73-75`
 - **Descrição:** O helper é `new Intl.DateTimeFormat("pt-BR").format(new Date(date))`. Para uma string ISO completa funciona. Para **data pura** — o que o DRF serializa de um `DateField`, `"2026-10-05"` — o `new Date` interpreta como **meia-noite UTC**, que em São Paulo (UTC−3) é 21h do dia **anterior**.
@@ -321,6 +338,8 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### ERR-05 — `lancar_financeiro`: duas escritas sem transação derrubam a guarda contra dinheiro duplicado
+
+> ✅ **CORRIGIDO** na Leva 1 (PR #56, mergeada em 2026-10-04).
 - **Severidade:** 🔴
 - **Local:** `backend/modules/vendas/services.py:236-285`
 - **Descrição:** A função escreve em dois lugares, sem `transaction.atomic()`:
@@ -349,6 +368,8 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### ERR-06 — Dois fluxos de "apagar com ajustes" sem atomicidade, com estorno de estoque dentro
+
+> ✅ **CORRIGIDO** na Leva 1 (PR #56, mergeada em 2026-10-04).
 - **Severidade:** 🔴
 - **Local:** `backend/modules/clientes/services.py:165-199` · `backend/modules/fornecedores/services.py:200-237`
 - **Descrição:** A face de risco do `DUP-02`. Os dois fazem **três** escritas em sequência — estornar movimentação de estoque, ajustar/apagar lançamento financeiro, apagar o registro — e `grep -c "transaction.atomic"` nos dois arquivos devolve **0**.
@@ -530,6 +551,8 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### ESC-01 — A lista de projetos faz 42 queries para 10 projetos, e o `prefetch` é pago e ignorado
+
+> ✅ **CORRIGIDO** na Leva 1 (PR #56, mergeada em 2026-10-04).
 - **Severidade:** 🔴
 - **Local:** `backend/modules/projetos/models.py:83,88` + `repository.py:22-28`
 - **Descrição:** `ProjetoRepository.listar_projetos` faz `.prefetch_related("tarefas")` — intenção clara de evitar N+1. Mas as propriedades serializadas na lista fazem:
@@ -579,6 +602,8 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### ESC-04 — `conn.keys()` na invalidação bloqueia o Redis inteiro
+
+> ✅ **CORRIGIDO** na Leva 1 (PR #56, mergeada em 2026-10-04).
 - **Severidade:** 🟠 *(e 🔴 pelo lado funcional — ver `ERR-02`)*
 - **Local:** `backend/shared/cache.py:77`
 - **Descrição:** O lado de escala do `ERR-02`. O comando `KEYS` do Redis é **O(N) sobre o keyspace completo** e **single-threaded**: enquanto varre, nenhuma outra operação é atendida. Com 100 empresas e páginas cacheadas por combinação de filtros, o keyspace fica grande, e **toda escrita** (todo create/update que chama `invalidate_cache`) tentaria essa varredura.
@@ -658,7 +683,7 @@ Levantado com o mesmo rigor dos achados, porque saber onde **não** tocar vale t
 
 Ordenado por **risco × esforço**, não por categoria. As duas primeiras levas resolvem os três bugs ativos.
 
-### Leva 1 — Os bugs ativos e o quase-grátis *(≈1 dia)*
+### ~~Leva 1~~ — Os bugs ativos e o quase-grátis ✅ **FEITA** (PR #56, mergeada em 2026-10-04)
 Tudo aqui está errado **agora**, em produção, e a correção é pequena.
 
 1. `ERR-01` — status inexistente na contagem da equipe (1 linha + teste)
@@ -670,14 +695,14 @@ Tudo aqui está errado **agora**, em produção, e a correção é pequena.
 
 > Fecha 6 achados, 3 deles 🔴, e entrega a maior melhoria de performance da lista. Se só uma leva for feita, é esta.
 
-### Leva 2 — A data, na ordem certa *(≈1 dia + migração)*
+### ~~Leva 2~~ — A data, na ordem certa ✅ **FEITA** (PR #57, mergeada em 2026-10-04)
 6. `ERR-03` — consertar `formatDate`/`formatDateTime` para data pura, com teste em `"2026-01-01"`
 7. Remover os 9 contornos `T00:00:00`/`split("-")`, que deixam de ser necessários
 8. `DUP-01` — só então migrar os 42 arquivos (mecânico, fatiável, pode ir em segundo plano)
 
 > A ordem é o ponto. Migrar para o helper **antes** de consertá-lo espalharia o bug para 42 arquivos.
 
-### Leva 3 — Parar a falha silenciosa *(≈2–3 dias)*
+### Leva 3 — Parar a falha silenciosa *(≈2–3 dias)* ← **a próxima**
 9. `ERR-04` — dashboard marca degradação em vez de devolver zero; a tela mostra "indisponível"
 10. `TST-02` (parcial) — testes de `dashboard`, que é a tela do `ERR-04` e tem 1 teste para 13 componentes
 
@@ -753,6 +778,8 @@ Também confirmei o que seria fácil errar e está certo: o `select_for_update` 
 ---
 
 #### PR54-01 — Com o módulo Projetos desligado, o evento vinculado fica impossível de editar
+
+> ✅ **CORRIGIDO** na Leva 1 (PR #56, mergeada em 2026-10-04).
 - **Severidade:** 🟠 *(entrou com a #54 — hoje em produção)*
 - **Local:** `modules/agenda/serializers.py` (`validate_projeto`) + `components/agenda/EventoForm.tsx:114`
 - **Descrição:** O `validate_projeto` recusa qualquer `projeto` não-nulo quando `modulo_projetos` está desligado. A intenção é boa (não criar vínculo invisível). O problema é que ele não distingue **criar um vínculo novo** de **manter o que já estava lá**.
