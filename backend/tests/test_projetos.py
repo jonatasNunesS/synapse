@@ -753,3 +753,105 @@ from modules.projetos.tasks import (  # noqa: E402
     verificar_prazos_tarefas,
     verificar_projetos_atrasados,
 )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# A LISTAGEM NÃO ESCALA COM O NÚMERO DE PROJETOS (CODE_HEALTH_AUDIT, ESC-01)
+#
+# As contagens de tarefa eram `@property` com `.count()`, uma query cada, por
+# projeto. O `prefetch_related("tarefas")` que havia no repository não evitava
+# nada: `.count()` e `.filter()` sobre manager relacionado ignoram o cache do
+# prefetch. Medido antes da correção: 42 queries para 10 projetos.
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _projeto_com_tarefas(empresa, nome, por_status):
+    """Cria um projeto com N tarefas em cada status pedido."""
+    from modules.projetos.models import Projeto, Tarefa
+
+    p = Projeto.objects.create(empresa=empresa, nome=nome)
+    for status, quantas in por_status.items():
+        for i in range(quantas):
+            Tarefa.objects.create(
+                empresa=empresa, projeto=p, titulo=f"{nome} {status} {i}",
+                status=status,
+            )
+    return p
+
+
+@pytest.mark.django_db
+def test_listagem_de_projetos_nao_cresce_em_queries(empresa_a):
+    """
+    O teto é por projeto, não absoluto: 30 projetos não podem custar 3x o que
+    custam 10. É isso que o `annotate` garante e a `@property` não garantia.
+    """
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+
+    from modules.projetos.repository import ProjetoRepository
+    from modules.projetos.serializers import ProjetoListSerializer
+
+    def queries_para(n, prefixo):
+        for i in range(n):
+            _projeto_com_tarefas(
+                empresa_a, f"{prefixo}{i}", {"a_fazer": 2, "concluido": 1}
+            )
+        qs = ProjetoRepository.listar_projetos(empresa_a.id)
+        with CaptureQueriesContext(connection) as cap:
+            ProjetoListSerializer(qs, many=True).data
+        return len(cap)
+
+    com_10 = queries_para(10, "A")
+    com_30 = queries_para(20, "B")  # +20 → 30 no total
+
+    assert com_10 <= 3, f"{com_10} queries para 10 projetos"
+    assert com_30 == com_10, (
+        f"a listagem escala com o volume: {com_10} queries para 10 projetos, "
+        f"{com_30} para 30"
+    )
+
+
+@pytest.mark.django_db
+def test_contagens_anotadas_batem_com_a_realidade(empresa_a):
+    """
+    Rapidez não serve se o número estiver errado. Projetos com quantidades
+    diferentes, para um `JOIN` multiplicado aparecer como valor torto.
+    """
+    from modules.projetos.repository import ProjetoRepository
+
+    _projeto_com_tarefas(empresa_a, "Cinco", {"a_fazer": 2, "revisao": 1, "concluido": 2})
+    _projeto_com_tarefas(empresa_a, "Zero", {})
+    _projeto_com_tarefas(empresa_a, "SoConcluidas", {"concluido": 3})
+
+    por_nome = {p.nome: p for p in ProjetoRepository.listar_projetos(empresa_a.id)}
+
+    assert por_nome["Cinco"].total_tarefas == 5
+    assert por_nome["Cinco"].tarefas_concluidas == 2
+    assert por_nome["Cinco"].progresso == 40
+
+    assert por_nome["Zero"].total_tarefas == 0
+    assert por_nome["Zero"].tarefas_concluidas == 0
+    assert por_nome["Zero"].progresso == 0  # não divide por zero
+
+    assert por_nome["SoConcluidas"].total_tarefas == 3
+    assert por_nome["SoConcluidas"].tarefas_concluidas == 3
+    assert por_nome["SoConcluidas"].progresso == 100
+
+
+@pytest.mark.django_db
+def test_projeto_sem_anotacao_ainda_conta_certo(empresa_a):
+    """
+    As propriedades continuam funcionando fora da listagem — detalhe, admin,
+    shell. Sem este caminho, a correção quebraria tudo que não passa pelo
+    repository.
+    """
+    from modules.projetos.models import Projeto
+
+    _projeto_com_tarefas(empresa_a, "Avulso", {"a_fazer": 1, "concluido": 3})
+
+    # Busca direta, sem passar pelo repository: não há anotação.
+    p = Projeto.objects.get(empresa=empresa_a, nome="Avulso")
+
+    assert not hasattr(p, "_total_tarefas")
+    assert p.total_tarefas == 4
+    assert p.tarefas_concluidas == 3
+    assert p.progresso == 75

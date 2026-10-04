@@ -8,7 +8,13 @@ from datetime import date
 from django.db import transaction
 from django.db.models import Count, Q
 
-from .models import ChecklistItem, Comentario, Projeto, Tarefa
+from .models import (
+    TAREFA_STATUS_CONCLUIDO,
+    ChecklistItem,
+    Comentario,
+    Projeto,
+    Tarefa,
+)
 
 logger = logging.getLogger("synapse")
 
@@ -20,11 +26,30 @@ class ProjetoRepository:
 
     @staticmethod
     def listar_projetos(empresa_id, filtros: dict = None):
-        """Lista projetos ativos com filtros opcionais."""
+        """
+        Lista projetos ativos com filtros opcionais.
+
+        As contagens de tarefa vêm ANOTADAS, não calculadas por projeto. Antes
+        eram `@property` com `.count()`, o que custava 2 queries por linha —
+        e o `prefetch_related("tarefas")` que havia aqui não evitava nada,
+        porque `.count()` sobre manager relacionado ignora o cache do prefetch.
+        Medido: 42 queries para 10 projetos; agora a listagem não cresce com o
+        número de projetos (CODE_HEALTH_AUDIT, ESC-01).
+
+        `distinct=True` nas duas contagens para o JOIN de uma não multiplicar a
+        outra. O prefetch saiu: ninguém mais o lê neste caminho.
+        """
         qs = (
             Projeto.objects.filter(empresa_id=empresa_id, ativo=True)
             .select_related("responsavel", "criado_por")
-            .prefetch_related("tarefas")
+            .annotate(
+                _total_tarefas=Count("tarefas", distinct=True),
+                _tarefas_concluidas=Count(
+                    "tarefas",
+                    filter=Q(tarefas__status=TAREFA_STATUS_CONCLUIDO),
+                    distinct=True,
+                ),
+            )
         )
 
         if filtros:

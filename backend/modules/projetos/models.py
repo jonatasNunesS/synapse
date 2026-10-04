@@ -83,15 +83,35 @@ class Projeto(models.Model):
     def __str__(self):
         return f"{self.nome} ({self.status})"
 
+    # As duas contagens abaixo aparecem na LISTAGEM de projetos, uma por linha.
+    # Como `@property` que consulta o banco, elas custavam 2 queries por
+    # projeto — e o `prefetch_related("tarefas")` do repository não ajudava,
+    # porque `.count()` e `.filter()` sobre um manager relacionado ignoram o
+    # cache do prefetch e emitem SQL novo. Medido: 42 queries para 10 projetos
+    # (CODE_HEALTH_AUDIT, ESC-01).
+    #
+    # Agora o repository ANOTA os valores (`_total_tarefas`,
+    # `_tarefas_concluidas`) e estas propriedades os usam quando existem,
+    # caindo na consulta só quando o objeto veio sem anotação — detalhe, admin,
+    # shell. A anotação usa um nome com underscore porque `property` é um data
+    # descriptor: anotar com o mesmo nome faria o Django tentar `setattr` e
+    # estourar.
+
     @property
     def total_tarefas(self) -> int:
-        """Conta tarefas ativas do projeto."""
-        return self.tarefas.filter(status__in=["a_fazer", "em_andamento", "revisao", "concluido"]).count()
+        """Quantas tarefas o projeto tem."""
+        anotado = getattr(self, "_total_tarefas", None)
+        if anotado is not None:
+            return anotado
+        return self.tarefas.count()
 
     @property
     def tarefas_concluidas(self) -> int:
-        """Conta tarefas concluídas do projeto."""
-        return self.tarefas.filter(status="concluido").count()
+        """Quantas já terminaram."""
+        anotado = getattr(self, "_tarefas_concluidas", None)
+        if anotado is not None:
+            return anotado
+        return self.tarefas.filter(status=TAREFA_STATUS_CONCLUIDO).count()
 
     @property
     def progresso(self) -> int:
