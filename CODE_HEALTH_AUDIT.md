@@ -539,7 +539,9 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
   self.tarefas.filter(status="concluido").count() # tarefas_concluidas
   ```
 
-  `.count()` e `.filter()` sobre um manager relacionado **não usam o cache do prefetch** — emitem SQL novo. Então o prefetch carrega todas as tarefas, ninguém as lê, e as queries acontecem de todo jeito.
+  `.filter()` sobre um manager relacionado **cria um queryset novo** e vai ao banco, ignorando o cache do prefetch. Como as **duas** propriedades filtram, o prefetch carrega todas as tarefas, ninguém as lê, e as queries acontecem de todo jeito.
+
+  > **Correção de rumo (2026-10-04).** A primeira versão desta auditoria dizia que `.count()` *e* `.filter()` ignoram o cache do prefetch. Isso é falso para um `.count()` **sem** filtro: esse usa o cache e não emite SQL. O desperdício aqui vinha dos dois `.filter()`, não de `.count()` em geral. Medido ao implementar a correção na Leva 1 — reverter só o repository, mantendo propriedades que usam `.count()` puro, dá 22 queries em vez de 42, exatamente por isso. O achado e o número de 42 seguem válidos; a explicação estava mais larga do que a verdade.
 
   Medido em execução (10 projetos × 3 tarefas, sonda depois apagada):
 
