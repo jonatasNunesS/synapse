@@ -277,22 +277,38 @@ class VendaService:
         pago = venda.status_pagamento == "pago"
         quem = venda.cliente.nome if venda.cliente_id else "balcão"
 
-        lancamento = FinanceiroService.criar_lancamento(
-            empresa_id,
-            usuario_id,
-            {
-                "tipo": "receita",
-                "descricao": f"Venda - {quem}",
-                "valor": venda.total,
-                "data_vencimento": venda.data_prevista_pagamento or venda.data_venda or hoje,
-                "data_pagamento": hoje if pago else None,
-                "status": "pago" if pago else "pendente",
-                "observacoes": f"Referente à venda #{venda.id}",
-            },
-        )
+        # As duas escritas são uma só operação. Sem a transação, a guarda de
+        # idempotência acima fica sem alicerce: ela depende do vínculo, que é
+        # escrito DEPOIS do lançamento. Se o lançamento é criado e o vínculo
+        # falha (conexão caindo, timeout, deploy no meio), sobra uma receita
+        # que a venda não conhece — e a próxima tentativa passa pela guarda e
+        # lança o MESMO dinheiro outra vez, que é exatamente o que a guarda
+        # existe para impedir (CODE_HEALTH_AUDIT, ERR-05).
+        #
+        # É o mesmo raciocínio que `baixar_estoque` já aplicava logo acima;
+        # ele não havia sido repetido para o lado do dinheiro.
+        with transaction.atomic():
+            lancamento = FinanceiroService.criar_lancamento(
+                empresa_id,
+                usuario_id,
+                {
+                    "tipo": "receita",
+                    "descricao": f"Venda - {quem}",
+                    "valor": venda.total,
+                    "data_vencimento": venda.data_prevista_pagamento
+                    or venda.data_venda
+                    or hoje,
+                    "data_pagamento": hoje if pago else None,
+                    "status": "pago" if pago else "pendente",
+                    "observacoes": f"Referente à venda #{venda.id}",
+                },
+            )
 
-        venda.lancamento_financeiro = lancamento
-        venda.save(update_fields=["lancamento_financeiro", "atualizado_em"])
+            venda.lancamento_financeiro = lancamento
+            venda.save(update_fields=["lancamento_financeiro", "atualizado_em"])
+
+        # Fora da transação de propósito: invalidar cache não é escrita de
+        # dado, e falhar aqui não deve desfazer o lançamento.
         invalidate_cache(empresa_id, "financeiro")
         return lancamento
 

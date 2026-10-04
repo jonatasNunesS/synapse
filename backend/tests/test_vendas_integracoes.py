@@ -757,3 +757,87 @@ def test_venda_so_de_item_livre_diz_que_nao_ha_estoque_a_perguntar(usuario):
     )
 
     assert venda["tem_itens_com_produto"] is False
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ATOMICIDADE DO LANÇAMENTO (CODE_HEALTH_AUDIT, ERR-05)
+#
+# `lancar_financeiro` escreve em dois lugares: cria o lançamento e grava o
+# vínculo na venda. A guarda de idempotência no topo da função depende do
+# VÍNCULO — então, sem transação, uma falha na segunda escrita deixa uma
+# receita que a venda não conhece, a guarda não dispara na próxima tentativa,
+# e o mesmo dinheiro entra duas vezes. É o cenário que o docstring da função
+# diz estar protegido.
+# ═══════════════════════════════════════════════════════════════════════════
+
+@pytest.mark.django_db
+def test_falha_ao_vincular_nao_deixa_lancamento_orfao(usuario, empresa, camisa):
+    """
+    Simula a falha na SEGUNDA escrita e exige que a primeira volte atrás.
+
+    Sem `transaction.atomic`, sobraria um `Lancamento` no banco sem nenhuma
+    venda apontando para ele.
+    """
+    from unittest.mock import patch
+
+    from modules.vendas.services import VendaService
+
+    venda = Venda.objects.get(pk=_criar_venda(usuario, [_item(camisa, "1", "50.00")])["id"])
+    antes = Lancamento.objects.filter(empresa=empresa).count()
+
+    # O `save` do vínculo estoura — tudo o que veio antes tem de ser desfeito.
+    with patch.object(
+        Venda, "save", side_effect=RuntimeError("conexão caiu ao vincular")
+    ):
+        with pytest.raises(RuntimeError):
+            VendaService.lancar_financeiro(empresa.id, usuario.id, venda.id)
+
+    assert Lancamento.objects.filter(empresa=empresa).count() == antes, (
+        "sobrou lançamento órfão: a receita existe e nenhuma venda a conhece"
+    )
+    venda.refresh_from_db()
+    assert venda.lancamento_financeiro_id is None
+
+
+@pytest.mark.django_db
+def test_depois_da_falha_a_guarda_de_idempotencia_ainda_protege(
+    usuario, empresa, camisa
+):
+    """
+    O dano real do defeito: com lançamento órfão, a guarda não dispara e o
+    dinheiro entra DUAS vezes. Aqui, depois do rollback, a segunda tentativa
+    lança exatamente uma vez.
+    """
+    from unittest.mock import patch
+
+    from modules.vendas.services import VendaService
+
+    venda = Venda.objects.get(pk=_criar_venda(usuario, [_item(camisa, "1", "50.00")])["id"])
+
+    with patch.object(Venda, "save", side_effect=RuntimeError("falhou")):
+        with pytest.raises(RuntimeError):
+            VendaService.lancar_financeiro(empresa.id, usuario.id, venda.id)
+
+    # Agora sem a falha: lança uma vez, e a guarda recusa a terceira.
+    VendaService.lancar_financeiro(empresa.id, usuario.id, venda.id)
+    venda.refresh_from_db()
+
+    assert venda.lancamento_financeiro_id is not None
+    assert Lancamento.objects.filter(
+        empresa=empresa, observacoes__contains=str(venda.id)
+    ).count() == 1, "a mesma venda gerou mais de uma receita"
+
+
+@pytest.mark.django_db
+def test_lancar_sem_falha_continua_funcionando(usuario, empresa, camisa):
+    """A transação não pode ter mudado o caminho felizmente comum."""
+    from modules.vendas.services import VendaService
+
+    venda = Venda.objects.get(pk=_criar_venda(usuario, [_item(camisa, "2", "50.00")])["id"])
+
+    lancamento = VendaService.lancar_financeiro(empresa.id, usuario.id, venda.id)
+
+    venda.refresh_from_db()
+    assert venda.lancamento_financeiro_id == lancamento.id
+    assert lancamento.tipo == "receita"
+    assert lancamento.valor == Decimal("100.00")
