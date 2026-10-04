@@ -43,54 +43,122 @@ def set_cached(key: str, value: Any, ttl: int = 300) -> None:
     logger.debug(f"Cache SET: {key} (TTL: {ttl}s)")
 
 
+def _e_cache_local() -> bool:
+    """
+    O cache em uso é o de memória do processo (testes), e não o Redis?
+
+    Importa porque o fallback final (`cache.clear()`) é aceitável num cache
+    local de teste e inaceitável em produção, onde apagaria o cache de TODAS
+    as empresas por causa da escrita de uma.
+
+    Olha o BACKEND configurado, e não `cache.__class__`: `django.core.cache.cache`
+    é um `ConnectionProxy`, então a classe dele não diz nada sobre qual backend
+    está atrás.
+    """
+    from django.conf import settings
+
+    backend = settings.CACHES.get("default", {}).get("BACKEND", "")
+    return "locmem" in backend.lower() or "dummy" in backend.lower()
+
+
 def invalidate_cache(empresa_id, modulo: str) -> None:
     """
     Invalida todo o cache de um módulo para uma empresa.
-    Usa padrão de prefixo: synapse:{empresa_id}:{modulo}:*
 
-    Estratégia:
-    1. Tenta usar cache.delete_pattern() (django-redis)
-    2. Fallback: tenta via get_redis_connection diretamente
-    3. Fallback final: usa cache.clear() (apenas em testes/LocMemCache)
+    Padrão lógico: `synapse:{empresa_id}:{modulo}:*`. A chave REAL no Redis
+    não é essa — o django-redis prefixa com `KEY_PREFIX` e a versão, então o
+    que está guardado é `synapse:1:synapse:{empresa_id}:{modulo}:*`. Por isso
+    todo padrão usado contra a conexão crua passa por `cache.make_key()`.
+
+    Era exatamente aqui que morava o defeito (CODE_HEALTH_AUDIT, ERR-02): o
+    fallback montava o padrão à mão, sem prefixo, não casava com nada,
+    invalidava ZERO chaves — e retornava como se tivesse funcionado, sem nem
+    logar, porque o log estava dentro de um `if keys:`. O sistema seguia
+    servindo dado velho acreditando ter invalidado.
+
+    Estratégia, em cascata:
+    1. `cache.delete_pattern()` do django-redis (preferido; usa SCAN por dentro)
+    2. Conexão crua com `scan_iter()` sobre o padrão JÁ PREFIXADO
+    3. `cache.clear()` — SÓ em cache local de teste; em produção, levanta
     """
     pattern = f"synapse:{empresa_id}:{modulo}:*"
+    contexto = {"empresa_id": str(empresa_id), "modulo": modulo}
 
-    # Tentativa 1: delete_pattern do django-redis (método preferido)
+    # ── Tentativa 1: delete_pattern (django-redis aplica o prefixo sozinho)
     try:
         cache.delete_pattern(pattern)
-        logger.info(
-            f"Cache invalidated via delete_pattern: {pattern}",
-            extra={"empresa_id": empresa_id, "modulo": modulo},
-        )
+        logger.info(f"Cache invalidado via delete_pattern: {pattern}", extra=contexto)
         return
     except AttributeError:
-        # LocMemCache não tem delete_pattern — fallback
+        # LocMemCache não tem delete_pattern — segue para o fallback.
         pass
     except Exception as e:
-        logger.warning(f"delete_pattern failed: {pattern} - {e}")
+        logger.warning(f"delete_pattern falhou: {pattern} — {e}", extra=contexto)
 
-    # Tentativa 2: via get_redis_connection diretamente
+    # ── Tentativa 2: conexão crua, com o padrão prefixado e sem bloquear
     try:
         from django_redis import get_redis_connection
+
         conn = get_redis_connection("default")
-        # Padrão correto sem prefixo duplicado
-        keys = conn.keys(pattern)
-        if keys:
-            conn.delete(*keys)
+
+        # `make_key` devolve a chave como ela REALMENTE existe (KEY_PREFIX +
+        # versão + chave lógica). Montar o padrão à mão é o que não casava.
+        pattern_real = cache.make_key(pattern)
+
+        # `scan_iter`, não `keys`: o comando KEYS é O(N) sobre o keyspace
+        # INTEIRO e bloqueia o Redis, que é single-threaded. Com muitas
+        # empresas, toda escrita pagaria essa varredura — e justamente neste
+        # caminho, que roda quando as coisas já vão mal (CODE_HEALTH_AUDIT,
+        # ESC-04).
+        apagadas = 0
+        for chave in conn.scan_iter(match=pattern_real, count=500):
+            conn.delete(chave)
+            apagadas += 1
+
+        if apagadas:
             logger.info(
-                f"Cache invalidated via redis keys: {pattern}",
-                extra={"empresa_id": empresa_id, "modulo": modulo, "keys_deleted": len(keys)},
+                f"Cache invalidado via scan_iter: {pattern_real} "
+                f"({apagadas} chaves)",
+                extra={**contexto, "keys_deleted": apagadas},
+            )
+        else:
+            # Zero chaves é informação, não silêncio. Pode ser legítimo (nada
+            # cacheado ainda) ou o sintoma de um padrão que não casa — e antes
+            # os dois casos eram indistinguíveis.
+            logger.info(
+                f"Cache invalidado via scan_iter: {pattern_real} "
+                f"(nenhuma chave encontrada)",
+                extra={**contexto, "keys_deleted": 0},
             )
         return
     except Exception as e:
-        logger.debug(f"Redis direct invalidation failed: {pattern} - {e}")
+        logger.warning(
+            f"Invalidação direta no Redis falhou: {pattern} — {e}", extra=contexto
+        )
 
-    # Fallback final: limpa todo o cache (aceitável em testes com LocMemCache)
+    # ── Tentativa 3: só para cache local de teste
+    #
+    # `cache.clear()` apaga o cache de TODAS as empresas. Num LocMemCache de
+    # teste isso não custa nada; em produção seria uma empresa derrubando o
+    # cache das outras — raio de alcance cross-tenant a partir de um fallback.
+    # Então em produção o erro SOBE, em vez de ser "resolvido" assim.
+    if not _e_cache_local():
+        logger.error(
+            f"Não foi possível invalidar o cache de {pattern}: todas as "
+            f"tentativas falharam. Recusando o cache.clear() global para não "
+            f"apagar o cache de outras empresas.",
+            extra=contexto,
+        )
+        raise RuntimeError(
+            f"Falha ao invalidar o cache do módulo {modulo} "
+            f"da empresa {empresa_id}."
+        )
+
     try:
         cache.clear()
-        logger.debug(f"Cache cleared (fallback): {pattern}")
+        logger.debug(f"Cache local limpo (fallback de teste): {pattern}")
     except Exception as e:
-        logger.warning(f"Cache clear fallback failed: {e}")
+        logger.warning(f"Fallback de cache.clear() falhou: {e}", extra=contexto)
 
 
 def cached_view(modulo: str, tipo: str, ttl: int = 300):
