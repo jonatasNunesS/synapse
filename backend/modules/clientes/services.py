@@ -1,3 +1,5 @@
+from django.db import transaction
+
 from shared.cache import build_cache_key, get_cached, set_cached, invalidate_cache
 from shared.exceptions import ResourceNotFound, TenantAccessDenied, BusinessRuleViolation
 from .repository import ClienteRepository
@@ -180,21 +182,36 @@ class ClienteService:
         interacao = ClienteService._obter_interacao_por_empresa(empresa_id, interacao_id)
         resumo = {"estoque_estornado": False, "financeiro_ajustado": None}
 
-        if estornar_estoque and interacao.movimentacao_estoque_id:
-            EstoqueService.estornar_movimentacao(
-                empresa_id,
-                interacao.movimentacao_estoque_id,
-                usuario_id,
-                motivo_estorno=f"Venda apagada (interação {interacao.id})",
-            )
-            resumo["estoque_estornado"] = True
+        # As três escritas são uma só operação, e o estorno é a razão: a
+        # movimentação original é imutável por regra do módulo de estoque,
+        # então estornar é SOMAR de volta. Falhar depois dele deixa o estoque
+        # alto com a interação ainda viva — e repetir a operação soma outra
+        # vez, inflando o estoque sem jeito de desfazer pela tela
+        # (CODE_HEALTH_AUDIT, ERR-06).
+        #
+        # O fluxo gêmeo em `vendas` já era atômico; este nasceu da mesma ideia
+        # e ficou sem a transação.
+        with transaction.atomic():
+            if estornar_estoque and interacao.movimentacao_estoque_id:
+                EstoqueService.estornar_movimentacao(
+                    empresa_id,
+                    interacao.movimentacao_estoque_id,
+                    usuario_id,
+                    motivo_estorno=f"Venda apagada (interação {interacao.id})",
+                )
+                resumo["estoque_estornado"] = True
 
-        if apagar_financeiro and interacao.lancamento_financeiro_id:
-            resumo["financeiro_ajustado"] = ClienteService._ajustar_lancamento_ao_apagar(
-                empresa_id, interacao.lancamento_financeiro
-            )
+            if apagar_financeiro and interacao.lancamento_financeiro_id:
+                resumo["financeiro_ajustado"] = (
+                    ClienteService._ajustar_lancamento_ao_apagar(
+                        empresa_id, interacao.lancamento_financeiro
+                    )
+                )
 
-        ClienteRepository.deletar_interacao(interacao)
+            ClienteRepository.deletar_interacao(interacao)
+
+        # Cache fora da transação: não é dado, e falhar aqui não deve desfazer
+        # o que já foi corretamente apagado.
         ClienteService._invalidar_todos(empresa_id)
         return resumo
 
