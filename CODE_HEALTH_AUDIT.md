@@ -1,14 +1,15 @@
 # 🩺 Auditoria de Saúde do Código — Synapse
 
 **Data:** 2026-10-03
-**Base:** `master` @ `eb49fa3` **+ PR #54** (`feature/agenda-vinculos` @ `064656a`, aberta)
+**Base:** `master` @ `eb49fa3` **+ PR #54** (`feature/agenda-vinculos` @ `064656a`)
+**Atualização de 2026-10-04:** a **PR #54 foi mergeada** (`master` agora é `064656a`) *depois* desta auditoria. Os três achados próprios dela (seção 7) **deixaram de ser "da branch" e são achados de produção** — a `PR54-01`, que a auditoria recomendava corrigir antes do merge, está hoje no `master` e entrou na Leva 1.
 **Escopo:** saúde estrutural — duplicação, arquitetura, código morto, proteção contra erro, testes, contrato e preparo para crescimento.
 **Natureza desta branch:** auditoria. **Nenhuma linha de código de produção foi alterada.** O único artefato é este documento.
 **Método:** leitura de código, varredura de padrões e **verificação em execução** onde dava para medir em vez de supor — contagem real de queries, formatação de datas rodada em Node no fuso de São Paulo, sondas de teste descartáveis (criadas, medidas e apagadas).
 
 > **Nota de baseline — duas correções ao enunciado.**
 >
-> 1. A instrução dizia "agenda completa mergeada". O `master` tem as **categorias** (PR #53) mergeadas, mas a **PR #54** (vínculo com projeto e venda) estava **aberta** quando esta auditoria começou. A pedido, o escopo passou a cobrir os dois estados — e a #54 foi auditada em **duas passadas**: primeiro contra as classes de achado do `master`, depois como código próprio, linha a linha. A segunda passada rendeu **três achados que só existem nela** (seção 7), um dos quais vale corrigir antes do merge.
+> 1. A instrução dizia "agenda completa mergeada". O `master` tem as **categorias** (PR #53) mergeadas, mas a **PR #54** (vínculo com projeto e venda) estava **aberta** quando esta auditoria começou. A pedido, o escopo passou a cobrir os dois estados — e a #54 foi auditada em **duas passadas**: primeiro contra as classes de achado do `master`, depois como código próprio, linha a linha. A segunda passada rendeu **três achados que só existiam nela** (seção 7). A #54 **foi mergeada em 2026-10-04**, depois disso — então os três passaram a ser achados de produção, e o "corrigir antes do merge" que a auditoria recomendava para a `PR54-01` virou correção urgente na Leva 1.
 > 2. Vários achados dos audits anteriores **foram de fato corrigidos** e estão confirmados resolvidos na seção 6. Mas dois que o `QUALITY_AUDIT` declarava contidos **não estavam**: o erro engolido (`UX-01`, "os únicos dois casos remanescentes") hoje são **30**, e as datas à mão (`INC-04`) passaram de 28 para **42 arquivos**. Ambos pioraram, não melhoraram.
 
 ---
@@ -23,7 +24,7 @@ O que foi construído ou revisitado nos últimos meses é **sólido de verdade**
 
 O que puxa a nota para baixo não é desleixo: é **assimetria**. Os módulos recentes (vendas, agenda) têm 1,4 a 2,0 linhas de teste por linha de código; os antigos (recorrências, projetos) têm 0,30. Os fluxos tocados pelas últimas levas são atômicos; os gêmeos deles, escritos antes e copiados sem a transação, não são. O cuidado existe e é alto — ele só não foi aplicado uniformemente, e os buracos estão exatamente onde ninguém voltou.
 
-Há **três bugs ativos** (não latentes: errados agora, em produção) e todos falham **em silêncio**, que é a categoria que o fundador pediu para priorizar.
+Há **três bugs ativos** (não latentes: errados agora, em produção) e todos falham **em silêncio**, que é a categoria que o fundador pediu para priorizar. Com o merge da PR #54 somou-se um quarto defeito em produção — a `PR54-01` —, que não é silencioso (ele grita um 400), mas **bloqueia uma operação legítima**: quem desliga o módulo Projetos não consegue mais editar os eventos que já vinculou.
 
 | Severidade | Qtd |
 |---|---|
@@ -33,7 +34,7 @@ Há **três bugs ativos** (não latentes: errados agora, em produção) e todos 
 | 🔵 cosmético | **4** |
 | **Total** | **32** |
 
-Dos 32, **29 estão no `master`** e **3 são do código próprio da PR #54** (seção 7).
+Os 32 estão **todos no `master`**: 29 vinham dele, e os 3 restantes entraram com o merge da PR #54 (seção 7).
 
 ### Os 5 mais importantes
 
@@ -538,7 +539,9 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
   self.tarefas.filter(status="concluido").count() # tarefas_concluidas
   ```
 
-  `.count()` e `.filter()` sobre um manager relacionado **não usam o cache do prefetch** — emitem SQL novo. Então o prefetch carrega todas as tarefas, ninguém as lê, e as queries acontecem de todo jeito.
+  `.filter()` sobre um manager relacionado **cria um queryset novo** e vai ao banco, ignorando o cache do prefetch. Como as **duas** propriedades filtram, o prefetch carrega todas as tarefas, ninguém as lê, e as queries acontecem de todo jeito.
+
+  > **Correção de rumo (2026-10-04).** A primeira versão desta auditoria dizia que `.count()` *e* `.filter()` ignoram o cache do prefetch. Isso é falso para um `.count()` **sem** filtro: esse usa o cache e não emite SQL. O desperdício aqui vinha dos dois `.filter()`, não de `.count()` em geral. Medido ao implementar a correção na Leva 1 — reverter só o repository, mantendo propriedades que usam `.count()` puro, dá 22 queries em vez de 42, exatamente por isso. O achado e o número de 42 seguem válidos; a explicação estava mais larga do que a verdade.
 
   Medido em execução (10 projetos × 3 tarefas, sonda depois apagada):
 
@@ -663,8 +666,9 @@ Tudo aqui está errado **agora**, em produção, e a correção é pequena.
 3. `ERR-06` — `transaction.atomic` nos dois "apagar com ajustes" (2 linhas + testes)
 4. `ERR-02` + `ESC-04` — `make_key` + `scan_iter` + logar zero chaves (mesma função)
 5. `ESC-01` — `annotate` na lista de projetos: 42 queries → 1, sem mudar o frontend
+6. `PR54-01` — gating do projeto só quando o valor **muda** (comparar com `self.instance.projeto_id`). Entrou nesta leva porque o merge da #54 levou o bug para produção: hoje quem desliga o módulo Projetos não consegue editar os eventos que já vinculou.
 
-> Fecha 5 achados, 3 deles 🔴, e entrega a maior melhoria de performance da lista. Se só uma leva for feita, é esta.
+> Fecha 6 achados, 3 deles 🔴, e entrega a maior melhoria de performance da lista. Se só uma leva for feita, é esta.
 
 ### Leva 2 — A data, na ordem certa *(≈1 dia + migração)*
 6. `ERR-03` — consertar `formatDate`/`formatDateTime` para data pura, com teste em `"2026-01-01"`
@@ -725,9 +729,11 @@ Tudo aqui está errado **agora**, em produção, e a correção é pequena.
 
 ---
 
-## 7. A PR #54 (`feature/agenda-vinculos`) — auditada no mesmo rigor
+## 7. A PR #54 (`feature/agenda-vinculos`, mergeada) — auditada no mesmo rigor
 
-Auditada em duas passadas. A primeira conferiu a #54 contra as classes de achado que vieram do `master`. A segunda — a pedido — auditou as **2.330 linhas novas dela** como código próprio, e encontrou **três achados que não existem no `master`**: um deles bloqueia uma operação legítima e vale corrigir **antes do merge**.
+Auditada em duas passadas. A primeira conferiu a #54 contra as classes de achado que vieram do `master`. A segunda — a pedido — auditou as **2.330 linhas novas dela** como código próprio, e encontrou **três achados que não existiam no `master` até então**: um deles bloqueia uma operação legítima.
+
+> **A #54 foi mergeada em 2026-10-04**, depois desta auditoria. Os três achados abaixo estão, portanto, **em produção**. Mantive a seção separada porque a origem deles explica o que procurar — mas eles contam como achados do `master`, e a `PR54-01` subiu para a Leva 1 (ver 7.3).
 
 ### 7.1 — O que a #54 acrescenta aos números do `master`
 
@@ -747,7 +753,7 @@ Também confirmei o que seria fácil errar e está certo: o `select_for_update` 
 ---
 
 #### PR54-01 — Com o módulo Projetos desligado, o evento vinculado fica impossível de editar
-- **Severidade:** 🟠 *(achado próprio da #54 — não existe no `master`)*
+- **Severidade:** 🟠 *(entrou com a #54 — hoje em produção)*
 - **Local:** `modules/agenda/serializers.py` (`validate_projeto`) + `components/agenda/EventoForm.tsx:114`
 - **Descrição:** O `validate_projeto` recusa qualquer `projeto` não-nulo quando `modulo_projetos` está desligado. A intenção é boa (não criar vínculo invisível). O problema é que ele não distingue **criar um vínculo novo** de **manter o que já estava lá**.
 
@@ -774,7 +780,7 @@ Também confirmei o que seria fácil errar e está certo: o `select_for_update` 
 ---
 
 #### PR54-02 — A seção de compromissos baixa o histórico inteiro para exibir no máximo 3 itens passados
-- **Severidade:** 🟠 *(herdado do `master`, mas a #54 triplica o alcance)*
+- **Severidade:** 🟠 *(já vinha do `master`; a #54 triplicou o alcance)*
 - **Local:** `frontend/hooks/useAgenda.ts` (`useEventosPorVinculo`)
 - **Descrição:** O hook pagina em laço **sem teto**:
 
@@ -799,7 +805,7 @@ Também confirmei o que seria fácil errar e está certo: o `select_for_update` 
 ---
 
 #### PR54-03 — Reabrir um evento que já tem venda não oferece herdar o cliente
-- **Severidade:** 🔵 *(achado próprio da #54)*
+- **Severidade:** 🔵 *(entrou com a #54 — hoje em produção)*
 - **Local:** `components/agenda/EventoForm.tsx` (o `fixo` de `buscaVenda`) + `hooks/useBuscaVinculo.ts:74`
 - **Descrição:** A sugestão "essa venda é da Ana, vincular a ela também?" depende de `clienteSugerido`, que o `buscarVendas` preenche. Mas a opção **fixa** — a que garante o vínculo atual na lista mesmo fora da busca — é construída só com `{ id, rotulo }`, nos dois lugares: o formulário monta o `fixo` a partir de `evento.venda` + `evento.venda_rotulo`, e o hook o reinsere na lista com os mesmos dois campos (:74).
 
@@ -811,13 +817,13 @@ Também confirmei o que seria fácil errar e está certo: o `select_for_update` 
 
 ---
 
-### 7.3 — Efeito no plano de correção
+### 7.3 — Efeito no plano de correção *(revisto depois do merge)*
 
-Os três achados são **da branch**, não do `master`, então nenhuma leva das seções anteriores muda. O que muda é a recomendação de merge:
+A auditoria recomendava corrigir a `PR54-01` **antes** do merge. O merge aconteceu em 2026-10-04, então a recomendação caducou e os três achados mudaram de endereço — de "pendências de uma branch" para **código em produção**:
 
-- **`PR54-01` vale corrigir antes do merge.** É pequeno (uma comparação no `validate_projeto`) e, sem ele, qualquer empresa que desligue o módulo Projetos perde a capacidade de editar os eventos que já vinculou. É a única objeção que eu levantaria ao merge.
-- **`PR54-02`** pode ir junto ou na Leva 6 — mas é baixo esforço e tem efeito nas três telas, então aproveitar a branch é mais barato que voltar depois.
-- **`PR54-03`** é cosmético; pode ficar para quando o arquivo for tocado.
+- **`PR54-01` virou bug de produção e subiu para a Leva 1.** Hoje, uma empresa que desligue o módulo Projetos **não consegue editar** nenhum evento que já tenha vinculado — nem para corrigir o título ou a hora. A correção continua pequena (uma comparação com `self.instance.projeto_id` no `validate_projeto`), e agora é urgente em vez de preventiva.
+- **`PR54-02`** vai para a Leva 6, com os outros itens de escalabilidade. Deixou de haver a economia de "aproveitar a branch aberta".
+- **`PR54-03`** segue cosmético; quando o arquivo for tocado.
 
 Fora isso, a #54 é das contribuições mais bem testadas da base (30 testes de backend, 46 de frontend, 28 mutações reintroduzidas) e eleva a razão teste/código da agenda, que já era a segunda melhor do projeto.
 
