@@ -30,9 +30,22 @@ from .serializers import (
     ProximosCompromissosQuerySerializer,
     VencimentosQuerySerializer,
 )
-from .services import DashboardService
+from .services import FALHAS_DE_INFRA, DashboardService
 
 logger = logging.getLogger("synapse")
+
+# Os handlers abaixo capturam FALHAS_DE_INFRA, não `Exception`.
+#
+# A diferença: banco fora do ar é condição operacional e merece a resposta
+# arrumada de 500 com código DASHBOARD_ERROR. Um TypeError de refatoração não
+# é condição operacional — embrulhá-lo em "Erro ao carregar o dashboard" faz um
+# bug parecer um soluço de infra, e um bug com aparência de soluço não é
+# investigado. Estourando, ele sobe para o handler global do DRF, entra no log
+# com traceback e chega ao Sentry.
+#
+# Os blocos indisponíveis do payload (ver `services.py`) continuam vindo em
+# resposta 200 com o bloco em `null`: a tela mostra aviso naquele cartão e o
+# resto do dashboard segue funcionando.
 
 
 class DashboardResumoView(EmpresaQuerySetMixin, APIView):
@@ -51,7 +64,7 @@ class DashboardResumoView(EmpresaQuerySetMixin, APIView):
                 data=resumo,
                 message="Resumo do dashboard obtido com sucesso.",
             )
-        except Exception as e:
+        except FALHAS_DE_INFRA as e:
             logger.error(f"Dashboard resumo error: {e}", exc_info=True)
             return error_response(
                 code="DASHBOARD_ERROR",
@@ -86,7 +99,7 @@ class DashboardFluxoCaixaView(EmpresaQuerySetMixin, APIView):
                 data={"fluxo": fluxo, "dias": dias},
                 message="Fluxo de caixa obtido com sucesso.",
             )
-        except Exception as e:
+        except FALHAS_DE_INFRA as e:
             logger.error(f"Dashboard fluxo-caixa error: {e}", exc_info=True)
             return error_response(
                 code="DASHBOARD_ERROR",
@@ -107,11 +120,13 @@ class DashboardFunilVendasView(EmpresaQuerySetMixin, APIView):
 
         try:
             funil = DashboardService.obter_funil_vendas(empresa_id)
+            # `data=None` viraria `{}` no success_response, e o front leria
+            # isso como "veio, só está vazio". O null precisa ir numa chave.
             return success_response(
-                data=funil,
+                data={"etapas": None if funil is None else funil["etapas"]},
                 message="Funil de vendas obtido com sucesso.",
             )
-        except Exception as e:
+        except FALHAS_DE_INFRA as e:
             logger.error(f"Dashboard funil-vendas error: {e}", exc_info=True)
             return error_response(
                 code="DASHBOARD_ERROR",
@@ -146,7 +161,7 @@ class DashboardVencimentosView(EmpresaQuerySetMixin, APIView):
                 data={"vencimentos": vencimentos, "dias": dias},
                 message="Vencimentos próximos obtidos com sucesso.",
             )
-        except Exception as e:
+        except FALHAS_DE_INFRA as e:
             logger.error(f"Dashboard vencimentos error: {e}", exc_info=True)
             return error_response(
                 code="DASHBOARD_ERROR",
@@ -181,7 +196,7 @@ class DashboardFollowUpsView(EmpresaQuerySetMixin, APIView):
                 data={"followups": followups, "dias": dias},
                 message="Follow-ups próximos obtidos com sucesso.",
             )
-        except Exception as e:
+        except FALHAS_DE_INFRA as e:
             logger.error(f"Dashboard followups error: {e}", exc_info=True)
             return error_response(
                 code="DASHBOARD_ERROR",
@@ -218,7 +233,7 @@ class DashboardProximosCompromissosView(EmpresaQuerySetMixin, APIView):
                 data={"compromissos": compromissos, "dias": dias},
                 message="Próximos compromissos obtidos com sucesso.",
             )
-        except Exception as e:
+        except FALHAS_DE_INFRA as e:
             logger.error(f"Dashboard proximos-compromissos error: {e}", exc_info=True)
             return error_response(
                 code="DASHBOARD_ERROR",
@@ -244,7 +259,7 @@ class DashboardMinhasTarefasView(EmpresaQuerySetMixin, APIView):
                 data={"tarefas": tarefas},
                 message="Minhas tarefas obtidas com sucesso.",
             )
-        except Exception as e:
+        except FALHAS_DE_INFRA as e:
             logger.error(f"Dashboard minhas-tarefas error: {e}", exc_info=True)
             return error_response(
                 code="DASHBOARD_ERROR",
@@ -269,7 +284,7 @@ class DashboardAlertasEstoqueView(EmpresaQuerySetMixin, APIView):
                 data={"alertas": alertas},
                 message="Alertas de estoque obtidos com sucesso.",
             )
-        except Exception as e:
+        except FALHAS_DE_INFRA as e:
             logger.error(f"Dashboard alertas-estoque error: {e}", exc_info=True)
             return error_response(
                 code="DASHBOARD_ERROR",
@@ -294,7 +309,7 @@ class DashboardProjetosView(EmpresaQuerySetMixin, APIView):
                 data={"projetos": projetos},
                 message="Projetos em andamento obtidos com sucesso.",
             )
-        except Exception as e:
+        except FALHAS_DE_INFRA as e:
             logger.error(f"Dashboard projetos error: {e}", exc_info=True)
             return error_response(
                 code="DASHBOARD_ERROR",
@@ -329,7 +344,7 @@ class DashboardAtividadeView(EmpresaQuerySetMixin, APIView):
                 data={"eventos": atividade},
                 message="Atividade recente obtida com sucesso.",
             )
-        except Exception as e:
+        except FALHAS_DE_INFRA as e:
             logger.error(f"Dashboard atividade error: {e}", exc_info=True)
             return error_response(
                 code="DASHBOARD_ERROR",

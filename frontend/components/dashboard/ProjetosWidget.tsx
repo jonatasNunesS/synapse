@@ -4,12 +4,16 @@ import Link from "next/link";
 import { FolderOpen, AlertTriangle, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BlocoIndisponivel } from "./BlocoIndisponivel";
 import { Progress } from "@/components/ui/progress";
 import type { ProjetoDashboard } from "@/types/dashboard";
 
 interface ProjetosWidgetProps {
   projetos: ProjetoDashboard[];
   isLoading: boolean;
+  /** A consulta falhou: mostra aviso em vez de "nenhum", que seria mentira. */
+  indisponivel?: boolean;
+  onTentarNovamente?: () => void;
 }
 
 const PRIORIDADE_COR: Record<string, string> = {
@@ -19,7 +23,7 @@ const PRIORIDADE_COR: Record<string, string> = {
   urgente: "text-erro",
 };
 
-export function ProjetosWidget({ projetos, isLoading }: ProjetosWidgetProps) {
+export function ProjetosWidget({ projetos, isLoading, indisponivel, onTentarNovamente }: ProjetosWidgetProps) {
   if (isLoading) {
     return (
       <Card>
@@ -55,7 +59,9 @@ export function ProjetosWidget({ projetos, isLoading }: ProjetosWidgetProps) {
         </div>
       </CardHeader>
       <CardContent>
-        {projetos.length === 0 ? (
+        {indisponivel ? (
+          <BlocoIndisponivel oQue="os projetos" onTentarNovamente={onTentarNovamente} />
+        ) : projetos.length === 0 ? (
           <div className="py-6 text-center text-muted-foreground text-sm">
             Nenhum projeto em andamento.
           </div>

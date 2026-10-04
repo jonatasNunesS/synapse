@@ -734,15 +734,43 @@ class TestDashboardService:
         assert isinstance(atividade, list)
 
     def test_resiliencia_modulo_com_erro(self, usuario_a):
-        """Service deve ser resiliente a erros de módulos individuais."""
+        """
+        Banco fora do ar num módulo: o bloco vem None, os outros vêm inteiros.
+
+        Este teste já existiu afirmando o contrário — que o bloco devia voltar
+        com `total_receitas == 0`. Era o ERR-04 escrito como contrato: a suíte
+        protegia o bug. Resiliência é a tela não cair; não é o número mentir.
+        """
+        from django.db import OperationalError
+
         from modules.dashboard.services import DashboardService
         with patch(
             "modules.financeiro.services.FinanceiroService.obter_resumo",
-            side_effect=Exception("Erro simulado"),
+            side_effect=OperationalError("conexão perdida"),
         ):
             resumo = DashboardService.obter_resumo_principal(
                 usuario_a.empresa_id, usuario_a.id
             )
-            # Mesmo com erro no financeiro, deve retornar dados padrão
-            assert resumo["financeiro"]["total_receitas"] == 0
-            assert "estoque" in resumo
+            assert resumo["financeiro"] is None
+            # Os outros blocos não são arrastados pela falha de um.
+            assert resumo["estoque"] is not None
+            assert resumo["crm"] is not None
+            assert resumo["meta"]["mes"]
+
+    def test_bug_de_codigo_nao_vira_bloco_indisponivel(self, usuario_a):
+        """
+        AttributeError de refatoração estoura — não se disfarça de degradação.
+
+        É a metade esquecida do ERR-04. Marcar o bloco como indisponível já
+        seria melhor que zerá-lo, mas um bug de código marcado como
+        "indisponível" também não é investigado: parece banco instável.
+        """
+        from modules.dashboard.services import DashboardService
+        with patch(
+            "modules.financeiro.services.FinanceiroService.obter_resumo",
+            side_effect=AttributeError("'NoneType' object has no attribute 'x'"),
+        ):
+            with pytest.raises(AttributeError):
+                DashboardService.obter_resumo_principal(
+                    usuario_a.empresa_id, usuario_a.id
+                )
