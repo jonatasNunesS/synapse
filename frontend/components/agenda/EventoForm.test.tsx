@@ -158,7 +158,19 @@ describe("Dia inteiro", () => {
 
     // Quem normaliza para 00:00 → 23:59 é o backend; daqui sai o dia certo.
     expect(payloadSalvo().dia_inteiro).toBe(true);
-    expect(payloadSalvo().data_inicio).toContain("2026-11-20");
+
+    // Afirma a DATA LOCAL, não a substring do ISO. O payload é UTC: às 23h30
+    // em São Paulo, o dia 20 local vira "2026-11-21T02:30:00Z", e procurar
+    // "2026-11-20" na string falharia sem que nada estivesse errado — o
+    // backend normaliza com `timezone.localtime()` e grava o dia 20.
+    //
+    // A asserção antiga passava só porque a suíte rodava em UTC, onde local e
+    // UTC coincidem. Ou seja: ela se anulava exatamente no caso que o slot de
+    // 23h30 foi posto aqui para exercitar.
+    const enviado = new Date(payloadSalvo().data_inicio);
+    expect(enviado.getFullYear()).toBe(2026);
+    expect(enviado.getMonth()).toBe(10); // novembro
+    expect(enviado.getDate()).toBe(20);
   });
 
   it("término num dia ANTERIOR continua sendo recusado", async () => {
