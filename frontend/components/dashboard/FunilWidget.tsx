@@ -39,7 +39,25 @@ interface EtapaPlotada extends FunilEtapa {
   percentual: number;
 }
 
-const CustomTooltip = ({ active, payload }: any) => {
+/**
+ * Monta as barras do gráfico a partir do que o backend manda.
+ *
+ * Exportada para o teste poder verificar que `percentual` sai daqui — era um
+ * campo que o tipo prometia e o payload não trazia.
+ */
+export function plotarEtapas(etapas: FunilEtapa[]): EtapaPlotada[] {
+  const total = etapas.reduce((acc, e) => acc + e.count, 0);
+  return etapas.map((e) => ({
+    ...e,
+    label: STATUS_FUNIL_LABELS[e.status] ?? e.status,
+    cor: STATUS_FUNIL_CORES[e.status] ?? "#6b7280",
+    // Divisão por zero daria NaN e o tooltip mostraria "NaN% do total" — mas
+    // com total zero o gráfico nem é desenhado (ver o estado vazio abaixo).
+    percentual: total === 0 ? 0 : (e.count / total) * 100,
+  }));
+}
+
+export const CustomTooltipFunil = ({ active, payload }: any) => {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload as EtapaPlotada;
   return (
@@ -76,15 +94,7 @@ export function FunilWidget({
   }
 
   const totalClientes = etapas.reduce((acc, e) => acc + e.count, 0);
-
-  const dados: EtapaPlotada[] = etapas.map((e) => ({
-    ...e,
-    label: STATUS_FUNIL_LABELS[e.status] ?? e.status,
-    cor: STATUS_FUNIL_CORES[e.status] ?? "#6b7280",
-    // Divisão por zero daria NaN e o tooltip mostraria "NaN% do total" — mas
-    // com total zero o gráfico nem é desenhado (ver o estado vazio abaixo).
-    percentual: totalClientes === 0 ? 0 : (e.count / totalClientes) * 100,
-  }));
+  const dados = plotarEtapas(etapas);
 
   return (
     <Card>
@@ -122,7 +132,7 @@ export function FunilWidget({
                 axisLine={false}
                 allowDecimals={false}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltipFunil />} />
               <Bar dataKey="count" name="Clientes" radius={[4, 4, 0, 0]}>
                 {dados.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.cor} />
