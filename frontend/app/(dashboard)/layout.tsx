@@ -19,7 +19,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { sidebarOpen } = useAppStore();
+  const { sidebarExpandida } = useAppStore();
   const { carregarUsuario, loading, autenticado, empresa } = useAuth();
   const { rotaPermitida, moduloDaRota } = useModulos();
   const pathname = usePathname();
@@ -70,7 +70,7 @@ export default function DashboardLayout({
           "pt-[64px] min-h-screen transition-all duration-300",
           // Mobile (< md): sem padding lateral — sidebar fica como overlay
           // Desktop (>= md): padding conforme estado da sidebar
-          sidebarOpen ? "md:pl-[256px]" : "md:pl-[64px]"
+          sidebarExpandida ? "md:pl-[256px]" : "md:pl-[64px]"
         )}
       >
         <div className="p-4 md:p-6">{children}</div>

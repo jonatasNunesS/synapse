@@ -55,7 +55,7 @@ export const ACOES: ItemAcao[] = [
 
 export function BotaoAcaoRapida() {
   const { moduloAtivo } = useModulos();
-  const { sidebarOpen } = useAppStore();
+  const { gavetaAberta } = useAppStore();
   const router = useRouter();
 
   const [aberto, setAberto] = useState(false);
@@ -113,8 +113,13 @@ export function BotaoAcaoRapida() {
           "fixed bottom-5 right-5 z-20 flex flex-col items-end gap-2 md:bottom-6 md:right-6",
           // No mobile a sidebar é uma gaveta com fundo escuro por cima da
           // tela; o botão sairia flutuando sobre ela. Some enquanto ela está
-          // aberta — no desktop `sidebarOpen` só quer dizer "expandida".
-          sidebarOpen && "hidden md:flex"
+          // aberta.
+          //
+          // O `md:flex` sobrou de quando `sidebarOpen` significava as duas
+          // coisas e o botão desaparecia no desktop expandido. Agora
+          // `gavetaAberta` é só do celular, e o `md:flex` fica como rede para
+          // o caso de alguém abrir a gaveta e alargar a janela.
+          gavetaAberta && "hidden md:flex"
         )}
       >
         {aberto && (

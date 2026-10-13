@@ -18,9 +18,18 @@ interface AppState {
   clearAuth: () => void;
 
   // ── Sidebar ──────────────────────────────────────────────
-  sidebarOpen: boolean;
-  toggleSidebar: () => void;
-  setSidebarOpen: (open: boolean) => void;
+  //
+  // DOIS estados, não um. `sidebarOpen` servia dois significados que
+  // discordam exatamente no valor inicial: no desktop, "expandida" começa
+  // ligada; no celular, "gaveta por cima da tela" nunca pode começar ligada.
+  // Com uma flag só e o default `true`, todo carregamento no celular abria o
+  // menu sobre o conteúdo — o bug mais antigo do sistema.
+  /** Desktop: 256px (expandida) ou 64px (recolhida). */
+  sidebarExpandida: boolean;
+  alternarExpansao: () => void;
+  /** Mobile: a gaveta está por cima da tela? Começa fechada, sempre. */
+  gavetaAberta: boolean;
+  setGavetaAberta: (aberta: boolean) => void;
 
   // ── Notificações ─────────────────────────────────────────
   unreadNotifications: number;
@@ -51,9 +60,11 @@ export const useAppStore = create<AppState>((set) => ({
   clearAuth: () => set({ ...initialAuthState }),
 
   // ── Sidebar ───────────────────────────────────────────────
-  sidebarOpen: true,
-  toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
-  setSidebarOpen: (open) => set({ sidebarOpen: open }),
+  sidebarExpandida: true,
+  alternarExpansao: () =>
+    set((state) => ({ sidebarExpandida: !state.sidebarExpandida })),
+  gavetaAberta: false,
+  setGavetaAberta: (aberta) => set({ gavetaAberta: aberta }),
 
   // ── Notificações ──────────────────────────────────────────
   unreadNotifications: 0,

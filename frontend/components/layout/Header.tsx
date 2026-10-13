@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { PLANO_LABELS } from "@/types/auth";
 
 export function Header() {
-  const { sidebarOpen, toggleSidebar, unreadNotifications } = useAppStore();
+  const { sidebarExpandida, setGavetaAberta, unreadNotifications } = useAppStore();
   const { usuario, empresa, logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = React.useState(false);
 
@@ -33,12 +33,15 @@ export function Header() {
         // Mobile: sempre left-0 (sidebar é overlay)
         // Desktop: ajusta conforme estado da sidebar
         "left-0",
-        sidebarOpen ? "md:left-[256px]" : "md:left-[64px]"
+        sidebarExpandida ? "md:left-[256px]" : "md:left-[64px]"
       )}
     >
       {/* ── Hamburger (mobile only) ────────────────────────── */}
+      {/* `md:hidden`: este botão só existe no celular, então ABRE a gaveta —
+          não alterna. Antes chamava o mesmo toggle do desktop, e era por isso
+          que os dois significados viviam na mesma flag. */}
       <button
-        onClick={toggleSidebar}
+        onClick={() => setGavetaAberta(true)}
         className="flex md:hidden h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground-suave transition-colors mr-2"
         aria-label="Abrir menu"
       >
