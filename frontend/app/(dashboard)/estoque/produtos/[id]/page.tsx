@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/api";
+import { avisarSeFalhar } from "@/lib/avisarErro";
 import {
   ArrowLeft,
   Package,
@@ -70,19 +71,31 @@ export default function ProdutoDetailPage() {
 
   const carregarProduto = useCallback(async () => {
     setLoading(true);
-    const p = await obter(id);
-    if (!p) {
-      router.push("/estoque");
-      return;
+    try {
+      const p = await obter(id);
+      if (!p) {
+        // 404 de verdade: o produto não existe mais, e voltar para a lista é
+        // a resposta certa.
+        router.push("/estoque");
+        return;
+      }
+      setProduto(p);
+    } catch (err) {
+      // Antes, QUALQUER falha caía no ramo de cima: o `obter` devolvia `null`
+      // para 404 e para erro de banco igualmente, e quem abriu o produto era
+      // mandado de volta para a lista como se ele tivesse sido apagado.
+      toast.error(getErrorMessage(err), { duration: 7000 });
+    } finally {
+      setLoading(false);
     }
-    setProduto(p);
-    setLoading(false);
   }, [id, obter, router]);
 
   useEffect(() => {
+    // `carregarProduto` já trata o próprio erro; as outras duas leituras
+    // passaram a propagar e precisam de quem escute.
     carregarProduto();
-    listarCategorias();
-    listarMov(id, { page: 1 });
+    avisarSeFalhar(listarCategorias());
+    avisarSeFalhar(listarMov(id, { page: 1 }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -285,7 +298,7 @@ export default function ProdutoDetailPage() {
           movimentacoes={movimentacoes}
           paginacao={paginacao}
           loading={loadingMov}
-          onPaginaChange={(pagina) => listarMov(id, { page: pagina })}
+          onPaginaChange={(pagina) => avisarSeFalhar(listarMov(id, { page: pagina }))}
         />
       </div>
 

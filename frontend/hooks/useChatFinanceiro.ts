@@ -55,9 +55,13 @@ export function useChatFinanceiro() {
               pararPolling();
               reject(new Error(task.erro || "Erro ao responder."));
             }
-          } catch {
+          } catch (err) {
             pararPolling();
-            reject(new Error("Erro ao verificar o status da resposta."));
+            // O polling perdeu a consulta de status. Pode ser 402 (crédito
+            // acabou no meio), 404 (task expirou) ou o backend fora do ar — e
+            // a frase fixa dizia a mesma coisa nos três, deixando quem olha
+            // sem saber se é para recarregar, comprar crédito ou esperar.
+            reject(err);
           }
         }, 2000);
       }),

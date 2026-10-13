@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { Search, Loader2 } from "lucide-react";
 import { useClientes } from "@/hooks/useClientes";
+import { avisarSeFalhar } from "@/lib/avisarErro";
 
 interface ClienteSelectProps {
   onSelect: (cliente: { id: string; nome: string }) => void;
@@ -15,7 +16,10 @@ export function ClienteSelect({ onSelect }: ClienteSelectProps) {
   const [busca, setBusca] = useState("");
 
   useEffect(() => {
-    const t = setTimeout(() => carregar({ busca: busca || undefined, page: 1 }), 250);
+    const t = setTimeout(
+      () => avisarSeFalhar(carregar({ busca: busca || undefined, page: 1 })),
+      250
+    );
     return () => clearTimeout(t);
   }, [busca, carregar]);
 

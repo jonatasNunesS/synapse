@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { List, Kanban, RefreshCw, Zap } from "lucide-react";
 import { getErrorMessage } from "@/lib/api";
+import { avisarSeFalhar } from "@/lib/avisarErro";
 import { ResumoCards } from "@/components/clientes/ResumoCards";
 import { ClienteTable } from "@/components/clientes/ClienteTable";
 import { FunilKanban } from "@/components/clientes/FunilKanban";
@@ -44,12 +45,15 @@ export default function ClientesPage() {
   const [periodo, setPeriodo] = useState<Periodo | null>(null);
   const [filtrosTabela, setFiltrosTabela] = useState<FiltrosClientes>({});
 
+  // `avisarSeFalhar` em cada leitura: os hooks do CRM passaram a propagar o
+  // erro do backend, e sem isto a falha ficava numa promessa rejeitada — a
+  // lista aparecia vazia, como se a empresa não tivesse cliente nenhum.
   const carregarTudo = useCallback(async () => {
     const p = periodo ?? {};
     await Promise.all([
-      carregar({ ...filtrosTabela, ...p, page }),
-      carregarFunil(),
-      carregarResumo(periodo ?? undefined),
+      avisarSeFalhar(carregar({ ...filtrosTabela, ...p, page })),
+      avisarSeFalhar(carregarFunil()),
+      avisarSeFalhar(carregarResumo(periodo ?? undefined)),
     ]);
   }, [carregar, carregarFunil, carregarResumo, page, periodo, filtrosTabela]);
 
@@ -186,12 +190,12 @@ export default function ClientesPage() {
           onFiltrar={(filtros) => {
             setFiltrosTabela(filtros);
             setPage(1);
-            carregar({ ...filtros, ...(periodo ?? {}), page: 1 });
+            avisarSeFalhar(carregar({ ...filtros, ...(periodo ?? {}), page: 1 }));
           }}
           pagination={{ count: pagination.count, page }}
           onPageChange={(p) => {
             setPage(p);
-            carregar({ ...filtrosTabela, ...(periodo ?? {}), page: p });
+            avisarSeFalhar(carregar({ ...filtrosTabela, ...(periodo ?? {}), page: p }));
           }}
         />
       ) : (
