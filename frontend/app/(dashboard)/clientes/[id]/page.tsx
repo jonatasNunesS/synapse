@@ -34,11 +34,12 @@ import { STATUS_FUNIL_LABELS, STATUS_FUNIL_COLORS } from "@/types/clientes";
 import type { StatusFunil, InteracaoCliente } from "@/types/clientes";
 import type { Venda } from "@/types/vendas";
 import { api, getErrorMessage } from "@/lib/api";
+import { avisarSeFalhar } from "@/lib/avisarErro";
 import { useModulos } from "@/hooks/useModulos";
 import { useEventosDoCliente } from "@/hooks/useAgenda";
 import { useVendasDoCliente } from "@/hooks/useVendas";
 import { montarHistorico } from "@/lib/vendas";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
 
 function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
@@ -131,12 +132,14 @@ export default function ClienteDetalhePage() {
   }, [interacoes, vendas, filtroEstoque]);
 
   useEffect(() => {
-    carregar();
+    avisarSeFalhar(carregar());
   }, [carregar]);
 
   // Recarrega as interações sempre que o filtro de estoque muda.
   useEffect(() => {
-    carregarInteracoes(filtroEstoque ? { estoque: filtroEstoque } : {});
+    avisarSeFalhar(
+      carregarInteracoes(filtroEstoque ? { estoque: filtroEstoque } : {})
+    );
   }, [carregarInteracoes, filtroEstoque]);
 
   // Compromissos deste cliente — só se a empresa usa a Agenda. O erro não
@@ -148,14 +151,26 @@ export default function ClienteDetalhePage() {
 
   // Recarrega as interações preservando o filtro de estoque atual.
   const recarregarInteracoes = () =>
-    carregarInteracoes(filtroEstoque ? { estoque: filtroEstoque } : {});
+    avisarSeFalhar(
+      carregarInteracoes(filtroEstoque ? { estoque: filtroEstoque } : {})
+    );
+
+  /**
+   * Recarrega o cliente avisando se falhar.
+   *
+   * Um envelope em vez de `avisarSeFalhar(carregar())` espalhado: esta página
+   * recarrega o cliente em sete lugares diferentes (depois de registrar
+   * interação, baixar estoque, decidir fiado, apagar com ajustes...), e repetir
+   * o envelope em cada um é como esquecer dele em um.
+   */
+  const recarregarCliente = () => avisarSeFalhar(carregar());
 
   const handleRegistrarInteracao = async (dados: Parameters<typeof registrar>[0]) => {
     setInteracaoLoading(true);
     try {
       const nova = await registrar(dados); // lança em caso de erro → o form exibe o banner
       setShowInteracaoForm(false);
-      carregar(); // Recarrega para atualizar valor_total_compras etc.
+      recarregarCliente(); // Recarrega para atualizar valor_total_compras etc.
       // Venda? Oferece baixar do estoque — só se o módulo Estoque estiver
       // ativo; senão vai direto para o financeiro (que é obrigatório).
       if (nova?.tipo === "venda") {
@@ -174,7 +189,7 @@ export default function ClienteDetalhePage() {
       await editar(editingInteracao.id, dados); // lança → form mostra o erro
       toast.success("Interação atualizada.");
       setEditingInteracao(null);
-      carregar(); // agregados (valor_total_compras) podem ter mudado
+      recarregarCliente(); // agregados (valor_total_compras) podem ter mudado
     } finally {
       // Erro é exibido no banner do próprio form (mantém aberto); não engolimos.
       setInteracaoLoading(false);
@@ -205,7 +220,7 @@ export default function ClienteDetalhePage() {
       await apagar(alvo.id);
       toast.success("Interação excluída.");
       setInteracaoParaExcluir(null);
-      carregar(); // recalcula agregados do cliente
+      recarregarCliente(); // recalcula agregados do cliente
     } catch (err) {
       // Erro NUNCA calado: mostra a mensagem real do backend
       toast.error(getErrorMessage(err), { duration: 7000 });
@@ -228,7 +243,7 @@ export default function ClienteDetalhePage() {
       });
       toast.success("Interação apagada.");
       setApagarFlow(null);
-      carregar();
+      recarregarCliente();
     } catch (err) {
       toast.error(getErrorMessage(err), { duration: 7000 });
     } finally {
@@ -454,7 +469,7 @@ export default function ClienteDetalhePage() {
             {cliente.ultima_compra && (
               <p className="text-xs text-muted-suave">
                 Última compra:{" "}
-                {new Date(cliente.ultima_compra).toLocaleDateString("pt-BR")}
+                {formatDate(cliente.ultima_compra)}
               </p>
             )}
           </div>
@@ -484,7 +499,7 @@ export default function ClienteDetalhePage() {
               </div>
               {cliente.proximo_followup && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  {new Date(cliente.proximo_followup).toLocaleDateString("pt-BR")}
+                  {formatDate(cliente.proximo_followup)}
                 </p>
               )}
             </div>
@@ -508,7 +523,7 @@ export default function ClienteDetalhePage() {
             <InfoRow label="CEP" value={cliente.cep} />
             <InfoRow
               label="Cadastrado em"
-              value={new Date(cliente.criado_em).toLocaleDateString("pt-BR")}
+              value={formatDate(cliente.criado_em)}
             />
             <InfoRow label="Cadastrado por" value={cliente.criado_por_nome} />
           </div>
@@ -565,7 +580,7 @@ export default function ClienteDetalhePage() {
             setVendaParaEstoque(null);
           }}
           onSuccess={() => {
-            carregar();
+            recarregarCliente();
             recarregarInteracoes(); // reflete o badge "Estoque descontado"
           }}
         />
@@ -582,7 +597,7 @@ export default function ClienteDetalhePage() {
           registrar={() => registrarFinanceiro(vendaParaFinanceiro.id)}
           onClose={() => setVendaParaFinanceiro(null)}
           onSuccess={() => {
-            carregar();
+            recarregarCliente();
             recarregarInteracoes();
           }}
         />
@@ -604,7 +619,7 @@ export default function ClienteDetalhePage() {
             interacao={fiadoInteracao}
             onClose={fechar}
             onResolved={() => {
-              carregar();
+              recarregarCliente();
               recarregarInteracoes();
             }}
           />
@@ -621,7 +636,7 @@ export default function ClienteDetalhePage() {
             // o lançamento entra nos agregados dele.
             setVendaDetalhe(atualizada);
             recarregarVendas();
-            carregar();
+            recarregarCliente();
           }}
         />
       )}

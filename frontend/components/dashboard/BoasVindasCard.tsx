@@ -4,6 +4,7 @@ import { Bell, TrendingUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { DashboardResumo } from "@/types/dashboard";
+import { formatCurrency } from "@/lib/utils";
 
 interface BoasVindasCardProps {
   resumo: DashboardResumo | undefined;
@@ -28,9 +29,15 @@ export function BoasVindasCard({ resumo, nomeUsuario, isLoading }: BoasVindasCar
   const primeiroNome = nomeUsuario.split(" ")[0];
   const mes = resumo ? MESES[resumo.meta.mes - 1] : MESES[new Date().getMonth()];
   const ano = resumo?.meta.ano ?? new Date().getFullYear();
-  const naoLidas = resumo?.notificacoes.nao_lidas ?? 0;
-  const saldoMes = resumo?.financeiro.saldo_mes ?? 0;
-  const saldoPositivo = saldoMes >= 0;
+  const naoLidas = resumo?.notificacoes?.nao_lidas ?? 0;
+  // `null` aqui tem significado: o bloco financeiro não respondeu. A pílula do
+  // saldo então não aparece, em vez de anunciar "R$ 0,00" no cartão de
+  // destaque da tela — o lugar onde o número errado é mais lido e menos
+  // questionado. O aviso explícito fica nos KPIs, logo abaixo, onde há espaço
+  // para dizer o que aconteceu.
+  const saldoMes = resumo?.financeiro?.saldo_mes ?? null;
+  const saldoPositivo = (saldoMes ?? 0) >= 0;
+  const tarefasMinhas = resumo?.projetos?.tarefas_minhas ?? 0;
 
   return (
     // Ilha sempre escura: o card é um gradiente da marca nos DOIS modos, então
@@ -54,14 +61,14 @@ export function BoasVindasCard({ resumo, nomeUsuario, isLoading }: BoasVindasCar
           {/* Indicadores rápidos */}
           <div className="flex flex-wrap gap-2">
             {/* Saldo do mês */}
-            {!isLoading && (
+            {!isLoading && saldoMes !== null && (
               <div className="flex items-center gap-1.5 bg-white/10 rounded-lg px-3 py-2">
                 <TrendingUp className={`h-4 w-4 ${saldoPositivo ? "text-green-300" : "text-red-300"}`} />
                 <div>
                   <p className="text-xs text-brand-200">Saldo do mês</p>
                   <p className={`text-sm font-bold ${saldoPositivo ? "text-green-300" : "text-red-300"}`}>
                     {saldoPositivo ? "+" : ""}
-                    {saldoMes.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                    {formatCurrency(saldoMes)}
                   </p>
                 </div>
               </div>
@@ -81,12 +88,12 @@ export function BoasVindasCard({ resumo, nomeUsuario, isLoading }: BoasVindasCar
             )}
 
             {/* Tarefas pendentes */}
-            {!isLoading && (resumo?.projetos.tarefas_minhas ?? 0) > 0 && (
+            {!isLoading && tarefasMinhas > 0 && (
               <div className="flex items-center gap-1.5 bg-white/10 rounded-lg px-3 py-2">
                 <div>
                   <p className="text-xs text-brand-200">Minhas tarefas</p>
                   <p className="text-sm font-bold text-white">
-                    {resumo?.projetos.tarefas_minhas} pendente{resumo?.projetos.tarefas_minhas !== 1 ? "s" : ""}
+                    {tarefasMinhas} pendente{tarefasMinhas !== 1 ? "s" : ""}
                   </p>
                 </div>
               </div>

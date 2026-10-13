@@ -29,6 +29,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { PLANO_CORES, PLANO_LABELS } from "@/types/auth";
 import type { ModuloOpcional } from "@/types/auth";
 import { useModulos } from "@/hooks/useModulos";
+import { useTelaEstreita } from "@/hooks/useTelaEstreita";
 import { VERSION_LABEL } from "@/lib/version";
 
 interface NavItem {
@@ -59,7 +60,9 @@ const navigation: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { sidebarOpen, toggleSidebar, setSidebarOpen } = useAppStore();
+  const { sidebarExpandida, alternarExpansao, gavetaAberta, setGavetaAberta } =
+    useAppStore();
+  const estreita = useTelaEstreita();
   const { usuario, empresa, logout } = useAuth();
   const { moduloAtivo } = useModulos();
 
@@ -83,20 +86,41 @@ export function Sidebar() {
   const planoLabel = PLANO_LABELS[plano];
   const planoCor = PLANO_CORES[plano];
 
+  /**
+   * No celular a gaveta é modal: navegar fecha. No desktop a coluna fica.
+   *
+   * Lê o breakpoint pelo hook, e não por `window.innerWidth`: o hook usa
+   * `useSyncExternalStore`, então reage a rotação e redimensionamento em vez
+   * de medir uma vez no clique.
+   */
   const handleNavClick = () => {
-    // Em mobile (< md), fecha a sidebar ao navegar
-    if (typeof window !== "undefined" && window.innerWidth < 768) {
-      setSidebarOpen(false);
-    }
+    if (estreita) setGavetaAberta(false);
   };
+
+  /**
+   * O mesmo botão fecha a gaveta no celular e recolhe a coluna no desktop.
+   *
+   * Só no clique dá para saber qual dos dois — e no clique já estamos
+   * hidratados, então ler o breakpoint aqui é seguro.
+   */
+  const alternarMenu = () => {
+    if (estreita) setGavetaAberta(!gavetaAberta);
+    else alternarExpansao();
+  };
+
+  /**
+   * Rótulos ao lado dos ícones. No celular a gaveta é sempre larga; no
+   * desktop depende de estar expandida.
+   */
+  const mostrarRotulos = estreita || sidebarExpandida;
 
   return (
     <>
       {/* ── Overlay mobile ──────────────────────────────────── */}
-      {sidebarOpen && (
+      {gavetaAberta && (
         <div
           className="fixed inset-0 z-30 bg-black/60 md:hidden"
-          onClick={() => setSidebarOpen(false)}
+          onClick={() => setGavetaAberta(false)}
           aria-hidden="true"
         />
       )}
@@ -105,17 +129,28 @@ export function Sidebar() {
       <aside
         className={cn(
           "fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-border bg-card transition-all duration-300",
-          // Desktop: colapsa para 64px quando fechado. Largura em px de
-          // propósito: a moldura não escala com o tamanho do texto.
-          // Mobile: some completamente (translate) quando fechado
-          sidebarOpen
-            ? "w-[256px] translate-x-0"
-            : "w-[64px] -translate-x-full md:translate-x-0"
+          // Quem decide o estado INICIAL aqui é o CSS, não o JavaScript, e é
+          // isso que mata o flash: `-translate-x-full` já vale no primeiro
+          // paint do celular, e o `md:translate-x-0` traz a coluna de volta no
+          // desktop sem esperar hidratação.
+          //
+          // Inicializar por breakpoint em JS não resolveria: no servidor não
+          // existe viewport, então o primeiro paint do celular sairia com a
+          // gaveta aberta e só depois o hook a fecharia — o menu apareceria e
+          // sumiria na frente de quem abriu o app. O prefixo `md:` do Tailwind
+          // é avaliado pelo navegador antes de qualquer JS rodar.
+          //
+          // Largura em px de propósito: a moldura não escala com o tamanho do
+          // texto.
+          "w-[256px]",
+          gavetaAberta ? "translate-x-0" : "-translate-x-full",
+          "md:translate-x-0",
+          sidebarExpandida ? "md:w-[256px]" : "md:w-[64px]"
         )}
       >
         {/* ── Logo ──────────────────────────────────────────── */}
         <div className="flex h-[64px] items-center justify-between border-b border-border px-4">
-          {sidebarOpen && (
+          {mostrarRotulos && (
             <Link href="/dashboard" className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600">
                 <Zap className="h-4 w-4 text-white" />
@@ -123,16 +158,16 @@ export function Sidebar() {
               <span className="text-lg font-bold text-foreground tracking-tight">Synapse</span>
             </Link>
           )}
-          {!sidebarOpen && (
+          {!mostrarRotulos && (
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 mx-auto">
               <Zap className="h-4 w-4 text-white" />
             </div>
           )}
-          {sidebarOpen && (
+          {mostrarRotulos && (
             <button
-              onClick={toggleSidebar}
+              onClick={alternarMenu}
               className="flex h-7 w-7 items-center justify-center rounded-md text-muted-suave hover:bg-secondary hover:text-foreground-suave transition-colors"
-              aria-label="Recolher menu"
+              aria-label={estreita ? "Fechar menu" : "Recolher menu"}
             >
               {/* Em mobile mostra X, em desktop mostra ChevronLeft */}
               <span className="md:hidden">
@@ -146,9 +181,10 @@ export function Sidebar() {
         </div>
 
         {/* ── Botão expandir (quando recolhido, apenas desktop) ─ */}
-        {!sidebarOpen && (
+        {/* Só no desktop (`hidden md:flex`), então expande direto. */}
+        {!mostrarRotulos && (
           <button
-            onClick={toggleSidebar}
+            onClick={alternarExpansao}
             className="absolute -right-3 top-[72px] hidden md:flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-muted-suave hover:text-foreground-suave transition-colors shadow-md"
             aria-label="Expandir menu"
           >
@@ -174,7 +210,7 @@ export function Sidebar() {
       ? "bg-brand-600/15 text-brand-accent shadow-sm"
       : "text-muted-foreground hover:bg-secondary hover:text-foreground-suave",
     item.disabled && "cursor-not-allowed opacity-40",
-    !sidebarOpen && "justify-center px-2"
+    !mostrarRotulos && "justify-center px-2"
   )}
   onClick={(e) => {
     if (item.disabled) {
@@ -183,7 +219,7 @@ export function Sidebar() {
     }
     handleNavClick();
   }}
-  title={!sidebarOpen ? item.label : undefined}
+  title={!mostrarRotulos ? item.label : undefined}
 >
   <Icon
     className={cn(
@@ -191,7 +227,7 @@ export function Sidebar() {
       isActive ? "text-brand-accent" : "text-muted-suave"
     )}
   />
-  {sidebarOpen && (
+  {mostrarRotulos && (
     <>
       <span className="flex-1">{item.label}</span>
       {item.badge !== undefined && item.badge > 0 && (
@@ -212,7 +248,7 @@ export function Sidebar() {
 
         {/* ── Footer: Usuário ────────────────────────────────── */}
         <div className="border-t border-border p-3">
-          {sidebarOpen ? (
+          {mostrarRotulos ? (
             <div className="group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-secondary transition-colors cursor-default">
               {/* Avatar */}
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600/20 text-brand-accent text-xs font-bold border border-brand-600/30">
@@ -253,7 +289,7 @@ export function Sidebar() {
               </button>
             </div>
           )}
-          {sidebarOpen && (
+          {mostrarRotulos && (
             <p className="mt-1 px-3 pb-0.5 text-[0.625rem] tabular-nums text-muted-foreground select-none">
               Synapse {VERSION_LABEL}
             </p>

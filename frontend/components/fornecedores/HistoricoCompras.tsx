@@ -14,7 +14,7 @@ import { ApagarComAjustesFlow } from "@/components/clientes/ApagarComAjustesFlow
 import type { CompraFornecedor } from "@/types/fornecedores";
 import type { ApiError } from "@/types/api";
 import { useModulos } from "@/hooks/useModulos";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
 const STATUS_COMPRA: Record<string, { label: string; color: string }> = {
   pendente: { label: "Pendente", color: "bg-amber-500/15 text-alerta border-amber-500/30" },
@@ -101,12 +101,12 @@ function NovaCompraForm({ fornecedorId, onSuccess, onClose, compraId, initialDat
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <label className="mb-1 block text-xs font-medium text-muted-foreground">Descrição *</label>
-              <input {...register("descricao")} placeholder="Descrição da compra" className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground placeholder-zinc-600 outline-none focus:border-brand-500/50" />
+              <input {...register("descricao")} placeholder="Descrição da compra" className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-brand-500/50" />
               {errors.descricao && <p className="mt-1 text-xs text-erro">{errors.descricao.message}</p>}
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-muted-foreground">Valor *</label>
-              <input {...register("valor", { valueAsNumber: true })} type="number" step="0.01" placeholder="0,00" className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground placeholder-zinc-600 outline-none focus:border-brand-500/50" />
+              <input {...register("valor", { valueAsNumber: true })} type="number" step="0.01" placeholder="0,00" className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-brand-500/50" />
               {errors.valor && <p className="mt-1 text-xs text-erro">{errors.valor.message}</p>}
             </div>
             <div>
@@ -116,7 +116,7 @@ function NovaCompraForm({ fornecedorId, onSuccess, onClose, compraId, initialDat
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-muted-foreground">Nº Nota Fiscal</label>
-              <input {...register("numero_nf")} placeholder="NF-001" className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground placeholder-zinc-600 outline-none focus:border-brand-500/50" />
+              <input {...register("numero_nf")} placeholder="NF-001" className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-brand-500/50" />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-muted-foreground">Status</label>
@@ -134,7 +134,7 @@ function NovaCompraForm({ fornecedorId, onSuccess, onClose, compraId, initialDat
             )}
             <div className="sm:col-span-2">
               <label className="mb-1 block text-xs font-medium text-muted-foreground">Observações</label>
-              <textarea {...register("observacoes")} rows={2} placeholder="Observações adicionais..." className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground placeholder-zinc-600 outline-none focus:border-brand-500/50" />
+              <textarea {...register("observacoes")} rows={2} placeholder="Observações adicionais..." className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-brand-500/50" />
             </div>
           </div>
           <div className="mt-5 flex justify-end gap-3">
@@ -297,7 +297,7 @@ export function HistoricoCompras({ fornecedorId }: HistoricoComprasProps) {
               <div className="flex-1">
                 <p className="text-sm font-medium text-foreground">{c.descricao}</p>
                 <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-suave">
-                  <span>{new Date(c.data_compra).toLocaleDateString("pt-BR")}</span>
+                  <span>{formatDate(c.data_compra)}</span>
                   {c.numero_nf && <span>NF: {c.numero_nf}</span>}
                   {c.criado_por_nome && <span>por {c.criado_por_nome}</span>}
                 </div>

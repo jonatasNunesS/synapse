@@ -26,6 +26,7 @@ import { OcorrenciaDecisaoModal } from "@/components/recorrencias/OcorrenciaDeci
 import { getErrorMessage } from "@/lib/api";
 import { descreverFrequencia } from "@/types/recorrencias";
 import type { Recorrencia, OcorrenciaDetalhe } from "@/types/recorrencias";
+import { formatDate } from "@/lib/utils";
 
 function moeda(v: string): string {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
@@ -146,7 +147,7 @@ export default function RecorrenciasPage() {
                   {r.ativa && r.proxima_prevista && (
                     <p className="text-xs text-muted-suave mt-0.5">
                       Próxima prevista:{" "}
-                      {new Date(r.proxima_prevista + "T00:00:00").toLocaleDateString("pt-BR")}
+                      {formatDate(r.proxima_prevista)}
                     </p>
                   )}
                   {/* Últimas 3 ocorrências */}
@@ -159,7 +160,7 @@ export default function RecorrenciasPage() {
                           title={oc.status}
                         >
                           {STATUS_ICON[oc.status]}
-                          {new Date(oc.data_esperada + "T00:00:00").toLocaleDateString("pt-BR")}
+                          {formatDate(oc.data_esperada)}
                         </span>
                       ))}
                     </div>

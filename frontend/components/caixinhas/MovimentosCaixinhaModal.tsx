@@ -15,6 +15,7 @@ import {
 import { useMovimentosCaixinha } from "@/hooks/useCaixinhas";
 import type { Caixinha } from "@/types/caixinhas";
 import { moedaCaixinha } from "./CaixinhaCard";
+import { formatDate, formatTime } from "@/lib/utils";
 
 interface MovimentosCaixinhaModalProps {
   caixinha: Caixinha;
@@ -23,11 +24,7 @@ interface MovimentosCaixinhaModalProps {
 }
 
 function dataHora(iso: string): string {
-  const d = new Date(iso);
-  return `${d.toLocaleDateString("pt-BR")} às ${d.toLocaleTimeString("pt-BR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  })}`;
+  return `${formatDate(iso)} às ${formatTime(iso)}`;
 }
 
 export function MovimentosCaixinhaModal({

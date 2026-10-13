@@ -238,7 +238,7 @@ export function CategoriaEventoModal({ onFechar, onMudou }: CategoriaEventoModal
                     required
                     maxLength={60}
                     placeholder="Ex: Cobrança"
-                    className="w-full px-3 py-2 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
+                    className="w-full px-3 py-2 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
                   />
                 </div>
 

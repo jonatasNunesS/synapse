@@ -4,7 +4,19 @@
  * Mostra os dados e, se vinculado, o cliente com link pro perfil no CRM.
  */
 import Link from "next/link";
-import { X, Pencil, Trash2, MapPin, Clock, User, Bell, Loader2 } from "lucide-react";
+import {
+  X,
+  Pencil,
+  Trash2,
+  MapPin,
+  Clock,
+  User,
+  Bell,
+  Loader2,
+  Tag,
+  FolderKanban,
+  Receipt,
+} from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { rotuloLembrete, SEM_LEMBRETE, type Evento } from "@/types/agenda";
@@ -57,6 +69,20 @@ export function EventoDetalhe({ evento, onEditar, onExcluir, onFechar, excluindo
             </div>
           )}
 
+          {evento.categoria && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Tag size={15} />
+              <span className="inline-flex items-center gap-1.5 text-foreground">
+                <span
+                  aria-hidden
+                  className="h-2.5 w-2.5 rounded-full"
+                  style={{ backgroundColor: evento.cor_efetiva }}
+                />
+                {evento.categoria_nome ?? "Categoria"}
+              </span>
+            </div>
+          )}
+
           {evento.lembrete_antecedencia !== SEM_LEMBRETE && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <Bell size={15} />
@@ -74,6 +100,32 @@ export function EventoDetalhe({ evento, onEditar, onExcluir, onFechar, excluindo
                 className="text-brand-accent hover:underline"
               >
                 {evento.cliente_nome ?? "Ver cliente"}
+              </Link>
+            </div>
+          )}
+
+          {/* Projeto e venda vinculados. Cada um leva ao seu detalhe: é o que
+              faz o vínculo servir para navegar, e não só para decorar. */}
+          {evento.projeto && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <FolderKanban size={15} />
+              <Link
+                href={`/projetos/${evento.projeto}`}
+                className="text-brand-accent hover:underline"
+              >
+                {evento.projeto_nome ?? "Ver projeto"}
+              </Link>
+            </div>
+          )}
+
+          {/* A venda NÃO tem rota própria: o detalhe dela é um modal aberto da
+              lista (`VendaDetalheModal`). Então aqui o link leva à lista, e não
+              a uma `/vendas/{id}` que devolveria 404. */}
+          {evento.venda && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Receipt size={15} />
+              <Link href="/vendas" className="text-brand-accent hover:underline">
+                {evento.venda_rotulo ?? "Ver venda"}
               </Link>
             </div>
           )}

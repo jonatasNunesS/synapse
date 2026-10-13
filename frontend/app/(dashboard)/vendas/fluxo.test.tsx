@@ -60,7 +60,7 @@ vi.mock("@/hooks/useClientes", () => ({
   useClientes: () => ({
     clientes: [{ id: "cli-1", nome: "Maria Souza" }],
     loading: false,
-    carregar: vi.fn(),
+    carregar: vi.fn().mockResolvedValue(undefined),
   }),
 }));
 

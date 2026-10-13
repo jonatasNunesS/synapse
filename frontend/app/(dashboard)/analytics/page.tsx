@@ -31,7 +31,8 @@ import { useAnalytics } from "@/hooks/useDashboard";
 import type { PeriodoAnalytics } from "@/types/dashboard";
 import { STATUS_FUNIL_LABELS, STATUS_FUNIL_CORES } from "@/types/dashboard";
 import { useCoresDoGrafico } from "@/lib/graficos";
-import { formatCurrency, formatCurrencyCompact } from "@/lib/utils";
+import { SEM_VALOR, formatCurrency, formatCurrencyCompact } from "@/lib/utils";
+import { BlocoIndisponivel } from "@/components/dashboard/BlocoIndisponivel";
 
 // ════════════════════════════════════════════════════════════
 // HELPERS
@@ -93,22 +94,29 @@ export default function AnalyticsPage() {
     return Object.values(grupos);
   })();
 
-  // Dados de distribuição por tipo de lançamento (pie chart)
-  const distribuicaoFinanceira = resumo.resumo
+  // Os blocos do resumo vêm `null` quando a consulta deles falha — ver a nota
+  // no topo de `types/dashboard.ts`. Lidos aqui uma vez, com nome curto.
+  const financeiro = resumo.resumo?.financeiro ?? null;
+  const crm = resumo.resumo?.crm ?? null;
+
+  // Dados de distribuição por tipo de lançamento (pie chart).
+  // Sem o bloco financeiro a pizza fica vazia em vez de desenhar três fatias
+  // de zero, que pareceriam um mês sem nenhum movimento.
+  const distribuicaoFinanceira = financeiro
     ? [
         {
           name: "Receitas",
-          value: resumo.resumo.financeiro.total_receitas,
+          value: financeiro.total_receitas,
           cor: "#22c55e",
         },
         {
           name: "Despesas",
-          value: resumo.resumo.financeiro.total_despesas,
+          value: financeiro.total_despesas,
           cor: "#ef4444",
         },
         {
           name: "A Receber",
-          value: resumo.resumo.financeiro.total_pendente,
+          value: financeiro.total_pendente,
           cor: "#f59e0b",
         },
       ]
@@ -143,28 +151,31 @@ export default function AnalyticsPage() {
       {/* ── KPIs de Resumo ─────────────────────────────────── */}
       {resumo.resumo && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Bloco que não respondeu mostra "—": o `formatCurrency` devolve
+              isso para ausência, e é o que separa "não faturou" de "não
+              sabemos quanto faturou". */}
           {[
             {
               label: "Receitas",
-              valor: formatCurrency(resumo.resumo.financeiro.total_receitas),
+              valor: formatCurrency(financeiro?.total_receitas),
               cor: "text-sucesso",
               bg: "bg-sucesso/10",
             },
             {
               label: "Despesas",
-              valor: formatCurrency(resumo.resumo.financeiro.total_despesas),
+              valor: formatCurrency(financeiro?.total_despesas),
               cor: "text-erro",
               bg: "bg-erro/10",
             },
             {
               label: "Saldo",
-              valor: formatCurrency(resumo.resumo.financeiro.saldo_mes),
-              cor: resumo.resumo.financeiro.saldo_mes >= 0 ? "text-sucesso" : "text-erro",
-              bg: resumo.resumo.financeiro.saldo_mes >= 0 ? "bg-sucesso/10" : "bg-erro/10",
+              valor: formatCurrency(financeiro?.saldo_mes),
+              cor: (financeiro?.saldo_mes ?? 0) >= 0 ? "text-sucesso" : "text-erro",
+              bg: (financeiro?.saldo_mes ?? 0) >= 0 ? "bg-sucesso/10" : "bg-erro/10",
             },
             {
               label: "Clientes",
-              valor: resumo.resumo.crm.total_clientes.toString(),
+              valor: crm ? crm.total_clientes.toString() : SEM_VALOR,
               cor: "text-brand-accent",
               bg: "bg-brand-500/10",
             },
@@ -189,6 +200,10 @@ export default function AnalyticsPage() {
         <CardContent>
           {isLoading ? (
             <Skeleton className="h-[300px] w-full rounded-lg" />
+          ) : fluxoCaixa.indisponivel ? (
+            <div className="flex h-[300px] items-center justify-center">
+              <BlocoIndisponivel oQue="o fluxo de caixa" />
+            </div>
           ) : fluxoDados.length === 0 ? (
             <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">
               Nenhum dado disponível para o período selecionado.
@@ -244,6 +259,10 @@ export default function AnalyticsPage() {
           <CardContent>
             {isLoading ? (
               <Skeleton className="h-[260px] w-full rounded-lg" />
+            ) : fluxoCaixa.indisponivel ? (
+              <div className="flex h-[300px] items-center justify-center">
+                <BlocoIndisponivel oQue="receitas e despesas" />
+              </div>
             ) : receitasDespesasAgrupadas.length === 0 ? (
               <div className="h-[260px] flex items-center justify-center text-muted-foreground text-sm">
                 Nenhum dado disponível.
@@ -286,6 +305,10 @@ export default function AnalyticsPage() {
           <CardContent>
             {funil.isLoading ? (
               <Skeleton className="h-[260px] w-full rounded-lg" />
+            ) : funil.indisponivel ? (
+              <div className="flex h-[260px] items-center justify-center">
+                <BlocoIndisponivel oQue="o funil de vendas" />
+              </div>
             ) : funilDados.length === 0 ? (
               <div className="h-[260px] flex items-center justify-center text-muted-foreground text-sm">
                 Nenhum cliente cadastrado.
@@ -341,6 +364,10 @@ export default function AnalyticsPage() {
           <CardContent>
             {resumo.isLoading ? (
               <Skeleton className="h-[240px] w-full rounded-lg" />
+            ) : resumo.indisponivel ? (
+              <div className="flex h-[260px] items-center justify-center">
+                <BlocoIndisponivel oQue="a distribuição financeira" />
+              </div>
             ) : distribuicaoFinanceira.length === 0 ? (
               <div className="h-[240px] flex items-center justify-center text-muted-foreground text-sm">
                 Nenhum dado financeiro disponível.
@@ -392,6 +419,10 @@ export default function AnalyticsPage() {
           <CardContent>
             {isLoading ? (
               <Skeleton className="h-[240px] w-full rounded-lg" />
+            ) : fluxoCaixa.indisponivel ? (
+              <div className="flex h-[260px] items-center justify-center">
+                <BlocoIndisponivel oQue="o saldo acumulado" />
+              </div>
             ) : fluxoDados.length === 0 ? (
               <div className="h-[240px] flex items-center justify-center text-muted-foreground text-sm">
                 Nenhum dado disponível.

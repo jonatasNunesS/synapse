@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { ProdutoForm } from "@/components/estoque/ProdutoForm";
 import { useCategoriasEstoque, useProdutos } from "@/hooks/useEstoque";
 import { getErrorMessage } from "@/lib/api";
+import { avisarSeFalhar } from "@/lib/avisarErro";
 import type { ProdutoCreate } from "@/types/estoque";
 
 import { LinkTelaCompleta } from "./LinkTelaCompleta";
@@ -28,7 +29,7 @@ export function AcaoRapidaProduto({ onFechar, onIrParaTela }: Props) {
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
-    listar();
+    avisarSeFalhar(listar());
   }, [listar]);
 
   const registrar = async (dados: ProdutoCreate) => {

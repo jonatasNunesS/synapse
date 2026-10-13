@@ -197,7 +197,7 @@ export function MovimentacaoForm({
                 step="0.001"
                 min="0.001"
                 placeholder="0"
-                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm pr-16"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500/50 transition-colors text-sm pr-16"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-suave">
                 {produto.unidade}
@@ -236,7 +236,7 @@ export function MovimentacaoForm({
             <input
               {...register("referencia")}
               placeholder="Ex: NF-001, Pedido #123"
-              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500/50 transition-colors text-sm"
             />
           </div>
 
@@ -249,7 +249,7 @@ export function MovimentacaoForm({
               {...register("observacoes")}
               rows={2}
               placeholder="Observações adicionais..."
-              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm resize-none"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500/50 transition-colors text-sm resize-none"
             />
           </div>
 

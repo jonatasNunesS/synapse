@@ -6,7 +6,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import useSWR from "swr";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
 import type { ApiError } from "@/types/api";
 import type {
   ConteudoGerado,
@@ -82,11 +82,15 @@ export function useAIHub() {
             setGerando(false);
             setErro(task.erro || "Erro ao gerar conteúdo.");
           }
-        } catch {
+        } catch (err) {
           clearInterval(pollingRef.current!);
           pollingRef.current = null;
           setGerando(false);
-          setErro("Erro ao verificar status da geração.");
+          // O polling perdeu a consulta de status. Pode ser 402 (crédito
+          // acabou no meio), 404 (task expirou) ou o backend fora do ar — e
+          // a frase fixa dizia a mesma coisa nos três, deixando quem olha
+          // sem saber se é para recarregar, comprar crédito ou esperar.
+          setErro(getErrorMessage(err));
         }
       }, 2000); // Polling a cada 2 segundos
     },

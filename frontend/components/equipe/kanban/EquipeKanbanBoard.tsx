@@ -19,6 +19,7 @@ import {
 import { Plus, Calendar, AlertCircle, GripVertical, Lock } from "lucide-react";
 import type { ColunaKanbanComTarefas, TarefaKanban } from "@/types/equipe";
 import { PRIORIDADE_TAREFA_CORES, PRIORIDADE_TAREFA_LABELS } from "@/types/equipe";
+import { formatDateDiaMesAbrev } from "@/lib/utils";
 
 interface BoardProps {
   colunas: ColunaKanbanComTarefas[];
@@ -104,10 +105,7 @@ function Card({
               }`}
             >
               <Calendar size={10} />
-              {new Date(tarefa.prazo).toLocaleDateString("pt-BR", {
-                day: "2-digit",
-                month: "short",
-              })}
+              {formatDateDiaMesAbrev(tarefa.prazo)}
             </span>
           )}
           {mostrarResponsavel && tarefa.responsavel && (

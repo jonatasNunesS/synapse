@@ -14,7 +14,7 @@ import {
 import { useFornecedores, useCategoriasFornecedor } from "@/hooks/useFornecedores";
 import { ScoreSynapse } from "./ScoreSynapse";
 import type { FornecedorList } from "@/types/fornecedores";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   ativo: { label: "Ativo", color: "bg-emerald-500/15 text-sucesso border-emerald-500/30" },
@@ -75,7 +75,7 @@ export function FornecedorTable({ onNovo }: FornecedorTableProps) {
               placeholder="Buscar..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="h-8 w-full rounded-lg border border-border bg-superficie pl-8 pr-3 text-sm text-foreground placeholder-zinc-500 outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20"
+              className="h-8 w-full rounded-lg border border-border bg-superficie pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20"
             />
           </div>
           {/* Status filter */}
@@ -183,7 +183,7 @@ export function FornecedorTable({ onNovo }: FornecedorTableProps) {
                 </td>
                 <td className="px-4 py-3 text-right text-muted-foreground">
                   {f.ultima_compra
-                    ? new Date(f.ultima_compra).toLocaleDateString("pt-BR")
+                    ? formatDate(f.ultima_compra)
                     : "—"}
                 </td>
                 <td className="px-4 py-3">

@@ -3,7 +3,7 @@
  * Synapse — M6: Página de Detalhe do Projeto com Kanban
  * Rota: /projetos/[id]
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -22,6 +22,9 @@ import { TarefaForm } from "@/components/projetos/TarefaForm";
 import { TarefaModal } from "@/components/projetos/TarefaModal";
 import { ProjetoForm } from "@/components/projetos/ProjetoForm";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { CompromissosVinculados } from "@/components/agenda/CompromissosVinculados";
+import { useEventosDoProjeto } from "@/hooks/useAgenda";
+import { useModulos } from "@/hooks/useModulos";
 import {
   useProjetoDetalhe,
   useKanban,
@@ -43,6 +46,7 @@ import {
 } from "@/types/projetos";
 import { api, getErrorMessage } from "@/lib/api";
 import type { ApiError } from "@/types/api";
+import { formatDate } from "@/lib/utils";
 
 export default function ProjetoDetalhePage() {
   const params = useParams();
@@ -68,6 +72,22 @@ export default function ProjetoDetalhePage() {
     useTarefas(projetoId);
   const { tarefa: tarefaDetalhe, recarregar: recarregarTarefa } =
     useTarefaDetalhe(tarefaDetalheId);
+
+  // Os compromissos vinculados a este projeto (Fase B da agenda).
+  const { moduloAtivo } = useModulos();
+  const agendaAtiva = moduloAtivo("agenda");
+  const {
+    eventos: compromissos,
+    loading: compromissosCarregando,
+    carregadoEm: compromissosCarregadosEm,
+    carregar: carregarCompromissos,
+  } = useEventosDoProjeto(projetoId);
+
+  useEffect(() => {
+    // Falhar aqui não pode derrubar a página do projeto: sem a seção, ela é o
+    // que já era. O hook guarda o erro, e a seção some.
+    if (agendaAtiva && projetoId) carregarCompromissos().catch(() => {});
+  }, [agendaAtiva, projetoId, carregarCompromissos]);
 
   const handleNovaTarefa = (status: TarefaStatus) => {
     setStatusNovaTarefa(status);
@@ -261,7 +281,7 @@ export default function ProjetoDetalhePage() {
             <div className="flex items-center gap-1.5">
               <Calendar size={14} className="text-muted-foreground" />
               <span className={projeto.esta_atrasado ? "text-erro font-medium" : ""}>
-                {new Date(projeto.data_prazo).toLocaleDateString("pt-BR")}
+                {formatDate(projeto.data_prazo)}
               </span>
             </div>
           )}
@@ -288,6 +308,17 @@ export default function ProjetoDetalhePage() {
           )}
         </div>
       </div>
+
+      {/* Os compromissos deste projeto. Só aparece quando a empresa usa a
+          Agenda — sem o módulo, a seção não teria para onde levar. */}
+      {agendaAtiva && (
+        <CompromissosVinculados
+          eventos={compromissos}
+          loading={compromissosCarregando}
+          agora={compromissosCarregadosEm}
+          vazioSufixo="neste projeto"
+        />
+      )}
 
       {/* Controles de visão */}
       <div className="flex items-center justify-between">
@@ -408,7 +439,7 @@ export default function ProjetoDetalhePage() {
                       }`}
                     >
                       {tarefa.data_prazo
-                        ? new Date(tarefa.data_prazo).toLocaleDateString("pt-BR")
+                        ? formatDate(tarefa.data_prazo)
                         : "—"}
                     </td>
                     <td className="px-4 py-3">

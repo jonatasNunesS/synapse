@@ -14,6 +14,7 @@
 import { useState } from "react";
 import { AlertTriangle, ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
 import type { Categoria, Lancamento, LancamentoCreate } from "@/types/financeiro";
+import { formatMesAno } from "@/lib/utils";
 
 const MOTIVO_MIN = 5;
 const MOTIVO_MAX = 500;
@@ -29,10 +30,7 @@ const ETAPAS = ["Dados", "Impacto", "Motivo"] as const;
 
 function mesDoLancamento(l: Lancamento): string {
   const ref = l.data_pagamento || l.data_vencimento;
-  return new Date(`${ref}T12:00:00`).toLocaleDateString("pt-BR", {
-    month: "long",
-    year: "numeric",
-  });
+  return formatMesAno(ref);
 }
 
 export function EditarPagoModal({
@@ -84,7 +82,7 @@ export function EditarPagoModal({
   };
 
   const inputClass =
-    "w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors";
+    "w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-white placeholder:text-muted-foreground focus:outline-none focus:border-brand-500 transition-colors";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

@@ -14,9 +14,11 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/store/useAppStore", () => ({
   useAppStore: () => ({
-    sidebarOpen: true, // aberto: o rodapé de versão só renderiza expandido
-    toggleSidebar: vi.fn(),
-    setSidebarOpen: vi.fn(),
+    // Expandida: o rodapé de versão só renderiza com os rótulos à mostra.
+    sidebarExpandida: true,
+    alternarExpansao: vi.fn(),
+    gavetaAberta: false,
+    setGavetaAberta: vi.fn(),
   }),
 }));
 

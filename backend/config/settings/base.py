@@ -39,7 +39,6 @@ THIRD_PARTY_APPS = [
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
-    "django_filters",
     "django_celery_beat",
 ]
 
@@ -161,8 +160,18 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PAGINATION_CLASS": "shared.pagination.StandardPagination",
     "PAGE_SIZE": 25,
+    # `django_filters.rest_framework.DjangoFilterBackend` saiu daqui: estava
+    # registrado globalmente e era inerte, porque nenhuma view declara
+    # `filterset_fields` nem `filterset_class` — sem um desses, o backend não
+    # filtra nada. Os filtros do sistema são feitos à mão nos repositories.
+    #
+    # Os outros dois ficam. `SearchFilter` também está sem uso (os 29
+    # `search_fields` do projeto são todos de `admin.py`, que é outra coisa),
+    # mas vem do próprio DRF e não custa dependência. E `OrderingFilter`, ao
+    # contrário dos outros, FUNCIONA sem declaração: sem `ordering_fields` ele
+    # aceita ordenar pelos campos do serializer, então tirá-lo poderia quebrar
+    # um `?ordering=` que hoje responde.
     "DEFAULT_FILTER_BACKENDS": (
-        "django_filters.rest_framework.DjangoFilterBackend",
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ),

@@ -68,13 +68,13 @@ vi.mock("@/hooks/useClientes", () => ({
   useClienteDetalhe: () => ({
     cliente,
     loading: false,
-    carregar: vi.fn(),
+    carregar: vi.fn().mockResolvedValue(undefined),
     setCliente: vi.fn(),
   }),
   useInteracoes: () => ({
     interacoes: [venda],
     loading: false,
-    carregar: vi.fn(),
+    carregar: vi.fn().mockResolvedValue(undefined),
     registrar: vi.fn(),
     editar: vi.fn(),
     apagar: vi.fn(),

@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { getErrorMessage } from "@/lib/api";
 import type { ApiError } from "@/types/api";
+import { formatDate } from "@/lib/utils";
 
 interface Props {
   clienteNome: string;
@@ -20,12 +21,6 @@ interface Props {
   /** Cria/atualiza o evento; recebe `atualizar` e devolve a resposta da API. */
   criarEvento: (atualizar: boolean) => Promise<unknown>;
   onClose: () => void;
-}
-
-function formatData(iso: string): string {
-  // Aceita "yyyy-mm-dd" (sem timezone) sem escorregar um dia.
-  const d = iso.length <= 10 ? new Date(`${iso}T00:00:00`) : new Date(iso);
-  return d.toLocaleDateString("pt-BR");
 }
 
 export function FollowupAgendaModal({
@@ -37,7 +32,7 @@ export function FollowupAgendaModal({
   const router = useRouter();
   const [etapa, setEtapa] = useState<"perguntar" | "atualizar">("perguntar");
   const [processando, setProcessando] = useState(false);
-  const dataFmt = formatData(dataFollowup);
+  const dataFmt = formatDate(dataFollowup);
 
   const sucesso = (criado: boolean) => {
     toast.success(

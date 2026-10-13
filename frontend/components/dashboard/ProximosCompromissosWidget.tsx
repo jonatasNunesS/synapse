@@ -14,11 +14,15 @@ import Link from "next/link";
 import { ArrowRight, CalendarDays, MapPin } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BlocoIndisponivel } from "./BlocoIndisponivel";
 import type { CompromissoItem } from "@/types/dashboard";
 
 interface Props {
   compromissos: CompromissoItem[];
   isLoading: boolean;
+  /** A consulta falhou: mostra aviso em vez de "nenhum", que seria mentira. */
+  indisponivel?: boolean;
+  onTentarNovamente?: () => void;
 }
 
 /** Quantos cabem sem virar lista longa dentro do dashboard. */
@@ -39,7 +43,7 @@ export function rotuloHora(item: CompromissoItem): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-export function ProximosCompromissosWidget({ compromissos, isLoading }: Props) {
+export function ProximosCompromissosWidget({ compromissos, isLoading, indisponivel, onTentarNovamente }: Props) {
   if (isLoading) {
     return (
       <Card>
@@ -72,7 +76,9 @@ export function ProximosCompromissosWidget({ compromissos, isLoading }: Props) {
         </div>
       </CardHeader>
       <CardContent>
-        {compromissos.length === 0 ? (
+        {indisponivel ? (
+          <BlocoIndisponivel oQue="os compromissos" onTentarNovamente={onTentarNovamente} />
+        ) : compromissos.length === 0 ? (
           <div className="py-6 text-center text-muted-foreground text-sm">
             Nenhum compromisso próximo.
           </div>

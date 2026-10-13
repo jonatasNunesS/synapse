@@ -22,6 +22,7 @@ import { UpgradeWhatsappButton } from "@/components/ui/UpgradeWhatsappButton";
 import { ModulosSection } from "@/components/configuracoes/ModulosSection";
 import { IdentidadeVisualSection } from "@/components/configuracoes/IdentidadeVisualSection";
 import { ExpedienteSection } from "@/components/configuracoes/ExpedienteSection";
+import { formatDate } from "@/lib/utils";
 
 // ── Schema de empresa ────────────────────────────────────────────────────────
 
@@ -105,7 +106,7 @@ export default function ConfiguracoesPage() {
           {empresa.plano_validade && (
             <p className="text-xs text-muted-suave">
               Válido até{" "}
-              {new Date(empresa.plano_validade).toLocaleDateString("pt-BR")}
+              {formatDate(empresa.plano_validade)}
             </p>
           )}
           {/* Sempre visível quando o WhatsApp está configurado */}
@@ -155,7 +156,7 @@ export default function ConfiguracoesPage() {
             <input
               {...register("nome")}
               disabled={!isAdmin}
-              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-500/50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             />
             {errors.nome && <p className="mt-1 text-xs text-erro">{errors.nome.message}</p>}
           </div>
@@ -187,7 +188,7 @@ export default function ConfiguracoesPage() {
                 {...register("cnpj")}
                 disabled={!isAdmin}
                 placeholder="00.000.000/0001-00"
-                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-500/50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
           </div>

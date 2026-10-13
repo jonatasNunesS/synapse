@@ -7,9 +7,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { buscarClientes } from "@/hooks/useAgenda";
+import { buscarClientes, buscarProjetos, buscarVendas } from "@/hooks/useAgenda";
 import { getErrorMessage } from "@/lib/api";
 import { useCategoriasAgenda } from "@/hooks/useCategoriasAgenda";
+import { useBuscaVinculo } from "@/hooks/useBuscaVinculo";
+import { useModulos } from "@/hooks/useModulos";
 import {
   CORES_EVENTO,
   LEMBRETES,
@@ -100,6 +102,69 @@ export function EventoForm({ evento, slotInicial, onSalvar, onFechar }: EventoFo
     evento?.lembrete_antecedencia ?? SEM_LEMBRETE
   );
   const [clienteId, setClienteId] = useState<string | "">(evento?.cliente ?? "");
+
+  // ── Vínculos com projeto e venda ────────────────────────────────────────
+  // Só aparecem quando a empresa usa o módulo. Projetos tem módulo próprio;
+  // Vendas segue o mesmo critério que a Sidebar usa para o item Vendas, que é
+  // o módulo Estoque.
+  const { moduloAtivo } = useModulos();
+  const mostrarProjeto = moduloAtivo("projetos");
+  const mostrarVenda = moduloAtivo("estoque");
+
+  const [projetoId, setProjetoId] = useState<string>(evento?.projeto ?? "");
+  const [vendaId, setVendaId] = useState<string>(evento?.venda ?? "");
+
+  const buscaProjeto = useBuscaVinculo({
+    buscar: buscarProjetos,
+    fixo:
+      evento?.projeto && evento.projeto_nome
+        ? { id: evento.projeto, rotulo: evento.projeto_nome }
+        : null,
+    ativo: mostrarProjeto,
+  });
+  const buscaVenda = useBuscaVinculo({
+    buscar: buscarVendas,
+    fixo:
+      evento?.venda && evento.venda_rotulo
+        ? { id: evento.venda, rotulo: evento.venda_rotulo }
+        : null,
+    ativo: mostrarVenda,
+  });
+
+  /**
+   * A venda escolhida tem cliente, e o evento ainda não tem? Oferece herdar.
+   *
+   * Sugestão, não regra: quem quiser um compromisso da venda sem marcar o
+   * cliente pode ter motivo, e o sistema não decide por ela. O botão apenas
+   * poupa o passo de ir buscar o mesmo nome à mão.
+   *
+   * Só a VENDA oferece isso porque só ela tem cliente. `Projeto` não tem
+   * nenhum campo de cliente no modelo — não existe o que herdar de um projeto.
+   */
+  const [clienteDaVenda, setClienteDaVenda] = useState<{
+    id: string;
+    nome: string;
+  } | null>(null);
+  const sugerirClienteDaVenda = !!clienteDaVenda && !clienteId;
+
+  const escolherVenda = (id: string) => {
+    setVendaId(id);
+    const escolhida = buscaVenda.opcoes.find((o) => o.id === id);
+    setClienteDaVenda(escolhida?.clienteSugerido ?? null);
+  };
+
+  /** Aceita a sugestão: o cliente da venda passa a ser o cliente do evento. */
+  const herdarClienteDaVenda = () => {
+    if (!clienteDaVenda) return;
+    setClienteId(clienteDaVenda.id);
+    // O nome precisa existir na lista do seletor, senão o `select` ficaria com
+    // um valor que nenhuma opção representa e mostraria em branco.
+    setClientes((atual) =>
+      atual.some((c) => c.id === clienteDaVenda.id)
+        ? atual
+        : [{ id: clienteDaVenda.id, nome: clienteDaVenda.nome }, ...atual]
+    );
+  };
 
   const [clientes, setClientes] = useState<ClienteOption[]>([]);
   // Dois estados de propósito: `buscaDigitada` é o que aparece no campo (muda
@@ -200,6 +265,10 @@ export function EventoForm({ evento, slotInicial, onSalvar, onFechar }: EventoFo
         categoria: categoriaId || null,
         lembrete_antecedencia: lembrete,
         cliente: clienteId || null,
+        // String vazia é "nenhum" na tela; o backend espera null. Mandar ""
+        // num campo de FK seria erro de validação.
+        projeto: projetoId || null,
+        venda: vendaId || null,
       });
       onFechar();
     } catch (err) {
@@ -345,15 +414,24 @@ export function EventoForm({ evento, slotInicial, onSalvar, onFechar }: EventoFo
 
           {/* Cliente do CRM (opcional) */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Cliente (opcional)</label>
+            {/* `htmlFor`/`id`: o rótulo não estava associado a campo nenhum, então
+                leitor de tela (e teste) não tinha como ligar um ao outro. */}
+            <label
+              htmlFor="evento-cliente"
+              className="block text-sm font-medium text-foreground mb-1"
+            >
+              Cliente (opcional)
+            </label>
             <input
               type="text"
               value={buscaDigitada}
               onChange={(e) => onBuscaChange(e.target.value)}
               placeholder="Buscar cliente do CRM..."
+              aria-label="Buscar cliente"
               className={`${inputClass} mb-2`}
             />
             <select
+              id="evento-cliente"
               value={clienteId}
               onChange={(e) => setClienteId(e.target.value)}
               className={inputClass}
@@ -366,6 +444,96 @@ export function EventoForm({ evento, slotInicial, onSalvar, onFechar }: EventoFo
               ))}
             </select>
           </div>
+
+          {/* Projeto (opcional) — só quando a empresa usa Projetos */}
+          {mostrarProjeto && (
+            <div>
+              <label
+                htmlFor="evento-projeto"
+                className="block text-sm font-medium text-foreground mb-1"
+              >
+                Projeto (opcional)
+              </label>
+              <input
+                type="text"
+                value={buscaProjeto.digitado}
+                onChange={(e) => buscaProjeto.onDigitar(e.target.value)}
+                placeholder="Buscar projeto..."
+                aria-label="Buscar projeto"
+                className={`${inputClass} mb-2`}
+              />
+              <select
+                id="evento-projeto"
+                value={projetoId}
+                onChange={(e) => setProjetoId(e.target.value)}
+                className={inputClass}
+              >
+                <option value="">— Sem projeto —</option>
+                {buscaProjeto.opcoes.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.rotulo}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Venda (opcional) — mesmo critério de visibilidade que a Sidebar */}
+          {mostrarVenda && (
+            <div>
+              <label
+                htmlFor="evento-venda"
+                className="block text-sm font-medium text-foreground mb-1"
+              >
+                Venda (opcional)
+              </label>
+              <input
+                type="text"
+                value={buscaVenda.digitado}
+                onChange={(e) => buscaVenda.onDigitar(e.target.value)}
+                placeholder="Buscar venda por cliente..."
+                aria-label="Buscar venda"
+                className={`${inputClass} mb-2`}
+              />
+              <select
+                id="evento-venda"
+                value={vendaId}
+                onChange={(e) => escolherVenda(e.target.value)}
+                className={inputClass}
+              >
+                <option value="">— Sem venda —</option>
+                {buscaVenda.opcoes.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.rotulo}
+                  </option>
+                ))}
+              </select>
+
+              {/* Sugestão de coerência, não regra: o evento pode ficar sem
+                  cliente se for isso que a pessoa quer. */}
+              {sugerirClienteDaVenda && (
+                <div
+                  data-testid="sugestao-cliente-da-venda"
+                  className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2"
+                >
+                  <p className="text-xs text-muted-foreground">
+                    Essa venda é de{" "}
+                    <span className="font-medium text-foreground">
+                      {clienteDaVenda?.nome}
+                    </span>
+                    . Vincular o evento a ela também?
+                  </p>
+                  <button
+                    type="button"
+                    onClick={herdarClienteDaVenda}
+                    className="flex-shrink-0 rounded-md border border-border px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                  >
+                    Vincular
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Categoria — no lugar das 10 cores mudas. A cor vem dela. */}
           <div>

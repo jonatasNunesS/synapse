@@ -50,7 +50,10 @@ vi.mock("@/components/estoque/ProdutoSelect", () => ({
   ),
 }));
 
-const carregarClientes = vi.fn();
+// `mockResolvedValue` e não `vi.fn()`: os loaders dos hooks são async e
+// devolvem promessa, e o caller agora liga um `.catch` nela (Leva 4). Um
+// mock que devolve `undefined` não se parece com o que imita.
+const carregarClientes = vi.fn().mockResolvedValue(undefined);
 vi.mock("@/hooks/useClientes", () => ({
   useClientes: () => ({
     clientes: [{ id: "cli-1", nome: "Maria Souza" }],

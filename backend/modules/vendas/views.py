@@ -33,6 +33,10 @@ class VendaListCreateView(EmpresaQuerySetMixin, APIView):
             "cliente_id": request.query_params.get("cliente_id"),
             "data_inicio": request.query_params.get("data_inicio"),
             "data_fim": request.query_params.get("data_fim"),
+            # Busca por quem comprou (cliente cadastrado ou devedor do fiado).
+            # Entrou para o seletor de venda no formulário de evento poder
+            # buscar em vez de listar as vendas todas.
+            "busca": request.query_params.get("busca"),
         }
         qs = VendaService.listar(empresa_id, filtros)
         paginator = StandardPagination()

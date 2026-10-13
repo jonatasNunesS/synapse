@@ -197,7 +197,7 @@ export function CategoriaEstoqueModal({ onFechar }: CategoriaEstoqueModalProps) 
                   <input
                     {...register("nome")}
                     placeholder="Ex: Eletrônicos"
-                    className="w-full px-3 py-2 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
+                    className="w-full px-3 py-2 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
                   />
                   {errors.nome && <p className="mt-1 text-xs text-erro">{errors.nome.message}</p>}
                 </div>
@@ -209,7 +209,7 @@ export function CategoriaEstoqueModal({ onFechar }: CategoriaEstoqueModalProps) 
                   <input
                     {...register("descricao")}
                     placeholder="Descrição breve..."
-                    className="w-full px-3 py-2 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
+                    className="w-full px-3 py-2 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
                   />
                 </div>
 

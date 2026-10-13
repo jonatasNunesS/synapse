@@ -24,7 +24,9 @@ function setModulos(modulos: Partial<ModulosEmpresa>) {
   });
 }
 
-beforeEach(() => useAppStore.setState({ usuario: null, sidebarOpen: true }));
+beforeEach(() =>
+  useAppStore.setState({ usuario: null, sidebarExpandida: true, gavetaAberta: false })
+);
 
 describe("Sidebar — módulos", () => {
   it("esconde os itens dos módulos desligados", () => {

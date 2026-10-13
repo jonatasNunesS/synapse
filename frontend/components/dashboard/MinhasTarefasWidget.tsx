@@ -5,6 +5,7 @@ import { CheckSquare, AlertTriangle, Clock, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BlocoIndisponivel } from "./BlocoIndisponivel";
 import type { TarefaDashboard } from "@/types/dashboard";
 
 const PRIORIDADE_BADGE: Record<string, string> = {
@@ -24,9 +25,12 @@ const STATUS_LABEL: Record<string, string> = {
 interface MinhasTarefasWidgetProps {
   tarefas: TarefaDashboard[];
   isLoading: boolean;
+  /** A consulta falhou: mostra aviso em vez de "nenhum", que seria mentira. */
+  indisponivel?: boolean;
+  onTentarNovamente?: () => void;
 }
 
-export function MinhasTarefasWidget({ tarefas, isLoading }: MinhasTarefasWidgetProps) {
+export function MinhasTarefasWidget({ tarefas, isLoading, indisponivel, onTentarNovamente }: MinhasTarefasWidgetProps) {
   if (isLoading) {
     return (
       <Card>
@@ -59,7 +63,9 @@ export function MinhasTarefasWidget({ tarefas, isLoading }: MinhasTarefasWidgetP
         </div>
       </CardHeader>
       <CardContent>
-        {tarefas.length === 0 ? (
+        {indisponivel ? (
+          <BlocoIndisponivel oQue="suas tarefas" onTentarNovamente={onTentarNovamente} />
+        ) : tarefas.length === 0 ? (
           <div className="py-6 text-center text-muted-foreground text-sm">
             Nenhuma tarefa pendente.
           </div>

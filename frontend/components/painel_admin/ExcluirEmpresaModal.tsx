@@ -43,8 +43,12 @@ export function ExcluirEmpresaModal({
       // 3ª proteção: confirma a senha de staff re-autenticando no backend.
       try {
         await api.post("/auth/login/", { email: staffEmail, senha });
-      } catch {
-        toast.error("Senha de staff incorreta.", { duration: 6000 });
+      } catch (err) {
+        // Dizia "Senha de staff incorreta" para QUALQUER falha deste login —
+        // inclusive 500 e rede fora do ar. Numa operação irreversível, mandar
+        // o staff duvidar da própria senha quando o problema é outro custa
+        // tempo na hora errada. Agora quem explica é o backend.
+        toast.error(getErrorMessage(err), { duration: 6000 });
         setEnviando(false);
         return;
       }

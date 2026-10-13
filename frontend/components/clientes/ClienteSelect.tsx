@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { Search, Loader2 } from "lucide-react";
 import { useClientes } from "@/hooks/useClientes";
+import { avisarSeFalhar } from "@/lib/avisarErro";
 
 interface ClienteSelectProps {
   onSelect: (cliente: { id: string; nome: string }) => void;
@@ -15,7 +16,10 @@ export function ClienteSelect({ onSelect }: ClienteSelectProps) {
   const [busca, setBusca] = useState("");
 
   useEffect(() => {
-    const t = setTimeout(() => carregar({ busca: busca || undefined, page: 1 }), 250);
+    const t = setTimeout(
+      () => avisarSeFalhar(carregar({ busca: busca || undefined, page: 1 })),
+      250
+    );
     return () => clearTimeout(t);
   }, [busca, carregar]);
 
@@ -28,7 +32,7 @@ export function ClienteSelect({ onSelect }: ClienteSelectProps) {
           onChange={(e) => setBusca(e.target.value)}
           placeholder="Buscar cliente..."
           aria-label="Buscar cliente"
-          className="w-full rounded-lg border border-border bg-superficie py-2 pl-9 pr-3 text-sm text-foreground placeholder-slate-500 outline-none focus:border-brand-500"
+          className="w-full rounded-lg border border-border bg-superficie py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-brand-500"
         />
       </div>
       <div className="mt-2 max-h-56 overflow-y-auto rounded-lg border border-border bg-white/[0.02]">

@@ -42,14 +42,14 @@ vi.mock("@/hooks/useModulos", () => ({
   }),
 }));
 
-let sidebarOpen = false;
+let gavetaAberta = false;
 vi.mock("@/store/useAppStore", () => ({
-  useAppStore: () => ({ sidebarOpen }),
+  useAppStore: () => ({ gavetaAberta }),
 }));
 
 beforeEach(() => {
   desligados = [];
-  sidebarOpen = false;
+  gavetaAberta = false;
 });
 
 function abrirMenu() {
@@ -201,19 +201,20 @@ describe("Onde o botão fica", () => {
 
   it("no mobile some enquanto a gaveta do menu está aberta", () => {
     // A gaveta cobre a tela com um fundo escuro; o botão flutuaria sobre ela.
-    sidebarOpen = true;
+    gavetaAberta = true;
     render(<BotaoAcaoRapida />);
 
     expect(caixa().className).toContain("hidden md:flex");
   });
 
-  it("no desktop a sidebar expandida não esconde o botão", () => {
-    // `sidebarOpen` no desktop quer dizer "expandida", não "por cima da tela" —
-    // e é a mesma flag. O `md:flex` é o que separa os dois casos.
-    sidebarOpen = true;
+  it("a sidebar expandida no desktop não esconde o botão", () => {
+    // Antes isto dependia do `md:flex`, porque a flag significava as duas
+    // coisas. Agora é mais simples: `gavetaAberta` é só do celular, e a
+    // expansão do desktop não entra nesta conta.
+    gavetaAberta = false;
     render(<BotaoAcaoRapida />);
 
-    expect(caixa().className).toContain("md:flex");
+    expect(caixa().className).not.toContain("hidden");
   });
 
   it("usa a cor de marca, que segue a paleta da empresa", () => {

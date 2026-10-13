@@ -68,20 +68,126 @@ export function formatCurrencyOrNull(valor: unknown): string | null {
 }
 
 /**
- * Formata data no padrão brasileiro.
+ * "2026-10-05" — data pura, sem parte de hora. É o que o DRF serializa de um
+ * `DateField`, e há 26 deles nos modelos (vencimento, prazo, follow-up…).
  */
-export function formatDate(date: string | Date): string {
-  return new Intl.DateTimeFormat("pt-BR").format(new Date(date));
+const SO_DATA = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Converte o que vem da API em `Date`, tratando data pura como LOCAL.
+ *
+ * É o conserto do bug que fazia toda data de `DateField` aparecer um dia
+ * antes. `new Date("2026-10-05")` é interpretado como meia-noite **UTC** —
+ * que em São Paulo (UTC−3) é 21h do dia ANTERIOR. Então:
+ *
+ *     new Date("2026-10-05")  →  04/10/2026   ❌
+ *     new Date("2026-01-01")  →  31/12/2025   ❌ dia e ano errados
+ *
+ * Uma data pura não tem fuso: "5 de outubro" é 5 de outubro onde quem lê
+ * estiver. Construindo com `new Date(ano, mes-1, dia)` ela nasce à meia-noite
+ * LOCAL, e a formatação devolve o dia que o backend gravou.
+ *
+ * String com hora (ISO completa, com `T`) já funcionava e segue intocada: ali
+ * o instante é real e o fuso tem sentido (CODE_HEALTH_AUDIT, ERR-03).
+ */
+export function paraData(valor: string | Date): Date {
+  if (valor instanceof Date) return valor;
+  const m = SO_DATA.exec(valor);
+  if (!m) return new Date(valor);
+  const [ano, mes, dia] = valor.split("-").map(Number);
+  return new Date(ano, mes - 1, dia);
 }
 
 /**
- * Formata data e hora no padrão brasileiro.
+ * Formata data no padrão brasileiro (dd/mm/aaaa).
+ *
+ * Aceita data pura do backend sem deslocar o dia — ver `paraData`.
+ */
+export function formatDate(date: string | Date): string {
+  return new Intl.DateTimeFormat("pt-BR").format(paraData(date));
+}
+
+/**
+ * Formata data e hora no padrão brasileiro (dd/mm/aaaa hh:mm).
+ *
+ * Numa data PURA não há hora para mostrar, e inventar "00:00" seria afirmar
+ * uma precisão que o dado não tem — então aí sai só a data.
  */
 export function formatDateTime(date: string | Date): string {
+  if (typeof date === "string" && SO_DATA.test(date)) {
+    return formatDate(date);
+  }
   return new Intl.DateTimeFormat("pt-BR", {
     dateStyle: "short",
     timeStyle: "short",
-  }).format(new Date(date));
+  }).format(paraData(date));
+}
+
+/**
+ * Só o dia e o mês (05/10). Para listas e cartões onde o ano é óbvio.
+ */
+export function formatDateDiaMes(date: string | Date): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+  }).format(paraData(date));
+}
+
+/**
+ * Dia com mês abreviado (05/out). Usado em timelines e kanban, onde o mês por
+ * extenso não cabe mas o número sozinho fica ambíguo.
+ */
+export function formatDateDiaMesAbrev(date: string | Date): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short",
+  }).format(paraData(date));
+}
+
+/**
+ * Dia com mês por extenso (05 de outubro). Para quando a data é o assunto.
+ */
+export function formatDateDiaMesLongo(date: string | Date): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "long",
+  }).format(paraData(date));
+}
+
+/**
+ * Dia, mês abreviado e hora (05/out 14:30). O formato do histórico do AI Hub.
+ */
+export function formatDateDiaMesHora(date: string | Date): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(paraData(date));
+}
+
+/**
+ * Mês e ano por extenso (outubro de 2026). Para agrupar por competência.
+ */
+export function formatMesAno(date: string | Date): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    month: "long",
+    year: "numeric",
+  }).format(paraData(date));
+}
+
+/**
+ * Só a hora (14:30).
+ *
+ * Note que aqui NÃO faz sentido receber data pura: sem hora no dado, qualquer
+ * saída seria inventada. Quem chamar com data pura recebe "00:00", que é o
+ * comportamento do `Date` — a responsabilidade de não chamar é de quem chama.
+ */
+export function formatTime(date: string | Date): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(paraData(date));
 }
 
 /**

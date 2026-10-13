@@ -12,6 +12,7 @@ import {
   TAREFA_STATUS_LABELS,
 } from "@/types/projetos";
 import { useComentarios, useChecklist } from "@/hooks/useProjetos";
+import { formatDate } from "@/lib/utils";
 
 interface TarefaModalProps {
   tarefa: TarefaDetail;
@@ -139,7 +140,7 @@ export function TarefaModal({ tarefa, onFechar, onEditar, onRecarregar }: Tarefa
               <div>
                 <span className="text-xs text-muted-suave">Prazo</span>
                 <p className={`font-medium ${tarefa.esta_atrasada ? "text-erro" : "text-foreground"}`}>
-                  {new Date(tarefa.data_prazo).toLocaleDateString("pt-BR")}
+                  {formatDate(tarefa.data_prazo)}
                 </p>
               </div>
             )}

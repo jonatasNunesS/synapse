@@ -17,7 +17,7 @@ import { ArrowLeft, Ban, Check, Clock, Loader2, X } from "lucide-react";
 
 import { getErrorMessage } from "@/lib/api";
 import { vendaFiado } from "@/hooks/useVendas";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import type { Venda } from "@/types/vendas";
 
 type Modo = "menu" | "confirmar" | "saldo" | "adiar";
@@ -129,7 +129,7 @@ export function VendaFiadoModal({ venda, onClose, onResolvida }: Props) {
             <p className="text-muted-foreground">
               Venda de{" "}
               <span className="text-foreground">
-                {new Date(venda.data_venda + "T00:00:00").toLocaleDateString("pt-BR")}
+                {formatDate(venda.data_venda)}
               </span>
               , total {formatCurrency(venda.total)}.
             </p>

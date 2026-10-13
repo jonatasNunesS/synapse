@@ -5,6 +5,8 @@ Lógica de negócio com cache Redis.
 import logging
 from decimal import Decimal
 
+from django.db import transaction
+
 from shared.cache import build_cache_key, get_cached, set_cached, invalidate_cache
 from shared.exceptions import BusinessRuleViolation, ResourceNotFound
 
@@ -213,27 +215,35 @@ class FornecedorService:
         compra = FornecedorRepository.obter_compra(empresa_id, compra_id)  # 404 multi-tenant
         resumo = {"estoque_estornado": False, "financeiro_ajustado": None}
 
-        if estornar_estoque and compra.movimentacao_estoque_id:
-            EstoqueService.estornar_movimentacao(
-                empresa_id,
-                compra.movimentacao_estoque_id,
-                usuario_id,
-                motivo_estorno=f"Compra apagada (compra {compra.id})",
-            )
-            resumo["estoque_estornado"] = True
+        # Mesma razão do fluxo gêmeo em `clientes`: o estorno SOMA ao estoque
+        # (a movimentação original é imutável), então uma falha depois dele
+        # deixa o estoque alto com a compra ainda viva, e repetir a operação
+        # soma de novo (CODE_HEALTH_AUDIT, ERR-06).
+        with transaction.atomic():
+            if estornar_estoque and compra.movimentacao_estoque_id:
+                EstoqueService.estornar_movimentacao(
+                    empresa_id,
+                    compra.movimentacao_estoque_id,
+                    usuario_id,
+                    motivo_estorno=f"Compra apagada (compra {compra.id})",
+                )
+                resumo["estoque_estornado"] = True
 
-        if apagar_financeiro and compra.lancamento_financeiro_id:
-            lancamento = compra.lancamento_financeiro
-            if lancamento.status == "pago":
-                lancamento.status = "cancelado"
-                lancamento.save(update_fields=["status"])
-                resumo["financeiro_ajustado"] = "cancelado"
-            else:
-                FinanceiroRepository.deletar_lancamento(lancamento)
-                resumo["financeiro_ajustado"] = "apagado"
+            if apagar_financeiro and compra.lancamento_financeiro_id:
+                lancamento = compra.lancamento_financeiro
+                if lancamento.status == "pago":
+                    lancamento.status = "cancelado"
+                    lancamento.save(update_fields=["status"])
+                    resumo["financeiro_ajustado"] = "cancelado"
+                else:
+                    FinanceiroRepository.deletar_lancamento(lancamento)
+                    resumo["financeiro_ajustado"] = "apagado"
+
+            FornecedorRepository.excluir_compra(empresa_id, compra_id)
+
+        # Cache fora da transação, pelos dois módulos que a operação toca.
+        if resumo["financeiro_ajustado"]:
             invalidate_cache(empresa_id, "financeiro")
-
-        FornecedorRepository.excluir_compra(empresa_id, compra_id)
         invalidate_cache(empresa_id, "fornecedores")
         return resumo
 

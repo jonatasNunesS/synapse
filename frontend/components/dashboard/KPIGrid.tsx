@@ -16,6 +16,7 @@ import type { DashboardResumo } from "@/types/dashboard";
 import type { ModuloOpcional } from "@/types/auth";
 import { useModulos } from "@/hooks/useModulos";
 import { formatCurrency } from "@/lib/utils";
+import { KPIIndisponivel } from "./BlocoIndisponivel";
 
 /**
  * A largura mínima da coluna está em rem, então ela cresce junto com a
@@ -28,8 +29,16 @@ const GRID_KPI = "grid grid-cols-[repeat(auto-fit,minmax(13.75rem,1fr))] gap-4";
 
 interface KPICardProps {
   titulo: string;
-  valor: string;
-  subtitulo: string;
+  /**
+   * `null` quando o bloco que alimenta este KPI não respondeu.
+   *
+   * É o pulo do gato desta leva. Antes, a falha do bloco chegava aqui como o
+   * número 0 e o cartão exibia "R$ 0,00" — indistinguível de um mês sem
+   * receita de verdade. Agora o cartão não tem como mostrar número nenhum sem
+   * um valor, e `null` o obriga a dizer que não sabe.
+   */
+  valor: string | null;
+  subtitulo: string | null;
   icone: React.ReactNode;
   cor: string;
   tendencia?: "positiva" | "negativa" | "neutra";
@@ -52,9 +61,17 @@ function KPICard({ titulo, valor, subtitulo, icone, cor, tendencia, alerta }: KP
             {icone}
           </div>
         </div>
-        <p className="text-2xl font-bold text-foreground mt-1 break-words">{valor}</p>
-        <p className="text-xs text-muted-foreground mt-1 break-words">{subtitulo}</p>
-        {tendencia && (
+        {valor === null ? (
+          <KPIIndisponivel />
+        ) : (
+          <>
+            <p className="text-2xl font-bold text-foreground mt-1 break-words">{valor}</p>
+            <p className="text-xs text-muted-foreground mt-1 break-words">{subtitulo}</p>
+          </>
+        )}
+        {/* Sem tendência num cartão indisponível: a seta para cima ou para
+            baixo é uma afirmação sobre o dado, e não há dado. */}
+        {valor !== null && tendencia && (
           <div className="flex items-center gap-1 mt-3">
             {tendencia === "positiva" ? (
               <TrendingUp className="h-3.5 w-3.5 text-sucesso" />
@@ -107,83 +124,94 @@ export function KPIGrid({ resumo, isLoading }: KPIGridProps) {
 
   if (!resumo) return null;
 
+  // Cada um pode ser `null`, e `null` significa que AQUELE bloco falhou. A
+  // falha é por bloco: o financeiro cair não apaga os números do CRM. Oito
+  // cartões continuam na tela nas mesmas posições — os que souberam mostram
+  // número, os que não souberam dizem que não sabem.
   const { financeiro, estoque, crm, projetos } = resumo;
-
 
   const kpis: (KPICardProps & { modulo?: ModuloOpcional })[] = [
     {
       titulo: "Receitas do Mês",
-      valor: formatCurrency(financeiro.total_receitas),
-      subtitulo: `${financeiro.lancamentos_count} lançamentos`,
+      valor: financeiro && formatCurrency(financeiro.total_receitas),
+      subtitulo: financeiro && `${financeiro.lancamentos_count} lançamentos`,
       icone: <DollarSign className="h-5 w-5 text-sucesso" />,
       cor: "border-l-green-500",
-      tendencia: financeiro.saldo_mes >= 0 ? "positiva" : "negativa",
+      tendencia: (financeiro?.saldo_mes ?? 0) >= 0 ? "positiva" : "negativa",
     },
     {
       titulo: "Despesas do Mês",
-      valor: formatCurrency(financeiro.total_despesas),
-      subtitulo: `Saldo: ${formatCurrency(financeiro.saldo_mes)}`,
+      valor: financeiro && formatCurrency(financeiro.total_despesas),
+      subtitulo: financeiro && `Saldo: ${formatCurrency(financeiro.saldo_mes)}`,
       icone: <TrendingDown className="h-5 w-5 text-erro" />,
       cor: "border-l-red-500",
-      tendencia: financeiro.saldo_mes >= 0 ? "positiva" : "negativa",
+      tendencia: (financeiro?.saldo_mes ?? 0) >= 0 ? "positiva" : "negativa",
     },
     {
       titulo: "A Receber",
-      valor: formatCurrency(financeiro.total_pendente),
-      subtitulo: financeiro.total_atrasado > 0
-        ? `${formatCurrency(financeiro.total_atrasado)} atrasado`
-        : "Sem atrasos",
-      icone: <AlertTriangle className={`h-5 w-5 ${financeiro.total_atrasado > 0 ? "text-erro" : "text-alerta"}`} />,
-      cor: financeiro.total_atrasado > 0 ? "border-l-red-400" : "border-l-yellow-500",
-      alerta: financeiro.total_atrasado > 0,
+      valor: financeiro && formatCurrency(financeiro.total_pendente),
+      subtitulo:
+        financeiro &&
+        (financeiro.total_atrasado > 0
+          ? `${formatCurrency(financeiro.total_atrasado)} atrasado`
+          : "Sem atrasos"),
+      icone: <AlertTriangle className={`h-5 w-5 ${(financeiro?.total_atrasado ?? 0) > 0 ? "text-erro" : "text-alerta"}`} />,
+      cor: (financeiro?.total_atrasado ?? 0) > 0 ? "border-l-red-400" : "border-l-yellow-500",
+      alerta: (financeiro?.total_atrasado ?? 0) > 0,
     },
     {
       modulo: "estoque",
       titulo: "Produtos em Estoque",
-      valor: estoque.total_produtos.toString(),
-      subtitulo: estoque.produtos_abaixo_minimo > 0
-        ? `${estoque.produtos_abaixo_minimo} abaixo do mínimo`
-        : "Estoque saudável",
-      icone: <Package className={`h-5 w-5 ${estoque.produtos_abaixo_minimo > 0 ? "text-erro" : "text-info"}`} />,
-      cor: estoque.produtos_abaixo_minimo > 0 ? "border-l-red-400" : "border-l-blue-500",
-      alerta: estoque.produtos_abaixo_minimo > 0,
+      valor: estoque && estoque.total_produtos.toString(),
+      subtitulo:
+        estoque &&
+        (estoque.produtos_abaixo_minimo > 0
+          ? `${estoque.produtos_abaixo_minimo} abaixo do mínimo`
+          : "Estoque saudável"),
+      icone: <Package className={`h-5 w-5 ${(estoque?.produtos_abaixo_minimo ?? 0) > 0 ? "text-erro" : "text-info"}`} />,
+      cor: (estoque?.produtos_abaixo_minimo ?? 0) > 0 ? "border-l-red-400" : "border-l-blue-500",
+      alerta: (estoque?.produtos_abaixo_minimo ?? 0) > 0,
     },
     {
       titulo: "Total de Clientes",
-      valor: crm.total_clientes.toString(),
-      subtitulo: `${crm.novos_este_mes} novo${crm.novos_este_mes !== 1 ? "s" : ""} este mês`,
+      valor: crm && crm.total_clientes.toString(),
+      subtitulo: crm && `${crm.novos_este_mes} novo${crm.novos_este_mes !== 1 ? "s" : ""} este mês`,
       icone: <Users className="h-5 w-5 text-brand-accent" />,
       cor: "border-l-brand-500",
-      tendencia: crm.novos_este_mes > 0 ? "positiva" : "neutra",
+      tendencia: (crm?.novos_este_mes ?? 0) > 0 ? "positiva" : "neutra",
     },
     {
       titulo: "Ticket Médio",
-      valor: formatCurrency(crm.ticket_medio_geral),
-      subtitulo: `Total gerado: ${formatCurrency(crm.valor_total_gerado)}`,
+      valor: crm && formatCurrency(crm.ticket_medio_geral),
+      subtitulo: crm && `Total gerado: ${formatCurrency(crm.valor_total_gerado)}`,
       icone: <TrendingUp className="h-5 w-5 text-brand-accent" />,
       cor: "border-l-brand-500",
     },
     {
       modulo: "projetos",
       titulo: "Projetos Ativos",
-      valor: projetos.projetos_ativos.toString(),
-      subtitulo: projetos.projetos_atrasados > 0
-        ? `${projetos.projetos_atrasados} atrasado${projetos.projetos_atrasados !== 1 ? "s" : ""}`
-        : "Todos no prazo",
-      icone: <FolderOpen className={`h-5 w-5 ${projetos.projetos_atrasados > 0 ? "text-erro" : "text-info"}`} />,
-      cor: projetos.projetos_atrasados > 0 ? "border-l-red-400" : "border-l-cyan-500",
-      alerta: projetos.projetos_atrasados > 0,
+      valor: projetos && projetos.projetos_ativos.toString(),
+      subtitulo:
+        projetos &&
+        (projetos.projetos_atrasados > 0
+          ? `${projetos.projetos_atrasados} atrasado${projetos.projetos_atrasados !== 1 ? "s" : ""}`
+          : "Todos no prazo"),
+      icone: <FolderOpen className={`h-5 w-5 ${(projetos?.projetos_atrasados ?? 0) > 0 ? "text-erro" : "text-info"}`} />,
+      cor: (projetos?.projetos_atrasados ?? 0) > 0 ? "border-l-red-400" : "border-l-cyan-500",
+      alerta: (projetos?.projetos_atrasados ?? 0) > 0,
     },
     {
       modulo: "projetos",
       titulo: "Minhas Tarefas",
-      valor: projetos.tarefas_minhas.toString(),
-      subtitulo: projetos.tarefas_atrasadas > 0
-        ? `${projetos.tarefas_atrasadas} atrasada${projetos.tarefas_atrasadas !== 1 ? "s" : ""}`
-        : "Sem atrasos",
-      icone: <CheckSquare className={`h-5 w-5 ${projetos.tarefas_atrasadas > 0 ? "text-erro" : "text-alerta"}`} />,
-      cor: projetos.tarefas_atrasadas > 0 ? "border-l-red-400" : "border-l-orange-500",
-      alerta: projetos.tarefas_atrasadas > 0,
+      valor: projetos && projetos.tarefas_minhas.toString(),
+      subtitulo:
+        projetos &&
+        (projetos.tarefas_atrasadas > 0
+          ? `${projetos.tarefas_atrasadas} atrasada${projetos.tarefas_atrasadas !== 1 ? "s" : ""}`
+          : "Sem atrasos"),
+      icone: <CheckSquare className={`h-5 w-5 ${(projetos?.tarefas_atrasadas ?? 0) > 0 ? "text-erro" : "text-alerta"}`} />,
+      cor: (projetos?.tarefas_atrasadas ?? 0) > 0 ? "border-l-red-400" : "border-l-orange-500",
+      alerta: (projetos?.tarefas_atrasadas ?? 0) > 0,
     },
   ];
 

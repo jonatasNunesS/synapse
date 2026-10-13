@@ -41,8 +41,11 @@ const interacao: InteracaoCliente = {
 
 const apagar = vi.fn().mockResolvedValue(undefined);
 const editar = vi.fn().mockResolvedValue(interacao);
-const carregar = vi.fn();
-const carregarInteracoes = vi.fn();
+// `mockResolvedValue` e não `vi.fn()`: os loaders dos hooks são async e
+// devolvem promessa, e o caller agora liga um `.catch` nela (Leva 4). Um
+// mock que devolve `undefined` não se parece com o que imita.
+const carregar = vi.fn().mockResolvedValue(undefined);
+const carregarInteracoes = vi.fn().mockResolvedValue(undefined);
 
 const cliente = {
   id: "cli-1",
