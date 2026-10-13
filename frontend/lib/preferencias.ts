@@ -109,10 +109,6 @@ export function modoValido(valor: unknown): TemaModo {
     : MODO_PADRAO;
 }
 
-export function infoDoModo(id: TemaModo): ModoInfo {
-  return MODOS.find((m) => m.id === id) ?? MODOS[2];
-}
-
 /**
  * Resolve a escolha no modo que vai para a tela.
  *
