@@ -8,7 +8,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import useSWR from "swr";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
 import type { TaskIA } from "@/types/ai_hub";
 import type {
   AnaliseFinanceira,
@@ -59,9 +59,13 @@ export function useAnaliseFinanceira() {
             setMensagem(task.erro || "Erro ao gerar a análise.");
             setEstado("erro");
           }
-        } catch {
+        } catch (err) {
           pararPolling();
-          setMensagem("Erro ao verificar o status da análise.");
+          // O polling perdeu a consulta de status. Pode ser 402 (crédito
+          // acabou no meio), 404 (task expirou) ou o backend fora do ar — e
+          // a frase fixa dizia a mesma coisa nos três, deixando quem olha
+          // sem saber se é para recarregar, comprar crédito ou esperar.
+          setMensagem(getErrorMessage(err));
           setEstado("erro");
         }
       }, 2000);

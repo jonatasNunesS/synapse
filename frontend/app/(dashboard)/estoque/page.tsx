@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { Plus, Search, Filter, RefreshCw, Tag } from "lucide-react";
 import { getErrorMessage } from "@/lib/api";
+import { avisarSeFalhar } from "@/lib/avisarErro";
 import { ResumoCards } from "@/components/estoque/ResumoCards";
 import { AlertasEstoque } from "@/components/estoque/AlertasEstoque";
 import { ProdutoTable } from "@/components/estoque/ProdutoTable";
@@ -35,16 +36,19 @@ export default function EstoquePage() {
   const [produtoParaExcluir, setProdutoParaExcluir] = useState<ProdutoList | null>(null);
   const [excluindo, setExcluindo] = useState(false);
 
+  // Cada leitura passa por `avisarSeFalhar`: os hooks agora propagam o erro
+  // do backend, e sem isto a falha morria numa promessa rejeitada — a tabela
+  // ficava vazia e a tela não dizia nada.
   const carregarTudo = useCallback(async (f: FiltrosProduto = filtros) => {
     await Promise.all([
-      carregarResumo(),
-      carregarAlertas(),
-      listar(f),
+      avisarSeFalhar(carregarResumo()),
+      avisarSeFalhar(carregarAlertas()),
+      avisarSeFalhar(listar(f)),
     ]);
   }, [carregarResumo, carregarAlertas, listar, filtros]);
 
   useEffect(() => {
-    listarCategorias();
+    avisarSeFalhar(listarCategorias());
     carregarTudo({ page: 1 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -56,13 +60,13 @@ export default function EstoquePage() {
       page: 1,
     };
     setFiltros(novosFiltros);
-    listar(novosFiltros);
+    avisarSeFalhar(listar(novosFiltros));
   }, [busca, statusFiltro, listar]);
 
   const handlePaginaChange = useCallback((pagina: number) => {
     const novosFiltros = { ...filtros, page: pagina };
     setFiltros(novosFiltros);
-    listar(novosFiltros);
+    avisarSeFalhar(listar(novosFiltros));
   }, [filtros, listar]);
 
   const handleSubmitForm = async (dados: ProdutoCreate) => {
@@ -187,7 +191,7 @@ export default function EstoquePage() {
                   page: 1,
                 };
                 setFiltros(novosFiltros);
-                listar(novosFiltros);
+                avisarSeFalhar(listar(novosFiltros));
               }}
               className="px-3 py-2 bg-superficie border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-blue-500/50 transition-colors"
             >

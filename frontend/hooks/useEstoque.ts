@@ -1,7 +1,24 @@
 "use client";
 
+/**
+ * Synapse — Estoque: hooks de dados.
+ *
+ * Toda leitura aqui segue o mesmo contrato, e ele mudou na Leva 4:
+ *
+ *   catch (err) → setError(getErrorMessage(err)) → throw err
+ *
+ * Os três passos importam por razões diferentes. O BINDING guarda o erro em
+ * vez de descartá-lo. O `getErrorMessage` põe a mensagem do backend no lugar
+ * de "Erro ao carregar produtos." — a mensagem fixa é a mesma quer o problema
+ * seja permissão, filtro inválido ou banco fora do ar, e quem lê não fica
+ * sabendo de nada. E o THROW é o que faz a mensagem chegar à tela: o `error`
+ * do hook sozinho não resolvia, porque nenhuma página destas lia esse campo —
+ * ele era escrito e nunca renderizado. Quem chama agora recebe a rejeição e
+ * mostra o toast, como o resto do sistema já fazia nas escritas.
+ */
+
 import { useState, useCallback } from "react";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
 import type {
   ProdutoList,
   ProdutoDetail,
@@ -30,8 +47,9 @@ export function useResumoEstoque() {
     try {
       const res = await api.get<ResumoEstoque>("/estoque/resumo/");
       setResumo(res.data || null);
-    } catch {
-      setError("Erro ao carregar resumo do estoque.");
+    } catch (err) {
+      setError(getErrorMessage(err));
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -53,8 +71,9 @@ export function useAlertasEstoque() {
     try {
       const res = await api.get<ProdutoList[]>("/estoque/alertas/");
       setAlertas(res.data || []);
-    } catch {
-      setError("Erro ao carregar alertas.");
+    } catch (err) {
+      setError(getErrorMessage(err));
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -97,20 +116,25 @@ export function useProdutos() {
         pagina: filtros.page || 1,
         totalPaginas: res.pagination?.total_pages || 1,
       });
-    } catch {
-      setError("Erro ao carregar produtos.");
+    } catch (err) {
+      setError(getErrorMessage(err));
+      throw err;
     } finally {
       setLoading(false);
     }
   }, []);
 
+  /**
+   * Um produto pelo id.
+   *
+   * Devolvia `null` tanto para "não existe" quanto para "a consulta falhou", e
+   * a tela de detalhe mostrava "Produto não encontrado" nos dois casos — uma
+   * afirmação sobre o banco que ninguém tinha como fazer. Agora `null` é só o
+   * 404, e a falha propaga.
+   */
   const obter = useCallback(async (id: string): Promise<ProdutoDetail | null> => {
-    try {
-      const res = await api.get<ProdutoDetail>(`/estoque/produtos/${id}/`);
-      return res.data || null;
-    } catch {
-      return null;
-    }
+    const res = await api.get<ProdutoDetail>(`/estoque/produtos/${id}/`);
+    return res.data || null;
   }, []);
 
   // Operações de escrita propagam o erro (ApiError) para a UI dar feedback —
@@ -182,8 +206,9 @@ export function useMovimentacoes() {
           pagina: filtros.page || 1,
           totalPaginas: res.pagination?.total_pages || 1,
         });
-      } catch {
-        setError("Erro ao carregar movimentações.");
+      } catch (err) {
+        setError(getErrorMessage(err));
+        throw err;
       } finally {
         setLoading(false);
       }
@@ -219,8 +244,9 @@ export function useCategoriasEstoque() {
     try {
       const res = await api.get<CategoriaEstoque[]>("/estoque/categorias/");
       setCategorias(res.data || []);
-    } catch {
-      setError("Erro ao carregar categorias.");
+    } catch (err) {
+      setError(getErrorMessage(err));
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -268,8 +294,9 @@ export function useRelatorioEstoque() {
     try {
       const res = await api.get<RelatorioEstoque>("/estoque/relatorio/");
       setRelatorio(res.data || null);
-    } catch {
-      setError("Erro ao carregar relatório.");
+    } catch (err) {
+      setError(getErrorMessage(err));
+      throw err;
     } finally {
       setLoading(false);
     }

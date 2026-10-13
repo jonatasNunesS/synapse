@@ -63,6 +63,15 @@ export function BuscaGlobal() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [resultados, setResultados] = useState<ResultadosBusca | null>(null);
+  /**
+   * A busca falhou. Separado de "não achei nada", que é o que a tela dizia
+   * antes: o catch limpava os resultados e nem abria o dropdown, então uma
+   * busca que nunca chegou ao servidor parecia uma busca sem resultado.
+   *
+   * Vai no dropdown, e não num toast, porque a busca é debounced: com o
+   * backend fora do ar, um toast por tecla digitada viraria uma parede.
+   */
+  const [erroBusca, setErroBusca] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [aberto, setAberto] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -72,16 +81,22 @@ export function BuscaGlobal() {
   const buscar = useCallback(async (q: string) => {
     if (q.length < 2) {
       setResultados(null);
+      setErroBusca(null);
       setAberto(false);
       return;
     }
     setLoading(true);
+    setErroBusca(null);
     try {
       const res = await api.get<ResultadosBusca>(`/search/?q=${encodeURIComponent(q)}`);
       setResultados(res.data);
       setAberto(true);
-    } catch {
+    } catch (err) {
       setResultados(null);
+      setErroBusca(getErrorMessage(err));
+      // Abre para o aviso aparecer: fechar o dropdown numa falha é o que
+      // fazia a busca parecer que simplesmente não encontrou nada.
+      setAberto(true);
     } finally {
       setLoading(false);
     }
@@ -119,6 +134,7 @@ export function BuscaGlobal() {
   const limpar = () => {
     setQuery("");
     setResultados(null);
+    setErroBusca(null);
     setAberto(false);
     inputRef.current?.focus();
   };
@@ -154,7 +170,11 @@ export function BuscaGlobal() {
       {/* Dropdown */}
       {aberto && (
         <div className="absolute top-full left-0 right-0 z-50 mt-1.5 rounded-xl border border-border bg-card shadow-2xl shadow-black/50 overflow-hidden">
-          {!temResultados ? (
+          {erroBusca ? (
+            <p role="status" className="px-4 py-3 text-sm text-alerta text-center">
+              Não foi possível buscar. {erroBusca}
+            </p>
+          ) : !temResultados ? (
             <p className="px-4 py-3 text-sm text-muted-suave text-center">
               Nenhum resultado para &ldquo;{query}&rdquo;
             </p>

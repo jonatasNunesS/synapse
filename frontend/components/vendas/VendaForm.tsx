@@ -16,6 +16,7 @@ import { Loader2, Plus, Trash2, X } from "lucide-react";
 import { ProdutoSelect } from "@/components/estoque/ProdutoSelect";
 import { useClientes } from "@/hooks/useClientes";
 import { getErrorMessage } from "@/lib/api";
+import { avisarSeFalhar } from "@/lib/avisarErro";
 import { formatCurrency } from "@/lib/utils";
 import {
   descontoValido,
@@ -79,7 +80,7 @@ export function VendaForm({ venda, onSubmit, onClose }: Props) {
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
-    carregarClientes({ page: 1 });
+    avisarSeFalhar(carregarClientes({ page: 1 }));
   }, [carregarClientes]);
 
   const subtotal = subtotalDaVenda(itens);

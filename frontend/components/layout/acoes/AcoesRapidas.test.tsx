@@ -54,7 +54,11 @@ vi.mock("@/components/estoque/ProdutoSelect", () => ({
 // O formulário de venda lista clientes num select; o hook real faria rede.
 vi.mock("@/hooks/useClientes", async (original) => {
   const real = await original<typeof import("@/hooks/useClientes")>();
-  return { ...real, useClientes: () => ({ clientes: [], carregar: vi.fn() }) };
+  return { ...real, useClientes: () => ({
+      clientes: [],
+      // Promessa, não undefined: o caller liga um `.catch` nela.
+      carregar: vi.fn().mockResolvedValue(undefined),
+    }) };
 });
 
 import { AcaoRapidaVenda } from "./AcaoRapidaVenda";

@@ -1,7 +1,17 @@
 "use client";
 
+/**
+ * Synapse — CRM: hooks de dados.
+ *
+ * As leituras seguem o contrato da Leva 4: `catch (err)` guarda o erro,
+ * `getErrorMessage(err)` põe a mensagem do backend no lugar de uma frase fixa,
+ * e o `throw` faz ela chegar à tela — o campo `error` do hook, sozinho, não
+ * resolvia, porque nenhuma página do CRM lia esse campo.
+ *
+ * As escritas já propagavam desde antes; só as leituras estavam caladas.
+ */
 import { useState, useCallback } from "react";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
 import type {
   ClienteList,
   ClienteDetail,
@@ -51,8 +61,9 @@ export function useClientes() {
         setClientes(resp.data as unknown as ClienteList[]);
         if (resp.pagination) setPagination(resp.pagination as typeof pagination);
       }
-    } catch {
-      setError("Erro ao carregar clientes.");
+    } catch (err) {
+      setError(getErrorMessage(err));
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -104,8 +115,9 @@ export function useClienteDetalhe(id: string) {
     try {
       const resp = await api.get<ClienteDetail>(`/clientes/${id}/`);
       if (resp.success && resp.data) setCliente(resp.data);
-    } catch {
-      setError("Erro ao carregar cliente.");
+    } catch (err) {
+      setError(getErrorMessage(err));
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -127,8 +139,9 @@ export function useFunilKanban() {
     try {
       const resp = await api.get<FunilData>("/clientes/funil/");
       if (resp.success && resp.data) setFunil(resp.data);
-    } catch {
-      setError("Erro ao carregar funil.");
+    } catch (err) {
+      setError(getErrorMessage(err));
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -159,9 +172,14 @@ export function useFunilKanban() {
       // Chama API
       try {
         await api.patch(`/clientes/${clienteId}/mover-funil/`, { status_funil: novoStatus });
-      } catch {
-        // Reverte em caso de erro
+      } catch (err) {
+        // O card volta para a coluna de origem — e isso é o certo, porque o
+        // backend não aceitou a mudança. O que faltava era dizer POR QUÊ: o
+        // card pulava de volta sozinho, sem mensagem nenhuma, e quem arrastou
+        // ficava achando que errou o gesto.
         setFunil(funil);
+        setError(getErrorMessage(err));
+        throw err;
       }
     },
     [funil]
@@ -212,8 +230,9 @@ export function useInteracoes(clienteId: string) {
         if (resp.success && resp.data) {
           setInteracoes(resp.data as unknown as InteracaoCliente[]);
         }
-      } catch {
-        setError("Erro ao carregar interações.");
+      } catch (err) {
+        setError(getErrorMessage(err));
+        throw err;
       } finally {
         setLoading(false);
       }
