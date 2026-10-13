@@ -30,6 +30,23 @@ const fetcher = <T>(url: string): Promise<T> =>
   api.get<T>(url).then((res) => res.data);
 
 // ════════════════════════════════════════════════════════════
+// INDISPONÍVEL
+// ════════════════════════════════════════════════════════════
+//
+// Cada hook devolve `indisponivel`, que junta as DUAS formas de o dado não
+// chegar:
+//
+//   1. a requisição não voltou (rede, 500) → o SWR dá `error`
+//   2. voltou 200, mas o bloco veio `null` → o backend marcou degradação
+//
+// Para quem olha a tela as duas são a mesma coisa: não sabemos. Então o widget
+// recebe um booleano e mostra um aviso, em vez de ter de conhecer a diferença.
+//
+// O caso (1) também era silencioso antes desta leva: com o endpoint em 500, o
+// hook devolvia `[]` e o widget exibia "Nenhum vencimento próximo" — negando a
+// existência de vencimentos que ninguém chegou a consultar.
+
+// ════════════════════════════════════════════════════════════
 // HOOK: RESUMO PRINCIPAL
 // ════════════════════════════════════════════════════════════
 
@@ -47,6 +64,10 @@ export function useDashboardResumo() {
     resumo: data,
     isLoading,
     isError: !!error,
+    // O resumo não tem um `indisponivel` só: cada bloco (financeiro, estoque,
+    // CRM…) falha por conta própria, e quem decide é o cartão que o lê. Aqui
+    // só a falha da requisição inteira, que derruba todos de uma vez.
+    indisponivel: !!error,
     error,
     refresh: mutate,
   };
@@ -65,6 +86,7 @@ export function useDashboardFluxoCaixa(dias: number = 30) {
 
   return {
     fluxo: data?.fluxo ?? [],
+    indisponivel: !!error || data?.fluxo === null,
     dias: data?.dias ?? dias,
     isLoading,
     isError: !!error,
@@ -88,6 +110,7 @@ export function useDashboardFunil() {
     etapas: data?.etapas ?? [],
     isLoading,
     isError: !!error,
+    indisponivel: !!error || data?.etapas === null,
     refresh: mutate,
   };
 }
@@ -105,6 +128,7 @@ export function useDashboardVencimentos(dias: number = 7) {
 
   return {
     vencimentos: data?.vencimentos ?? [],
+    indisponivel: !!error || data?.vencimentos === null,
     dias: data?.dias ?? dias,
     isLoading,
     isError: !!error,
@@ -125,6 +149,7 @@ export function useDashboardFollowUps(dias: number = 3) {
 
   return {
     followups: data?.followups ?? [],
+    indisponivel: !!error || data?.followups === null,
     dias: data?.dias ?? dias,
     isLoading,
     isError: !!error,
@@ -147,6 +172,7 @@ export function useDashboardProximosCompromissos(dias: number = 7) {
 
   return {
     compromissos: data?.compromissos ?? [],
+    indisponivel: !!error || data?.compromissos === null,
     dias: data?.dias ?? dias,
     isLoading,
     isError: !!error,
@@ -167,6 +193,7 @@ export function useDashboardMinhasTarefas() {
 
   return {
     tarefas: data?.tarefas ?? [],
+    indisponivel: !!error || data?.tarefas === null,
     isLoading,
     isError: !!error,
     refresh: mutate,
@@ -186,6 +213,7 @@ export function useDashboardAlertasEstoque() {
 
   return {
     alertas: data?.alertas ?? [],
+    indisponivel: !!error || data?.alertas === null,
     isLoading,
     isError: !!error,
     refresh: mutate,
@@ -205,6 +233,7 @@ export function useDashboardProjetos() {
 
   return {
     projetos: data?.projetos ?? [],
+    indisponivel: !!error || data?.projetos === null,
     isLoading,
     isError: !!error,
     refresh: mutate,
@@ -224,6 +253,7 @@ export function useDashboardAtividade(limit: number = 10) {
 
   return {
     eventos: data?.eventos ?? [],
+    indisponivel: !!error || data?.eventos === null,
     isLoading,
     isError: !!error,
     refresh: mutate,

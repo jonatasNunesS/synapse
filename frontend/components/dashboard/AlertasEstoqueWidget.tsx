@@ -4,15 +4,19 @@ import Link from "next/link";
 import { Package, AlertTriangle, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BlocoIndisponivel } from "./BlocoIndisponivel";
 import type { AlertaEstoqueItem } from "@/types/dashboard";
 import { ALERTA_ESTOQUE_CLASSES, ALERTA_ESTOQUE_LABELS } from "@/types/dashboard";
 
 interface AlertasEstoqueWidgetProps {
   alertas: AlertaEstoqueItem[];
   isLoading: boolean;
+  /** A consulta falhou: mostra aviso em vez de "nenhum", que seria mentira. */
+  indisponivel?: boolean;
+  onTentarNovamente?: () => void;
 }
 
-export function AlertasEstoqueWidget({ alertas, isLoading }: AlertasEstoqueWidgetProps) {
+export function AlertasEstoqueWidget({ alertas, isLoading, indisponivel, onTentarNovamente }: AlertasEstoqueWidgetProps) {
   if (isLoading) {
     return (
       <Card>
@@ -50,7 +54,9 @@ export function AlertasEstoqueWidget({ alertas, isLoading }: AlertasEstoqueWidge
         </div>
       </CardHeader>
       <CardContent>
-        {alertas.length === 0 ? (
+        {indisponivel ? (
+          <BlocoIndisponivel oQue="os alertas de estoque" onTentarNovamente={onTentarNovamente} />
+        ) : alertas.length === 0 ? (
           <div className="py-6 text-center text-muted-foreground text-sm">
             <Package className="h-8 w-8 mx-auto mb-2 text-sucesso" />
             Estoque saudável! Nenhum alerta.
