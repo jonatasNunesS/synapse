@@ -178,7 +178,7 @@ export default function EstoquePage() {
                 onChange={(e) => setBusca(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && aplicarFiltros()}
                 placeholder="Buscar por nome, SKU ou código..."
-                className="w-full pl-9 pr-3 py-2 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors"
+                className="w-full pl-9 pr-3 py-2 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500/50 transition-colors"
               />
             </div>
             <select

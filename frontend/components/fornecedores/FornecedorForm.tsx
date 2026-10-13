@@ -122,7 +122,7 @@ export function FornecedorForm({ fornecedor, onSuccess, onClose }: FornecedorFor
         {...register(name, type === "number" ? { valueAsNumber: true } : {})}
         type={type}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground placeholder-zinc-600 outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20"
+        className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20"
       />
       {errors[name] && (
         <p className="mt-1 text-xs text-erro">{errors[name]?.message as string}</p>
@@ -227,7 +227,7 @@ export function FornecedorForm({ fornecedor, onSuccess, onClose }: FornecedorFor
                 {...register("notas")}
                 rows={3}
                 placeholder="Observações sobre o fornecedor..."
-                className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground placeholder-zinc-600 outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20"
+                className="w-full rounded-lg border border-border bg-superficie px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20"
               />
             </div>
           </div>

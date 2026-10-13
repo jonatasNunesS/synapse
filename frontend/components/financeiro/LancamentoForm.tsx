@@ -221,7 +221,7 @@ export function LancamentoForm({
             <input
               {...register("descricao")}
               placeholder="Ex: Venda de produto, Aluguel..."
-              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-500 transition-colors"
             />
             {errors.descricao && (
               <p className="mt-1 text-xs text-erro">{errors.descricao.message}</p>
@@ -237,7 +237,7 @@ export function LancamentoForm({
               <input
                 {...register("valor")}
                 placeholder="0,00"
-                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-500 transition-colors"
               />
               {errors.valor && (
                 <p className="mt-1 text-xs text-erro">{errors.valor.message}</p>
@@ -304,7 +304,7 @@ export function LancamentoForm({
                 <input
                   {...register("pessoa_emprestimo")}
                   placeholder="Ex: João da padaria"
-                  className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-colors"
+                  className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-amber-500 transition-colors"
                 />
                 {errors.pessoa_emprestimo && (
                   <p className="mt-1 text-xs text-erro">
@@ -429,7 +429,7 @@ export function LancamentoForm({
               {...register("observacoes")}
               rows={2}
               placeholder="Notas adicionais..."
-              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors resize-none"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-500 transition-colors resize-none"
             />
           </div>
 

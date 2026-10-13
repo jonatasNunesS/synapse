@@ -57,7 +57,7 @@ export function ProdutoSelect({ value, onChange, disabled }: ProdutoSelectProps)
           onChange={(e) => setBusca(e.target.value)}
           placeholder="Buscar produto por nome ou SKU..."
           aria-label="Buscar produto"
-          className="w-full rounded-lg border border-border bg-superficie py-2 pl-9 pr-3 text-sm text-foreground placeholder-slate-500 outline-none focus:border-brand-500/50"
+          className="w-full rounded-lg border border-border bg-superficie py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-brand-500/50"
         />
       </div>
 

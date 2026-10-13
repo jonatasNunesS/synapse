@@ -75,7 +75,7 @@ export function FornecedorTable({ onNovo }: FornecedorTableProps) {
               placeholder="Buscar..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="h-8 w-full rounded-lg border border-border bg-superficie pl-8 pr-3 text-sm text-foreground placeholder-zinc-500 outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20"
+              className="h-8 w-full rounded-lg border border-border bg-superficie pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20"
             />
           </div>
           {/* Status filter */}

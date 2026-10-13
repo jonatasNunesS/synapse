@@ -159,7 +159,7 @@ export default function PerfilPage() {
             <label className="block text-sm font-medium text-foreground-suave mb-1.5">Nome</label>
             <input
               {...regPerfil("nome")}
-              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
             />
             {errPerfil.nome && <p className="mt-1 text-xs text-erro">{errPerfil.nome.message}</p>}
           </div>
@@ -172,7 +172,7 @@ export default function PerfilPage() {
               {...regPerfil("avatar_url")}
               type="url"
               placeholder="https://..."
-              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
             />
             {errPerfil.avatar_url && <p className="mt-1 text-xs text-erro">{errPerfil.avatar_url.message}</p>}
           </div>
@@ -226,7 +226,7 @@ export default function PerfilPage() {
               {...regSenha("senha_atual")}
               type="password"
               autoComplete="current-password"
-              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
             />
             {errSenha.senha_atual && <p className="mt-1 text-xs text-erro">{errSenha.senha_atual.message}</p>}
           </div>
@@ -238,7 +238,7 @@ export default function PerfilPage() {
                 {...regSenha("nova_senha")}
                 type="password"
                 autoComplete="new-password"
-                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
               />
               {errSenha.nova_senha && <p className="mt-1 text-xs text-erro">{errSenha.nova_senha.message}</p>}
             </div>
@@ -248,7 +248,7 @@ export default function PerfilPage() {
                 {...regSenha("confirmar_senha")}
                 type="password"
                 autoComplete="new-password"
-                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-500/50 transition-colors text-sm"
               />
               {errSenha.confirmar_senha && <p className="mt-1 text-xs text-erro">{errSenha.confirmar_senha.message}</p>}
             </div>

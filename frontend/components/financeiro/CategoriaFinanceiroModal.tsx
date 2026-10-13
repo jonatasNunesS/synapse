@@ -125,7 +125,7 @@ export function CategoriaFinanceiroModal({ onClose }: CategoriaFinanceiroModalPr
                 <input
                   {...register("nome")}
                   placeholder="Ex: Vendas, Aluguel..."
-                  className="w-full px-3 py-2 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors"
+                  className="w-full px-3 py-2 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-500 transition-colors"
                 />
                 {errors.nome && <p className="mt-1 text-xs text-erro">{errors.nome.message}</p>}
               </div>

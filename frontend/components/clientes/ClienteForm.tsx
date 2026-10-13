@@ -78,7 +78,7 @@ export function ClienteForm({ cliente, onSubmit, onClose, loading }: ClienteForm
   }, [cliente, reset]);
 
   const inputClass =
-    "w-full px-3 py-2 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder-gray-500 focus:outline-none focus:border-brand-500 transition-colors";
+    "w-full px-3 py-2 bg-superficie border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-500 transition-colors";
   const labelClass = "block text-xs font-medium text-muted-foreground mb-1";
   const errorClass = "text-xs text-erro mt-0.5";
 

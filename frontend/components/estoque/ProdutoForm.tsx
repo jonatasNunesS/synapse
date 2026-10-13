@@ -142,7 +142,7 @@ export function ProdutoForm({
             <input
               {...register("nome")}
               placeholder="Ex: Camisa Preta G"
-              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:bg-white/8 transition-colors text-sm"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500/50 focus:bg-white/8 transition-colors text-sm"
             />
             {errors.nome && (
               <p className="mt-1 text-xs text-erro">{errors.nome.message}</p>
@@ -158,7 +158,7 @@ export function ProdutoForm({
               {...register("descricao")}
               rows={2}
               placeholder="Descrição opcional do produto..."
-              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm resize-none"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500/50 transition-colors text-sm resize-none"
             />
           </div>
 
@@ -171,7 +171,7 @@ export function ProdutoForm({
               <input
                 {...register("sku")}
                 placeholder="Ex: CAM-001"
-                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm font-mono"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500/50 transition-colors text-sm font-mono"
               />
             </div>
             <div>
@@ -181,7 +181,7 @@ export function ProdutoForm({
               <input
                 {...register("codigo_barras")}
                 placeholder="Ex: 7891234567890"
-                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm font-mono"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500/50 transition-colors text-sm font-mono"
               />
             </div>
           </div>
@@ -243,7 +243,7 @@ export function ProdutoForm({
                 step="0.01"
                 min="0"
                 placeholder="0,00"
-                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500/50 transition-colors text-sm"
               />
               {errors.preco_custo && (
                 <p className="mt-1 text-xs text-erro">
@@ -261,7 +261,7 @@ export function ProdutoForm({
                 step="0.01"
                 min="0"
                 placeholder="0,00"
-                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500/50 transition-colors text-sm"
               />
               {errors.preco_venda && (
                 <p className="mt-1 text-xs text-erro">
@@ -283,7 +283,7 @@ export function ProdutoForm({
                 step="0.001"
                 min="0"
                 placeholder="0"
-                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500/50 transition-colors text-sm"
               />
             </div>
             <div>
@@ -297,7 +297,7 @@ export function ProdutoForm({
                 step="0.001"
                 min="0"
                 placeholder="Sem limite"
-                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm"
+                className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500/50 transition-colors text-sm"
               />
             </div>
           </div>
@@ -312,7 +312,7 @@ export function ProdutoForm({
               {...register("imagem_url")}
               type="url"
               placeholder="https://..."
-              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm"
+              className="w-full px-3 py-2.5 bg-superficie border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500/50 transition-colors text-sm"
             />
             {errors.imagem_url && (
               <p className="mt-1 text-xs text-erro">
