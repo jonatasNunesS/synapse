@@ -36,7 +36,7 @@ synapse/
 │   ├── shared/                    # Pagination, permissions, exceptions, logging, middleware
 │   ├── requirements/              # base.txt, development.txt, production.txt
 │   ├── tests/                     # Testes globais (health check, shared utilities)
-│   ├── manage.py
+│   ├── .py
 │   ├── pytest.ini
 │   └── Dockerfile
 ├── frontend/
