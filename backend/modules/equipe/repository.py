@@ -4,6 +4,7 @@ Todas as queries ao banco passam por aqui.
 """
 import logging
 from django.db import transaction
+from django.db.models import Count, Q
 from django.core.cache import cache
 from .models import MembroEquipe, MetaMembro
 
@@ -19,10 +20,63 @@ class EquipeRepository:
 
     @staticmethod
     def listar(empresa_id: str, filtros: dict = None):
-        """Lista membros da equipe com filtros opcionais."""
+        """
+        Lista membros da equipe com filtros opcionais.
+
+        As duas contagens que a lista mostra vêm por `annotate`, não por
+        consulta na propriedade do model (CODE_HEALTH_AUDIT, ESC-02). Antes
+        eram **1 + 3N** queries — medido: 31 para 10 membros, 91 para 30.
+        Agora é **1**, para qualquer tamanho de equipe.
+
+        As três por membro eram a contagem de tarefas, a de projetos e — a
+        menos óbvia — o FK `empresa`, que as duas propriedades liam para
+        filtrar e que `select_related` não trazia. A anotação resolveu o FK
+        de brinde: filtrando por `empresa_id` dentro do `Count`, ninguém
+        precisa mais carregar o objeto `Empresa` para contar.
+
+        É a mesma correção que a lista de projetos recebeu na Leva 1 (ESC-01),
+        inclusive no detalhe que a fez funcionar: o alias leva underscore
+        porque `@property` é um data descriptor — anotar com o mesmo nome faz
+        o Django tentar `setattr` e estourar.
+
+        `distinct=True` nas duas: são dois `Count` sobre relações
+        multivaloradas diferentes no mesmo queryset, e sem ele o join de uma
+        multiplica as linhas da outra.
+        """
+        from modules.projetos.models import TAREFA_STATUS_CONCLUIDO
+
         qs = (
             MembroEquipe.objects.filter(empresa_id=empresa_id)
             .select_related("usuario")
+            .annotate(
+                # "Aberta" por EXCLUSÃO do único status terminal, como na
+                # propriedade: um status novo entra como aberto sozinho. Ver
+                # o ERR-01, que nasceu de uma lista literal com dois status
+                # que não existiam.
+                _total_tarefas_abertas=Count(
+                    "usuario__tarefas_responsavel",
+                    filter=(
+                        Q(usuario__tarefas_responsavel__empresa_id=empresa_id)
+                        & ~Q(
+                            usuario__tarefas_responsavel__status=TAREFA_STATUS_CONCLUIDO
+                        )
+                    ),
+                    distinct=True,
+                ),
+                _total_projetos=Count(
+                    "usuario__projetos_responsavel",
+                    filter=(
+                        Q(usuario__projetos_responsavel__empresa_id=empresa_id)
+                        & Q(
+                            usuario__projetos_responsavel__status__in=[
+                                "planejamento",
+                                "em_andamento",
+                            ]
+                        )
+                    ),
+                    distinct=True,
+                ),
+            )
             .order_by("usuario__nome")
         )
         if filtros:
@@ -33,7 +87,6 @@ class EquipeRepository:
             if filtros.get("ativo") is not None:
                 qs = qs.filter(ativo=filtros["ativo"])
             if filtros.get("busca"):
-                from django.db.models import Q
                 qs = qs.filter(
                     Q(usuario__nome__icontains=filtros["busca"])
                     | Q(cargo__icontains=filtros["busca"])

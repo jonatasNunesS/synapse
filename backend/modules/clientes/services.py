@@ -1,5 +1,5 @@
-from django.db import transaction
 
+from shared.apagar_com_ajustes import ajustar_lancamento_ao_apagar, apagar_com_ajustes
 from shared.cache import build_cache_key, get_cached, set_cached, invalidate_cache
 from shared.exceptions import ResourceNotFound, TenantAccessDenied, BusinessRuleViolation
 from .repository import ClienteRepository
@@ -176,59 +176,57 @@ class ClienteService:
         - apagar_financeiro: apaga o lançamento (se pendente) ou o cancela
           (se pago — preserva o histórico, regra de imutabilidade).
         Retorna um resumo do que foi feito.
+
+        A ordem e a transação vêm de `shared.apagar_com_ajustes` (DUP-02). A
+        razão de serem uma só operação continua sendo o estorno: a movimentação
+        original é imutável por regra do módulo de estoque, então estornar é
+        SOMAR de volta. Falhar depois dele deixa o estoque alto com a interação
+        ainda viva — e repetir soma outra vez, inflando o estoque sem jeito de
+        desfazer pela tela (CODE_HEALTH_AUDIT, ERR-06).
         """
         from modules.estoque.services import EstoqueService
 
         interacao = ClienteService._obter_interacao_por_empresa(empresa_id, interacao_id)
-        resumo = {"estoque_estornado": False, "financeiro_ajustado": None}
 
-        # As três escritas são uma só operação, e o estorno é a razão: a
-        # movimentação original é imutável por regra do módulo de estoque,
-        # então estornar é SOMAR de volta. Falhar depois dele deixa o estoque
-        # alto com a interação ainda viva — e repetir a operação soma outra
-        # vez, inflando o estoque sem jeito de desfazer pela tela
-        # (CODE_HEALTH_AUDIT, ERR-06).
-        #
-        # O fluxo gêmeo em `vendas` já era atômico; este nasceu da mesma ideia
-        # e ficou sem a transação.
-        with transaction.atomic():
-            if estornar_estoque and interacao.movimentacao_estoque_id:
-                EstoqueService.estornar_movimentacao(
+        feitos = apagar_com_ajustes(
+            # `or True` porque `estornar_movimentacao` não devolve nada e aqui
+            # o resumo é booleano: o que importa registrar é que o passo
+            # correu, não o que ele retornou.
+            estornar_estoque=(
+                (lambda: EstoqueService.estornar_movimentacao(
                     empresa_id,
                     interacao.movimentacao_estoque_id,
                     usuario_id,
                     motivo_estorno=f"Venda apagada (interação {interacao.id})",
-                )
-                resumo["estoque_estornado"] = True
+                ) or True)
+                if estornar_estoque and interacao.movimentacao_estoque_id
+                else None
+            ),
+            ajustar_financeiro=(
+                (lambda: ajustar_lancamento_ao_apagar(interacao.lancamento_financeiro))
+                if apagar_financeiro and interacao.lancamento_financeiro_id
+                else None
+            ),
+            apagar=lambda: ClienteRepository.deletar_interacao(interacao),
+        )
 
-            if apagar_financeiro and interacao.lancamento_financeiro_id:
-                resumo["financeiro_ajustado"] = (
-                    ClienteService._ajustar_lancamento_ao_apagar(
-                        empresa_id, interacao.lancamento_financeiro
-                    )
-                )
-
-            ClienteRepository.deletar_interacao(interacao)
+        resumo = {
+            "estoque_estornado": bool(feitos.estoque),
+            "financeiro_ajustado": feitos.financeiro,
+        }
 
         # Cache fora da transação: não é dado, e falhar aqui não deve desfazer
         # o que já foi corretamente apagado.
+        #
+        # O `financeiro` subiu para cá: antes era invalidado de DENTRO da
+        # transação, pelo ajuste do lançamento. No caminho de sucesso o efeito
+        # é o mesmo; numa reversão, deixa de limpar o cache de um estado que
+        # não aconteceu — que é o que o fluxo de `vendas` já documentava como
+        # certo. `_invalidar_todos` cuida só de `clientes`.
+        if resumo["financeiro_ajustado"]:
+            invalidate_cache(empresa_id, "financeiro")
         ClienteService._invalidar_todos(empresa_id)
         return resumo
-
-    @staticmethod
-    def _ajustar_lancamento_ao_apagar(empresa_id, lancamento):
-        """Pendente → apaga; pago → cancela (imutabilidade). Retorna a ação."""
-        from modules.financeiro.repository import FinanceiroRepository
-
-        if lancamento.status == "pago":
-            lancamento.status = "cancelado"
-            lancamento.save(update_fields=["status"])
-            acao = "cancelado"
-        else:
-            FinanceiroRepository.deletar_lancamento(lancamento)
-            acao = "apagado"
-        invalidate_cache(empresa_id, "financeiro")
-        return acao
 
     @staticmethod
     def baixar_interacao_estoque(empresa_id, usuario_id, interacao_id, produto_id, quantidade):

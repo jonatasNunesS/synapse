@@ -24,6 +24,7 @@ from decimal import Decimal
 
 from django.db import transaction
 
+from shared.apagar_com_ajustes import ajustar_lancamento_ao_apagar, apagar_com_ajustes
 from shared.cache import invalidate_cache
 from shared.exceptions import BusinessRuleViolation, ResourceNotFound
 
@@ -611,29 +612,38 @@ class VendaService:
         fluxo antigo: lá, uma falha no meio deixava o estoque devolvido e a
         interação viva, e ninguém descobria até conferir. Aqui, ou os três
         passos acontecem, ou nenhum acontece.
+
+        A ordem e a transação vêm de `shared.apagar_com_ajustes`, que é onde
+        os três fluxos gêmeos do sistema passaram a buscá-las (DUP-02). Este
+        era o que já estava certo; ele virou a referência do helper, não o
+        contrário.
         """
-        from modules.financeiro.repository import FinanceiroRepository
-
         venda = VendaService.obter(empresa_id, venda_id)
-        resumo = {"movimentacoes_estornadas": 0, "financeiro_ajustado": None}
 
-        with transaction.atomic():
-            if estornar_estoque:
-                resumo["movimentacoes_estornadas"] = VendaService.estornar_estoque(
-                    empresa_id, usuario_id, venda, motivo=f"Venda #{venda.id} apagada"
-                )
+        feitos = apagar_com_ajustes(
+            # A venda estorna N movimentações e devolve a contagem — por isso
+            # o resumo dela fala em `movimentacoes_estornadas` e não num
+            # booleano como os outros dois fluxos.
+            estornar_estoque=(
+                (lambda: VendaService.estornar_estoque(
+                    empresa_id, usuario_id, venda,
+                    motivo=f"Venda #{venda.id} apagada",
+                ))
+                if estornar_estoque
+                else None
+            ),
+            ajustar_financeiro=(
+                (lambda: ajustar_lancamento_ao_apagar(venda.lancamento_financeiro))
+                if apagar_financeiro and venda.lancamento_financeiro_id
+                else None
+            ),
+            apagar=lambda: VendaRepository.deletar(venda),
+        )
 
-            if apagar_financeiro and venda.lancamento_financeiro_id:
-                lancamento = venda.lancamento_financeiro
-                if lancamento.status == "pago":
-                    lancamento.status = "cancelado"
-                    lancamento.save(update_fields=["status"])
-                    resumo["financeiro_ajustado"] = "cancelado"
-                else:
-                    FinanceiroRepository.deletar_lancamento(lancamento)
-                    resumo["financeiro_ajustado"] = "apagado"
-
-            VendaRepository.deletar(venda)
+        resumo = {
+            "movimentacoes_estornadas": feitos.estoque or 0,
+            "financeiro_ajustado": feitos.financeiro,
+        }
 
         # Fora da transação: invalidar cache do que não foi confirmado seria
         # invalidar à toa, e invalidar dentro de um bloco que pode reverter

@@ -73,7 +73,17 @@ class MembroEquipe(models.Model):
 
         É também o idioma que o repository de projetos já usa em cinco lugares
         (`.exclude(status="concluido")`) — esta propriedade era a única fora.
+
+        PREFERE A ANOTAÇÃO quando ela existe. `EquipeRepository.listar` traz
+        esta contagem por `annotate`, e a consulta abaixo vira o caminho de
+        quem pegou o membro por fora da listagem (ESC-02). O alias tem
+        underscore porque `@property` é data descriptor: anotar com o mesmo
+        nome faz o Django tentar `setattr` e estourar.
         """
+        anotado = getattr(self, "_total_tarefas_abertas", None)
+        if anotado is not None:
+            return anotado
+
         from modules.projetos.models import TAREFA_STATUS_CONCLUIDO, Tarefa
 
         return (
@@ -87,6 +97,16 @@ class MembroEquipe(models.Model):
 
     @property
     def total_projetos(self):
+        """
+        Projetos ativos sob responsabilidade desta pessoa.
+
+        Como o `total_tarefas_abertas`: prefere a anotação de
+        `EquipeRepository.listar`, e consulta só fora da listagem (ESC-02).
+        """
+        anotado = getattr(self, "_total_projetos", None)
+        if anotado is not None:
+            return anotado
+
         from modules.projetos.models import Projeto
         return Projeto.objects.filter(
             responsavel=self.usuario,
