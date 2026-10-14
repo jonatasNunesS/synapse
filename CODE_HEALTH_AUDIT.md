@@ -2,6 +2,23 @@
 
 **Data:** 2026-10-03
 **Base:** `master` @ `eb49fa3` **+ PR #54** (`feature/agenda-vinculos` @ `064656a`)
+**Status de 2026-10-14 — Levas 1 a 6 em `master`, a 6ª em parte.** `master` @ `adaa65b`.
+
+| Leva | PR | Achados fechados |
+|---|---|---|
+| 1 | #56 | `ERR-01`, `ERR-02`, `ERR-05`, `ERR-06`, `ESC-01` (🔴) · `ESC-04`, `PR54-01` (🟠) |
+| 2 | #57 | `ERR-03` (🔴) · `DUP-01` (🟠, **parcial** — ver a nota lá) |
+| 3 | #58 | `ERR-04` (🔴) · `TST-02` (🟠, **parcial**) |
+| 4 | #59 | `ERR-07` (🔴) · `CTR-03` (🟡) · guarda nova contra reincidência |
+| 5 | #60 | `MORTO-01`, `MORTO-02`, `ERR-09` (🟡) · `MORTO-03` (🟡, **parcial** — `pillow` ficou) |
+| 6 | #61 | `DUP-02`, `ESC-02` (🟠) — **2 dos 7 itens da leva**; os outros 5 seguem abertos |
+
+**Nenhum 🔴 segue de pé — são 8 de 8 fechados.** Os quatro defeitos de produção que abriam o relatório e as duas falhas silenciosas que sobravam depois da Leva 2 foram todos corrigidos. O que resta é 🟠 para baixo, e a maior parte está na **Leva 6 (estrutura)**, que começou e entregou **2 dos seus 7 itens** — os dois que fechavam dívida estrutural já medida (`DUP-02`, `ESC-02`). Os cinco restantes são os maiores da leva (`DUP-03`, `ARQ-01`, `TST-01`, `TST-03`, `ERR-08`) e seguem de pé.
+
+Cada achado corrigido está marcado na seção 2, com o que a execução revelou de diferente do diagnóstico.
+
+> **Cinco números deste relatório estavam errados, e as levas provaram.** Estão corrigidos no corpo, cada um no seu achado: o `pillow` **não** estava morto (`MORTO-03`), o `UX-03` tinha **49** placeholders de cor fixa e não 1 (seção 6), o `DUP-01` ficou **parcial** apesar de uma revisão anterior deste documento tê-lo marcado como fechado, a parte do `ERR-04` sobre as views era falsa (elas devolviam 500, não zeros) e o `ESC-02` atribuía à lista de equipe uma terceira propriedade que **não é serializada ali** — a terceira query era outra coisa (ver o achado). Três dos cinco só apareceram porque alguém foi mexer no código — é o argumento mais direto que este relatório tem a favor de guardas automáticas em vez de varreduras manuais.
+
 **Atualização de 2026-10-04:** a **PR #54 foi mergeada** (`master` agora é `064656a`) *depois* desta auditoria. Os três achados próprios dela (seção 7) **deixaram de ser "da branch" e são achados de produção** — a `PR54-01`, que a auditoria recomendava corrigir antes do merge, está hoje no `master` e entrou na Leva 1.
 **Escopo:** saúde estrutural — duplicação, arquitetura, código morto, proteção contra erro, testes, contrato e preparo para crescimento.
 **Natureza desta branch:** auditoria. **Nenhuma linha de código de produção foi alterada.** O único artefato é este documento.
@@ -24,19 +41,43 @@ O que foi construído ou revisitado nos últimos meses é **sólido de verdade**
 
 O que puxa a nota para baixo não é desleixo: é **assimetria**. Os módulos recentes (vendas, agenda) têm 1,4 a 2,0 linhas de teste por linha de código; os antigos (recorrências, projetos) têm 0,30. Os fluxos tocados pelas últimas levas são atômicos; os gêmeos deles, escritos antes e copiados sem a transação, não são. O cuidado existe e é alto — ele só não foi aplicado uniformemente, e os buracos estão exatamente onde ninguém voltou.
 
-Há **três bugs ativos** (não latentes: errados agora, em produção) e todos falham **em silêncio**, que é a categoria que o fundador pediu para priorizar. Com o merge da PR #54 somou-se um quarto defeito em produção — a `PR54-01` —, que não é silencioso (ele grita um 400), mas **bloqueia uma operação legítima**: quem desliga o módulo Projetos não consegue mais editar os eventos que já vinculou.
+A auditoria encontrou **três bugs ativos** (não latentes: errados na hora em que isto foi escrito, em produção), todos falhando **em silêncio** — a categoria que o fundador pediu para priorizar. O merge da PR #54 somou um quarto defeito, a `PR54-01`, que não é silencioso (ele grita um 400) mas **bloqueava uma operação legítima**: quem desligasse o módulo Projetos não conseguia mais editar os eventos que já tinha vinculado.
 
-| Severidade | Qtd |
-|---|---|
-| 🔴 risco real (bug latente, falha silenciosa, buraco de erro) | **9** |
-| 🟠 dívida que atrapalha | **10** |
-| 🟡 melhoria | **9** |
-| 🔵 cosmético | **4** |
-| **Total** | **32** |
+> **Os quatro foram corrigidos na Leva 1** (PR #56, mergeada em 2026-10-04), junto com dois achados de escalabilidade. A nota 7,0 é a do diagnóstico original e **segue não recalculada** depois das cinco levas — ela descreve o estado que motivou o trabalho, e recalcular a cada leva tiraria a referência. O que mudou está na tabela abaixo e marcado achado por achado na seção 2.
+>
+> Se fosse recalculada, o que mudaria a nota não é a contagem de achados fechados: é que **os dois itens que haviam regredido depois de declarados resolvidos agora têm guarda automática**, e a assimetria que a seção diagnosticou — "o cuidado existe e é alto, só não foi aplicado uniformemente" — continua de pé em `projetos`, `ai_hub` e `equipe`, que seguem com zero teste de frontend.
 
-Os 32 estão **todos no `master`**: 29 vinham dele, e os 3 restantes entraram com o merge da PR #54 (seção 7).
+| Severidade | Achados | Fechados | Parciais | Em aberto |
+|---|---|---|---|---|
+| 🔴 risco real (bug latente, falha silenciosa, buraco de erro) | **8** | **8** | — | **0** |
+| 🟠 dívida que atrapalha | **11** | 4 | 2 | **5** |
+| 🟡 melhoria | **12** | 4 | 1 | **7** |
+| 🔵 cosmético | **2** | — | — | **2** |
+| **Total** | **33** | **16** | **3** | **14** |
+
+> **O total mudou de 32 para 33, e não por achado novo.** Recontei a partir das
+> marcas de severidade de cada achado da seção 2, porque a tabela anterior não
+> fechava com elas. São 36 blocos `####` na seção 2; três são **crédito, não
+> defeito** (`ARQ-05` tamanho de arquivo sob controle, `ESC-05` processamento
+> assíncrono bem endereçado, `TST-04` fluxos críticos bem cobertos) e saem da
+> conta, o que dá 33. O "32" da versão anterior está um a menos e não consigo
+> reproduzir qual foi excluído — então a conta de agora é a que fecha com o
+> corpo, e esta nota existe para a diferença não parecer achado resolvido.
+>
+> **Quem está onde, para a tabela ser verificável linha por linha.**
+> Fechados 🟠: `ESC-04`, `PR54-01` (Leva 1) · `DUP-02`, `ESC-02` (Leva 6).
+> Parciais 🟠: `DUP-01`, `TST-02`. Abertos 🟠: `DUP-03`, `ARQ-01`, `ERR-08`,
+> `TST-01`, `PR54-02`. Fechados 🟡: `MORTO-01`, `MORTO-02`, `ERR-09`,
+> `CTR-03`. Parcial 🟡: `MORTO-03`. Abertos 🟡: `DUP-04`, `ARQ-02`, `ARQ-03`,
+> `TST-03`, `CTR-01`, `CTR-02`, `ESC-03`. Abertos 🔵: `ARQ-04`, `PR54-03`.
+
+Os 33 estão **todos no `master`**: 30 vinham dele, e os 3 restantes entraram com o merge da PR #54 (seção 7).
 
 ### Os 5 mais importantes
+
+> **Os cinco estão corrigidos** (Levas 1 a 4; o 4º, o dashboard, na Leva 3).
+> O texto abaixo é o do diagnóstico e fica como está — ele descreve o que
+> motivou o trabalho, e reescrevê-lo apagaria a razão de cada correção.
 
 1. **A tela da equipe mostra 1 tarefa aberta quando há 3.** Um filtro usa dois status que não existem no modelo (`"backlog"`, `"em_progresso"`). Medido em execução. Sem erro, sem aviso — só o número errado. `ERR-01` 🔴
 2. **A invalidação de cache tem um fallback que "funciona" invalidando zero chaves.** O padrão não inclui o `KEY_PREFIX`, então não casa com nada no Redis, e a função retorna como se tivesse limpado. Provado em execução: a chave real é `synapse:1:synapse:7:...` e o padrão procura `synapse:7:...`. Quando o caminho principal falha, o sistema serve dado velho acreditando que invalidou. `ERR-02` 🔴
@@ -56,7 +97,7 @@ Isto não é formalidade: a maior parte do `QUALITY_AUDIT` foi **resolvida bem**
 - ✅ **Nenhum TODO/FIXME/HACK** em todo o código de produção. Confirmado.
 - ✅ **Migrations saudáveis** — nenhum módulo acumulou lixo (máximo 11, em `auth`, que é o mais antigo). Nada a squashar.
 
-Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos registrados abaixo.
+Dois ficaram abertos no diagnóstico: `INC-02` (gaveta mobile) e `UX-03` (placeholder). **Os dois foram corrigidos na Leva 5** (PR #60) — e o `UX-03` revelou que o "1 restante" era 49, ver a seção 6.
 
 ---
 
@@ -67,6 +108,20 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### DUP-01 — Datas formatadas à mão em 42 arquivos, e o helper está quebrado
+
+> ✅ **CORRIGIDO EM PARTE** na Leva 2 (PR #57, mergeada em 2026-10-04):
+> **26 chamadas migradas, em 23 arquivos**, e os 9 contornos de fuso
+> removidos. **Correção de uma marca anterior deste documento:** a revisão
+> de 2026-10-04 registrou este achado como fechado, e ele não está.
+>
+> Restam **7 formatadores de data à mão, em 7 arquivos** — e a varredura da
+> Leva 2 não os pegou porque nenhum deles chama `new Date`: cinco fatiam a
+> string (`dateStr.split("-")`, em `ProjetosWidget`, `FluxoCaixaWidget`,
+> `FollowUpsWidget`, `VencimentosWidget` e `analytics/page`) e dois usam
+> `parseISO` local (`LancamentoTable`, `FluxoCaixaChart`). **Nenhum tem o
+> bug de fuso** — a saída está correta. É duplicação pura, não defeito
+> ativo, e por isso continua 🟠 em vez de voltar a 🔴. Hoje 33 arquivos
+> usam os helpers.
 - **Severidade:** 🟠 (a quebra do helper em si é o `ERR-03` 🔴)
 - **Local:** 58 chamadas em 42 arquivos; só **6** usam `formatDate`/`formatDateTime` de `lib/utils`.
 - **Descrição:** O `INC-04` do `QUALITY_AUDIT` contou 28 arquivos. Hoje são **42** — a dívida cresceu durante as correções. A PR #54 adiciona duas chamadas novas (`CompromissosVinculados.tsx:51` e o `rotuloDaVenda` em `useAgenda.ts:242`).
@@ -78,6 +133,30 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### DUP-02 — O mesmo fluxo "apagar com ajustes" escrito três vezes, e só uma é atômica
+
+> ✅ **CORRIGIDO** na Leva 6 (PR #61, mergeada em 2026-10-14): nasceu
+> `backend/shared/apagar_com_ajustes.py`, e os três fluxos passaram a chamá-lo.
+> A transação deixou de ser algo que cada cópia lembra de escrever e passou a
+> ser o que o helper **é** — a única forma de rodar os três passos por ele é
+> dentro dela.
+>
+> **O que ficou de fora, de propósito:** buscar o registro (e o 404
+> multi-tenant), decidir **se** estorna, invalidar cache e a forma do resumo.
+> As três APIs respondem em formatos diferentes que já prometeram
+> (`movimentacoes_estornadas: int` na venda, `estoque_estornado: bool` nos
+> outros dois), e achatar isso num formato único seria mudar três contratos de
+> API para economizar três linhas. O helper acomoda a diferença por callbacks;
+> **nenhum dos três fluxos mudou de comportamento.**
+>
+> **A ordem virou teste, e não era.** Ao mutar o helper, **inverter a ordem
+> dos passos não quebrou nenhum teste** — e faz sentido que não quebre, porque
+> dentro de uma transação duas escritas independentes dão no mesmo resultado em
+> qualquer ordem. Mas a ordem é contrato escrito do módulo, e contrato sem
+> teste é comentário: `backend/tests/test_apagar_com_ajustes_helper.py` (17
+> testes) prende a ordem, os passos opcionais, o rollback com escrita real no
+> banco e o fato de os callbacks serem **por palavra-chave** — posicionais,
+> trocar `estornar_estoque` com `apagar` inverteria a ordem sem erro de tipo
+> nenhum.
 - **Severidade:** 🟠 (a falta de transação é o `ERR-06` 🔴)
 - **Local:** `vendas/services.py:573` · `clientes/services.py:165` · `fornecedores/services.py:200`
 - **Descrição:** Três funções com a mesma assinatura (`estornar_estoque=False, apagar_financeiro=False`), a mesma ordem documentada (estoque → financeiro → apagar) e o mesmo resumo de retorno. A de vendas está dentro de `transaction.atomic()`; as outras duas **não têm uma única** ocorrência de `atomic` no arquivo.
@@ -167,6 +246,12 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### MORTO-01 — `infoDoModo` é a única função verdadeiramente órfã
+
+> ✅ **CORRIGIDO** na Leva 5 (PR #60, mergeada em 2026-10-13).
+>
+> `infoDoModo` apagada. Os outros 7 `export` ficaram: a varredura que os
+> achou não os nomeia, e o custo de mantê-los é o que este próprio achado
+> diz ser — zero.
 - **Severidade:** 🟡
 - **Local:** `frontend/lib/preferencias.ts:112`
 - **Descrição:** Exportada, zero chamadas em todo o repositório — inclusive dentro do próprio arquivo e dos testes. É a irmã do helper de `R$ NaN` com zero importadores que o audit anterior achou.
@@ -178,6 +263,13 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### MORTO-02 — Três dependências do frontend instaladas e nunca importadas
+
+> ✅ **CORRIGIDO** na Leva 5 (PR #60, mergeada em 2026-10-13).
+>
+> As três removidas; `@dnd-kit/core` preservado (está em uso em três
+> kanbans). `pnpm audit`: **41 vulnerabilidades antes, 41 depois** — nada
+> abriu, e ao contrário do que este achado sugeria, nada fechou. As 41 vêm
+> de outro lugar.
 - **Severidade:** 🟡
 - **Local:** `frontend/package.json`
 - **Descrição:** `@dnd-kit/sortable`, `@dnd-kit/utilities` e **`@tanstack/react-query`** — zero referências no código. A terceira é a interessante: react-query é uma biblioteca de cache/fetch, e o projeto resolveu o problema com hooks próprios (os 22 do `DUP-03`). Alguém começou pelo caminho da biblioteca e seguiu por outro, sem remover a dependência.
@@ -187,6 +279,36 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### MORTO-03 — `pillow` e `factory-boy` no `requirements.txt` sem uso; `django-filter` registrado e inerte
+
+> ✅ **CORRIGIDO EM PARTE** na Leva 5 (PR #60, mergeada em 2026-10-13):
+> `django-filter` e `factory-boy` removidos. **`pillow` foi MANTIDO — este
+> achado estava errado.**
+>
+> A verificação "nenhum `PIL`" não alcançou os testes:
+>
+> ```
+> backend/tests/test_estoque.py:551:  from PIL import Image
+> ```
+>
+> Existe upload de imagem de produto (`POST
+> /api/estoque/produtos/{id}/upload-imagem/`) e o teste usa PIL para
+> sintetizar o JPEG que envia. Provado desinstalando do venv:
+> `ModuleNotFoundError: No module named 'PIL'`, e
+> `TestUploadImagemProduto::test_upload_imagem_sucesso` quebra. A outra
+> metade do diagnóstico estava certa: `imagem_url` é um `CharField`, não um
+> `ImageField`, e **produção não importa PIL** — a view só grava o arquivo.
+> Então `pillow` é dependência de **teste** morando em `base.txt`.
+> **Proposta pendente:** movê-la para `development.txt` encolheria a imagem
+> de produção, mas muda onde o CI instala o quê — não foi feito na Leva 5.
+>
+> E o achado do `django-filter` era **menor que a realidade**: a tupla
+> `DEFAULT_FILTER_BACKENDS` **inteira** está sem uso. Os 29 `search_fields`
+> do projeto são todos de `admin.py` — o campo do Django admin, que não tem
+> relação com o `SearchFilter` do DRF; em views são zero. Ainda assim os
+> outros dois ficaram: `SearchFilter` vem do próprio DRF e não custa
+> dependência, e **`OrderingFilter` funciona sem declaração** (sem
+> `ordering_fields` ele aceita ordenar pelos campos do serializer), então
+> removê-lo poderia quebrar um `?ordering=` que hoje responde.
 - **Severidade:** 🟡
 - **Local:** `backend/requirements.txt`, `config/settings/base.py:42,165`
 - **Descrição:** Verificado por nome de **import**, não de pacote (o heurístico por nome de pacote dá falso positivo em massa — `djangorestframework` importa como `rest_framework`):
@@ -203,6 +325,8 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### ERR-01 — A tela da equipe conta tarefas com dois status que não existem
+
+> ✅ **CORRIGIDO** na Leva 1 (PR #56, mergeada em 2026-10-04).
 - **Severidade:** 🔴 **bug ativo, falha silenciosa**
 - **Local:** `backend/modules/equipe/models.py:63`
 - **Descrição:** `MembroEquipe.total_tarefas_abertas` filtra:
@@ -231,6 +355,8 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### ERR-02 — O fallback de invalidação de cache invalida zero chaves e diz que funcionou
+
+> ✅ **CORRIGIDO** na Leva 1 (PR #56, mergeada em 2026-10-04).
 - **Severidade:** 🔴 **falha silenciosa**
 - **Local:** `backend/shared/cache.py:72-86`
 - **Descrição:** `invalidate_cache` tem três tentativas em cascata. A segunda monta o padrão à mão:
@@ -267,6 +393,8 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### ERR-03 — `formatDate` mostra o dia anterior para toda data pura do backend
+
+> ✅ **CORRIGIDO** na Leva 2 (PR #57, mergeada em 2026-10-04).
 - **Severidade:** 🔴 **bug ativo**
 - **Local:** `frontend/lib/utils.ts:73-75`
 - **Descrição:** O helper é `new Intl.DateTimeFormat("pt-BR").format(new Date(date))`. Para uma string ISO completa funciona. Para **data pura** — o que o DRF serializa de um `DateField`, `"2026-10-05"` — o `new Date` interpreta como **meia-noite UTC**, que em São Paulo (UTC−3) é 21h do dia **anterior**.
@@ -294,6 +422,31 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### ERR-04 — O dashboard converte falha em zero, e a tela não sabe a diferença
+
+> ✅ **CORRIGIDO** na Leva 3 (PR #58, mergeada em 2026-10-13).
+>
+> O padrão escolhido foi `null` no lugar do dado, e não uma flag ao lado dos
+> zeros: com `| null` nos tipos, o compilador cobra o tratamento de cada
+> leitor — foi assim que o `tsc` apontou a tela de Analytics, que lê o mesmo
+> payload. Uma flag deixaria o código antigo compilando e mostrando os zeros.
+>
+> **E a correção achou um bug que estava em produção.** Estreitar os `except`
+> fez a suíte estourar em `from modules.projetos.repository import
+> ProjetosRepository` — classe que nunca existiu (é `ProjetoRepository`,
+> singular). O `except Exception` engolia o `ImportError` desde que a linha
+> foi escrita, e o bloco de projetos saía **zerado para todas as empresas**.
+> Medido em `master`, numa empresa com 1 projeto ativo e 2 tarefas abertas, o
+> dashboard devolvia `{'projetos_ativos': 0, 'tarefas_minhas': 0}`. É este
+> achado em uma linha: a falha tinha cara de resposta.
+>
+> Dois ajustes a mais que a correção exigiu e o diagnóstico não previa:
+> resposta degradada **não vai para o cache** (o código antigo guardava os
+> zeros por 5 min, então o banco voltava e a tela seguia mentindo pelo resto
+> do TTL), e os 10 `except` das **views** não devolviam estrutura zerada —
+> devolviam 500 com código `DASHBOARD_ERROR`. Essa parte do diagnóstico
+> estava errada; eles foram estreitados por outra razão (embrulhar um
+> `TypeError` em "Erro ao carregar o dashboard" faz bug parecer soluço de
+> infra).
 - **Severidade:** 🔴 **falha silenciosa**
 - **Local:** `backend/modules/dashboard/services.py` (19 `except Exception`) e `views.py` (10)
 - **Descrição:** Cada bloco do dashboard é embrulhado assim:
@@ -321,6 +474,8 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### ERR-05 — `lancar_financeiro`: duas escritas sem transação derrubam a guarda contra dinheiro duplicado
+
+> ✅ **CORRIGIDO** na Leva 1 (PR #56, mergeada em 2026-10-04).
 - **Severidade:** 🔴
 - **Local:** `backend/modules/vendas/services.py:236-285`
 - **Descrição:** A função escreve em dois lugares, sem `transaction.atomic()`:
@@ -349,6 +504,12 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### ERR-06 — Dois fluxos de "apagar com ajustes" sem atomicidade, com estorno de estoque dentro
+
+> ✅ **CORRIGIDO** na Leva 1 (PR #56, mergeada em 2026-10-04) — com um `with`
+> em cada um, que era a correção urgente. **A Leva 6 fechou a outra metade:**
+> os dois (e o de `vendas`) passaram a herdar a transação do helper do
+> `DUP-02`, de modo que o quarto módulo a copiar o padrão não tem como copiar
+> a versão sem proteção.
 - **Severidade:** 🔴
 - **Local:** `backend/modules/clientes/services.py:165-199` · `backend/modules/fornecedores/services.py:200-237`
 - **Descrição:** A face de risco do `DUP-02`. Os dois fazem **três** escritas em sequência — estornar movimentação de estoque, ajustar/apagar lançamento financeiro, apagar o registro — e `grep -c "transaction.atomic"` nos dois arquivos devolve **0**.
@@ -364,6 +525,27 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### ERR-07 — 30 `catch` que descartam o erro antes de ele chegar ao usuário
+
+> ✅ **CORRIGIDO** na Leva 4 (PR #59, conteúdo em `master` via `8170e97`, 2026-10-13).
+>
+> **17 corrigidos, 13 na allowlist** — a contagem de 30 estava certa, a
+> distribuição não: são **21 em `hooks/`, 6 em `components/` e 3 em `lib/`**,
+> e não "~25 em hooks de dados".
+>
+> A correção também não era mecânica, e o motivo vale registrar: **nenhuma
+> página de Estoque ou de CRM lia o campo `error` desses hooks.** Ele era
+> escrito e nunca renderizado, então trocar a frase fixa pela mensagem do
+> backend ali, e parar, teria produzido zero diferença visível. Quem entrega
+> a mensagem é o `throw`, e ele obriga a tratar quem chama — daí os 8
+> arquivos consumidores e o envelope `lib/avisarErro.ts`.
+>
+> Quatro sítios não eram só binding: `useProdutos.obter` devolvia `null` para
+> 404 **e** para falha de consulta (a tela expulsava o usuário para a lista
+> como se o produto tivesse sido apagado); `moverCard` do funil devolvia o
+> card à coluna de origem sem dizer por quê; a busca global que falhava nem
+> abria o dropdown, parecendo busca sem resultado; e o
+> `ExcluirEmpresaModal` dizia "Senha de staff incorreta" para qualquer
+> falha, inclusive 500 e rede — numa operação irreversível.
 - **Severidade:** 🔴
 - **Local:** `hooks/useEstoque.ts` (7) · `hooks/useClientes.ts` (5) · `hooks/useAuth.ts` (3) · `lib/api.ts` (2) · mais 13 espalhados. A PR #54 adiciona o 30º.
 - **Descrição:** O `QUALITY_AUDIT` registrou isto como `UX-01` e disse: *"São os únicos dois casos remanescentes no sistema — a varredura não encontrou outros."* A varredura olhou `components/`. Nos **hooks** há 28 mais.
@@ -402,6 +584,20 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### ERR-09 — `INC-02`: a gaveta do mobile continua abrindo sozinha
+
+> ✅ **CORRIGIDO** na Leva 5 (PR #60, mergeada em 2026-10-13).
+>
+> A separação foi a recomendada (`sidebarExpandida` / `gavetaAberta`), mas o
+> `useTelaEstreita` **não** resolve a inicialização, e é por isso que a
+> correção tinha travado: no servidor não existe viewport, então o hook
+> responde `false` no primeiro render — o celular pintaria a gaveta ABERTA e
+> só depois o hook a fecharia. Trocaria o bug por um flash.
+>
+> Quem decide o estado inicial é o **CSS**: `-translate-x-full` na base,
+> `md:translate-x-0` no desktop. O prefixo `md:` é avaliado pelo navegador
+> antes de qualquer JS, então o primeiro paint já está certo nas duas telas
+> com o mesmo markup. O hook entra no **clique**, onde já estamos hidratados
+> e onde ele é necessário (o mesmo botão fecha a gaveta e recolhe a coluna).
 - **Severidade:** 🟡 *(reaberto — não corrigido)*
 - **Local:** `frontend/store/useAppStore.ts:54` · `components/layout/Sidebar.tsx:96`
 - **Descrição:** Confirmado idêntico ao que o audit anterior descreveu, e não corrigido. `sidebarOpen: true` no default; `Sidebar.tsx:96` renderiza o overlay preto (`fixed inset-0 z-30 bg-black/60 md:hidden`) sempre que `sidebarOpen` é verdadeiro. No celular, **todo** carregamento começa com a tela coberta.
@@ -441,6 +637,18 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### TST-02 — Assimetria frontend: módulos inteiros sem um único teste
+
+> ✅ **CORRIGIDO EM PARTE** na Leva 3 (PR #58, mergeada em 2026-10-13):
+> `dashboard` saiu de **1 teste para 11 dos 14 componentes cobertos** (5
+> arquivos de teste no diretório mais os de página). Dos três que faltam,
+> `BlocoIndisponivel` é exercitado pelo texto que ele renderiza em todos os
+> casos de falha; ficam de fora `BoasVindasToast` e `PeriodoSelector`.
+>
+> A linha do `dashboard` nesta tabela é a que estava pior e deixou de
+> estar. **O resto segue igual:** `projetos`, `ai_hub` e `equipe` continuam
+> com zero, e `ui` com 2 de 13 — e a observação sobre a `equipe` (0 testes
+> de frontend, enquanto o `ERR-01` era um número errado na tela dela)
+> continua valendo.
 - **Severidade:** 🟠
 - **Descrição:** Componentes por pasta × pastas com teste:
 
@@ -516,6 +724,11 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### CTR-03 — Tratamento de erro da API: padronizado no backend, irregular no consumo
+
+> ✅ **CORRIGIDO** na Leva 4 (PR #59, conteúdo em `master` via `8170e97`,
+> 2026-10-13). Este achado não tinha trabalho próprio — a correção
+> recomendada era literalmente "é o `ERR-07`", e o envelope deixou de ser
+> jogado fora no transporte.
 - **Severidade:** 🟡
 - **Descrição:** O backend tem `shared/exceptions.py` (`BusinessRuleViolation` com `code`/`message`/`details`, `ResourceNotFound`) e um handler que devolve tudo no mesmo envelope — bem feito. `getErrorMessage` e `getFieldErrors` no front sabem lê-lo.
 
@@ -530,6 +743,8 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### ESC-01 — A lista de projetos faz 42 queries para 10 projetos, e o `prefetch` é pago e ignorado
+
+> ✅ **CORRIGIDO** na Leva 1 (PR #56, mergeada em 2026-10-04).
 - **Severidade:** 🔴
 - **Local:** `backend/modules/projetos/models.py:83,88` + `repository.py:22-28`
 - **Descrição:** `ProjetoRepository.listar_projetos` faz `.prefetch_related("tarefas")` — intenção clara de evitar N+1. Mas as propriedades serializadas na lista fazem:
@@ -556,6 +771,30 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### ESC-02 — A lista de membros da equipe repete o padrão, três vezes por linha
+
+> ✅ **CORRIGIDO** na Leva 6 (PR #61, mergeada em 2026-10-14): as duas
+> contagens viraram `annotate` no `EquipeRepository.listar`, e as propriedades
+> do model preferem a anotação quando ela existe (seguem consultando no
+> caminho de detalhe, onde é um registro só). **Medido:** 91 queries para 30
+> membros → **1**, e o teste trava a propriedade que importa — a contagem
+> **não cresce** com o tamanho da equipe (1 membro e 10 custam igual), porque
+> um `annotate` removido por engano continuaria devolvendo os valores certos,
+> só que caro. `backend/tests/test_equipe_queries.py`, 11 testes.
+>
+> **Correção de um número deste relatório.** O diagnóstico dizia três queries
+> por membro e listava `progresso_meta_atual` como a terceira. Ela **não é
+> serializada na lista** — está só no `MembroEquipeDetailSerializer`. A
+> terceira query era o FK `empresa`, que o `select_related` não cobria: o
+> custo real era `1 + 3N` por outro motivo, e as 91 medidas confirmam a
+> ordem de grandeza do achado mesmo com a causa trocada. Por isso o
+> `Prefetch` da meta vigente que a recomendação pedia **não foi feito**: não
+> há o que prefetchar num caminho que carrega um registro.
+>
+> Dois tropeços que a execução cobrou e que ficam escritos porque voltariam:
+> anotar com o **mesmo nome** da `@property` explode (`property` é data
+> descriptor, o Django tenta `setattr`) — daí os apelidos `_total_*`; e os
+> dois `Count` sobre relações multi-valoradas diferentes precisam de
+> `distinct=True`, senão 3 projetos × 4 tarefas contam 36 em vez de 12.
 - **Severidade:** 🟠
 - **Local:** `backend/modules/equipe/models.py:57-85` + `serializers.py:28-50`
 - **Descrição:** Mesma classe de problema do `ESC-01`. `MembroEquipe` serializa na lista três propriedades que consultam o banco uma a uma:
@@ -579,6 +818,8 @@ Dois ficaram abertos: `INC-02` (gaveta mobile) e `UX-03` (placeholder), ambos re
 ---
 
 #### ESC-04 — `conn.keys()` na invalidação bloqueia o Redis inteiro
+
+> ✅ **CORRIGIDO** na Leva 1 (PR #56, mergeada em 2026-10-04).
 - **Severidade:** 🟠 *(e 🔴 pelo lado funcional — ver `ERR-02`)*
 - **Local:** `backend/shared/cache.py:77`
 - **Descrição:** O lado de escala do `ERR-02`. O comando `KEYS` do Redis é **O(N) sobre o keyspace completo** e **single-threaded**: enquanto varre, nenhuma outra operação é atendida. Com 100 empresas e páginas cacheadas por combinação de filtros, o keyspace fica grande, e **toda escrita** (todo create/update que chama `invalidate_cache`) tentaria essa varredura.
@@ -613,6 +854,8 @@ O achado estrutural mais importante desta auditoria.
 
 Não é falta de conhecimento — o conhecimento está no repositório, escrito e comentado. É que **nada propaga o padrão** para a cópia seguinte. Daí a recomendação recorrente de extrair o esqueleto comum (`DUP-02`, `DUP-03`): não pela elegância, mas porque **um esqueleto compartilhado carrega a proteção consigo** e o próximo módulo a herda sem precisar lembrar.
 
+> **A primeira linha desta tabela deixou de valer na Leva 6**, e vale dizer como: o `shared/apagar_com_ajustes.py` não é um lugar onde a transação está escrita mais uma vez — é o lugar onde ela **não pode faltar**, porque rodar os três passos por ele é rodá-los dentro dela. As outras três linhas continuam de pé: `lancar_financeiro` ganhou o `with` mas não um esqueleto, os hooks seguem copiados (`DUP-03`) e a assimetria de teste segue onde estava (`TST-01`).
+
 ### 2. Falha convertida em valor plausível
 `ERR-01` (status inexistente → conta 1 em vez de 3), `ERR-02` (invalida zero → diz que invalidou), `ERR-03` (data pura → dia anterior), `ERR-04` (exceção → zero).
 
@@ -627,6 +870,8 @@ O `QUALITY_AUDIT` diagnosticou "helper existe e é ignorado". O quadro é pior e
 
 ### 4. Propriedade de model que consulta o banco e é serializada em lista
 `ESC-01` (projetos, medido: 4,2 queries/linha), `ESC-02` (equipe, 3 queries/linha), e `documentos/models.py:64` (`self.versoes.count()`).
+
+> **Dois dos três foram fechados** (`ESC-01` na Leva 1, `ESC-02` na Leva 6), e os dois pela mesma correção: `annotate` no repository, propriedade preferindo a anotação, teste de contagem de queries travando o resultado. **`documentos/models.py:64` segue como estava** — é o terceiro caso da mesma família e ninguém foi lá.
 
 O mesmo gesto — expor um agregado como `@property` do model — que é limpo numa tela de detalhe e quadrático numa listagem. Em projetos há até um `prefetch_related` que **não funciona** para `.count()`, o que mostra que o problema foi percebido e a solução aplicada não era a certa.
 
@@ -658,7 +903,7 @@ Levantado com o mesmo rigor dos achados, porque saber onde **não** tocar vale t
 
 Ordenado por **risco × esforço**, não por categoria. As duas primeiras levas resolvem os três bugs ativos.
 
-### Leva 1 — Os bugs ativos e o quase-grátis *(≈1 dia)*
+### ~~Leva 1~~ — Os bugs ativos e o quase-grátis ✅ **FEITA** (PR #56, mergeada em 2026-10-04)
 Tudo aqui está errado **agora**, em produção, e a correção é pequena.
 
 1. `ERR-01` — status inexistente na contagem da equipe (1 linha + teste)
@@ -670,39 +915,67 @@ Tudo aqui está errado **agora**, em produção, e a correção é pequena.
 
 > Fecha 6 achados, 3 deles 🔴, e entrega a maior melhoria de performance da lista. Se só uma leva for feita, é esta.
 
-### Leva 2 — A data, na ordem certa *(≈1 dia + migração)*
+### ~~Leva 2~~ — A data, na ordem certa ✅ **FEITA** (PR #57, mergeada em 2026-10-04)
 6. `ERR-03` — consertar `formatDate`/`formatDateTime` para data pura, com teste em `"2026-01-01"`
 7. Remover os 9 contornos `T00:00:00`/`split("-")`, que deixam de ser necessários
 8. `DUP-01` — só então migrar os 42 arquivos (mecânico, fatiável, pode ir em segundo plano)
 
 > A ordem é o ponto. Migrar para o helper **antes** de consertá-lo espalharia o bug para 42 arquivos.
 
-### Leva 3 — Parar a falha silenciosa *(≈2–3 dias)*
+### ~~Leva 3~~ — Parar a falha silenciosa ✅ **FEITA** (PR #58, mergeada em 2026-10-13)
 9. `ERR-04` — dashboard marca degradação em vez de devolver zero; a tela mostra "indisponível"
 10. `TST-02` (parcial) — testes de `dashboard`, que é a tela do `ERR-04` e tem 1 teste para 13 componentes
 
 > Maior ganho de confiança percebida. O usuário deixa de ler número errado com cara de certo.
+>
+> **Entregue:** o padrão é `null` no slot do dado, o `dashboard` foi de 1 para 11 de 14 componentes cobertos — e a correção desenterrou um `ImportError` engolido que zerava o bloco de projetos de todas as empresas desde que a linha foi escrita.
 
-### Leva 4 — O erro chega ao usuário, e fica *(≈2 dias)*
+### ~~Leva 4~~ — O erro chega ao usuário, e fica ✅ **FEITA** (PR #59, conteúdo em `master` via `8170e97`, 2026-10-13)
 11. `ERR-07` — os ~25 `catch` de hooks: `catch (err)` + `getErrorMessage` + `throw`
 12. Teste-guarda por varredura contra `} catch {` em `hooks/`, com allowlist para os legítimos
 
 > O item 12 é o que importa a longo prazo: sem ele o padrão volta — **já voltou uma vez**, depois de declarado resolvido.
+>
+> **Entregue:** 17 corrigidos, 13 na allowlist. A guarda varre `app/`, `components/`, `hooks/`, `lib/` e `store/`, e não só `hooks/` como este item pedia — 9 dos 30 sítios estavam fora de `hooks/`, e uma guarda restrita deixaria o mesmo defeito entrar pela porta ao lado. A allowlist guarda **quantidade por arquivo**, não linha, para um catch legítimo não liberar o próximo. Fecha também o `CTR-03`, cuja correção era este achado.
 
-### Leva 5 — Faxina *(≈meio dia)*
+### ~~Leva 5~~ — Faxina ✅ **FEITA** (PR #60, mergeada em 2026-10-13)
 13. `MORTO-02` + `MORTO-03` — remover 5 dependências sem uso; decidir o `django-filter`
 14. `MORTO-01` — apagar `infoDoModo`
 15. `ERR-09` — gaveta mobile, agora com `useTelaEstreita` disponível
 16. `UX-03` — o `placeholder-slate-500` que restou
 
-### Leva 6 — Estrutura *(contínuo, fatiável)*
-17. `DUP-02` — esqueleto comum do "apagar com ajustes", **carregando a transação**
+> **Entregue, com dois itens fora do previsto.** Foram **4** dependências removidas, não 5: o `pillow` está em uso (ver `MORTO-03`). E o `UX-03` eram **49** placeholders em 23 arquivos, não 1 — ganhou guarda própria, que achou 7 deles antes de eu terminar de escrevê-la.
+
+### Leva 6 — Estrutura *(contínuo, fatiável)* ⚠️ **COMEÇOU — 2 de 7 itens** (PR #61, mergeada em 2026-10-14)
+17. ~~`DUP-02` — esqueleto comum do "apagar com ajustes", **carregando a transação**~~ ✅ `shared/apagar_com_ajustes.py`, os 3 fluxos chamando-o, 17 testes de contrato
 18. `DUP-03` + `CTR-02` — `useRecurso<T>` substituindo os 22 hooks copiados
-19. `ESC-02` — `annotate` na equipe (junto do `ERR-01`, mesma linha)
+19. ~~`ESC-02` — `annotate` na equipe (junto do `ERR-01`, mesma linha)~~ ✅ 91 queries para 30 membros → 1, travado por teste de inclinação
 20. `ARQ-01` — extrair camadas do `search`
 21. `TST-01` — testes por risco: `auth`, `equipe`, `recorrencias` (`TST-04`)
 22. `TST-03` — helper de mock de `api` que falha alto
 23. `ERR-08` + `CTR-01` — validação na fronteira com Zod, endpoint a endpoint, começando pelos de dinheiro
+
+> **Os dois entregues eram os dois menores, e isso é deliberado**: são os que
+> fechavam dívida já medida em execução, com o frontend intocado nos dois
+> casos. Os **cinco que restam** (18, 20, 21, 22, 23) são a parte grande —
+> `DUP-03` são 22 hooks, `TST-01` é a assimetria de teste inteira e o
+> `ERR-08` é validação endpoint a endpoint. Nenhum deles começou.
+>
+> Seguem em aberto e **fora** desta leva: `ESC-03` (cinco endpoints de
+> listagem sem paginação), `DUP-04`, `ARQ-03`, `ARQ-04`, `PR54-02`,
+> `PR54-03`, e `documentos/models.py:64` — o terceiro caso da família do
+> `ESC-01`/`ESC-02`, que nenhuma leva cobriu.
+
+### Dívida registrada durante as levas — não estava no diagnóstico
+
+Seis coisas que as correções criaram ou expuseram, e que ficam anotadas aqui para não virarem descoberta de auditoria futura — as quatro primeiras das Levas 1 a 5, as duas últimas da Leva 6:
+
+1. **Quatro inputs com `text-white` fixo** — `CaixinhaFormModal`, `OperacaoCaixinhaModal`, `EditarPagoModal`, `ExcluirPagoModal`. É a mesma classe do `QUEBRA-02` (que o `tema-auth.test.tsx` proíbe em input justamente por isso) e no tema claro provavelmente deixa o texto digitado ilegível sobre `bg-superficie`. Não entrou na Leva 5 porque é mudança visível em quatro modais e estava fora do pedido. **Vai para a auditoria do financeiro.**
+2. **`useVendas.ts` na allowlist da guarda de `catch`** — `useVendasDoCliente` mostra lista vazia na falha, que é a forma do `ERR-04` fora do dashboard. Está na allowlist com a razão escrita, porque consertá-lo é trabalho de exibição: o hook não tem estado de erro e o perfil do cliente não tem onde mostrar "indisponível".
+3. **`pillow` em `base.txt` sendo dependência de teste** — mover para `development.txt` encolhe a imagem de produção. Proposta pendente (ver `MORTO-03`).
+4. **Os 7 formatadores de data que o `DUP-01` deixou** — duplicação sem o bug, detalhada no próprio achado.
+5. **`documentos/models.py:64` (`self.versoes.count()`)** — o terceiro caso da família `ESC-01`/`ESC-02`, e o único que sobrou. Não está em nenhuma leva porque nunca ganhou ID próprio: aparece só como exemplo no padrão 4 da seção 3. **Fica com endereço agora**, para não depender de alguém reler aquele parágrafo.
+6. **A guarda de contagem de queries existe em três lugares e não é um hábito do projeto** — `test_agenda_vinculos.py` (da #54), e os de `ESC-01` e `ESC-02`. As três listagens medidas tinham o problema; as que ninguém mediu seguem sem medida. O barato seria um helper de "esta listagem não cresce em queries" que outros módulos possam apontar para si, na linha do `TST-03`.
 
 ---
 
@@ -711,21 +984,23 @@ Tudo aqui está errado **agora**, em produção, e a correção é pequena.
 | ID | Audit | Situação hoje | Evidência |
 |---|---|---|---|
 | `QUEBRA-01` | Qualidade | ✅ **Corrigido** | `SecaoLancamentos.tsx` existe e é usado pelas 2 rotas |
-| `QUEBRA-02` | Qualidade | ✅ **Corrigido** | nenhum `text-white` em input de `app/(auth)/` |
+| `QUEBRA-02` | Qualidade | 🟡 **Corrigido onde foi olhado** | nenhum `text-white` em input de `app/(auth)/`; **4 modais fora de `auth/` ainda têm** — ver a dívida registrada na seção 5 |
 | `QUEBRA-03` | Qualidade | ✅ **Corrigido** | `getErrorMessage` trata `Error` nativo e é idempotente |
 | `INC-01` | Qualidade | ✅ **Corrigido** | mesma unificação do `QUEBRA-01` |
-| `INC-02` | Qualidade | ❌ **Aberto** | `sidebarOpen: true` + overlay `md:hidden` → `ERR-09` |
+| `INC-02` | Qualidade | ✅ **Corrigido** (Leva 5, #60) | `sidebarExpandida` / `gavetaAberta` separados; o inicial é decidido pelo CSS → `ERR-09` |
 | `INC-03` | Qualidade | ✅ **Corrigido** | zero cópias locais de `formatCurrency` |
-| `INC-04` | Qualidade | ❌ **Piorou** | 28 → 42 arquivos → `DUP-01` |
-| `UX-01` | Qualidade | ❌ **Piorou** | "únicos dois" → **30** → `ERR-07` |
+| `INC-04` | Qualidade | 🟡 **Em parte** (Leva 2, #57) | 28 → 42; 26 chamadas migradas em 23 arquivos, **7 formatadores restam** → `DUP-01` |
+| `UX-01` | Qualidade | ✅ **Corrigido + guarda** (Leva 4, #59) | "únicos dois" eram **30**; 17 corrigidos, 13 na allowlist, e agora há varredura automática → `ERR-07` |
 | `UX-02` | Qualidade | ✅ **Corrigido** | ver `lib/api.ts` (envelope de resposta inválida) |
-| `UX-03` | Qualidade | 🟡 **Quase** | 1 `placeholder-slate-500` restante |
+| `UX-03` | Qualidade | ✅ **Corrigido + guarda** (Leva 5, #60) | **eram 49 em 23 arquivos, não 1** — ver a nota abaixo |
 | `COD-01` | Qualidade | ✅ **Corrigido** | ESLint 9 + `eslint.config.mjs` + `"lint": "eslint ."` |
 | `COD-02` | Qualidade | ✅ **Corrigido** | `formatCurrency(valor: unknown)`, robusta, + 2 variantes |
 | `MED-01` | Segurança | ⚠️ fora do escopo desta auditoria (upload) | — |
 | `BAIXO-02` | Segurança | ✅ coberto estruturalmente | recorte por empresa antes de todo filtro |
 
-> Os dois "piorou" não contradizem o crédito da seção 1. O que foi corrigido foi corrigido **bem** — e o que regrediu são os dois itens que **não tinham guarda automática**. É a evidência mais direta a favor do item 12 da Leva 4.
+> **O `UX-03` merece o parágrafo que esta linha não cabia.** A situação "🟡 Quase — 1 restante" foi lida de uma guarda que **funciona**: `app/(auth)/tema-auth.test.tsx` proíbe `placeholder-slate-500` nos inputs de login e cadastro, e de fato nunca regrediu lá. O erro foi tomar o resultado dela pelo resultado do projeto. Fora de `auth/` havia **49 ocorrências em 23 arquivos** (42 de `slate`/`gray` e 7 de `zinc`), corrigidas na Leva 5. E os 7 de `zinc` só apareceram porque a guarda nova cobre qualquer paleta do Tailwind: a varredura manual tinha procurado exatamente as duas paletas que este relatório citava.
+>
+> Os dois "piorou" não contradizem o crédito da seção 1. O que foi corrigido foi corrigido **bem** — e o que regrediu são os dois itens que **não tinham guarda automática**. Os dois hoje têm: `UX-01` ganhou a varredura de `} catch {` na Leva 4, `UX-03` a de placeholder na Leva 5. O `QUEBRA-02` mostra o limite da ideia: ele tem guarda, mas só para `app/(auth)/` — e é justamente fora de `auth/` que sobraram quatro inputs. **Guarda estreita dá a sensação de cobertura sem a cobertura**, e este relatório caiu nisso duas vezes: no `UX-03` e, por tabela, no `QUEBRA-02`.
 
 ---
 
@@ -753,6 +1028,8 @@ Também confirmei o que seria fácil errar e está certo: o `select_for_update` 
 ---
 
 #### PR54-01 — Com o módulo Projetos desligado, o evento vinculado fica impossível de editar
+
+> ✅ **CORRIGIDO** na Leva 1 (PR #56, mergeada em 2026-10-04).
 - **Severidade:** 🟠 *(entrou com a #54 — hoje em produção)*
 - **Local:** `modules/agenda/serializers.py` (`validate_projeto`) + `components/agenda/EventoForm.tsx:114`
 - **Descrição:** O `validate_projeto` recusa qualquer `projeto` não-nulo quando `modulo_projetos` está desligado. A intenção é boa (não criar vínculo invisível). O problema é que ele não distingue **criar um vínculo novo** de **manter o que já estava lá**.
@@ -822,7 +1099,7 @@ Também confirmei o que seria fácil errar e está certo: o `select_for_update` 
 A auditoria recomendava corrigir a `PR54-01` **antes** do merge. O merge aconteceu em 2026-10-04, então a recomendação caducou e os três achados mudaram de endereço — de "pendências de uma branch" para **código em produção**:
 
 - **`PR54-01` virou bug de produção e subiu para a Leva 1.** Hoje, uma empresa que desligue o módulo Projetos **não consegue editar** nenhum evento que já tenha vinculado — nem para corrigir o título ou a hora. A correção continua pequena (uma comparação com `self.instance.projeto_id` no `validate_projeto`), e agora é urgente em vez de preventiva.
-- **`PR54-02`** vai para a Leva 6, com os outros itens de escalabilidade. Deixou de haver a economia de "aproveitar a branch aberta".
+- **`PR54-02`** vai para a Leva 6, com os outros itens de escalabilidade. Deixou de haver a economia de "aproveitar a branch aberta". **Segue em aberto:** a Leva 6 entregou só `DUP-02` e `ESC-02`, e este não estava entre eles.
 - **`PR54-03`** segue cosmético; quando o arquivo for tocado.
 
 Fora isso, a #54 é das contribuições mais bem testadas da base (30 testes de backend, 46 de frontend, 28 mutações reintroduzidas) e eleva a razão teste/código da agenda, que já era a segunda melhor do projeto.
