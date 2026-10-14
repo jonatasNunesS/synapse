@@ -5,8 +5,8 @@ Lógica de negócio com cache Redis.
 import logging
 from decimal import Decimal
 
-from django.db import transaction
 
+from shared.apagar_com_ajustes import ajustar_lancamento_ao_apagar, apagar_com_ajustes
 from shared.cache import build_cache_key, get_cached, set_cached, invalidate_cache
 from shared.exceptions import BusinessRuleViolation, ResourceNotFound
 
@@ -210,36 +210,37 @@ class FornecedorService:
         Retorna resumo do que foi feito.
         """
         from modules.estoque.services import EstoqueService
-        from modules.financeiro.repository import FinanceiroRepository
 
         compra = FornecedorRepository.obter_compra(empresa_id, compra_id)  # 404 multi-tenant
-        resumo = {"estoque_estornado": False, "financeiro_ajustado": None}
 
         # Mesma razão do fluxo gêmeo em `clientes`: o estorno SOMA ao estoque
         # (a movimentação original é imutável), então uma falha depois dele
         # deixa o estoque alto com a compra ainda viva, e repetir a operação
-        # soma de novo (CODE_HEALTH_AUDIT, ERR-06).
-        with transaction.atomic():
-            if estornar_estoque and compra.movimentacao_estoque_id:
-                EstoqueService.estornar_movimentacao(
+        # soma de novo (CODE_HEALTH_AUDIT, ERR-06). A ordem e a transação vêm
+        # de `shared.apagar_com_ajustes` (DUP-02).
+        feitos = apagar_com_ajustes(
+            estornar_estoque=(
+                (lambda: EstoqueService.estornar_movimentacao(
                     empresa_id,
                     compra.movimentacao_estoque_id,
                     usuario_id,
                     motivo_estorno=f"Compra apagada (compra {compra.id})",
-                )
-                resumo["estoque_estornado"] = True
+                ) or True)
+                if estornar_estoque and compra.movimentacao_estoque_id
+                else None
+            ),
+            ajustar_financeiro=(
+                (lambda: ajustar_lancamento_ao_apagar(compra.lancamento_financeiro))
+                if apagar_financeiro and compra.lancamento_financeiro_id
+                else None
+            ),
+            apagar=lambda: FornecedorRepository.excluir_compra(empresa_id, compra_id),
+        )
 
-            if apagar_financeiro and compra.lancamento_financeiro_id:
-                lancamento = compra.lancamento_financeiro
-                if lancamento.status == "pago":
-                    lancamento.status = "cancelado"
-                    lancamento.save(update_fields=["status"])
-                    resumo["financeiro_ajustado"] = "cancelado"
-                else:
-                    FinanceiroRepository.deletar_lancamento(lancamento)
-                    resumo["financeiro_ajustado"] = "apagado"
-
-            FornecedorRepository.excluir_compra(empresa_id, compra_id)
+        resumo = {
+            "estoque_estornado": bool(feitos.estoque),
+            "financeiro_ajustado": feitos.financeiro,
+        }
 
         # Cache fora da transação, pelos dois módulos que a operação toca.
         if resumo["financeiro_ajustado"]:
