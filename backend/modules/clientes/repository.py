@@ -1,6 +1,10 @@
 from datetime import date, timedelta
+from decimal import Decimal
+
 from django.db import transaction
-from django.db.models import Count, Sum, Avg, Max, Q
+from django.db.models import (
+    Avg, Case, Count, DecimalField, F, Max, Q, Sum, Value, When,
+)
 from django.utils import timezone
 
 from .models import Cliente, InteracaoCliente
@@ -235,8 +239,24 @@ class ClienteRepository:
 
         agg = base_qs.filter(ativo=True).aggregate(
             valor_total=Sum("valor_total_compras"),
-            ticket_medio=Avg("valor_total_compras"),
         )
+
+        # Ticket médio é POR VENDA, não por cliente.
+        #
+        # Era `Avg("valor_total_compras")`: a média do quanto cada cliente
+        # comprou, diluída por todo lead que nunca comprou nada. Dez clientes
+        # e uma venda de R$ 450 davam R$ 45, e o cartão do dashboard chamava
+        # isso de "Ticket médio". Não é — é receita média por cliente, que é
+        # outra pergunta e ninguém estava fazendo.
+        #
+        # Agora é a conta que o nome promete: total das vendas ÷ número de
+        # vendas. Canceladas ficam de fora, como em todo o resto do módulo.
+        from modules.vendas.models import Venda
+
+        vendas_qs = Venda.objects.filter(empresa_id=empresa_id).exclude(
+            status_pagamento="cancelado"
+        )
+        ticket = vendas_qs.aggregate(m=Avg("total"))["m"]
 
         followups_atrasados = base_qs.filter(
             ativo=True,
@@ -258,7 +278,7 @@ class ClienteRepository:
             "clientes_ativos": clientes_ativos,
             "novos_este_mes": novos_este_mes,
             "valor_total_gerado": agg["valor_total"] or 0,
-            "ticket_medio_geral": agg["ticket_medio"] or 0,
+            "ticket_medio_geral": ticket or 0,
             "followups_atrasados": followups_atrasados,
             "clientes_por_status": clientes_por_status,
         }
@@ -284,7 +304,7 @@ class ClienteRepository:
     @staticmethod
     @transaction.atomic
     def criar_interacao(cliente_id, empresa_id, dados: dict, usuario_id) -> InteracaoCliente:
-        """Cria uma interação — o signal cuida de atualizar o cliente."""
+        """Cria uma interação. O follow-up é puxado pelo signal; compra, não."""
         return InteracaoCliente.objects.create(
             cliente_id=cliente_id,
             empresa_id=empresa_id,
@@ -305,59 +325,97 @@ class ClienteRepository:
     @staticmethod
     @transaction.atomic
     def atualizar_interacao(interacao: InteracaoCliente, dados: dict) -> InteracaoCliente:
-        """Atualiza uma interação e recalcula os agregados de venda do cliente."""
+        """Atualiza uma interação."""
         for field, value in dados.items():
             setattr(interacao, field, value)
         interacao.save()
-        ClienteRepository._recalcular_agregados_venda(interacao.cliente_id)
         return interacao
 
     @staticmethod
     @transaction.atomic
     def deletar_interacao(interacao: InteracaoCliente) -> None:
-        """Remove uma interação e recalcula os agregados de venda do cliente."""
-        cliente_id = interacao.cliente_id
+        """Remove uma interação. Agregado de compra não depende mais daqui."""
         interacao.delete()
-        ClienteRepository._recalcular_agregados_venda(cliente_id)
 
     @staticmethod
-    def _recalcular_agregados_venda(cliente_id) -> None:
+    def recalcular_agregados_cliente(cliente_id) -> None:
         """
-        Recalcula os agregados de venda do cliente a partir das interações
-        reais (fonte única da verdade), em qualquer operação (criar/editar/
-        apagar). Mantém tudo consistente sem lógica incremental.
+        Refaz os agregados de compra do cliente a partir das VENDAS dele.
 
-        - valor_total_compras = recebido + a_receber (canceladas NÃO contam).
-        - valor_recebido      = vendas pagas + vendas à vista (nao_se_aplica).
-        - valor_a_receber     = vendas pendentes (fiado em aberto).
+        FONTE ÚNICA: `Venda`. Antes esta função lia `InteracaoCliente` do tipo
+        "venda", e era só por isso que uma venda de R$ 450 registrada no fluxo
+        novo deixava o cliente marcando R$ 0,00 — o B10. `Venda` tem itens,
+        estoque e financeiro; a interação de venda era o registro simples que
+        ela substituiu, e agora não entra mais na conta por caminho nenhum: a
+        tela de Clientes deixou de oferecer "Venda" como tipo de interação, e
+        `manage.py migrar_vendas` converte as que já existiam.
 
-        Venda "nao_se_aplica" é venda à vista (fluxo rápido, sem fiado): o
-        dinheiro já entrou, então conta como RECEBIDO. Sem isso, uma venda à
-        vista aparecia no Total mas com Recebido = R$ 0,00 (o bug do painel de
-        receita) e o Total deixava de bater com Recebido + A receber.
+        QUEM CHAMA, E POR QUE NÃO É UM SIGNAL. Um `post_save` preso a uma
+        entidade foi exatamente o que criou o B10: ele ficou em
+        `InteracaoCliente`, `Venda` nasceu noutro módulo e ninguém reparou que
+        o gatilho não a alcançava. Aqui a chamada é explícita, do service de
+        `Venda`, dentro da mesma transação da escrita — de modo que uma
+        reversão leve junto o agregado, e que esquecer de chamar apareça no
+        teste de quem mexeu, não seis meses depois numa auditoria.
+
+        RECÁLCULO COMPLETO, não incremental: a função lê tudo de novo. É mais
+        caro por chamada e é o que faz criar, editar, apagar, confirmar,
+        vincular e desvincular caírem todos no mesmo caminho, sem nenhum deles
+        precisar saber o que o anterior deixou escrito.
+
+        O SPLIT recebido/a-receber usa o que a `Venda` sabe e a interação não
+        sabia — recebimento PARCIAL:
+
+        - venda `pago`      → o total entrou, mesmo que `valor_recebido` seja
+                              zero (venda de balcão não "confirma" nada);
+        - venda `pendente`  → entrou `valor_recebido`, falta o saldo;
+        - venda `cancelado` → fora da conta inteira, como no fluxo antigo.
+
+        Com isso `total = recebido + a_receber` continua valendo, que é a
+        invariante que a tela do cliente mostra em três cartões lado a lado.
+
+        Venda fiada CONTA em quantidade e em total: é compra, e o que ainda
+        não entrou aparece em "a receber", não some.
         """
-        vendas = InteracaoCliente.objects.filter(
-            cliente_id=cliente_id, tipo="venda"
-        ).exclude(status_pagamento="cancelado")
+        from modules.vendas.models import Venda
 
-        agg = vendas.aggregate(
-            total=Sum("valor"),
-            qtd=Count("id"),
-            ultima=Max("data_interacao"),
+        vendas = Venda.objects.filter(cliente_id=cliente_id).exclude(
+            status_pagamento="cancelado"
         )
-        recebido = vendas.filter(
-            status_pagamento__in=["pago", "nao_se_aplica"]
-        ).aggregate(s=Sum("valor"))["s"] or 0
-        a_receber = vendas.filter(status_pagamento="pendente").aggregate(
-            s=Sum("valor")
-        )["s"] or 0
+
+        # Os apelidos não repetem nome de campo de propósito: um alias
+        # chamado `total` sombreia a coluna `total` e o Django recusa a
+        # expressão com "'total' is an aggregate".
+        agg = vendas.aggregate(
+            soma=Sum("total"),
+            qtd=Count("id"),
+            ultima=Max("data_venda"),
+            # `pago` entra inteiro; `pendente` entra pelo que já foi recebido.
+            recebido=Sum(
+                Case(
+                    When(status_pagamento="pago", then=F("total")),
+                    default=F("valor_recebido"),
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                )
+            ),
+            a_receber=Sum(
+                Case(
+                    When(
+                        status_pagamento="pendente",
+                        then=F("total") - F("valor_recebido"),
+                    ),
+                    default=Value(Decimal("0")),
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                )
+            ),
+        )
 
         Cliente.objects.filter(pk=cliente_id).update(
-            valor_total_compras=agg["total"] or 0,
-            valor_recebido=recebido,
-            valor_a_receber=a_receber,
+            valor_total_compras=agg["soma"] or 0,
+            valor_recebido=agg["recebido"] or 0,
+            valor_a_receber=agg["a_receber"] or 0,
             quantidade_compras=agg["qtd"] or 0,
-            ultima_compra=agg["ultima"].date() if agg["ultima"] else None,
+            ultima_compra=agg["ultima"],
         )
 
     @staticmethod

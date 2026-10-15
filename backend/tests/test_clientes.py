@@ -311,8 +311,24 @@ class TestInteracoes:
         assert resp.data["data"]["tipo"] == "venda"
         assert Decimal(resp.data["data"]["valor"]) == Decimal("500.00")
 
-    def test_signal_atualiza_valor_total_compras(self, client_a, cliente_maria):
-        """Signal atualiza valor_total_compras e ultima_compra após venda."""
+    def test_interacao_de_venda_nao_mexe_mais_nos_agregados(
+        self, client_a, cliente_maria
+    ):
+        """
+        O signal recalculava os agregados aqui. Não recalcula mais.
+
+        Dois testes deste arquivo afirmavam o contrário, e estavam certos até
+        esta leva: o `post_save` de `InteracaoCliente` era a única coisa que
+        alimentava o quanto o cliente comprou. Preso a essa entidade, ele
+        nunca alcançou a `Venda` — que é o B10.
+
+        Agora a fonte é `Venda` e só ela. Uma interação de venda antiga,
+        editada hoje, não move o total: quem a representa é a `Venda` que o
+        `migrar_vendas` criou a partir dela. Se as duas contassem, a mesma
+        compra apareceria em dobro.
+
+        O que o signal AINDA faz é o follow-up — testado logo abaixo.
+        """
         client_a.post(f"/api/clientes/{cliente_maria.id}/interacoes/", {
             "tipo": "venda",
             "titulo": "Venda R$300",
@@ -321,28 +337,9 @@ class TestInteracoes:
         }, format="json")
 
         cliente_maria.refresh_from_db()
-        assert cliente_maria.valor_total_compras == Decimal("300.00")
-        assert cliente_maria.quantidade_compras == 1
-        assert cliente_maria.ultima_compra is not None
-
-    def test_signal_acumula_multiplas_vendas(self, db, empresa_a, usuario_a, client_a):
-        """Múltiplas vendas acumulam valor_total_compras corretamente."""
-        cliente = Cliente.objects.create(
-            empresa=empresa_a,
-            nome="Cliente Acumulado",
-            criado_por=usuario_a,
-        )
-        for valor in ["100.00", "200.00", "300.00"]:
-            client_a.post(f"/api/clientes/{cliente.id}/interacoes/", {
-                "tipo": "venda",
-                "titulo": f"Venda R${valor}",
-                "valor": valor,
-                "data_interacao": timezone.now().isoformat(),
-            }, format="json")
-
-        cliente.refresh_from_db()
-        assert cliente.valor_total_compras == Decimal("600.00")
-        assert cliente.quantidade_compras == 3
+        assert cliente_maria.valor_total_compras == Decimal("0")
+        assert cliente_maria.quantidade_compras == 0
+        assert cliente_maria.ultima_compra is None
 
     def test_criar_interacao_com_followup_atualiza_cliente(self, client_a, cliente_joao):
         """Interação com proximo_followup atualiza o campo no cliente."""
@@ -708,7 +705,7 @@ class TestCenarioCompleto:
         1. Criar 3 clientes
         2. Ver funil com clientes nas colunas corretas
         3. Arrastar João de lead → contato
-        4. Registrar venda R$500 para Maria
+        4. Registrar venda R$500 para Maria (pela tela de Vendas)
         5. Verificar ticket médio e valor total de Maria
         6. Definir follow-up de ontem para João → atrasado
         7. Verificar link WhatsApp
@@ -759,14 +756,15 @@ class TestCenarioCompleto:
         assert resp_mover.status_code == 200
         assert resp_mover.data["data"]["status_funil"] == "contato"
 
-        # 4. Registrar venda R$500 para Maria
-        resp_venda = client_a.post(f"/api/clientes/{maria_id}/interacoes/", {
-            "tipo": "venda",
-            "titulo": "Venda do produto principal",
-            "valor": "500.00",
-            "data_interacao": timezone.now().isoformat(),
+        # 4. Registrar venda R$500 para Maria — pela tela de Vendas, que é
+        #    por onde se registra venda desde que ela virou entidade própria.
+        resp_venda = client_a.post("/api/vendas/", {
+            "cliente": maria_id,
+            "status_pagamento": "pago",
+            "itens": [{"descricao": "Produto principal", "quantidade": "1",
+                       "preco_unitario": "500.00"}],
         }, format="json")
-        assert resp_venda.status_code == 201
+        assert resp_venda.status_code == 201, resp_venda.data
 
         # 5. Verificar ticket médio e valor total de Maria
         resp_maria_detalhe = client_a.get(f"/api/clientes/{maria_id}/")
@@ -810,7 +808,7 @@ class TestInteracaoCamposVazios:
         assert resp.data["data"]["proximo_followup"] is None
 
     def test_criar_venda_com_followup_vazio(self, client_a, cliente_maria):
-        """Venda com followup vazio também deve funcionar e atualizar agregados."""
+        """Venda com followup vazio também deve funcionar → 201."""
         resp = client_a.post(f"/api/clientes/{cliente_maria.id}/interacoes/", {
             "tipo": "venda",
             "titulo": "Venda sem followup",
@@ -819,8 +817,7 @@ class TestInteracaoCamposVazios:
             "proximo_followup": "",
         }, format="json")
         assert resp.status_code == 201
-        cliente_maria.refresh_from_db()
-        assert cliente_maria.valor_total_compras == Decimal("1500.00")
+        assert resp.data["data"]["valor"] == "1500.00"
 
     def test_data_interacao_vazia_usa_default(self, client_a, cliente_joao):
         """data_interacao="" deve cair no default do model (timezone.now)."""
@@ -861,20 +858,22 @@ class TestInteracaoEditarApagar:
         assert resp.data["data"]["titulo"] == "Venda revisada"
         assert Decimal(resp.data["data"]["valor"]) == Decimal("750.00")
 
-    def test_editar_venda_recalcula_agregados(self, client_a, cliente_maria):
-        """Editar o valor de uma venda recalcula valor_total_compras do cliente."""
+    def test_editar_interacao_de_venda_nao_move_o_agregado(
+        self, client_a, cliente_maria
+    ):
+        """Editar a interação continua funcionando; o total do cliente é da Venda."""
         iid = self._criar_venda(client_a, cliente_maria, "500.00")
-        cliente_maria.refresh_from_db()
-        assert cliente_maria.valor_total_compras == Decimal("500.00")
 
-        client_a.patch(
+        resp = client_a.patch(
             f"/api/clientes/{cliente_maria.id}/interacoes/{iid}/",
             {"valor": "800.00"},
             format="json",
         )
+        assert resp.status_code == 200
+        assert resp.data["data"]["valor"] == "800.00"
+
         cliente_maria.refresh_from_db()
-        assert cliente_maria.valor_total_compras == Decimal("800.00")
-        assert cliente_maria.quantidade_compras == 1
+        assert cliente_maria.valor_total_compras == Decimal("0")
 
     def test_apagar_interacao(self, client_a, cliente_maria):
         """DELETE remove a interação → 204."""
@@ -885,18 +884,21 @@ class TestInteracaoEditarApagar:
         assert resp.status_code == 204
         assert not InteracaoCliente.objects.filter(id=iid).exists()
 
-    def test_apagar_venda_reduz_agregados(self, client_a, cliente_maria):
-        """Apagar uma venda reduz valor_total_compras e quantidade_compras."""
+    def test_apagar_interacao_de_venda_nao_move_o_agregado(
+        self, client_a, cliente_maria
+    ):
+        """Apagar a interação some com a linha do histórico, não com dinheiro."""
         iid1 = self._criar_venda(client_a, cliente_maria, "300.00")
         self._criar_venda(client_a, cliente_maria, "200.00")
-        cliente_maria.refresh_from_db()
-        assert cliente_maria.valor_total_compras == Decimal("500.00")
-        assert cliente_maria.quantidade_compras == 2
 
-        client_a.delete(f"/api/clientes/{cliente_maria.id}/interacoes/{iid1}/")
+        resp = client_a.delete(
+            f"/api/clientes/{cliente_maria.id}/interacoes/{iid1}/"
+        )
+        assert resp.status_code == 204
+
         cliente_maria.refresh_from_db()
-        assert cliente_maria.valor_total_compras == Decimal("200.00")
-        assert cliente_maria.quantidade_compras == 1
+        assert cliente_maria.valor_total_compras == Decimal("0")
+        assert cliente_maria.quantidade_compras == 0
 
     def test_editar_interacao_inexistente_404(self, client_a, cliente_maria):
         import uuid
@@ -1210,13 +1212,32 @@ class TestFiadoNotificacao:
 # ─── Testes: agregados de venda (recebido / a receber) — Parte 0 ──────────────
 
 class TestAgregadosVendaCliente:
+    """
+    Os agregados de compra do cliente, agora lidos de `Venda`.
 
-    def _venda(self, client, cliente_id, valor, status, data=None):
-        payload = {"tipo": "venda", "titulo": "V", "valor": valor,
-                   "status_pagamento": status}
+    Esta classe testava o mesmo contrato pelo fluxo antigo — uma
+    `InteracaoCliente` do tipo "venda" alimentava os agregados por signal. Era
+    a única fonte, e foi por isso que uma `Venda`, criada noutro módulo,
+    deixava o cliente marcando R$ 0,00 (o B10).
+
+    O que se afirma aqui não mudou: total, split recebido/a-receber, cancelada
+    fora da conta, editar e apagar refletindo. O que mudou é POR ONDE a venda
+    entra, e isso é o conserto. O vocabulário de status também encolheu —
+    `Venda` não tem `nao_se_aplica`, porque venda à vista é simplesmente
+    `pago`.
+    """
+
+    def _venda(self, client, cliente_id, valor, status="pago", **extra):
+        corpo = {
+            "cliente": str(cliente_id),
+            "status_pagamento": status,
+            "itens": [{"descricao": "Item", "quantidade": "1",
+                       "preco_unitario": valor}],
+        }
         if status == "pendente":
-            payload["data_prevista_pagamento"] = data or "2026-09-01"
-        r = client.post(f"/api/clientes/{cliente_id}/interacoes/", payload, format="json")
+            corpo.setdefault("data_prevista_pagamento", "2031-09-01")
+        corpo.update(extra)
+        r = client.post("/api/vendas/", corpo, format="json")
         assert r.status_code == 201, r.data
         return r.data["data"]["id"]
 
@@ -1226,93 +1247,124 @@ class TestAgregadosVendaCliente:
         assert cliente_maria.valor_total_compras == Decimal("300.00")
         assert cliente_maria.valor_recebido == Decimal("300.00")
         assert cliente_maria.valor_a_receber == Decimal("0")
+        assert cliente_maria.quantidade_compras == 1
 
-    def test_venda_pendente_conta_em_a_receber(self, client_a, cliente_maria):
+    def test_venda_pendente_conta_em_a_receber_e_na_quantidade(
+        self, client_a, cliente_maria
+    ):
+        """Fiado é compra: entra na quantidade e no total, não só no 'a receber'."""
         self._venda(client_a, cliente_maria.id, "200.00", "pendente")
         cliente_maria.refresh_from_db()
         assert cliente_maria.valor_total_compras == Decimal("200.00")
         assert cliente_maria.valor_recebido == Decimal("0")
         assert cliente_maria.valor_a_receber == Decimal("200.00")
+        assert cliente_maria.quantidade_compras == 1
 
-    def test_confirmar_pagamento_move_de_a_receber_para_recebido(self, client_a, cliente_maria):
-        iid = self._venda(client_a, cliente_maria.id, "500.00", "pendente")
-        client_a.post(f"/api/clientes/interacoes/{iid}/confirmar-pagamento/", {}, format="json")
+    def test_confirmar_pagamento_move_de_a_receber_para_recebido(
+        self, client_a, cliente_maria
+    ):
+        vid = self._venda(client_a, cliente_maria.id, "500.00", "pendente")
+        client_a.post(f"/api/vendas/{vid}/confirmar-pagamento/", {}, format="json")
         cliente_maria.refresh_from_db()
         assert cliente_maria.valor_recebido == Decimal("500.00")
         assert cliente_maria.valor_a_receber == Decimal("0")
         assert cliente_maria.valor_total_compras == Decimal("500.00")
 
-    def test_venda_a_vista_conta_em_recebido(self, client_a, cliente_maria):
+    def test_recebimento_parcial_divide_o_valor_entre_os_dois(
+        self, client_a, cliente_maria
+    ):
         """
-        BUG do painel de receita: venda À VISTA (nao_se_aplica) é dinheiro que já
-        entrou → deve contar em RECEBIDO. Antes ficava só no Total e o painel
-        "Recebido" mostrava R$ 0,00, quebrando Total = Recebido + A receber.
+        O que a `Venda` sabe e a interação não sabia.
+
+        No fluxo antigo o pagamento era tudo ou nada: 60 de 500 recebidos não
+        tinham onde morar, e o saldo virava uma segunda interação. Aqui a
+        venda é uma só e o split do cliente acompanha o que de fato entrou.
         """
-        self._venda(client_a, cliente_maria.id, "400.00", "nao_se_aplica")
+        vid = self._venda(client_a, cliente_maria.id, "500.00", "pendente")
+        client_a.post(
+            f"/api/vendas/{vid}/confirmar-pagamento/",
+            {"valor_recebido": "200.00", "data_prevista_saldo": "2031-10-01"},
+            format="json",
+        )
         cliente_maria.refresh_from_db()
-        assert cliente_maria.valor_total_compras == Decimal("400.00")
-        assert cliente_maria.valor_recebido == Decimal("400.00")   # ← era 0 (bug)
-        assert cliente_maria.valor_a_receber == Decimal("0")
-        # Invariante restaurada: Total = Recebido + A receber.
+        assert cliente_maria.valor_recebido == Decimal("200.00")
+        assert cliente_maria.valor_a_receber == Decimal("300.00")
+        assert cliente_maria.valor_total_compras == Decimal("500.00")
+        # A invariante dos três cartões da tela do cliente.
         assert cliente_maria.valor_total_compras == (
             cliente_maria.valor_recebido + cliente_maria.valor_a_receber
         )
 
-    def test_qualquer_status_conta_no_total(self, client_a, cliente_maria):
-        """valor_total_compras soma TODAS as vendas (pago + pendente + à vista)."""
+    def test_venda_a_vista_conta_em_recebido(self, client_a, cliente_maria):
+        """
+        Venda de balcão: `pago` sem nenhum recebimento confirmado.
+
+        É a herdeira do caso `nao_se_aplica` do fluxo antigo, e tinha o mesmo
+        risco: `valor_recebido` da venda fica em zero, porque ninguém
+        "confirma" dinheiro que já entrou na mão. Somar esse zero deixaria o
+        Total sem bater com Recebido + A receber — que foi exatamente o bug do
+        painel de receita. Por isso `pago` entra pelo TOTAL, não pelo
+        `valor_recebido`.
+        """
+        self._venda(client_a, cliente_maria.id, "400.00", "pago")
+        cliente_maria.refresh_from_db()
+        assert cliente_maria.valor_recebido == Decimal("400.00")
+        assert cliente_maria.valor_a_receber == Decimal("0")
+        assert cliente_maria.valor_total_compras == (
+            cliente_maria.valor_recebido + cliente_maria.valor_a_receber
+        )
+
+    def test_qualquer_status_nao_cancelado_conta_no_total(
+        self, client_a, cliente_maria
+    ):
         self._venda(client_a, cliente_maria.id, "100.00", "pago")
         self._venda(client_a, cliente_maria.id, "200.00", "pendente")
-        self._venda(client_a, cliente_maria.id, "300.00", "nao_se_aplica")
+        self._venda(client_a, cliente_maria.id, "300.00", "pago")
         cliente_maria.refresh_from_db()
         assert cliente_maria.valor_total_compras == Decimal("600.00")
-        # Recebido = pago (100) + à vista (300); A receber = pendente (200).
         assert cliente_maria.valor_recebido == Decimal("400.00")
         assert cliente_maria.valor_a_receber == Decimal("200.00")
+        assert cliente_maria.quantidade_compras == 3
 
     def test_criar_editar_apagar_venda_atualiza_total(self, client_a, cliente_maria):
-        """Total reflete criar → editar → apagar de uma venda."""
-        iid = self._venda(client_a, cliente_maria.id, "500.00", "pago")
+        vid = self._venda(client_a, cliente_maria.id, "500.00", "pago")
         cliente_maria.refresh_from_db()
         assert cliente_maria.valor_total_compras == Decimal("500.00")
-        # Editar o valor → total reflete
+
         client_a.patch(
-            f"/api/clientes/{cliente_maria.id}/interacoes/{iid}/",
-            {"valor": "800.00"}, format="json",
+            f"/api/vendas/{vid}/",
+            {"itens": [{"descricao": "Item", "quantidade": "1",
+                        "preco_unitario": "800.00"}]},
+            format="json",
         )
         cliente_maria.refresh_from_db()
         assert cliente_maria.valor_total_compras == Decimal("800.00")
-        # Apagar → total diminui
-        client_a.delete(f"/api/clientes/{cliente_maria.id}/interacoes/{iid}/")
+
+        client_a.delete(f"/api/vendas/{vid}/")
         cliente_maria.refresh_from_db()
         assert cliente_maria.valor_total_compras == Decimal("0")
+        assert cliente_maria.quantidade_compras == 0
+        assert cliente_maria.ultima_compra is None
 
     def test_cancelar_pagamento_exclui_do_total(self, client_a, cliente_maria):
-        iid = self._venda(client_a, cliente_maria.id, "500.00", "pendente")
+        vid = self._venda(client_a, cliente_maria.id, "500.00", "pendente")
         self._venda(client_a, cliente_maria.id, "100.00", "pago")
-        client_a.post(f"/api/clientes/interacoes/{iid}/cancelar-pagamento/", {}, format="json")
+        client_a.post(f"/api/vendas/{vid}/cancelar-pagamento/", {}, format="json")
         cliente_maria.refresh_from_db()
-        # A cancelada (500) sai do total; sobra a paga (100)
+        # A cancelada (500) sai da conta inteira; sobra a paga (100).
         assert cliente_maria.valor_total_compras == Decimal("100.00")
         assert cliente_maria.valor_recebido == Decimal("100.00")
         assert cliente_maria.valor_a_receber == Decimal("0")
-
-    def test_editar_valor_reflete_no_total(self, client_a, cliente_maria):
-        iid = self._venda(client_a, cliente_maria.id, "300.00", "pago")
-        client_a.patch(
-            f"/api/clientes/{cliente_maria.id}/interacoes/{iid}/",
-            {"valor": "450.00"}, format="json",
-        )
-        cliente_maria.refresh_from_db()
-        assert cliente_maria.valor_total_compras == Decimal("450.00")
-        assert cliente_maria.valor_recebido == Decimal("450.00")
+        assert cliente_maria.quantidade_compras == 1
 
     def test_apagar_venda_reduz_total(self, client_a, cliente_maria):
-        i1 = self._venda(client_a, cliente_maria.id, "300.00", "pago")
+        v1 = self._venda(client_a, cliente_maria.id, "300.00", "pago")
         self._venda(client_a, cliente_maria.id, "200.00", "pago")
-        client_a.delete(f"/api/clientes/{cliente_maria.id}/interacoes/{i1}/")
+        client_a.delete(f"/api/vendas/{v1}/")
         cliente_maria.refresh_from_db()
         assert cliente_maria.valor_total_compras == Decimal("200.00")
         assert cliente_maria.valor_recebido == Decimal("200.00")
+        assert cliente_maria.quantidade_compras == 1
 
     def test_serializer_expoe_split(self, client_a, cliente_maria):
         self._venda(client_a, cliente_maria.id, "300.00", "pago")
@@ -1321,6 +1373,29 @@ class TestAgregadosVendaCliente:
         assert r.data["data"]["valor_total_compras"] == "500.00"
         assert r.data["data"]["valor_recebido"] == "300.00"
         assert r.data["data"]["valor_a_receber"] == "200.00"
+
+    def test_interacao_de_venda_antiga_nao_entra_mais_na_conta(
+        self, client_a, cliente_maria
+    ):
+        """
+        A fonte é única, e isto é o que "única" quer dizer.
+
+        Uma `InteracaoCliente` tipo="venda" criada direto no banco — como as
+        que existem de antes — não soma nada. Quem as converte é
+        `manage.py migrar_vendas`, e depois de convertidas quem conta é a
+        `Venda` que saiu delas. Sem isto, a mesma compra contaria duas vezes:
+        medido, 400 onde a venda foi 200.
+        """
+        InteracaoCliente.objects.create(
+            cliente=cliente_maria, empresa=cliente_maria.empresa, tipo="venda",
+            titulo="Venda do fluxo antigo", valor=Decimal("999.00"),
+            status_pagamento="pago",
+        )
+        self._venda(client_a, cliente_maria.id, "200.00", "pago")
+
+        cliente_maria.refresh_from_db()
+        assert cliente_maria.valor_total_compras == Decimal("200.00")
+        assert cliente_maria.quantidade_compras == 1
 
 
 # ─── Testes: Venda → Lançamento financeiro (Parte 3) ──────────────────────────

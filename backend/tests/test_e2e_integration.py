@@ -342,25 +342,29 @@ class TestE2ECRM:
         assert move_resp.status_code == 200
         assert move_resp.json()["data"]["status_funil"] == "proposta"
 
-    def test_registrar_interacao_venda(self, auth_client):
-        """Registrar interação de venda R$500 e verificar valor_total_compras."""
+    def test_registrar_venda_atualiza_total_do_cliente(self, auth_client):
+        """Venda de R$500 pela tela de Vendas → o cliente passa a marcar 500."""
         client, empresa, user = auth_client
         resp = client.post("/api/clientes/", {
             "nome": "Maria Santos", "origem": "indicacao", "status_funil": "fechado"
         }, format="json")
         cliente_id = resp.json()["data"]["id"]
 
-        int_resp = client.post(f"/api/clientes/{cliente_id}/interacoes/", {
-            "tipo": "venda",
-            "titulo": "Venda de produto",
-            "descricao": "Venda de produto",
-            "valor": "500.00",
+        # Pela tela de Vendas, não por interação: venda deixou de ser um tipo
+        # de interação, e é esta ponta que alimenta os números do cliente.
+        venda_resp = client.post("/api/vendas/", {
+            "cliente": cliente_id,
+            "status_pagamento": "pago",
+            "itens": [{"descricao": "Produto", "quantidade": "1",
+                       "preco_unitario": "500.00"}],
         }, format="json")
-        assert int_resp.status_code == 201
+        assert venda_resp.status_code == 201, venda_resp.json()
 
-        # Verificar valor_total_compras atualizado
         detail_resp = client.get(f"/api/clientes/{cliente_id}/")
-        assert Decimal(str(detail_resp.json()["data"]["valor_total_compras"])) == Decimal("500.00")
+        dados = detail_resp.json()["data"]
+        assert Decimal(str(dados["valor_total_compras"])) == Decimal("500.00")
+        assert dados["quantidade_compras"] == 1
+        assert Decimal(str(dados["ticket_medio"])) == Decimal("500.00")
 
     def test_followup_atrasado(self, auth_client):
         """Follow-up para ontem deve aparecer como atrasado."""

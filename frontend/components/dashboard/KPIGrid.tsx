@@ -181,7 +181,10 @@ export function KPIGrid({ resumo, isLoading }: KPIGridProps) {
       tendencia: (crm?.novos_este_mes ?? 0) > 0 ? "positiva" : "neutra",
     },
     {
-      titulo: "Ticket Médio",
+      // "por venda" no rótulo porque o número mudou de pergunta: era a média
+      // do quanto cada cliente comprou (diluída por todo lead que nunca
+      // comprou) e agora é total das vendas ÷ número de vendas.
+      titulo: "Ticket Médio por Venda",
       valor: crm && formatCurrency(crm.ticket_medio_geral),
       subtitulo: crm && `Total gerado: ${formatCurrency(crm.valor_total_gerado)}`,
       icone: <TrendingUp className="h-5 w-5 text-brand-accent" />,

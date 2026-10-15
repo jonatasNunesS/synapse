@@ -57,9 +57,29 @@ const TIPOS: { value: TipoInteracao; label: string; icon: React.ElementType; col
     icon: MessageCircle,
     color: "text-sucesso bg-green-400/10",
   },
-  { value: "venda", label: "Venda", icon: DollarSign, color: "text-sucesso bg-emerald-400/10" },
   { value: "outro", label: "Outro", icon: FileText, color: "text-muted-foreground bg-gray-400/10" },
 ];
+
+/**
+ * "Venda" saiu da lista acima, e continua existindo aqui.
+ *
+ * Venda deixou de ser um tipo de interação: quem registra uma venda usa a
+ * tela de Vendas, que tem itens, estoque e financeiro. As métricas do cliente
+ * leem `Venda` e só ela — manter a porta antiga aberta significaria dinheiro
+ * entrando por um caminho que nenhum número enxerga, que é exatamente o
+ * defeito que esta leva fecha.
+ *
+ * Mas as interações de venda ANTIGAS continuam no banco e continuam
+ * editáveis: tirar o tipo da existência faria o formulário recusar um
+ * registro que o próprio sistema gravou. Então ele aparece, marcado, quando
+ * se está editando uma — e não aparece para escolher numa nova.
+ */
+const TIPO_VENDA = {
+  value: "venda" as TipoInteracao,
+  label: "Venda",
+  icon: DollarSign,
+  color: "text-sucesso bg-emerald-400/10",
+};
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -121,6 +141,10 @@ export function InteracaoForm({ onSubmit, onClose, loading, interacao }: Interac
   };
 
   const tipoSelecionado = watch("tipo");
+
+  // A venda só aparece quando já é o tipo do registro que está sendo editado.
+  const tiposVisiveis =
+    tipoSelecionado === "venda" ? [...TIPOS, TIPO_VENDA] : TIPOS;
   const statusPagamento = watch("status_pagamento");
 
   const inputClass =
@@ -155,11 +179,17 @@ export function InteracaoForm({ onSubmit, onClose, loading, interacao }: Interac
           <div>
             <label className={labelClass}>Tipo de Interação *</label>
             <div className="grid grid-cols-3 gap-2">
-              {TIPOS.map(({ value, label, icon: Icon, color }) => (
+              {tiposVisiveis.map(({ value, label, icon: Icon, color }) => (
                 <button
                   key={value}
                   type="button"
-                  onClick={() => setValue("tipo", value)}
+                  disabled={value === "venda"}
+                  title={
+                    value === "venda"
+                      ? "Vendas novas são registradas na tela de Vendas."
+                      : undefined
+                  }
+                  onClick={() => value !== "venda" && setValue("tipo", value)}
                   className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all text-xs font-medium ${
                     tipoSelecionado === value
                       ? "border-brand-500 bg-brand-500/10 text-foreground"

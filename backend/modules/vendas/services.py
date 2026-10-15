@@ -71,26 +71,62 @@ class VendaService:
             raise ResourceNotFound("Venda", str(venda_id))
         return venda
 
+    # ── Agregados do cliente ─────────────────────────────────────────────────
+
     @staticmethod
+    def _refletir_no_cliente(*cliente_ids) -> None:
+        """
+        Põe os agregados do(s) cliente(s) de acordo com as vendas que existem.
+
+        Chamada explícita, e não um signal em `Venda`: um `post_save` preso a
+        uma entidade foi o que criou o B10 — ele ficou em `InteracaoCliente`,
+        `Venda` nasceu noutro módulo e o gatilho nunca a alcançou. Explícita,
+        esquecer de chamar quebra o teste de quem mexeu.
+
+        Aceita vários ids porque trocar o dono de uma venda move dinheiro de
+        um cliente para outro: o antigo precisa descer na mesma transação em
+        que o novo sobe. `None` é ignorado — venda de balcão não tem dono.
+        """
+        from modules.clientes.repository import ClienteRepository
+
+        for cliente_id in {c for c in cliente_ids if c}:
+            ClienteRepository.recalcular_agregados_cliente(cliente_id)
+
+    @staticmethod
+    @transaction.atomic
     def criar(empresa_id, usuario_id, dados: dict) -> Venda:
         itens = dados.pop("itens")
         dados.pop("_subtotal_previsto", None)
         # As integrações NÃO acontecem aqui. Quem baixa estoque e quem lança no
         # financeiro é a pessoa, pelos endpoints abaixo, depois de ver o que vai
         # acontecer. Automatizar aqui tiraria dela a decisão.
-        return VendaRepository.criar(empresa_id, usuario_id, dados, itens)
+        #
+        # O agregado do cliente é outra coisa: não é integração com módulo
+        # nenhum, é o retrato de quanto essa pessoa comprou. Ele anda junto com
+        # a venda, na mesma transação, sem a pessoa precisar pedir.
+        venda = VendaRepository.criar(empresa_id, usuario_id, dados, itens)
+        VendaService._refletir_no_cliente(venda.cliente_id)
+        return venda
 
     @staticmethod
+    @transaction.atomic
     def atualizar(empresa_id, venda_id, dados: dict) -> Venda:
         venda = VendaService.obter(empresa_id, venda_id)
+        dono_antigo = venda.cliente_id
         itens = dados.pop("itens", None)
         dados.pop("_subtotal_previsto", None)
-        return VendaRepository.atualizar(venda, dados, itens)
+        venda = VendaRepository.atualizar(venda, dados, itens)
+        # O PATCH pode trocar o dono junto com o resto; os dois recalculam.
+        VendaService._refletir_no_cliente(dono_antigo, venda.cliente_id)
+        return venda
 
     @staticmethod
+    @transaction.atomic
     def deletar(empresa_id, venda_id) -> None:
         venda = VendaService.obter(empresa_id, venda_id)
+        dono = venda.cliente_id
         VendaRepository.deletar(venda)
+        VendaService._refletir_no_cliente(dono)
 
     # ── Integração 1: estoque ────────────────────────────────────────────────
 
@@ -347,8 +383,16 @@ class VendaService:
                 # tentativa de alcançar dado alheio, e para aqui.
                 raise ResourceNotFound("Cliente", str(cliente_id))
 
-        venda.cliente = cliente
-        venda.save(update_fields=["cliente", "atualizado_em"])
+        dono_antigo = venda.cliente_id
+        with transaction.atomic():
+            venda.cliente = cliente
+            venda.save(update_fields=["cliente", "atualizado_em"])
+            # Pôr, trocar ou tirar: o agregado do antigo desce e o do novo
+            # sobe, na mesma transação. Vínculo continua não reescrevendo o
+            # que já aconteceu com o DINHEIRO — o lançamento fica onde está —
+            # mas "quanto esta pessoa comprou" passa a ser pergunta com outra
+            # resposta, e ela é respondida aqui.
+            VendaService._refletir_no_cliente(dono_antigo, venda.cliente_id)
         return venda
 
     # ── Fase 3B: fiado ───────────────────────────────────────────────────────
@@ -535,6 +579,9 @@ class VendaService:
                     "notificacao_enviada", "lancamento_financeiro", "atualizado_em",
                 ]
             )
+            # Recebimento muda o split recebido/a-receber do cliente, e um
+            # recebimento PARCIAL muda os dois ao mesmo tempo.
+            VendaService._refletir_no_cliente(venda.cliente_id)
 
         return {
             "venda": venda,
@@ -587,11 +634,16 @@ class VendaService:
                 message="Este pagamento já foi resolvido.",
             )
 
-        venda.status_pagamento = "cancelado"
-        venda.notificacao_enviada = True  # não volta a cobrar
-        venda.save(
-            update_fields=["status_pagamento", "notificacao_enviada", "atualizado_em"]
-        )
+        with transaction.atomic():
+            venda.status_pagamento = "cancelado"
+            venda.notificacao_enviada = True  # não volta a cobrar
+            venda.save(
+                update_fields=[
+                    "status_pagamento", "notificacao_enviada", "atualizado_em",
+                ]
+            )
+            # Cancelada sai da conta inteira — total, quantidade e a receber.
+            VendaService._refletir_no_cliente(venda.cliente_id)
         return venda
 
     @staticmethod
@@ -617,26 +669,38 @@ class VendaService:
         contrário.
         """
         venda = VendaService.obter(empresa_id, venda_id)
+        dono = venda.cliente_id
 
-        feitos = apagar_com_ajustes(
-            # A venda estorna N movimentações e devolve a contagem — por isso
-            # o resumo dela fala em `movimentacoes_estornadas` e não num
-            # booleano como os outros dois fluxos.
-            estornar_estoque=(
-                (lambda: VendaService.estornar_estoque(
-                    empresa_id, usuario_id, venda,
-                    motivo=f"Venda #{venda.id} apagada",
-                ))
-                if estornar_estoque
-                else None
-            ),
-            ajustar_financeiro=(
-                (lambda: ajustar_lancamento_ao_apagar(venda.lancamento_financeiro))
-                if apagar_financeiro and venda.lancamento_financeiro_id
-                else None
-            ),
-            apagar=lambda: VendaRepository.deletar(venda),
-        )
+        # A `atomic` externa existe para o agregado do cliente entrar na mesma
+        # transação dos três passos: apagar a venda e deixar o cliente dizendo
+        # que ela existe é a mesma classe de estado impossível que o helper
+        # foi criado para evitar. Aninhar `atomic` custa um savepoint e nada
+        # mais — e o helper continua dono da ORDEM, que é o contrato dele.
+        with transaction.atomic():
+            feitos = apagar_com_ajustes(
+                # A venda estorna N movimentações e devolve a contagem — por
+                # isso o resumo dela fala em `movimentacoes_estornadas` e não
+                # num booleano como os outros dois fluxos.
+                estornar_estoque=(
+                    (lambda: VendaService.estornar_estoque(
+                        empresa_id, usuario_id, venda,
+                        motivo=f"Venda #{venda.id} apagada",
+                    ))
+                    if estornar_estoque
+                    else None
+                ),
+                ajustar_financeiro=(
+                    (lambda: ajustar_lancamento_ao_apagar(
+                        venda.lancamento_financeiro
+                    ))
+                    if apagar_financeiro and venda.lancamento_financeiro_id
+                    else None
+                ),
+                apagar=lambda: VendaRepository.deletar(venda),
+            )
+            # Depois dos três passos, nunca entre eles: o agregado é o retrato
+            # do que sobrou, não um quarto passo da ordem que o helper guarda.
+            VendaService._refletir_no_cliente(dono)
 
         resumo = {
             "movimentacoes_estornadas": feitos.estoque or 0,
