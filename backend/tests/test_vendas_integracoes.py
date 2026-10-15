@@ -541,7 +541,11 @@ def test_interacao_comum_e_venda_convivem_no_historico(
     interacoes = cli.get(f"/api/clientes/{cliente.id}/interacoes/").json()["data"]
     vendas = cli.get(f"/api/vendas/?cliente_id={cliente.id}").json()["data"]
 
-    assert len(interacoes) + len(vendas) == 2
+    # A ligação continua lá, e a venda também. A terceira linha é o aviso da
+    # promoção de funil — "outro", sem valor —, que a venda paga gerou.
+    tipos = sorted(i["tipo"] for i in interacoes)
+    assert tipos == ["ligacao", "outro"]
+    assert len(vendas) == 1
 
 
 @pytest.mark.django_db

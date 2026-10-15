@@ -453,8 +453,15 @@ def test_criar_venda_NAO_lanca_financeiro(usuario, camisa):
 
 
 @pytest.mark.django_db
-def test_criar_venda_NAO_cria_interacao_de_cliente(usuario, camisa, cliente):
-    """O fluxo antigo segue intocado — as duas formas coexistem."""
+def test_criar_venda_NAO_cria_interacao_de_venda(usuario, camisa, cliente):
+    """
+    A venda não vira também uma interação de venda.
+
+    Se virasse, a mesma compra contaria duas vezes — era o risco que a
+    exclusão das migradas existe para impedir. O que a venda paga PODE criar
+    é a linha de aviso da promoção de funil, que é tipo "outro" e não tem
+    valor: ela não é compra e não entra em conta nenhuma.
+    """
     from modules.clientes.models import InteracaoCliente
 
     _client(usuario).post(
@@ -466,7 +473,8 @@ def test_criar_venda_NAO_cria_interacao_de_cliente(usuario, camisa, cliente):
         format="json",
     )
 
-    assert InteracaoCliente.objects.count() == 0
+    assert not InteracaoCliente.objects.filter(tipo="venda").exists()
+    assert not InteracaoCliente.objects.exclude(valor=None).exists()
 
 
 # ── Item livre: a linha que não tem produto no catálogo ──────────────────────

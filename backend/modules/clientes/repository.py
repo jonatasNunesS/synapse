@@ -418,6 +418,71 @@ class ClienteRepository:
             ultima_compra=agg["ultima"],
         )
 
+    # Status de funil que uma venda paga faz avançar. Quem já está em
+    # "fechado" não tem para onde ir; "perdido" entra porque voltar a comprar
+    # é justamente o que desfaz um perdido.
+    FUNIL_PROMOVIVEL = ("lead", "contato", "proposta", "negociacao", "perdido")
+
+    @staticmethod
+    def promover_por_venda_paga(cliente_id, venda) -> bool:
+        """
+        Cliente que pagou uma venda vai para "fechado". Devolve se mudou.
+
+        FEATURE NOVA, não restauração. A promoção automática nunca existiu —
+        nem no fluxo antigo de interação. `status_funil` tinha três
+        escritores, todos manuais (o arrastar do Kanban, a ação em massa do
+        admin e o default "lead"). O diagnóstico do B10 foi atrás disso
+        esperando encontrar um gatilho perdido na refatoração, e não havia
+        nenhum.
+
+        SÓ PARA A FRENTE, E NUNCA DE VOLTA. Promover é uma inferência segura:
+        quem pagou fechou. Rebaixar não é — apagar a venda não significa que
+        o negócio se desfez, e o dono pode ter movido o cliente à mão depois,
+        por um motivo que o sistema não conhece. Um rebaixamento automático
+        desfaria essa decisão sem avisar. Por isso não existe o caminho de
+        volta: apagar ou cancelar a venda não mexe no funil.
+
+        POR EVENTO, NÃO POR ESTADO. A chamada vem do momento em que o
+        pagamento é confirmado — não de um recálculo. Se dependesse do
+        estado, um recálculo qualquer re-promoveria um cliente que o dono
+        tivesse acabado de mover para trás de propósito, que é a mesma
+        violação pela porta dos fundos.
+
+        Venda sem cliente não promove ninguém.
+        """
+        # O `filter(pk=None)` abaixo já devolveria vazio — este `if` existe
+        # para a venda de balcão ser uma decisão escrita e não um efeito de
+        # como o ORM trata `None`.
+        if not cliente_id:
+            return False
+
+        cliente = Cliente.objects.filter(pk=cliente_id).first()
+        if cliente is None:
+            return False
+        if cliente.status_funil not in ClienteRepository.FUNIL_PROMOVIVEL:
+            return False
+
+        anterior = cliente.get_status_funil_display()
+        cliente.status_funil = "fechado"
+        cliente.save(update_fields=["status_funil", "atualizado_em"])
+
+        # A linha na timeline existe para a mudança não ser silenciosa: quem
+        # abrir o funil amanhã e vir o cartão noutra coluna precisa achar o
+        # porquê sem adivinhar. Tipo "outro" de propósito — "venda" deixou de
+        # ser um tipo de interação nesta mesma leva.
+        InteracaoCliente.objects.create(
+            cliente_id=cliente_id,
+            empresa_id=cliente.empresa_id,
+            tipo="outro",
+            titulo="Movido para Fechado automaticamente",
+            descricao=(
+                f"O pagamento de uma venda de R$ {venda.total} foi confirmado, "
+                f"e o cliente passou de {anterior} para Fechado. "
+                f"Mover de volta, se for o caso, é pelo funil."
+            ),
+        )
+        return True
+
     @staticmethod
     def listar_interacoes(cliente_id, empresa_id, filtros: dict):
         """

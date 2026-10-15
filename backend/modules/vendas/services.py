@@ -93,6 +93,25 @@ class VendaService:
             ClienteRepository.recalcular_agregados_cliente(cliente_id)
 
     @staticmethod
+    def _promover_funil(venda: Venda) -> None:
+        """
+        Pagamento confirmado move o cliente para "fechado".
+
+        Dois momentos, e só esses dois: a venda nascer `pago` (balcão) e o
+        PRIMEIRO recebimento de um fiado — parcial conta, porque quem pagou
+        uma parte já fechou. Confirmações seguintes não repetem nada: o
+        cliente já está em "fechado" e o repository devolve `False`.
+
+        Não é chamada de `_refletir_no_cliente` de propósito. Aquele é
+        recálculo de estado e roda também ao apagar; a promoção é reação a um
+        EVENTO. Juntá-los faria um apagar re-promover alguém que o dono tinha
+        acabado de mover para trás à mão.
+        """
+        from modules.clientes.repository import ClienteRepository
+
+        ClienteRepository.promover_por_venda_paga(venda.cliente_id, venda)
+
+    @staticmethod
     @transaction.atomic
     def criar(empresa_id, usuario_id, dados: dict) -> Venda:
         itens = dados.pop("itens")
@@ -106,6 +125,8 @@ class VendaService:
         # a venda, na mesma transação, sem a pessoa precisar pedir.
         venda = VendaRepository.criar(empresa_id, usuario_id, dados, itens)
         VendaService._refletir_no_cliente(venda.cliente_id)
+        if venda.status_pagamento == "pago":
+            VendaService._promover_funil(venda)
         return venda
 
     @staticmethod
@@ -542,6 +563,10 @@ class VendaService:
                 message="Este pagamento já foi resolvido.",
             )
 
+        # Capturado ANTES da soma: é o que distingue o primeiro recebimento
+        # dos seguintes, e só o primeiro move o funil.
+        primeiro_recebimento = (venda.valor_recebido or Decimal("0")) == Decimal("0")
+
         falta = venda.saldo_devedor
         recebido = Decimal(str(valor_recebido)) if valor_recebido is not None else falta
 
@@ -582,6 +607,8 @@ class VendaService:
             # Recebimento muda o split recebido/a-receber do cliente, e um
             # recebimento PARCIAL muda os dois ao mesmo tempo.
             VendaService._refletir_no_cliente(venda.cliente_id)
+            if primeiro_recebimento:
+                VendaService._promover_funil(venda)
 
         return {
             "venda": venda,
