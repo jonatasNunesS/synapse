@@ -7,6 +7,7 @@ import logging
 from datetime import date, timedelta
 
 from django.db import DatabaseError, InterfaceError
+from django.utils import timezone
 
 from shared.cache import build_cache_key, get_cached, set_cached
 
@@ -101,7 +102,7 @@ class DashboardService:
         if cached is not None:
             return cached
 
-        hoje = date.today()
+        hoje = timezone.localdate()
         mes = hoje.month
         ano = hoje.year
 
@@ -223,7 +224,7 @@ class DashboardService:
 
         `None` significa que a consulta falhou — não que o resultado é vazio.
         """
-        hoje = date.today()
+        hoje = timezone.localdate()
         data_inicio = hoje - timedelta(days=dias - 1)
 
         cache_key = build_cache_key(
@@ -356,8 +357,6 @@ class DashboardService:
             return cached
 
         try:
-            from django.utils import timezone
-
             from modules.agenda.models import Evento
             from modules.auth.models import Empresa
             from shared.modulos import modulo_ativo
@@ -464,7 +463,7 @@ class DashboardService:
 
         try:
             from modules.projetos.models import Tarefa
-            hoje = date.today()
+            hoje = timezone.localdate()
             tarefas = (
                 Tarefa.objects.filter(
                     empresa_id=empresa_id,
@@ -587,7 +586,7 @@ class DashboardService:
             return cached
 
         eventos = []
-        hoje = date.today()
+        hoje = timezone.localdate()
         sete_dias = hoje - timedelta(days=7)
 
         # Uma fonte que falha deixa o feed INCOMPLETO, e um feed incompleto é

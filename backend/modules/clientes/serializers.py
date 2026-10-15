@@ -1,6 +1,6 @@
 import re
-from datetime import date
 from rest_framework import serializers
+from django.utils import timezone
 from .models import Cliente, InteracaoCliente
 
 
@@ -90,13 +90,13 @@ class InteracaoClienteSerializer(serializers.ModelSerializer):
         return bool(
             obj.status_pagamento == "pendente"
             and obj.data_prevista_pagamento is not None
-            and obj.data_prevista_pagamento < date.today()
+            and obj.data_prevista_pagamento < timezone.localdate()
         )
 
     def get_dias_para_vencer(self, obj):
         if obj.status_pagamento != "pendente" or obj.data_prevista_pagamento is None:
             return None
-        return (obj.data_prevista_pagamento - date.today()).days
+        return (obj.data_prevista_pagamento - timezone.localdate()).days
 
 
 # ─── Interação (criação) ──────────────────────────────────────────────────────

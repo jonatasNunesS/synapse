@@ -7,6 +7,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { hojeLocal } from "@/lib/utils";
 import type { ApiError } from "@/types/api";
 import type {
   Categoria,
@@ -93,13 +94,12 @@ export function useSaldoFinanceiro(mes?: number, ano?: number) {
 // ── Fluxo de Caixa ────────────────────────────────────────
 
 export function useFluxoCaixa(dataInicio?: string, dataFim?: string) {
+  // Datas do fuso de quem usa, não do UTC: `toISOString()` às 21h em São
+  // Paulo empurrava o fim da janela para amanhã.
   const hoje = new Date();
-  const inicio =
-    dataInicio ??
-    new Date(hoje.getFullYear(), hoje.getMonth(), 1)
-      .toISOString()
-      .split("T")[0];
-  const fim = dataFim ?? hoje.toISOString().split("T")[0];
+  const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+  const inicio = dataInicio ?? `${hoje.getFullYear()}-${mes}-01`;
+  const fim = dataFim ?? hojeLocal();
 
   const [fluxo, setFluxo] = useState<FluxoCaixaDia[]>([]);
   const [loading, setLoading] = useState(true);

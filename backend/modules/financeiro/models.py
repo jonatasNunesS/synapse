@@ -3,9 +3,9 @@ Synapse — Módulo Financeiro: Models
 Categoria e Lancamento com multi-tenant obrigatório (empresa_id).
 """
 import uuid
-from datetime import date
 
 from django.db import models
+from django.utils import timezone
 
 
 class Categoria(models.Model):
@@ -146,7 +146,7 @@ class Lancamento(models.Model):
     @property
     def esta_atrasado(self) -> bool:
         """True se o lançamento está pendente e o vencimento já passou."""
-        return self.status == "pendente" and self.data_vencimento < date.today()
+        return self.status == "pendente" and self.data_vencimento < timezone.localdate()
 
     @property
     def status_emprestimo(self) -> str:
@@ -161,7 +161,7 @@ class Lancamento(models.Model):
             return ""
         if self.emprestimo_quitado:
             return "perdoado" if self.emprestimo_perdoado else "quitado"
-        if self.data_retorno_esperado and self.data_retorno_esperado < date.today():
+        if self.data_retorno_esperado and self.data_retorno_esperado < timezone.localdate():
             return "atrasado"
         return "aberto"
 

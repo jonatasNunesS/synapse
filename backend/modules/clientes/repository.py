@@ -224,7 +224,7 @@ class ClienteRepository:
         KPIs do período (novos_no_periodo, valor_gerado_no_periodo) e o
         comparativo com o mês anterior — mantendo os campos base (retrocompatível).
         """
-        hoje = date.today()
+        hoje = timezone.localdate()
         inicio_mes = hoje.replace(day=1)
 
         base_qs = Cliente.objects.filter(empresa_id=empresa_id)

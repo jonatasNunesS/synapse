@@ -1,4 +1,6 @@
 
+from django.utils import timezone
+
 from shared.apagar_com_ajustes import ajustar_lancamento_ao_apagar, apagar_com_ajustes
 from shared.cache import build_cache_key, get_cached, set_cached, invalidate_cache
 from shared.exceptions import ResourceNotFound, TenantAccessDenied, BusinessRuleViolation
@@ -319,10 +321,9 @@ class ClienteService:
         Cria notificação no sino para cada venda fiada vencida ainda não avisada.
         Idempotente via notificacao_enviada. Retorna quantas notificações criou.
         """
-        from datetime import date as _date
         from modules.notificacoes.services import NotificacaoService
 
-        hoje = hoje or _date.today()
+        hoje = hoje or timezone.localdate()
         pendentes = InteracaoCliente.objects.select_related("cliente").filter(
             status_pagamento="pendente",
             data_prevista_pagamento__isnull=False,
@@ -414,12 +415,12 @@ class ClienteService:
     @staticmethod
     def adiar_pagamento(empresa_id, interacao_id, dias: int):
         """Adia a previsão de pagamento em N dias e rearma a notificação."""
-        from datetime import date as _date, timedelta
+        from datetime import timedelta
 
         interacao = ClienteService._obter_interacao_por_empresa(empresa_id, interacao_id)
-        base = interacao.data_prevista_pagamento or _date.today()
+        base = interacao.data_prevista_pagamento or timezone.localdate()
         # Nunca adia para o passado: parte de hoje se a previsão já venceu.
-        base = max(base, _date.today())
+        base = max(base, timezone.localdate())
         interacao.data_prevista_pagamento = base + timedelta(days=max(1, int(dias)))
         interacao.notificacao_enviada = False  # volta a notificar no novo vencimento
         interacao.save(update_fields=["data_prevista_pagamento", "notificacao_enviada"])
@@ -460,7 +461,7 @@ class ClienteService:
                 "Esta venda já tem lançamento financeiro.",
             )
 
-        hoje = date.today()
+        hoje = timezone.localdate()
         pago = interacao.status_pagamento == "pago"
         lancamento = FinanceiroService.criar_lancamento(
             empresa_id,
@@ -492,7 +493,6 @@ class ClienteService:
         Retorna (evento, criado_bool).
         """
         from datetime import datetime, time
-        from django.utils import timezone
         from modules.agenda.services import AgendaService
         from modules.agenda.models import Evento
 

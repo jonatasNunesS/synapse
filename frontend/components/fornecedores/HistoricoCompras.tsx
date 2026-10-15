@@ -14,7 +14,7 @@ import { ApagarComAjustesFlow } from "@/components/clientes/ApagarComAjustesFlow
 import type { CompraFornecedor } from "@/types/fornecedores";
 import type { ApiError } from "@/types/api";
 import { useModulos } from "@/hooks/useModulos";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, hojeLocal } from "@/lib/utils";
 
 const STATUS_COMPRA: Record<string, { label: string; color: string }> = {
   pendente: { label: "Pendente", color: "bg-amber-500/15 text-alerta border-amber-500/30" },
@@ -57,7 +57,7 @@ function NovaCompraForm({ fornecedorId, onSuccess, onClose, compraId, initialDat
     resolver: zodResolver(compraSchema),
     defaultValues: {
       status: "pendente",
-      data_compra: new Date().toISOString().split("T")[0],
+      data_compra: hojeLocal(),
       ...initialData,
     },
   });

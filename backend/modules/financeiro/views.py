@@ -9,6 +9,7 @@ from rest_framework import status
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
+from django.utils import timezone
 
 from shared.authentication import CookieJWTAuthentication
 from shared.pagination import StandardPagination
@@ -461,7 +462,7 @@ class ResumoFinanceiroView(EmpresaQuerySetMixin, APIView):
 
     def get(self, request):
         empresa_id = self.get_empresa_id()
-        hoje = date.today()
+        hoje = timezone.localdate()
 
         try:
             mes = int(request.query_params.get("mes", hoje.month))
@@ -494,7 +495,7 @@ class SaldoFinanceiroView(EmpresaQuerySetMixin, APIView):
 
     def get(self, request):
         empresa_id = self.get_empresa_id()
-        hoje = date.today()
+        hoje = timezone.localdate()
 
         try:
             mes = int(request.query_params.get("mes", hoje.month))
@@ -520,7 +521,7 @@ class FluxoCaixaView(EmpresaQuerySetMixin, APIView):
 
     def get(self, request):
         empresa_id = self.get_empresa_id()
-        hoje = date.today()
+        hoje = timezone.localdate()
 
         data_inicio_str = request.query_params.get(
             "data_inicio", str(hoje - timedelta(days=30))
@@ -548,7 +549,7 @@ class DREView(EmpresaQuerySetMixin, APIView):
 
     def get(self, request):
         empresa_id = self.get_empresa_id()
-        hoje = date.today()
+        hoje = timezone.localdate()
 
         try:
             mes = int(request.query_params.get("mes", hoje.month))

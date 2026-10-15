@@ -17,7 +17,7 @@ import { ProdutoSelect } from "@/components/estoque/ProdutoSelect";
 import { useClientes } from "@/hooks/useClientes";
 import { getErrorMessage } from "@/lib/api";
 import { avisarSeFalhar } from "@/lib/avisarErro";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, hojeLocal } from "@/lib/utils";
 import {
   descontoValido,
   subtotalDaVenda,
@@ -40,7 +40,9 @@ interface Props {
   onClose: () => void;
 }
 
-const hoje = () => new Date().toISOString().slice(0, 10);
+// `hojeLocal` e não `toISOString()`: às 21h em São Paulo o UTC já virou,
+// e a venda nascia com a data de amanhã. Ver o docstring do helper.
+const hoje = hojeLocal;
 
 function itensIniciais(venda?: Venda | null): ItemEmEdicao[] {
   if (!venda) return [];

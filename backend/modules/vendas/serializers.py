@@ -6,11 +6,11 @@ Chegam calculados do backend e saem somente-leitura. O que a interface soma
 enquanto a pessoa monta a venda serve para ela ver o valor na hora — o número
 que vale é o que o servidor devolve.
 """
-from datetime import date
 from decimal import Decimal
 
 from rest_framework import serializers
 from rest_framework.fields import empty
+from django.utils import timezone
 
 from modules.clientes.models import Cliente
 from modules.estoque.models import Produto
@@ -150,14 +150,14 @@ class VendaSerializer(serializers.ModelSerializer):
         return bool(
             obj.status_pagamento == "pendente"
             and obj.data_prevista_pagamento is not None
-            and obj.data_prevista_pagamento < date.today()
+            and obj.data_prevista_pagamento < timezone.localdate()
         )
 
     def get_dias_para_vencer(self, obj) -> int | None:
         # Só faz sentido para o que ainda se cobra e tem data marcada.
         if obj.status_pagamento != "pendente" or obj.data_prevista_pagamento is None:
             return None
-        return (obj.data_prevista_pagamento - date.today()).days
+        return (obj.data_prevista_pagamento - timezone.localdate()).days
 
 
 class VendaCreateSerializer(serializers.Serializer):

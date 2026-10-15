@@ -99,6 +99,34 @@ export function paraData(valor: string | Date): Date {
 }
 
 /**
+ * A data de hoje como "YYYY-MM-DD", no fuso de quem está usando o sistema.
+ *
+ * Existe porque o atalho óbvio está errado para esta finalidade:
+ *
+ *     new Date().toISOString().slice(0, 10)   // ← UTC, não aqui
+ *
+ * `toISOString` converte para UTC. São Paulo é UTC−3, então das 21:00 à
+ * meia-noite esse atalho devolve AMANHÃ — e em 31/10 às 21:30 devolve
+ * `2026-11-01`, que é outro mês. Uma venda registrada no fim do expediente
+ * nascia com a data do dia seguinte, saía do filtro "hoje" da lista e, pelo
+ * lançamento financeiro que herda `data_venda`, entrava no mês errado do
+ * fluxo de caixa.
+ *
+ * Aqui os componentes vêm do relógio local (`getFullYear`/`getMonth`/
+ * `getDate`), que é o mesmo dia que a pessoa vê no canto da tela. O backend
+ * faz a conta equivalente com `timezone.localdate()`.
+ *
+ * Para EXIBIR data que veio do backend, use `formatDate` — esta função é só
+ * para PRODUZIR a data de hoje ao gravar.
+ */
+export function hojeLocal(): string {
+  const agora = new Date();
+  const mes = String(agora.getMonth() + 1).padStart(2, "0");
+  const dia = String(agora.getDate()).padStart(2, "0");
+  return `${agora.getFullYear()}-${mes}-${dia}`;
+}
+
+/**
  * Formata data no padrão brasileiro (dd/mm/aaaa).
  *
  * Aceita data pura do backend sem deslocar o dia — ver `paraData`.

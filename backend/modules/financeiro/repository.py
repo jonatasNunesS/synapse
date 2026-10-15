@@ -10,6 +10,7 @@ from typing import Any
 from django.db.models import Case, Count, DecimalField, Q, Sum, Value, When
 from django.db.models.functions import TruncDate
 from django.db import connection
+from django.utils import timezone
 
 from .models import Categoria, Lancamento
 
@@ -134,7 +135,7 @@ class FinanceiroRepository:
         Receitas/Despesas: apenas lançamentos PAGOS no período.
         Pendente/Atrasado: lançamentos com esses status (qualquer data).
         """
-        hoje = date.today()
+        hoje = timezone.localdate()
 
         # Lançamentos pagos no período (mês/ano)
         pagos_periodo = Lancamento.objects.filter(
@@ -382,7 +383,7 @@ class FinanceiroRepository:
     @staticmethod
     def listar_vencimentos_proximos(empresa_id, dias: int = 7):
         """Lançamentos pendentes com vencimento nos próximos X dias."""
-        hoje = date.today()
+        hoje = timezone.localdate()
         limite = hoje + timedelta(days=dias)
         return (
             Lancamento.objects.filter(
@@ -403,7 +404,7 @@ class FinanceiroRepository:
         """
         qs = Lancamento.objects.filter(
             status="pendente",
-            data_vencimento__lt=date.today(),
+            data_vencimento__lt=timezone.localdate(),
         )
         if empresa_id:
             qs = qs.filter(empresa_id=empresa_id)
@@ -427,7 +428,7 @@ class FinanceiroRepository:
         elif filtro == "atrasado":
             qs = qs.filter(
                 emprestimo_quitado=False,
-                data_retorno_esperado__lt=date.today(),
+                data_retorno_esperado__lt=timezone.localdate(),
             )
         return qs.order_by("data_retorno_esperado")
 
@@ -461,7 +462,7 @@ class FinanceiroRepository:
             Lancamento.objects.filter(
                 tipo="emprestimo",
                 emprestimo_quitado=False,
-                data_retorno_esperado__lte=date.today(),
+                data_retorno_esperado__lte=timezone.localdate(),
             )
             .select_related("empresa", "criado_por")
         )
@@ -469,7 +470,7 @@ class FinanceiroRepository:
     @staticmethod
     def listar_vencendo_hoje_amanha():
         """Lançamentos pendentes que vencem hoje ou amanhã (para notificações)."""
-        hoje = date.today()
+        hoje = timezone.localdate()
         amanha = hoje + timedelta(days=1)
         return (
             Lancamento.objects.filter(
@@ -494,7 +495,7 @@ class FinanceiroRepository:
         contagem de atrasados, contas a receber (receitas pendentes) e ticket
         médio (receita paga no período ÷ nº de recebimentos).
         """
-        hoje = date.today()
+        hoje = timezone.localdate()
 
         atrasados = Lancamento.objects.filter(
             empresa_id=empresa_id, status="pendente", data_vencimento__lt=hoje

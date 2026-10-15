@@ -7,6 +7,7 @@ from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
 
 from celery import shared_task
+from django.utils import timezone
 
 logger = logging.getLogger("synapse")
 
@@ -21,7 +22,7 @@ def verificar_vencimentos(self):
     from .models import Lancamento
     from .repository import FinanceiroRepository
 
-    hoje = date.today()
+    hoje = timezone.localdate()
     processados = 0
     notificacoes_criadas = 0
 
@@ -111,7 +112,7 @@ def verificar_emprestimos(self):
     """
     from .repository import FinanceiroRepository
 
-    hoje = date.today()
+    hoje = timezone.localdate()
     criadas = 0
     try:
         for emp in FinanceiroRepository.listar_emprestimos_a_notificar():

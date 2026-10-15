@@ -8,6 +8,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 from django.db import transaction
+from django.utils import timezone
 
 from shared.cache import build_cache_key, get_cached, invalidate_cache, set_cached
 
@@ -307,7 +308,7 @@ class FinanceiroService:
         if lancamento.emprestimo_quitado:
             raise ValueError("Este empréstimo já está quitado.")
 
-        hoje = date.today()
+        hoje = timezone.localdate()
         with transaction.atomic():
             if not perdoar:
                 if lancamento.direcao_emprestimo == "emprestei":
@@ -360,7 +361,7 @@ class FinanceiroService:
             raise ValueError("Este empréstimo já está quitado.")
         if dias < 1:
             raise ValueError("O número de dias deve ser maior que zero.")
-        nova_data = date.today() + timedelta(days=dias)
+        nova_data = timezone.localdate() + timedelta(days=dias)
         lancamento = FinanceiroRepository.atualizar_lancamento(
             lancamento, {"data_retorno_esperado": nova_data}
         )

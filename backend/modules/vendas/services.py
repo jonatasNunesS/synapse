@@ -23,6 +23,7 @@ que bateu ao centavo de virar financeiro duplicado.
 from decimal import Decimal
 
 from django.db import transaction
+from django.utils import timezone
 
 from shared.apagar_com_ajustes import ajustar_lancamento_ao_apagar, apagar_com_ajustes
 from shared.cache import invalidate_cache
@@ -256,7 +257,6 @@ class VendaService:
         já está lançada. Um segundo lançamento contaria o mesmo dinheiro duas
         vezes.
         """
-        from datetime import date
 
         from modules.financeiro.services import FinanceiroService
 
@@ -274,7 +274,7 @@ class VendaService:
                 message="Venda sem valor não gera receita.",
             )
 
-        hoje = date.today()
+        hoje = timezone.localdate()
         pago = venda.status_pagamento == "pago"
         quem = venda.cliente.nome if venda.cliente_id else "balcão"
 
@@ -367,11 +367,10 @@ class VendaService:
         Venda pendente SEM data prevista nunca entra aqui. É o que mantém
         caladas as vendas migradas que não tinham previsão nenhuma.
         """
-        from datetime import date as _date
 
         from modules.notificacoes.services import NotificacaoService
 
-        hoje = hoje or _date.today()
+        hoje = hoje or timezone.localdate()
         pendentes = Venda.objects.select_related("cliente").filter(
             status_pagamento="pendente",
             data_prevista_pagamento__isnull=False,
@@ -432,7 +431,6 @@ class VendaService:
         Sem lançamento vinculado, nada acontece: a venda que nunca foi ao
         financeiro não passa a ir por causa de um recebimento.
         """
-        from datetime import date
 
         from modules.financeiro.services import FinanceiroService
 
@@ -444,7 +442,7 @@ class VendaService:
             # histórico — a regra de imutabilidade do módulo financeiro.
             return None
 
-        hoje = date.today()
+        hoje = timezone.localdate()
         saldo = venda.saldo_devedor
 
         lancamento.valor = recebido
@@ -554,7 +552,7 @@ class VendaService:
         dias, vence daqui a 3 — senão o adiamento nasceria atrasado e a
         notificação voltaria no mesmo dia. Mesma conta do fluxo antigo.
         """
-        from datetime import date as _date, timedelta
+        from datetime import timedelta
 
         venda = VendaService.obter(empresa_id, venda_id)
         if venda.status_pagamento != "pendente":
@@ -563,7 +561,7 @@ class VendaService:
                 message="Este pagamento já foi resolvido.",
             )
 
-        base = max(venda.data_prevista_pagamento or _date.today(), _date.today())
+        base = max(venda.data_prevista_pagamento or timezone.localdate(), timezone.localdate())
         venda.data_prevista_pagamento = base + timedelta(days=max(1, int(dias)))
         venda.notificacao_enviada = False
         venda.save(

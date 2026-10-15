@@ -4,6 +4,7 @@ Synapse — Módulo Financeiro: Serializers
 from decimal import Decimal
 
 from rest_framework import serializers
+from django.utils import timezone
 
 from .models import Categoria, Lancamento, LogEdicaoLancamento
 
@@ -129,7 +130,6 @@ class LancamentoCreateSerializer(LancamentoSerializer):
         ]
 
     def validate(self, attrs):
-        from datetime import date as _date
 
         tipo = attrs.get("tipo", getattr(self.instance, "tipo", None))
 
@@ -154,7 +154,7 @@ class LancamentoCreateSerializer(LancamentoSerializer):
             # como vencimento (o model exige data_vencimento).
             attrs["data_vencimento"] = data_retorno
             attrs["status"] = "pago"
-            attrs.setdefault("data_pagamento", _date.today())
+            attrs.setdefault("data_pagamento", timezone.localdate())
         else:
             # tipo != emprestimo → campos de empréstimo são ignorados.
             for campo in ("direcao_emprestimo", "pessoa_emprestimo", "data_retorno_esperado"):
