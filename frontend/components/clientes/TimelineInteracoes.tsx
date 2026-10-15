@@ -28,6 +28,11 @@ interface TimelineInteracoesProps {
   entradas: EntradaHistorico[];
   loading?: boolean;
   onNovaInteracao?: () => void;
+  /**
+   * Registrar uma venda daqui. Ausente quando o módulo está desligado — a
+   * tela de Vendas segue o mesmo gating do atalho flutuante e da sidebar.
+   */
+  onNovaVenda?: () => void;
   onEditar?: (interacao: InteracaoCliente) => void;
   onApagar?: (interacao: InteracaoCliente) => void;
   /** Descontar do estoque agora (venda sem baixa) — reabre o modal de produto. */
@@ -308,6 +313,7 @@ export function TimelineInteracoes({
   entradas,
   loading,
   onNovaInteracao,
+  onNovaVenda,
   onEditar,
   onApagar,
   onDescontarEstoque,
@@ -340,6 +346,18 @@ export function TimelineInteracoes({
                 <option value="nao_descontados">Não descontados</option>
               </select>
             </label>
+          )}
+          {onNovaVenda && (
+            // Venda deixou de ser um tipo de interação — o atalho não sumiu
+            // com ela, mudou de destino: abre o formulário de Vendas, com
+            // itens, estoque e financeiro, já com este cliente escolhido.
+            <button
+              onClick={onNovaVenda}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-sucesso/15 hover:bg-sucesso/25 border border-sucesso/30 rounded-lg text-xs text-sucesso font-medium transition-colors"
+            >
+              <Receipt className="w-3.5 h-3.5" />
+              Registrar venda
+            </button>
           )}
           <button
             onClick={onNovaInteracao}

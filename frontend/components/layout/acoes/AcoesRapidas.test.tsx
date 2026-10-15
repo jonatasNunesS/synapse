@@ -118,6 +118,39 @@ describe("Registrar venda pelo atalho", () => {
     );
   });
 
+  it("GUARDA: o atalho nunca passa pelo caminho antigo de interação", async () => {
+    // Venda deixou de ser um tipo de `InteracaoCliente` (B10) — ela não
+    // alimentava métrica nenhuma, e por isso o caminho fechou. Este atalho
+    // sempre apontou para `Venda` e precisa continuar apontando: reapontá-lo
+    // para o modal de interação devolveria o cliente a R$ 0,00 com venda
+    // registrada, que é o defeito inteiro de volta.
+    post.mockResolvedValue({
+      data: {
+        id: "v-1",
+        itens: [],
+        total: "50.00",
+        tem_itens_com_produto: false,
+        tem_lancamento_financeiro: true,
+        ja_baixou_estoque: false,
+      },
+    });
+    montar();
+
+    // Nenhuma marca do formulário de interação em cena.
+    expect(screen.queryByText("Tipo de Interação *")).toBeNull();
+    expect(screen.queryByText("Registrar Interação")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: /escolher camisa/i }));
+    fireEvent.click(screen.getByRole("button", { name: /adicionar/i }));
+    fireEvent.click(screen.getByRole("button", { name: /registrar venda/i }));
+
+    await waitFor(() => expect(post).toHaveBeenCalled());
+
+    const urls = post.mock.calls.map((args: unknown[]) => String(args[0]));
+    expect(urls).toContain("/vendas/");
+    expect(urls.filter((u: string) => u.includes("/interacoes/"))).toEqual([]);
+  });
+
   it("depois de salvar, avisa e NÃO leva a pessoa para outra tela", async () => {
     post.mockResolvedValue({
       data: {

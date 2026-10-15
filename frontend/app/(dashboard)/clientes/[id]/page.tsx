@@ -32,12 +32,14 @@ import { VendaDetalheModal } from "@/components/vendas/VendaDetalheModal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { STATUS_FUNIL_LABELS, STATUS_FUNIL_COLORS } from "@/types/clientes";
 import type { StatusFunil, InteracaoCliente } from "@/types/clientes";
-import type { Venda } from "@/types/vendas";
+import type { Venda, VendaPayload } from "@/types/vendas";
 import { api, getErrorMessage } from "@/lib/api";
 import { avisarSeFalhar } from "@/lib/avisarErro";
 import { useModulos } from "@/hooks/useModulos";
 import { useEventosDoCliente } from "@/hooks/useAgenda";
-import { useVendasDoCliente } from "@/hooks/useVendas";
+import { criarVenda, useVendasDoCliente } from "@/hooks/useVendas";
+import { VendaForm } from "@/components/vendas/VendaForm";
+import { VendaPosVendaFlow } from "@/components/vendas/VendaPosVendaFlow";
 import { montarHistorico } from "@/lib/vendas";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -88,6 +90,9 @@ export default function ClienteDetalhePage() {
   } = useEventosDoCliente(id);
 
   const [showInteracaoForm, setShowInteracaoForm] = useState(false);
+  const [showVendaForm, setShowVendaForm] = useState(false);
+  // A venda recém-registrada, enquanto as perguntas do pós-venda rodam.
+  const [vendaRecemCriada, setVendaRecemCriada] = useState<Venda | null>(null);
   const [editingInteracao, setEditingInteracao] = useState<InteracaoCliente | null>(null);
   const [vendaParaEstoque, setVendaParaEstoque] = useState<InteracaoCliente | null>(null);
   // Depois do estoque, oferece registrar receita no financeiro (mesma venda).
@@ -164,6 +169,33 @@ export default function ClienteDetalhePage() {
    * o envelope em cada um é como esquecer dele em um.
    */
   const recarregarCliente = () => avisarSeFalhar(carregar());
+
+  /**
+   * Registrar uma venda sem sair do perfil do cliente.
+   *
+   * É o mesmo `VendaForm` da tela /vendas e o mesmo fluxo pós-venda — a
+   * pessoa responde aqui exatamente o que responderia lá. O que o atalho
+   * acrescenta é o cliente já escolhido.
+   *
+   * Substitui o caminho antigo, em que "Venda" era um tipo de interação. Ele
+   * fechou porque alimentava métrica nenhuma (B10); o atalho não fechou
+   * junto, só passou a apontar para a entidade certa.
+   */
+  const handleRegistrarVenda = async (dados: VendaPayload) => {
+    const nova = await criarVenda(dados);
+    toast.success("Venda registrada.");
+    setShowVendaForm(false);
+    setVendaRecemCriada(nova);
+    return nova;
+  };
+
+  const fecharPosVenda = () => {
+    setVendaRecemCriada(null);
+    // Os agregados do cliente mudaram e o funil pode ter avançado; a venda
+    // também entra na timeline. As duas listas releem.
+    recarregarVendas();
+    recarregarCliente();
+  };
 
   const handleRegistrarInteracao = async (dados: Parameters<typeof registrar>[0]) => {
     setInteracaoLoading(true);
@@ -535,6 +567,9 @@ export default function ClienteDetalhePage() {
             entradas={historico}
             loading={interacoesLoading || vendasLoading}
             onNovaInteracao={() => setShowInteracaoForm(true)}
+            onNovaVenda={
+              moduloAtivo("estoque") ? () => setShowVendaForm(true) : undefined
+            }
             onEditar={(interacao) => setEditingInteracao(interacao)}
             onApagar={handleApagarInteracao}
             onDescontarEstoque={
@@ -548,6 +583,24 @@ export default function ClienteDetalhePage() {
           />
         </div>
       </div>
+
+      {/* Registrar venda — o mesmo formulário da tela de Vendas */}
+      {showVendaForm && (
+        <VendaForm
+          clienteInicial={id}
+          onSubmit={handleRegistrarVenda}
+          onClose={() => setShowVendaForm(false)}
+        />
+      )}
+
+      {/* As perguntas que seguem a venda: estoque, depois financeiro */}
+      {vendaRecemCriada && (
+        <VendaPosVendaFlow
+          venda={vendaRecemCriada}
+          onAtualizada={setVendaRecemCriada}
+          onFim={fecharPosVenda}
+        />
+      )}
 
       {/* Modal de nova interação */}
       {showInteracaoForm && (

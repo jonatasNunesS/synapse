@@ -36,6 +36,14 @@ import {
 
 interface Props {
   venda?: Venda | null;
+  /**
+   * Cliente já escolhido ao abrir — o atalho do perfil manda o dono da tela.
+   *
+   * Só vale na criação: editando, quem manda é o cliente que a venda tem.
+   * E segue sendo um select normal, não um campo travado: quem abriu pelo
+   * perfil da Ana e percebeu que a venda é do Bruno troca ali mesmo.
+   */
+  clienteInicial?: string;
   onSubmit: (dados: VendaPayload) => Promise<unknown>;
   onClose: () => void;
 }
@@ -58,12 +66,14 @@ function itensIniciais(venda?: Venda | null): ItemEmEdicao[] {
   }));
 }
 
-export function VendaForm({ venda, onSubmit, onClose }: Props) {
+export function VendaForm({ venda, clienteInicial, onSubmit, onClose }: Props) {
   const { clientes, carregar: carregarClientes } = useClientes();
 
   const [itens, setItens] = useState<ItemEmEdicao[]>(() => itensIniciais(venda));
   const [produtoNovo, setProdutoNovo] = useState<ProdutoList | null>(null);
-  const [cliente, setCliente] = useState<string>(venda?.cliente ?? "");
+  const [cliente, setCliente] = useState<string>(
+    venda?.cliente ?? clienteInicial ?? ""
+  );
   const [dataVenda, setDataVenda] = useState(venda?.data_venda ?? hoje());
   const [desconto, setDesconto] = useState(venda?.desconto ?? "0");
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento | "">(

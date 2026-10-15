@@ -76,6 +76,18 @@ export const vendaCliente = {
       .then((r) => r.data),
 };
 
+/**
+ * Criar uma venda sem carregar a lista inteira.
+ *
+ * `useVendas().criar` recarrega `GET /vendas/` depois de gravar, que é o que
+ * a tela de Vendas precisa e é desperdício em qualquer outra. O atalho do
+ * perfil do cliente usa esta — ele já tem a sua própria lista, a do cliente,
+ * e recarrega só ela.
+ */
+export function criarVenda(dados: VendaPayload): Promise<Venda> {
+  return api.post<Venda>("/vendas/", dados).then((r) => r.data);
+}
+
 export function useVendas() {
   const [vendas, setVendas] = useState<Venda[]>([]);
   const [total, setTotal] = useState(0);
