@@ -194,7 +194,21 @@ class FinanceiroService:
             return lancamento
 
         # Pendente/atrasado: fluxo livre (regra atual mantida)
-        lancamento = FinanceiroRepository.atualizar_lancamento(lancamento, dados)
+        #
+        # `status` é campo gravável do serializer, então um PATCH comum pode
+        # levar o lançamento a "pago" sem passar pelo endpoint `/pagar/`. É a
+        # segunda porta para o mesmo dinheiro, e ela também passa a reconciliar
+        # a venda — senão bastaria editar em vez de pagar para o CRM voltar a
+        # divergir do Financeiro.
+        virou_pago = dados.get("status") == "pago"
+
+        with transaction.atomic():
+            lancamento = FinanceiroRepository.atualizar_lancamento(lancamento, dados)
+            if virou_pago:
+                FinanceiroService._reconciliar_venda_do_lancamento(
+                    lancamento, getattr(usuario, "id", None)
+                )
+
         invalidate_cache(empresa_id, "financeiro")
         return lancamento
 
@@ -258,8 +272,40 @@ class FinanceiroService:
         ).select_related("editado_por").order_by("-editado_em")
 
     @staticmethod
+    def _reconciliar_venda_do_lancamento(lancamento, usuario_id=None) -> None:
+        """
+        Lançamento de venda pago aqui → o recebimento é registrado NA VENDA.
+
+        UMA PORTA SÓ. O mesmo dinheiro tinha dois estados: o lançamento
+        virava "pago" no Financeiro e a venda continuava "pendente" — seguia
+        cobrando, não somava em `valor_recebido` do cliente e não promovia o
+        funil. Quem pagou a conta ficava devendo no CRM.
+
+        A venda é dona do recebimento, então quem paga por aqui passa pelo
+        `VendaService.confirmar_pagamento`: é o mesmo caminho da cobrança do
+        dia, com os mesmos efeitos (agregados do cliente, funil, notificação
+        desarmada).
+
+        SEM RECURSÃO: o ajuste financeiro que `confirmar_pagamento` faz
+        começa com `if lancamento.status != "pendente": return None`. Como
+        este reconciliador roda DEPOIS de o lançamento virar pago, aquele
+        passo encontra o trabalho feito e não mexe em nada.
+
+        Silencioso quando não há o que reconciliar — lançamento sem venda
+        (que é a maioria), ou venda que já estava paga.
+        """
+        from modules.vendas.models import Venda
+        from modules.vendas.services import VendaService
+
+        venda = Venda.objects.filter(lancamento_financeiro_id=lancamento.id).first()
+        if venda is None or venda.status_pagamento != "pendente":
+            return
+
+        VendaService.confirmar_pagamento(venda.empresa_id, usuario_id, venda.id)
+
+    @staticmethod
     def marcar_como_pago(
-        empresa_id, lancamento_id, data_pagamento: date
+        empresa_id, lancamento_id, data_pagamento: date, usuario_id=None
     ) -> Lancamento:
         lancamento = FinanceiroRepository.get_lancamento(empresa_id, lancamento_id)
         if not lancamento:
@@ -268,7 +314,13 @@ class FinanceiroService:
             raise ValueError("Este lançamento já está marcado como pago.")
         if lancamento.status == "cancelado":
             raise ValueError("Não é possível pagar um lançamento cancelado.")
-        lancamento = FinanceiroRepository.marcar_como_pago(lancamento, data_pagamento)
+
+        with transaction.atomic():
+            lancamento = FinanceiroRepository.marcar_como_pago(
+                lancamento, data_pagamento
+            )
+            FinanceiroService._reconciliar_venda_do_lancamento(lancamento, usuario_id)
+
         invalidate_cache(empresa_id, "financeiro")
         return lancamento
 

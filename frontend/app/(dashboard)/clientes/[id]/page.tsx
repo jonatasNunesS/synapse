@@ -38,6 +38,7 @@ import { avisarSeFalhar } from "@/lib/avisarErro";
 import { useModulos } from "@/hooks/useModulos";
 import { useEventosDoCliente } from "@/hooks/useAgenda";
 import { criarVenda, useVendasDoCliente } from "@/hooks/useVendas";
+import { VendaFiadoModal } from "@/components/vendas/VendaFiadoModal";
 import { VendaForm } from "@/components/vendas/VendaForm";
 import { VendaPosVendaFlow } from "@/components/vendas/VendaPosVendaFlow";
 import { montarHistorico } from "@/lib/vendas";
@@ -91,6 +92,8 @@ export default function ClienteDetalhePage() {
 
   const [showInteracaoForm, setShowInteracaoForm] = useState(false);
   const [showVendaForm, setShowVendaForm] = useState(false);
+  // A venda fiada cujo recebimento está sendo registrado daqui.
+  const [vendaParaCobrar, setVendaParaCobrar] = useState<Venda | null>(null);
   // A venda recém-registrada, enquanto as perguntas do pós-venda rodam.
   const [vendaRecemCriada, setVendaRecemCriada] = useState<Venda | null>(null);
   const [editingInteracao, setEditingInteracao] = useState<InteracaoCliente | null>(null);
@@ -578,6 +581,7 @@ export default function ClienteDetalhePage() {
                 : undefined
             }
             onVerVenda={setVendaDetalhe}
+            onRegistrarRecebimento={setVendaParaCobrar}
             filtroEstoque={filtroEstoque}
             onFiltroEstoqueChange={setFiltroEstoque}
           />
@@ -688,6 +692,25 @@ export default function ClienteDetalhePage() {
             // Baixar ou lançar muda os badges da linha; o cliente relê porque
             // o lançamento entra nos agregados dele.
             setVendaDetalhe(atualizada);
+            recarregarVendas();
+            recarregarCliente();
+          }}
+          onRegistrarRecebimento={(alvo) => {
+            setVendaDetalhe(null);
+            setVendaParaCobrar(alvo);
+          }}
+        />
+      )}
+
+      {/* Recebimento do fiado — o mesmo modal e o mesmo service da cobrança
+          do dia. Confirmar aqui move o split recebido/a-receber do cliente e
+          promove o funil, então as duas leituras são refeitas. */}
+      {vendaParaCobrar && (
+        <VendaFiadoModal
+          venda={vendaParaCobrar}
+          onClose={() => setVendaParaCobrar(null)}
+          onResolvida={() => {
+            setVendaParaCobrar(null);
             recarregarVendas();
             recarregarCliente();
           }}

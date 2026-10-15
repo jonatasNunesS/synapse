@@ -12,6 +12,7 @@ import { UserCog, X } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { FORMAS_PAGAMENTO, type Venda } from "@/types/vendas";
 
+import { temCobrancaAberta } from "@/lib/vendaStatus";
 import { VendaIntegracoes } from "./VendaIntegracoes";
 import { CompromissosVinculados } from "@/components/agenda/CompromissosVinculados";
 import { useEventosDaVenda } from "@/hooks/useAgenda";
@@ -24,6 +25,15 @@ interface Props {
   onAtualizada?: (venda: Venda) => void;
   /** Mexer em de quem foi a venda. Sem isto, o detalhe é só leitura. */
   onTrocarCliente?: (venda: Venda) => void;
+  /**
+   * Registrar o que entrou de uma venda fiada.
+   *
+   * Até aqui só dava para fazer isso quando a notificação do dia chegava
+   * (`/vendas?fiado=<id>`) ou pelo botão "Cobrar" da lista, que só aparece no
+   * hover. Quem pagou antes do vencimento não tinha por onde ser registrado,
+   * e o detalhe da venda — que é a página dela — não oferecia nada.
+   */
+  onRegistrarRecebimento?: (venda: Venda) => void;
 }
 
 function rotuloForma(valor: string): string {
@@ -34,6 +44,7 @@ export function VendaDetalheModal({
   venda,
   onClose,
   onAtualizada,
+  onRegistrarRecebimento,
   onTrocarCliente,
 }: Props) {
   // Os compromissos vinculados a esta venda.
@@ -138,6 +149,30 @@ export function VendaDetalheModal({
           <p className="mt-4 whitespace-pre-wrap text-sm text-foreground-suave">
             {venda.observacoes}
           </p>
+        )}
+
+        {onRegistrarRecebimento && temCobrancaAberta(venda) && (
+          <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Falta receber {formatCurrency(venda.saldo_devedor)}
+                </p>
+                {venda.data_prevista_pagamento && (
+                  <p className="text-xs text-muted-foreground">
+                    Previsto para {formatDate(venda.data_prevista_pagamento)}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => onRegistrarRecebimento(venda)}
+                className="shrink-0 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm font-medium text-alerta transition-colors hover:bg-amber-500/20"
+              >
+                Registrar recebimento
+              </button>
+            </div>
+          </div>
         )}
 
         {onAtualizada && (

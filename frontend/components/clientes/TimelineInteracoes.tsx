@@ -15,7 +15,7 @@ import { Plus, Pencil, Receipt, Trash2, PackageCheck, PackageX } from "lucide-re
 import type { InteracaoCliente } from "@/types/clientes";
 import { TIPO_INTERACAO_LABELS, TIPO_INTERACAO_ICONS } from "@/types/clientes";
 import type { EntradaHistorico } from "@/lib/vendas";
-import { badgePagamentoVenda } from "@/lib/vendaStatus";
+import { badgePagamentoVenda, temCobrancaAberta } from "@/lib/vendaStatus";
 import type { Venda } from "@/types/vendas";
 import { useModulos } from "@/hooks/useModulos";
 import { formatCurrencyOrNull, formatDate } from "@/lib/utils";
@@ -39,6 +39,8 @@ interface TimelineInteracoesProps {
   onDescontarEstoque?: (interacao: InteracaoCliente) => void;
   /** Abrir o detalhe da venda, onde ficam as integrações dela. */
   onVerVenda?: (venda: Venda) => void;
+  /** Registrar o que entrou de uma venda fiada, sem esperar a cobrança. */
+  onRegistrarRecebimento?: (venda: Venda) => void;
   filtroEstoque?: FiltroEstoque;
   onFiltroEstoqueChange?: (valor: FiltroEstoque) => void;
 }
@@ -247,10 +249,12 @@ function LinhaVenda({
   venda,
   mostrarEstoque,
   onVerVenda,
+  onRegistrarRecebimento,
 }: {
   venda: Venda;
   mostrarEstoque: boolean;
   onVerVenda?: (v: Venda) => void;
+  onRegistrarRecebimento?: (v: Venda) => void;
 }) {
   const estado = mostrarEstoque ? estadoEstoqueVenda(venda) : null;
   const itens = venda.itens.map((item) => item.produto_nome).join(", ");
@@ -293,14 +297,26 @@ function LinhaVenda({
         <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{itens}</p>
       )}
 
-      {onVerVenda && (
-        <button
-          onClick={() => onVerVenda(venda)}
-          className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-superficie-forte hover:bg-white/[0.06] border border-border rounded-lg text-[0.6875rem] text-foreground-suave font-medium transition-colors"
-        >
-          Ver venda
-        </button>
-      )}
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        {onVerVenda && (
+          <button
+            onClick={() => onVerVenda(venda)}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-superficie-forte hover:bg-white/[0.06] border border-border rounded-lg text-[0.6875rem] text-foreground-suave font-medium transition-colors"
+          >
+            Ver venda
+          </button>
+        )}
+        {/* Fiado em aberto se registra daqui também: quem paga antes do dia
+            da cobrança não precisa esperar a notificação chegar. */}
+        {onRegistrarRecebimento && temCobrancaAberta(venda) && (
+          <button
+            onClick={() => onRegistrarRecebimento(venda)}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg text-[0.6875rem] text-alerta font-medium transition-colors"
+          >
+            Registrar recebimento
+          </button>
+        )}
+      </div>
 
       <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
         <span className="text-xs text-muted-suave">{formatDate(venda.data_venda)}</span>
@@ -318,6 +334,7 @@ export function TimelineInteracoes({
   onApagar,
   onDescontarEstoque,
   onVerVenda,
+  onRegistrarRecebimento,
   filtroEstoque = "",
   onFiltroEstoqueChange,
 }: TimelineInteracoesProps) {
@@ -406,6 +423,7 @@ export function TimelineInteracoes({
                     venda={entrada.venda}
                     mostrarEstoque={mostrarEstoque}
                     onVerVenda={onVerVenda}
+                    onRegistrarRecebimento={onRegistrarRecebimento}
                   />
                 ) : (
                   <LinhaInteracao

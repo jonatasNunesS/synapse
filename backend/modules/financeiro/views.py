@@ -439,7 +439,7 @@ class LancamentoPagarView(EmpresaQuerySetMixin, APIView):
 
         try:
             lancamento = FinanceiroService.marcar_como_pago(
-                empresa_id, pk, data_pagamento
+                empresa_id, pk, data_pagamento, usuario_id=request.user.id
             )
         except ValueError as e:
             return error_response("PAGAMENTO_INVALIDO", str(e))

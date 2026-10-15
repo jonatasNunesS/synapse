@@ -312,6 +312,10 @@ function Vendas() {
             setVendaDetalhe(null);
             setVendaParaVincular(alvo);
           }}
+          onRegistrarRecebimento={(alvo) => {
+            setVendaDetalhe(null);
+            setVendaParaCobrar(alvo);
+          }}
           onAtualizada={(atualizada) => {
             // O modal mostra a venda que o backend devolveu, e a lista relê
             // para os badges acompanharem sem a pessoa precisar recarregar.
