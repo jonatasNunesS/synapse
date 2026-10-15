@@ -1735,16 +1735,32 @@ class TestFiltroPeriodoCRM:
         assert data["comparativo"]["mes_anterior_label"] == "junho"
 
     def test_resumo_periodo_valor_gerado(self, client_a, empresa_a, usuario_a, cliente_maria):
-        # Venda em julho conta no valor gerado do período.
-        venda = InteracaoCliente.objects.create(
+        """
+        Venda em julho conta no valor gerado de julho — lida de `Venda`.
+
+        Este teste criava uma `InteracaoCliente` tipo="venda", que era a
+        fonte até o B10. A interação continua podendo existir (as antigas
+        existem) e deixou de contar: quem conta é a `Venda`.
+        """
+        from modules.vendas.models import Venda
+
+        venda = Venda.objects.create(
             empresa=empresa_a, cliente=cliente_maria, criado_por=usuario_a,
-            tipo="venda", titulo="V", valor=Decimal("900.00"),
+            data_venda=date(2026, 7, 10), subtotal=Decimal("900.00"),
+            total=Decimal("900.00"), status_pagamento="pago",
+        )
+        # A interação do fluxo antigo, no mesmo mês, não soma junto.
+        InteracaoCliente.objects.create(
+            empresa=empresa_a, cliente=cliente_maria, criado_por=usuario_a,
+            tipo="venda", titulo="V antiga", valor=Decimal("111.00"),
             status_pagamento="pago",
             data_interacao=timezone.make_aware(datetime(2026, 7, 10, 12, 0)),
         )
+
         resp = client_a.get("/api/clientes/resumo/?mes=7&ano=2026")
         data = resp.json()["data"]
         assert Decimal(str(data["valor_gerado_no_periodo"])) == Decimal("900.00")
+        assert venda.id is not None
 
     def test_resumo_mes_sem_dados_zeros(self, client_a, empresa_a, usuario_a):
         resp = client_a.get("/api/clientes/resumo/?mes=3&ano=2020")

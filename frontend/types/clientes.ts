@@ -166,12 +166,23 @@ export interface ResumoClientes {
   total_clientes: number;
   clientes_ativos: number;
   novos_este_mes: number;
-  valor_total_vendas: string;
-  ticket_medio: string;
+  /**
+   * Os nomes abaixo são os que a API devolve, e passaram a ser.
+   *
+   * O tipo declarava `valor_total_vendas`, `ticket_medio` e `por_status`;
+   * o endpoint sempre devolveu `valor_total_gerado`, `ticket_medio_geral` e
+   * `clientes_por_status`. Como a resposta é tipada por asserção, o `tsc`
+   * não tinha como ver — e os cartões de Receita e Ticket Médio do CRM
+   * mostravam R$ 0,00 lendo campos que não existiam.
+   *
+   * O lado que mudou foi este: o dashboard já lia os nomes da API
+   * (`types/dashboard.ts`), e renomear lá para agradar aqui quebraria ele.
+   */
+  valor_total_gerado: string;
+  ticket_medio_geral: string;
   followups_hoje: number;
   followups_atrasados: number;
-  por_status: Record<StatusFunil, number>;
-  por_origem: Record<string, number>;
+  clientes_por_status: Record<StatusFunil, number>;
   // Presentes só quando há filtro de período (mes/ano):
   periodo?: { mes: number; ano: number; label: string };
   novos_no_periodo?: number;

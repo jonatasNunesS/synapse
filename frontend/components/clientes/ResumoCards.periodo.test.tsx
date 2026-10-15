@@ -11,12 +11,11 @@ const base: ResumoClientes = {
   total_clientes: 10,
   clientes_ativos: 8,
   novos_este_mes: 5,
-  valor_total_vendas: "5000.00",
-  ticket_medio: "500.00",
+  valor_total_gerado: "5000.00",
+  ticket_medio_geral: "500.00",
   followups_hoje: 1,
   followups_atrasados: 2,
-  por_status: {} as ResumoClientes["por_status"],
-  por_origem: {},
+  clientes_por_status: {} as ResumoClientes["clientes_por_status"],
 };
 
 const comPeriodo: ResumoClientes = {

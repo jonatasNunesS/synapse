@@ -369,3 +369,72 @@ def test_uuid_invalido_e_erro_claro(empresa):
 
     with pytest.raises(CommandError, match="não é um UUID"):
         _rodar("--empresa=nao-sou-uuid")
+
+
+# ════════════════════════════════════════════════════════════
+# OS CARTÕES DO TOPO DO CRM
+# ════════════════════════════════════════════════════════════
+
+
+def test_receita_do_periodo_le_venda_e_nao_interacao(empresa, usuario, ana):
+    """
+    O último leitor da fonte antiga a sobrar depois do B10.
+
+    `_valor_gerado_no_periodo` alimenta o cartão "Receita no Período" do CRM
+    e lia `InteracaoCliente` tipo="venda" — por isso o mês que teve venda
+    aparecia zerado.
+    """
+    hoje = timezone.localdate()
+    vender(empresa, usuario, ana, "450.00")
+    # Uma interação de venda antiga, não migrada, no mesmo mês: não conta.
+    InteracaoCliente.objects.create(
+        cliente=ana, empresa=empresa, tipo="venda", titulo="Fluxo antigo",
+        valor=Decimal("999.00"), status_pagamento="pago",
+    )
+
+    resumo = ClienteRepository.calcular_resumo(empresa.id, hoje.month, hoje.year)
+
+    assert resumo["valor_gerado_no_periodo"] == Decimal("450.00")
+
+
+def test_receita_do_periodo_ignora_cancelada_e_outro_mes(empresa, usuario, ana):
+    hoje = timezone.localdate()
+    vender(empresa, usuario, ana, "100.00")
+    cancelada = vender(empresa, usuario, ana, "900.00", status="pendente")
+    VendaService.cancelar_pagamento(empresa.id, cancelada.id)
+    # Uma de outro mês, para o filtro ter o que recusar.
+    outra = vender(empresa, usuario, ana, "700.00")
+    Venda.objects.filter(pk=outra.pk).update(
+        data_venda=hoje.replace(day=1) - timezone.timedelta(days=1)
+    )
+
+    resumo = ClienteRepository.calcular_resumo(empresa.id, hoje.month, hoje.year)
+
+    assert resumo["valor_gerado_no_periodo"] == Decimal("100.00")
+
+
+def test_o_resumo_devolve_os_campos_que_a_tela_le(empresa, usuario, ana):
+    """
+    Os nomes importam tanto quanto os números.
+
+    Os cartões liam `valor_total_vendas`, `ticket_medio` e `followups_hoje`;
+    a API devolvia `valor_total_gerado`, `ticket_medio_geral` e nada no
+    lugar do terceiro. Três cartões mostravam R$ 0,00 e 0 lendo campos que
+    não existiam — e o `tsc` não via, porque a resposta é tipada por
+    asserção. Este teste é o contrato do lado do servidor.
+    """
+    vender(empresa, usuario, ana, "450.00")
+    Cliente.objects.filter(pk=ana.pk).update(proximo_followup=timezone.localdate())
+
+    resumo = ClienteRepository.calcular_resumo(empresa.id)
+
+    for campo in (
+        "total_clientes", "clientes_ativos", "novos_este_mes",
+        "valor_total_gerado", "ticket_medio_geral",
+        "followups_atrasados", "followups_hoje", "clientes_por_status",
+    ):
+        assert campo in resumo, campo
+
+    assert resumo["valor_total_gerado"] == Decimal("450.00")
+    assert resumo["ticket_medio_geral"] == Decimal("450.00")
+    assert resumo["followups_hoje"] == 1

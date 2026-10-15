@@ -181,16 +181,24 @@ class ClienteRepository:
 
     @staticmethod
     def _valor_gerado_no_periodo(empresa_id, mes: int, ano: int):
-        """Receita gerada no mês = soma das vendas (não canceladas) do período."""
+        """
+        Receita gerada no mês = soma das VENDAS (não canceladas) do período.
+
+        Lia `InteracaoCliente` tipo="venda" — o último leitor da fonte antiga
+        a sobrar depois do B10, e o motivo de o cartão "Receita no Período" do
+        CRM mostrar R$ 0 para um mês que teve venda. `data_venda` é `DateField`
+        e o filtro por mês não tem conversão de fuso para errar.
+        """
+        from modules.vendas.models import Venda
+
         return (
-            InteracaoCliente.objects.filter(
+            Venda.objects.filter(
                 empresa_id=empresa_id,
-                tipo="venda",
-                data_interacao__year=ano,
-                data_interacao__month=mes,
+                data_venda__year=ano,
+                data_venda__month=mes,
             )
             .exclude(status_pagamento="cancelado")
-            .aggregate(s=Sum("valor"))["s"]
+            .aggregate(s=Sum("total"))["s"]
             or 0
         )
 
@@ -263,6 +271,13 @@ class ClienteRepository:
             proximo_followup__lt=hoje,
         ).count()
 
+        # O cartão "Follow-ups Hoje" do CRM lia um campo que o resumo nunca
+        # devolveu, e por isso mostrava 0 sempre. Agora tem de onde ler.
+        followups_hoje = base_qs.filter(
+            ativo=True,
+            proximo_followup=hoje,
+        ).count()
+
         # Clientes por status
         por_status_qs = (
             base_qs.filter(ativo=True)
@@ -280,6 +295,7 @@ class ClienteRepository:
             "valor_total_gerado": agg["valor_total"] or 0,
             "ticket_medio_geral": ticket or 0,
             "followups_atrasados": followups_atrasados,
+            "followups_hoje": followups_hoje,
             "clientes_por_status": clientes_por_status,
         }
 

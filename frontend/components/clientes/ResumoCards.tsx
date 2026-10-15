@@ -111,15 +111,15 @@ export function ResumoCards({ resumo, loading, periodoAtivo }: ResumoCardsProps)
           value={formatCurrency(
             emPeriodo
               ? resumo?.valor_gerado_no_periodo ?? "0"
-              : resumo?.valor_total_vendas ?? "0"
+              : resumo?.valor_total_gerado ?? "0"
           )}
           icon={DollarSign}
           color="bg-green-500"
           loading={loading}
         />
         <Card
-          title="Ticket Médio"
-          value={formatCurrency(resumo?.ticket_medio ?? "0")}
+          title="Ticket Médio por Venda"
+          value={formatCurrency(resumo?.ticket_medio_geral ?? "0")}
           icon={TrendingUp}
           color="bg-cyan-500"
           loading={loading}

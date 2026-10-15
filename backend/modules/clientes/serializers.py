@@ -462,6 +462,7 @@ class ResumoClientesSerializer(serializers.Serializer):
     valor_total_gerado = serializers.DecimalField(max_digits=14, decimal_places=2)
     ticket_medio_geral = serializers.DecimalField(max_digits=14, decimal_places=2)
     followups_atrasados = serializers.IntegerField()
+    followups_hoje = serializers.IntegerField()
     clientes_por_status = serializers.DictField()
 
 
